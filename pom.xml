@@ -5,6 +5,10 @@
 	<artifactId>imixs-adapters</artifactId>
 	<version>0.0.1</version>
 	<packaging>pom</packaging>
+	<modules>
+		<module>imixs-adapters-magento-ejb</module>
+		<module>imixs-adapters-testing</module>
+	</modules>
 
 	<url>https://github.com/imixs/imixs-adapters</url>
 
@@ -154,11 +158,17 @@
 		</dependency>
 
 
-		<!-- JUnit Tests -->
+		<!-- Testing -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.9.5</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
