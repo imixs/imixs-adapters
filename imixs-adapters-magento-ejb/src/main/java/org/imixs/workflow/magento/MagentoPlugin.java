@@ -57,6 +57,7 @@ import org.scribe.oauth.OAuthService;
 public class MagentoPlugin extends AbstractPlugin {
 	
 	public final static String PROPERTYSERVICE_NOT_BOUND = "PROPERTYSERVICE_NOT_BOUND";
+	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
 
 	
 	ItemCollection documentContext;
