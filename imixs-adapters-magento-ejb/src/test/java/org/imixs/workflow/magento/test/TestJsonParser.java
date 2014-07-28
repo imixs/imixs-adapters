@@ -1,7 +1,10 @@
 package org.imixs.workflow.magento.test;
 
+import java.util.List;
+
 import junit.framework.Assert;
 
+import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.magento.MagentoJsonParser;
 import org.junit.Test;
@@ -38,6 +41,46 @@ public class TestJsonParser {
 		result = MagentoJsonParser.parseError(PRODUCT_LIST);
 		Assert.assertNull(result);
 
+	}
+
+	@Test
+	public void testProductList() {
+
+		// error message
+		List<ItemCollection> result=null;
+		try {
+			result = MagentoJsonParser
+					.parseObjectList(PRODUCT_LIST);
+		} catch (PluginException e) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+
+		Assert.assertNotNull(result);
+		Assert.assertEquals(2, result.size());
+
+		ItemCollection entity = result.get(0);
+		Assert.assertEquals("1", entity.getItemValueString("item_id"));
+		Assert.assertEquals("1", entity.getItemValueString("product_id"));
+		Assert.assertEquals("1", entity.getItemValueString("stock_id"));
+		Assert.assertEquals(99.000, entity.getItemValueDouble("qty"));
+
+		entity = result.get(1);
+		Assert.assertEquals("2", entity.getItemValueString("item_id"));
+		Assert.assertEquals("2", entity.getItemValueString("product_id"));
+		Assert.assertEquals("1", entity.getItemValueString("stock_id"));
+		Assert.assertEquals(100.000, entity.getItemValueDouble("qty"));
+		
+		
+		// test unexpected error message
+		try {
+			result = MagentoJsonParser
+					.parseObjectList(ERROR_MESSAGE);
+			Assert.fail();
+		} catch (PluginException e) {
+			Assert.assertEquals("401", e.getErrorCode());
+			Assert.assertEquals("oauth_problem=token_rejected", e.getMessage());
+		}
 	}
 
 }

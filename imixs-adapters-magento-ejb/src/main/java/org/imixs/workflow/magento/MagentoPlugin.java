@@ -27,6 +27,8 @@
 
 package org.imixs.workflow.magento;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.naming.Context;
@@ -184,16 +186,17 @@ public class MagentoPlugin extends AbstractPlugin {
 	}
 
 	
-	public String getProducts() {
-
-		
+	public List<ItemCollection> getProducts() throws PluginException {
 		// Now let's go and ask for a protected resource!
 		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
 				+ "/stockitems?type=rest");
 		getService().signRequest(accessToken, request);
 		Response response = request.send();
-
-		return response.getBody();
+		
+		List<ItemCollection> result = new ArrayList<ItemCollection>();
+		result=MagentoJsonParser.parseObjectList(response.getBody());
+		
+		return result;
 	}
 
 }

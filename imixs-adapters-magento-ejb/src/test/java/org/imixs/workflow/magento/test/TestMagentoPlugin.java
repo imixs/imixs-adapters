@@ -4,6 +4,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
@@ -19,6 +20,7 @@ import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.magento.MagentoApi;
 import org.imixs.workflow.magento.MagentoPlugin;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -133,6 +135,7 @@ public class TestMagentoPlugin {
 	 * 
 	 */
 	@Test
+	@Ignore
 	public void testRequestNewToken() {
 
 		Scanner in = new Scanner(System.in);
@@ -166,15 +169,25 @@ public class TestMagentoPlugin {
 	 */
 	@Test
 	public void testGetProducts() {
+		
+		List<ItemCollection> result=null;
+		try {
+			result = magentoPlugin.getProducts();
+		} catch (PluginException e) {
+			
+			e.printStackTrace();
+			Assert.fail();
+		}
  
-		System.out.println("Test connection...");
-
-		System.out
-				.println("Thats it man! Go and build something awesome with Scribe! :)");
-
-		String s = magentoPlugin.getProducts();
-
-		System.out.println(s);
+		Assert.assertNotNull(result);
+		Assert.assertTrue(result.size()>0);
+		
+		ItemCollection entity = result.get(0);
+		Assert.assertTrue(entity.hasItem("item_id"));
+		Assert.assertTrue(entity.hasItem("product_id"));
+		Assert.assertTrue(entity.hasItem("stock_id"));
+	
+	
 	}
 
 }

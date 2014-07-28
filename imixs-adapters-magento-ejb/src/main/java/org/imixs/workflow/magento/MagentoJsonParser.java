@@ -1,12 +1,16 @@
 package org.imixs.workflow.magento;
 
 import java.io.StringReader;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParser.Event;
 
+import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 
 /**
@@ -41,73 +45,172 @@ public class MagentoJsonParser {
 	public static PluginException parseError(String json) {
 
 		PluginException result = null;
-		boolean hasMessages = false;
-		
-		if (json==null) 
+		if (json == null)
 			return null;
-		
-		json=json.trim();
+
+		json = json.trim();
 		if (json.isEmpty())
 			return null;
-		
+
 		// test error message string...
-		if (json.indexOf("\"messages\":{\"error\":")==-1)
+		if (json.indexOf("\"messages\":{\"error\":") == -1)
 			return null;
 
 		// parse the error message
 		JsonParser parser = Json.createParser(new StringReader(json));
 
-		if (parser.hasNext()) {
+		Event event = null;
+		// Advance to "messages" key
+		while (parser.hasNext()) {
+			event = parser.next();
+			if (event == Event.KEY_NAME
+					&& "messages".equals(parser.getString())) {
+				event = parser.next();
+				break;
+			}
+		}
 
-			while (parser.hasNext()) {
+		// parse message object....
+		long code = -1;
+		String message = null;
+		while (event != Event.END_OBJECT) {
+			if (event == Event.KEY_NAME && "code".equals(parser.getString())) {
+				// code..
+				event = parser.next();
+				code = parser.getLong();
+			}
 
-				Event eventKey = parser.next();
+			if (event == Event.KEY_NAME && "message".equals(parser.getString())) {
+				// message..
+				event = parser.next();
+				message = parser.getString();
+			}
 
-				if (eventKey == Event.KEY_NAME) {
+			// error message found?
+			if (code > -1 && message != null) {
+				result = new PluginException(MagentoPlugin.ERROR_MESSAGE, ""
+						+ code, message);
+				logger.fine("[MagentoJsonParser] found error message: " + code
+						+ " - " + message);
+				break;
+			}
 
-					String name = parser.getString();
-					if ("messages".equals(name)) {
-						hasMessages = true;
-						logger.fine("MagentoJsonParser: messages found");
-					}
+			event = parser.next();
+		}
 
-					// test for error object
-					if (hasMessages && "error".equals(name)) {
+		return result;
+	}
 
-						try {
-							logger.fine("MagentoJsonParser: error found");
+	/**
+	 * This method parses a Magento json string containing a List of objects.
+	 * Each object can contain several items. An object will be transfromed into
+	 * a ItemCollection. The Result will be stored into a list of ItemColleciton
+	 * objects.
+	 * 
+	 * 
+	 * Example JSON String:
+	 * 
+	 * <code>
+	 *    [ {"item_id":"1","product_id":"1","stock_id":"1","qty":"99.0000","low_stock_date":null},
+	 *      {"item_id":"2","product_id":"2","stock_id":"1","qty":"100.0000","low_stock_date":null}
+	 *    ]
+	 * </code>
+	 * 
+	 * @param json
+	 *            - the object string
+	 * @return an List<ItemCollection> containing the objects. Can be empty. Can
+	 *         not be null.
+	 * @throws PluginException
+	 * 
+	 */
+	public static List<ItemCollection> parseObjectList(String json)
+			throws PluginException {
 
-							// now parse the error object....
+		List<ItemCollection> result = new ArrayList<ItemCollection>();
+		if (json == null)
+			return result;
 
-							// array....
-							@SuppressWarnings("unused")
-							Event errorKey = parser.next();
-							errorKey = parser.next();
-							errorKey = parser.next();
+		json = json.trim();
+		if (json.isEmpty())
+			return result;
 
-							// code..
-							errorKey = parser.next();
+		// test error message...
+		PluginException pluginException = parseError(json);
+		if (pluginException != null) {
+			logger.severe("[MagentoParser] error parsing ObjectList!");
+			throw pluginException;
+		}
 
-							long code = parser.getLong();
+		// parse the error message
+		JsonParser parser = Json.createParser(new StringReader(json));
 
-							// message..
-							errorKey = parser.next();
-							errorKey = parser.next();
+		Event event = null;
+		// Advance to "messages" key
+		while (parser.hasNext()) {
+			event = parser.next();
+			// object start...
 
-							String message = parser.getString();
+			if (event == Event.START_OBJECT) {
+				ItemCollection entity = new ItemCollection();
+				// object contents
+				while (event != Event.END_OBJECT) {
 
-							result = new PluginException(
-									MagentoPlugin.ERROR_MESSAGE, "" + code,
-									message);
+					if (event == Event.KEY_NAME) {
+						Object itemValue = null;
+						String itemName = parser.getString();
+						// value..
+						event = parser.next();
+
+						switch (event) {
+
+						case VALUE_FALSE: {
+							itemValue = false;
 							break;
-						} catch (Exception parsingException) {
-							logger.fine("MagentoJsonParser: error parsing error message!");
+						}
+						case VALUE_TRUE: {
+							itemValue = true;
+							break;
+						}
+						case VALUE_NULL: {
+							itemValue = null;
+							break;
+						}
+						case VALUE_NUMBER: {
+							if (parser.isIntegralNumber()) {
+								itemValue = new Integer(parser.getInt());
+							} else {
+								BigDecimal b = parser.getBigDecimal();
+								itemValue = new Double(b.doubleValue());
+							}
+							break;
+						}
+						case VALUE_STRING: {
+							itemValue = parser.getString();
+							break;
+						}
+
+						default: {
+						}
 
 						}
+
+						if (itemValue != null) {
+							entity.replaceItemValue(itemName, itemValue);
+						}
+
 					}
 
+					event = parser.next();
 				}
+
+				// add itemCollection into result
+				if (entity != null) {
+					result.add(entity);
+					entity = null;
+				}
+
 			}
+
 		}
 
 		return result;
