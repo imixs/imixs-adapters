@@ -189,7 +189,7 @@ public class MagentoPlugin extends AbstractPlugin {
 	public List<ItemCollection> getProducts() throws PluginException {
 		// Now let's go and ask for a protected resource!
 		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
-				+ "/stockitems?type=rest");
+				+ "/products");
 		getService().signRequest(accessToken, request);
 		Response response = request.send();
 		
@@ -198,5 +198,44 @@ public class MagentoPlugin extends AbstractPlugin {
 		
 		return result;
 	}
+	
+	
+	public List<ItemCollection> getStockitems() throws PluginException {
+		// Now let's go and ask for a protected resource!
+		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
+				+ "/stockitems");
+		getService().signRequest(accessToken, request);
+		Response response = request.send();
+		
+		List<ItemCollection> result = new ArrayList<ItemCollection>();
+		result=MagentoJsonParser.parseObjectList(response.getBody());
+		
+		return result;
+	}
+
+	
+	public List<ItemCollection> getOrders(String status) throws PluginException {
+		
+		String requestURL=magentoApiURL
+				+ "/orders";
+		
+		
+		if (status!=null && !status.isEmpty()) {
+			requestURL+="?filter[1][attribute]=status&filter[1][in]="+status;
+		}
+		
+		
+		
+		// Now let's go and ask for a protected resource!
+		OAuthRequest request = new OAuthRequest(Verb.GET, requestURL);
+		getService().signRequest(accessToken, request);
+		Response response = request.send();
+		
+		List<ItemCollection> result = new ArrayList<ItemCollection>();
+		result=MagentoJsonParser.parseObjectList(response.getBody());
+		
+		return result;
+	}
+
 
 }

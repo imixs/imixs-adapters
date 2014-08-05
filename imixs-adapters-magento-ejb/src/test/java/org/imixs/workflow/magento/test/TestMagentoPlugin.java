@@ -186,8 +186,34 @@ public class TestMagentoPlugin {
 		Assert.assertTrue(entity.hasItem("item_id"));
 		Assert.assertTrue(entity.hasItem("product_id"));
 		Assert.assertTrue(entity.hasItem("stock_id"));
+	}
 	
 	
+	
+	
+	/**
+	 * This Test checks the Magento Connection...
+	 * 
+	 */
+	@Test
+	public void testGetPendingOrders() {
+		
+		List<ItemCollection> result=null;
+		try {
+			result = magentoPlugin.getOrders("pending");
+		} catch (PluginException e) {
+			
+			e.printStackTrace();
+			Assert.fail();
+		}
+ 
+		Assert.assertNotNull(result);
+		Assert.assertTrue(result.size()>0);
+		
+		ItemCollection entity = result.get(0);
+		Assert.assertTrue(entity.hasItem("item_id"));
+		Assert.assertTrue(entity.hasItem("product_id"));
+		Assert.assertTrue(entity.hasItem("stock_id"));
 	}
 
 }
