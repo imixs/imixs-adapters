@@ -135,7 +135,7 @@ public class TestMagentoPlugin {
 	 * 
 	 */
 	@Test
-	@Ignore
+	//@Ignore
 	public void testRequestNewToken() {
 
 		Scanner in = new Scanner(System.in);
@@ -173,6 +173,7 @@ public class TestMagentoPlugin {
 		List<ItemCollection> result=null;
 		try {
 			result = magentoPlugin.getProducts();
+			//result = magentoPlugin.getStockitems();
 		} catch (PluginException e) {
 			
 			e.printStackTrace();
@@ -183,9 +184,12 @@ public class TestMagentoPlugin {
 		Assert.assertTrue(result.size()>0);
 		
 		ItemCollection entity = result.get(0);
-		Assert.assertTrue(entity.hasItem("item_id"));
-		Assert.assertTrue(entity.hasItem("product_id"));
-		Assert.assertTrue(entity.hasItem("stock_id"));
+		
+		
+		
+		Assert.assertTrue(entity.hasItem("entity_id"));
+//		Assert.assertTrue(entity.hasItem("product_id"));
+//		Assert.assertTrue(entity.hasItem("stock_id"));
 	}
 	
 	
@@ -195,7 +199,7 @@ public class TestMagentoPlugin {
 	 * This Test checks the Magento Connection...
 	 * 
 	 */
-	@Test
+	@Test 
 	public void testGetPendingOrders() {
 		
 		List<ItemCollection> result=null;
