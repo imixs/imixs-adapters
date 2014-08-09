@@ -141,7 +141,7 @@ public class MagentoJsonParser {
 			throw pluginException;
 		}
 
-		// parse the error message
+		// parse the data string
 		JsonParser parser = Json.createParser(new StringReader(json));
 
 		Event event = null;
@@ -151,57 +151,9 @@ public class MagentoJsonParser {
 			// object start...
 
 			if (event == Event.START_OBJECT) {
-				ItemCollection entity = new ItemCollection();
-				// object contents
-				while (event != Event.END_OBJECT) {
 
-					if (event == Event.KEY_NAME) {
-						Object itemValue = null;
-						String itemName = parser.getString();
-						// value..
-						event = parser.next();
-
-						switch (event) {
-
-						case VALUE_FALSE: {
-							itemValue = false;
-							break;
-						}
-						case VALUE_TRUE: {
-							itemValue = true;
-							break;
-						}
-						case VALUE_NULL: {
-							itemValue = null;
-							break;
-						}
-						case VALUE_NUMBER: {
-							if (parser.isIntegralNumber()) {
-								itemValue = new Integer(parser.getInt());
-							} else {
-								BigDecimal b = parser.getBigDecimal();
-								itemValue = new Double(b.doubleValue());
-							}
-							break;
-						}
-						case VALUE_STRING: {
-							itemValue = parser.getString();
-							break;
-						}
-
-						default: {
-						}
-
-						}
-
-						if (itemValue != null) {
-							entity.replaceItemValue(itemName, itemValue);
-						}
-
-					}
-
-					event = parser.next();
-				}
+				// parse the item collection...
+				ItemCollection entity = parseItemCollection(parser);
 
 				// add itemCollection into result
 				if (entity != null) {
@@ -214,6 +166,125 @@ public class MagentoJsonParser {
 		}
 
 		return result;
+	}
+
+	/**
+	 * This method pareses a item collection part. The expected format is:
+	 * 
+	 * <code>
+	 *  {
+        "item_id":"1",
+        "product_id":"1",
+        "stock_id":"1",
+        ....
+        }
+	 * </code>
+	 * 
+	 * an item can contain embedded items. The method then makes a recursive
+	 * call and embeds a new itemcolleciton into the current
+	 * 
+	 * <code>
+	 * ....
+	 *  "tax_name":null,
+        "tax_rate":null,
+        "addresses":[
+            {
+                "region":"Bayern",
+                "postcode":"34535",
+                ...
+             },
+       "tax_rate":null,
+        }]
+	 * </code>
+	 * 
+	 * 
+	 * Matento also returns lists with an index number before each item. The
+	 * format than looks like this:
+	 * 
+	 * <code>
+	 *  {"1":{
+        "entity_id":"1",
+        "attribute_set_id":"4",
+        "type_id":"simple",
+        ...
+        },
+        "2":{
+        ....
+	 * </code>
+	 * 
+	 * @param parser
+	 * @return
+	 */
+	private static ItemCollection parseItemCollection(JsonParser parser) {
+		Event event = null;
+
+		ItemCollection entity = new ItemCollection();
+		// object contents
+		while (event != Event.END_OBJECT) {
+
+			if (event == Event.KEY_NAME) {
+				Object itemValue = null;
+				String itemName = parser.getString();
+				// value..
+				event = parser.next();
+
+				switch (event) {
+				
+				
+				case START_ARRAY: {
+					itemValue = new ArrayList<ItemCollection>();
+					while (event != Event.END_ARRAY) {
+						ItemCollection embeddedItemCollection=parseItemCollection(parser);
+						if (embeddedItemCollection!=null) {
+							((List<ItemCollection>)itemValue).add(embeddedItemCollection);
+						}
+						event = parser.next();
+					}
+					break;
+				}
+				
+
+				case VALUE_FALSE: {
+					itemValue = false;
+					break;
+				}
+				case VALUE_TRUE: {
+					itemValue = true;
+					break;
+				}
+				case VALUE_NULL: {
+					itemValue = null;
+					break;
+				}
+				case VALUE_NUMBER: {
+					if (parser.isIntegralNumber()) {
+						itemValue = new Integer(parser.getInt());
+					} else {
+						BigDecimal b = parser.getBigDecimal();
+						itemValue = new Double(b.doubleValue());
+					}
+					break;
+				}
+				case VALUE_STRING: {
+					itemValue = parser.getString();
+					break;
+				}
+
+				default: {
+				}
+
+				}
+
+				if (itemValue != null) {
+					entity.replaceItemValue(itemName, itemValue);
+				}
+
+			}
+
+			event = parser.next();
+		}
+
+		return entity;
 	}
 
 }

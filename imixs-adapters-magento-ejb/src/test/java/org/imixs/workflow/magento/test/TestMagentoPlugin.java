@@ -135,7 +135,7 @@ public class TestMagentoPlugin {
 	 * 
 	 */
 	@Test
-	//@Ignore
+	@Ignore 
 	public void testRequestNewToken() {
 
 		Scanner in = new Scanner(System.in);
@@ -168,6 +168,34 @@ public class TestMagentoPlugin {
 	 * 
 	 */
 	@Test
+	public void testGetStockitems() {
+		
+		List<ItemCollection> result=null;
+		try {
+			result = magentoPlugin.getStockitems();
+		} catch (PluginException e) {
+			
+			e.printStackTrace();
+			Assert.fail();
+		}
+	
+		Assert.assertNotNull(result);
+		Assert.assertTrue(result.size()>0);
+		
+		ItemCollection entity = result.get(0);
+		
+		
+		
+		Assert.assertTrue(entity.hasItem("item_id"));
+		Assert.assertTrue(entity.hasItem("product_id"));
+		Assert.assertTrue(entity.hasItem("stock_id"));
+	}
+
+	/**
+	 * This Test checks the Magento Connection...
+	 * 
+	 */
+	@Test
 	public void testGetProducts() {
 		
 		List<ItemCollection> result=null;
@@ -188,16 +216,15 @@ public class TestMagentoPlugin {
 		
 		
 		Assert.assertTrue(entity.hasItem("entity_id"));
-//		Assert.assertTrue(entity.hasItem("product_id"));
-//		Assert.assertTrue(entity.hasItem("stock_id"));
+		
+		Assert.assertEquals("simple", entity.getItemValueString("type_id"));
+		
 	}
 	
-	
-	
-	
+
 	/**
 	 * This Test checks the Magento Connection...
-	 * 
+	 *  
 	 */
 	@Test 
 	public void testGetPendingOrders() {
@@ -215,9 +242,19 @@ public class TestMagentoPlugin {
 		Assert.assertTrue(result.size()>0);
 		
 		ItemCollection entity = result.get(0);
-		Assert.assertTrue(entity.hasItem("item_id"));
-		Assert.assertTrue(entity.hasItem("product_id"));
-		Assert.assertTrue(entity.hasItem("stock_id"));
+		Assert.assertTrue(entity.hasItem("entity_id"));	
+		Assert.assertEquals("pending", entity.getItemValueString("status"));
+		
+		
+		List<ItemCollection> addresses=entity.getItemValue("addresses");
+		Assert.assertTrue(addresses.size()==2);
+		ItemCollection address=addresses.get(0);
+		Assert.assertEquals("Bayern", address.getItemValueString("region"));
+		
+		
+		
+		
+		
 	}
 
 }

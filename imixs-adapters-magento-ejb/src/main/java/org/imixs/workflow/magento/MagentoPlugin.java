@@ -232,7 +232,7 @@ public class MagentoPlugin extends AbstractPlugin {
 		Response response = request.send();
 		
 		List<ItemCollection> result = new ArrayList<ItemCollection>();
-		result=MagentoJsonParser.parseObjectList(response.getBody());
+		result= MagentoJsonParser.parseObjectList(response.getBody());
 		
 		return result;
 	}
