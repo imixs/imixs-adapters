@@ -39,7 +39,7 @@ public class MagentoApi extends DefaultApi10a {
 	}
 
 	@Override
-	public String getRequestTokenEndpoint() {
+	public String getRequestTokenEndpoint() {		
 		return getBaseURL() + "oauth/initiate";
 	}
 
@@ -57,7 +57,9 @@ public class MagentoApi extends DefaultApi10a {
 	 */
 	@Override
 	public String getAuthorizationUrl(Token requestToken) {
-
+		
+		
+		
 		if (isAdminAPI()) {
 			return getBaseURL() + URL_PATTERN_AUTHORIZATION_ADMIN
 					+ "?oauth_token=" + requestToken.getToken();
