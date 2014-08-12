@@ -57,11 +57,10 @@ import org.scribe.oauth.OAuthService;
  * 
  */
 public class MagentoPlugin extends AbstractPlugin {
-	
+
 	public final static String PROPERTYSERVICE_NOT_BOUND = "PROPERTYSERVICE_NOT_BOUND";
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
 
-	
 	ItemCollection documentContext;
 
 	private MagentoApi magentoApi = null;
@@ -75,8 +74,17 @@ public class MagentoPlugin extends AbstractPlugin {
 	String magentoTokenKey = null;
 	String magentoTokenSecret = null;
 
+	String basicAuthUser = null;
+	String basicAuthPassword = null;
+
+	boolean debugMode = false;
+
+	// Basic Authentication
+	String user = null;
+	String password = null;
+
 	OAuthService service = null;
-	Token accessToken = null; 
+	Token accessToken = null;
 	private PropertyService propertyService = null;
 
 	private static Logger logger = Logger.getLogger(MagentoPlugin.class
@@ -89,7 +97,7 @@ public class MagentoPlugin extends AbstractPlugin {
 	public void init(WorkflowContext actx) throws PluginException {
 		super.init(actx);
 
-		try { 
+		try {
 			// lookup PropertyService
 			InitialContext ictx = new InitialContext();
 			Context ctx = (Context) ictx.lookup("java:comp/env");
@@ -100,22 +108,52 @@ public class MagentoPlugin extends AbstractPlugin {
 					PROPERTYSERVICE_NOT_BOUND, "PropertyService not bound", e);
 		}
 
-
 		// read configuration....
-		magentoBasisURL =propertyService.getProperties().getProperty("magento.uri-basis");
-		magentoApiURL = propertyService.getProperties().getProperty("magento.uri-api");
-		magentoApiKey = propertyService.getProperties().getProperty("magento.token.api-key");
-		magentoApiSecret = propertyService.getProperties().getProperty("magento.token.api-secret");
-		magentoTokenKey = propertyService.getProperties().getProperty("magento.token.access-key");
-		magentoTokenSecret = propertyService.getProperties().getProperty("magento.token.access-secret");
+		magentoBasisURL = propertyService.getProperties().getProperty(
+				"magento.uri-basis");
+		logger.fine("[MagentoPlugin] magentoBasisURL='"+magentoBasisURL+"'");
+		
+		magentoApiURL = propertyService.getProperties().getProperty(
+				"magento.uri-api");
+		logger.fine("[MagentoPlugin] magentoApiURL='"+magentoApiURL+"'");
+		
+		
+		magentoApiKey = propertyService.getProperties().getProperty(
+				"magento.token.api-key");
+		logger.fine("[MagentoPlugin] magentoApiKey='"+magentoApiKey+"'");
+		
+		
+		magentoApiSecret = propertyService.getProperties().getProperty(
+				"magento.token.api-secret");
+		magentoTokenKey = propertyService.getProperties().getProperty(
+				"magento.token.access-key");
+		logger.fine("[MagentoPlugin] magentoTokenKey='"+magentoTokenKey+"'");
+		
+		
+		magentoTokenSecret = propertyService.getProperties().getProperty(
+				"magento.token.access-secret");
 
+		basicAuthUser = propertyService.getProperties().getProperty(
+				"magento.basicAuth.user");
+		basicAuthPassword = propertyService.getProperties().getProperty(
+				"magento.basicAuth.password");
+
+		if ("true".equals(propertyService.getProperties().getProperty(
+				"magento.debug")))
+			debugMode = true;
+		
+		
 		// create api
 		magentoApi = new MagentoApi();
 		magentoApi.setAdminAPI(true);
 		magentoApi.setBaseURL(magentoBasisURL);
 
+		// add basic auth if provided
+		this.addBasicAuthCredentials(basicAuthUser, basicAuthPassword);
+
 		// Create a signed token....
-		logger.fine("[MagentoPlugin] generate access token: "+magentoTokenKey + " - "+magentoTokenSecret);
+		logger.fine("[MagentoPlugin] generate access token: " + magentoTokenKey
+				+ " - " + magentoTokenSecret);
 		accessToken = new Token(magentoTokenKey, magentoTokenSecret);
 
 	}
@@ -144,98 +182,116 @@ public class MagentoPlugin extends AbstractPlugin {
 	 */
 	public OAuthService getService() {
 		if (service == null) {
-
-			service = new ServiceBuilder().provider(magentoApi)
-					.apiKey(magentoApiKey).apiSecret(magentoApiSecret).build();
+			if (debugMode)
+				service = new ServiceBuilder().provider(magentoApi)
+						.apiKey(magentoApiKey).apiSecret(magentoApiSecret)
+						.debug().build();
+			else
+				service = new ServiceBuilder().provider(magentoApi)
+						.apiKey(magentoApiKey).apiSecret(magentoApiSecret)
+						.build();
 		}
 		return service;
 	}
 
-	
-	
+	/**
+	 * This method adds a user credentials for a basic authentication. This is
+	 * needed if the complete service is additional protected with basic
+	 * authentication
+	 * 
+	 * @param aUser
+	 * @param aPassword
+	 */
+	public void addBasicAuthCredentials(String aUser, String aPassword) {
+		this.user = aUser;
+		this.password = aPassword;
+	}
 
-	
 	/**
 	 * returns a new request token...
+	 * 
 	 * @return
 	 */
 	public Token getRequestToken() {
 		// get a request token...
 		return getService().getRequestToken();
 	}
-	
-	
+
 	/**
 	 * returns a new authorization url...
+	 * 
 	 * @return
 	 */
 	public String getAuthorizationUrl(Token requestToken) {
+		
+		
 		return getService().getAuthorizationUrl(requestToken);
 	}
-	
+
 	/**
 	 * This method requests a new access token....
 	 * 
 	 * @return
 	 */
-	public Token getAccessToken(Token requestToken,String averifier) {
-		
-		Verifier verifier=new Verifier(averifier);
+	public Token getAccessToken(Token requestToken, String averifier) {
+
+		Verifier verifier = new Verifier(averifier);
 		accessToken = getService().getAccessToken(requestToken, verifier);
 		return accessToken;
 	}
 
-	
 	public List<ItemCollection> getProducts() throws PluginException {
 		// Now let's go and ask for a protected resource!
 		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
 				+ "/products");
 		getService().signRequest(accessToken, request);
-		Response response = request.send();
-		
+
+		Response response = request.send(new BasicAuthRequestTuner(user,
+				password));
+
 		List<ItemCollection> result = new ArrayList<ItemCollection>();
-		result=MagentoJsonParser.parseObjectList(response.getBody());
-		
+		result = MagentoJsonParser.parseObjectList(response.getBody());
+
 		return result;
 	}
-	
-	
+
 	public List<ItemCollection> getStockitems() throws PluginException {
 		// Now let's go and ask for a protected resource!
 		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
 				+ "/stockitems");
+
+		// addBasicAuthHeader(request);
+
 		getService().signRequest(accessToken, request);
 		Response response = request.send();
-		
+
 		List<ItemCollection> result = new ArrayList<ItemCollection>();
-		result=MagentoJsonParser.parseObjectList(response.getBody());
-		
+		result = MagentoJsonParser.parseObjectList(response.getBody());
+
 		return result;
 	}
 
-	
 	public List<ItemCollection> getOrders(String status) throws PluginException {
-		
-		String requestURL=magentoApiURL
-				+ "/orders";
-		
-		
-		if (status!=null && !status.isEmpty()) {
-			requestURL+="?filter[1][attribute]=status&filter[1][in]="+status;
+
+		String requestURL = magentoApiURL + "/orders";
+
+		if (status != null && !status.isEmpty()) {
+			requestURL += "?filter[1][attribute]=status&filter[1][in]="
+					+ status;
 		}
-		
-		
-		
+
 		// Now let's go and ask for a protected resource!
 		OAuthRequest request = new OAuthRequest(Verb.GET, requestURL);
+
+		// addBasicAuthHeader(request);
+
 		getService().signRequest(accessToken, request);
 		Response response = request.send();
-		
+
 		List<ItemCollection> result = new ArrayList<ItemCollection>();
-		result= MagentoJsonParser.parseObjectList(response.getBody());
-		
+		result = MagentoJsonParser.parseObjectList(response.getBody());
+
 		return result;
 	}
-
 
 }

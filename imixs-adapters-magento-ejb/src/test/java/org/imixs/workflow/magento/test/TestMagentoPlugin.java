@@ -43,13 +43,17 @@ import org.scribe.model.Token;
  * 
  * @see: https://github.com/fernandezpablo85/scribe-java
  * 
+ * 
+ * 
+ * Set log level
+ * 
+ * http://stackoverflow.com/questions/14235726/junit4-unit-tests-running-inside-eclipse-using-java-util-logging-cannot-see-l
+ * 
+ * 
+ * 
  */
 public class TestMagentoPlugin {
-	static final String MAGENTO_API_KEY = "9abde0f96ce9a388994d464f5dfa81b3";
-	static final String MAGENTO_API_SECRET = "34aa69d7ee0782f9a6f04ac9cdb3d11e";
-	static final String MAGENTO_REST_API_URL = "http://localhost/magento/api/rest";
 	MagentoApi magentoApi = null;
-
 	MagentoPlugin magentoPlugin = null;
 	ItemCollection documentActivity;
 	ItemCollection documentContext;
@@ -181,10 +185,7 @@ public class TestMagentoPlugin {
 	
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size()>0);
-		
-		ItemCollection entity = result.get(0);
-		
-		
+		ItemCollection entity = result.get(0);				
 		
 		Assert.assertTrue(entity.hasItem("item_id"));
 		Assert.assertTrue(entity.hasItem("product_id"));
@@ -210,13 +211,8 @@ public class TestMagentoPlugin {
  
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size()>0);
-		
 		ItemCollection entity = result.get(0);
-		
-		
-		
 		Assert.assertTrue(entity.hasItem("entity_id"));
-		
 		Assert.assertEquals("simple", entity.getItemValueString("type_id"));
 		
 	}
@@ -245,14 +241,10 @@ public class TestMagentoPlugin {
 		Assert.assertTrue(entity.hasItem("entity_id"));	
 		Assert.assertEquals("pending", entity.getItemValueString("status"));
 		
-		
 		List<ItemCollection> addresses=entity.getItemValue("addresses");
 		Assert.assertTrue(addresses.size()==2);
 		ItemCollection address=addresses.get(0);
 		Assert.assertEquals("Bayern", address.getItemValueString("region"));
-		
-		
-		
 		
 		
 	}

@@ -1,5 +1,7 @@
 package org.imixs.workflow.magento;
 
+import java.util.logging.Logger;
+
 import org.scribe.builder.api.DefaultApi10a;
 import org.scribe.model.Token;
 
@@ -8,7 +10,8 @@ import org.scribe.model.Token;
  * magento. The Class supports the Consumer and the Admin view. There for the
  * class provided different oauth URL pattern.
  * 
- * The Base URL can be set using the constructor
+ * The Base URL can be set using the constructor.
+ * 
  * 
  * @author rsoika
  * 
@@ -20,14 +23,17 @@ public class MagentoApi extends DefaultApi10a {
 	String baseURL = "http://localhost/magento/index.php/";
 	boolean adminAPI = false;
 
+	private static Logger logger = Logger.getLogger(MagentoApi.class.getName());
+
 	public String getBaseURL() {
 		return baseURL;
-	} 
-
-	public void setBaseURL(String baseURL) {
-		this.baseURL = baseURL;
 	}
 
+	public void setBaseURL(String baseURL) {
+		logger.fine("[MagentoApi] set BaseURL='" + baseURL + "'");
+
+		this.baseURL = baseURL;
+	}
 
 	public boolean isAdminAPI() {
 		return adminAPI;
@@ -35,11 +41,11 @@ public class MagentoApi extends DefaultApi10a {
 
 	public void setAdminAPI(boolean adminAPI) {
 		this.adminAPI = adminAPI;
-
+		logger.fine("[MagentoApi] set adminAPI=" + adminAPI );
 	}
 
 	@Override
-	public String getRequestTokenEndpoint() {		
+	public String getRequestTokenEndpoint() {
 		return getBaseURL() + "oauth/initiate";
 	}
 
@@ -57,16 +63,12 @@ public class MagentoApi extends DefaultApi10a {
 	 */
 	@Override
 	public String getAuthorizationUrl(Token requestToken) {
-		
-		
-		
 		if (isAdminAPI()) {
 			return getBaseURL() + URL_PATTERN_AUTHORIZATION_ADMIN
 					+ "?oauth_token=" + requestToken.getToken();
 		} else
 			return getBaseURL() + URL_PATTERN_AUTHORIZATION_CONSUMER
 					+ "?oauth_token=" + requestToken.getToken();
-
 	}
 
 }

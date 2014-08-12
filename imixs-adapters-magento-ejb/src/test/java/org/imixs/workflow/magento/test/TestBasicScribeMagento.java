@@ -23,19 +23,28 @@ import org.scribe.oauth.OAuthService;
  * 
  */
 public class TestBasicScribeMagento {
-	static final String MAGENTO_API_KEY = "9abde0f96ce9a388994d464f5dfa81b3";
-	static final String MAGENTO_API_SECRET = "34aa69d7ee0782f9a6f04ac9cdb3d11e";
-	static final String MAGENTO_REST_API_URL = "http://localhost/magento/api/rest";
-	static final String MAGENTO_BASE_URL = "http://localhost/magento/index.php/";
+//	static final String MAGENTO_API_KEY = "9abde0f96ce9a388994d464f5dfa81b3";
+//	static final String MAGENTO_API_SECRET = "34aa69d7ee0782f9a6f04ac9cdb3d11e";
+//	static final String MAGENTO_REST_API_URL = "http://localhost/magento/api/rest";
+//	static final String MAGENTO_BASE_URL = "http://localhost/magento/index.php/";
 
-	// static final String MAGENTO_API_KEY = "77gqhzp35ka9euqqczn5sgr5s5ayeylx";
-	// static final String MAGENTO_API_SECRET =
-	// "mpfbw1ptlrejwwrx5z0o9yoe90rq2hda";
-	// static final String MAGENTO_REST_API_URL =
-	// "http://toci01.imixs.com:11180/magento/api/rest";
-	// static final String MAGENTO_BASE_URL =
-	// "http://toci01.imixs.com:11180/magento/index.php/";
+	// toci
+	 static final String MAGENTO_API_KEY = "77gqhzp35ka9euqqczn5sgr5s5ayeylx";
+	 static final String MAGENTO_API_SECRET =  "mpfbw1ptlrejwwrx5z0o9yoe90rq2hda";
+	 static final String MAGENTO_REST_API_URL = "http://toci01.imixs.com:11180/magento/api/rest";
+	 static final String MAGENTO_BASE_URL = "http://toci01.imixs.com:11180/magento/index.php/";
 
+	 
+	 // ssg
+//	 static final String MAGENTO_API_KEY = "8v4p1fj12k7t2u7zkjsvzm9vbh8umg2k";
+//	 static final String MAGENTO_API_SECRET =  "bg0mbl4fl45ykxej8p95b61nu4hmsl4o";
+//	 static final String MAGENTO_REST_API_URL = "http://staging.badsanitaer.de/api/rest";
+//	 static final String MAGENTO_BASE_URL = "http://staging.badsanitaer.de/index.php/";
+
+	 
+	 
+	 
+	 
 	MagentoApi magentoApi = null;
 
 	@Before
@@ -55,7 +64,7 @@ public class TestBasicScribeMagento {
 	 */
 	@SuppressWarnings("resource")
 	@Test
-	@Ignore
+	//@Ignore
 	public void testConsumerAPI() {
 
 		magentoApi.setAdminAPI(false);
@@ -71,6 +80,10 @@ public class TestBasicScribeMagento {
 
 		// Obtain the Request Token
 		System.out.println("Fetching the Request Token...");
+		
+		
+		
+		
 		Token requestToken = service.getRequestToken();
 		System.out.println("Got the Request Token!");
 		System.out.println();
@@ -111,7 +124,7 @@ public class TestBasicScribeMagento {
 	 */
 	@SuppressWarnings("resource")
 	@Test
-	@Ignore
+	//@Ignore
 	public void testAdminAPI() {
 
 		OAuthService service = new ServiceBuilder().provider(magentoApi)
