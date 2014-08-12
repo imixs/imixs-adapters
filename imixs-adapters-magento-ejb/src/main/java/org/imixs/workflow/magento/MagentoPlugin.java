@@ -111,25 +111,22 @@ public class MagentoPlugin extends AbstractPlugin {
 		// read configuration....
 		magentoBasisURL = propertyService.getProperties().getProperty(
 				"magento.uri-basis");
-		logger.fine("[MagentoPlugin] magentoBasisURL='"+magentoBasisURL+"'");
-		
+		logger.fine("[MagentoPlugin] magentoBasisURL='" + magentoBasisURL + "'");
+
 		magentoApiURL = propertyService.getProperties().getProperty(
 				"magento.uri-api");
-		logger.fine("[MagentoPlugin] magentoApiURL='"+magentoApiURL+"'");
-		
-		
+		logger.fine("[MagentoPlugin] magentoApiURL='" + magentoApiURL + "'");
+
 		magentoApiKey = propertyService.getProperties().getProperty(
-				"magento.token.api-key");
-		logger.fine("[MagentoPlugin] magentoApiKey='"+magentoApiKey+"'");
-		
-		
+				"magento.token.consumer-key");
+		logger.fine("[MagentoPlugin] magentoApiKey='" + magentoApiKey + "'");
+
 		magentoApiSecret = propertyService.getProperties().getProperty(
-				"magento.token.api-secret");
+				"magento.token.consumer-secret");
 		magentoTokenKey = propertyService.getProperties().getProperty(
 				"magento.token.access-key");
-		logger.fine("[MagentoPlugin] magentoTokenKey='"+magentoTokenKey+"'");
-		
-		
+		logger.fine("[MagentoPlugin] magentoTokenKey='" + magentoTokenKey + "'");
+
 		magentoTokenSecret = propertyService.getProperties().getProperty(
 				"magento.token.access-secret");
 
@@ -141,8 +138,7 @@ public class MagentoPlugin extends AbstractPlugin {
 		if ("true".equals(propertyService.getProperties().getProperty(
 				"magento.debug")))
 			debugMode = true;
-		
-		
+
 		// create api
 		magentoApi = new MagentoApi();
 		magentoApi.setAdminAPI(true);
@@ -210,6 +206,11 @@ public class MagentoPlugin extends AbstractPlugin {
 	/**
 	 * returns a new request token...
 	 * 
+	 * I cast here to class 'OAuth10aServiceImpl' to be able to use the
+	 * RequestTuner here.
+	 * 
+	 * @see https://github.com/fernandezpablo85/scribe-java/issues/504
+	 * 
 	 * @return
 	 */
 	public Token getRequestToken() {
@@ -223,8 +224,6 @@ public class MagentoPlugin extends AbstractPlugin {
 	 * @return
 	 */
 	public String getAuthorizationUrl(Token requestToken) {
-		
-		
 		return getService().getAuthorizationUrl(requestToken);
 	}
 

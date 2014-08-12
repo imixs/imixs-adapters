@@ -43,7 +43,7 @@ public class MagentoApi extends DefaultApi10a {
 		this.adminAPI = adminAPI;
 		logger.fine("[MagentoApi] set adminAPI=" + adminAPI );
 	}
-
+ 
 	@Override
 	public String getRequestTokenEndpoint() {
 		return getBaseURL() + "oauth/initiate";

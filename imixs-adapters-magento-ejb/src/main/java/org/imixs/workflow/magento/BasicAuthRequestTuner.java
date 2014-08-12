@@ -54,5 +54,5 @@ public class BasicAuthRequestTuner extends RequestTuner {
 		}
 
 	}
-
+	
 }

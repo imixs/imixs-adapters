@@ -136,11 +136,11 @@ public class TestMagentoPlugin {
 	 * 
 	 * There for the test print outs the request url and waits for an input of
 	 * the verifier finally it prints out the access token
-	 * 
+	 *  
 	 */
 	@Test
 	//@Ignore 
-	public void testRequestNewToken() {
+	public void testRequestNewToken() { 
 
 		Scanner in = new Scanner(System.in);
 
