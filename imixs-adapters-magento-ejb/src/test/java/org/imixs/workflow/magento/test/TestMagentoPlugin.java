@@ -157,7 +157,7 @@ public class TestMagentoPlugin {
 		Token accessToken = magentoPlugin.getAccessToken(requestToken,
 				in.nextLine());
 
-		Assert.assertNotNull(accessToken);
+		Assert.assertNotNull(accessToken); 
 
 		System.out.println("Got the Access Token!");
 		System.out.println("   key=" + accessToken.getToken());

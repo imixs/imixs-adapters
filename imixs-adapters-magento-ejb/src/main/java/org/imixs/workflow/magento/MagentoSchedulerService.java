@@ -43,6 +43,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.ModelService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
@@ -82,7 +83,7 @@ import org.imixs.workflow.jee.ejb.WorkflowService;
  * 
  * statusmessage - text message
  * 
-
+ * 
  * 
  * @author rsoika
  * 
@@ -101,7 +102,7 @@ public class MagentoSchedulerService {
 	private String id;
 	private ItemCollection configuration = null;
 
-	private static final String ENTITY_TYPE = "ConfigMagento";
+	public static final String ENTITY_TYPE = "ConfigMagento";
 	@Resource
 	SessionContext ctx;
 
@@ -123,7 +124,7 @@ public class MagentoSchedulerService {
 	/**
 	 * This method loads the configuration from an entity with type=ENTITY_TYPE
 	 */
-	public ItemCollection loadConfiguration() throws Exception {
+	public ItemCollection loadConfiguration() {
 		String sQuery = "";
 		sQuery = "SELECT";
 
@@ -270,7 +271,7 @@ public class MagentoSchedulerService {
 	 * @return Timer
 	 * @throws Exception
 	 */
-	private Timer findTimer(String id) throws Exception {
+	private Timer findTimer(String id) {
 		for (Object obj : timerService.getTimers()) {
 			Timer timer = (javax.ejb.Timer) obj;
 			if (timer.getInfo() instanceof ItemCollection) {
@@ -283,7 +284,7 @@ public class MagentoSchedulerService {
 		return null;
 	}
 
-	private void updateTimerDetails() throws Exception {
+	private void updateTimerDetails() {
 		if (configuration == null)
 			return;
 		id = configuration.getItemValueString("$uniqueid");
@@ -317,19 +318,18 @@ public class MagentoSchedulerService {
 		// Startzeit ermitteln
 		long lProfiler = System.currentTimeMillis();
 
+		logger.info("[MagentoSchedulerService] processing import....");
 		try {
 			// configuration = (ItemCollection) timer.getInfo();
 			configuration = loadConfiguration();
 			sTimerID = configuration.getItemValueString("$uniqueid");
-			System.out.println("[ImportSchedulerService]  Processing : "
-					+ sTimerID);
 
-		//	importArtikel();
-			
+			importOrders();
+
 			configuration.replaceItemValue("errormessage", "");
 			configuration.replaceItemValue("datLastRun", new Date());
 
-		} catch (Exception e) {
+		} catch (PluginException e) {
 			e.printStackTrace();
 			// stop timer!
 			timer.cancel();
@@ -379,9 +379,66 @@ public class MagentoSchedulerService {
 
 		List<ItemCollection> result = new ArrayList<ItemCollection>();
 
-		
-
 		return result;
 
 	}
+
+	/**
+	 * This method imports all orders or update existing workitems
+	 * 
+	 * @throws PluginException
+	 */
+	public void importOrders() throws PluginException {
+
+		// fetch pending orders
+		MagentoPlugin magentoPlugin = new MagentoPlugin();
+		magentoPlugin.init(workflowService);
+
+		List<String> orderStatusMapping = configuration
+				.getItemValue("txtOrderStatusMapping");
+		String orderModelVersion = configuration
+				.getItemValueString("txtModelVersion");
+
+		// find processid....
+		// format: pending=1000
+		for (String mapping : orderStatusMapping) {
+			int pos = mapping.indexOf("=");
+			String status = mapping.substring(0, pos);
+			String processid = mapping.substring(pos + 1);
+
+			List<ItemCollection> orders = magentoPlugin.getOrders(status);
+
+			logger.info("[MagentoSchedulerSerivce] " + orders.size()
+					+ " pending orders found. ");
+
+			for (ItemCollection order : orders) {
+
+				// verifiy if workitem exits!
+				ItemCollection workitem = magentoPlugin
+						.findWorkitemByOrderID(order
+								.getItemValueString("entity_id"));
+
+				if (workitem == null) {
+					workitem = new ItemCollection();
+
+					workitem.replaceItemValue(WorkflowService.MODELVERSION,
+							orderModelVersion);
+
+					workitem.replaceItemValue("$ProcessID", new Integer(
+							processid));
+
+					// process activityId = 800
+					workitem.replaceItemValue("$ActivityID", new Integer(800));
+					workflowService.processWorkItem(workitem);
+
+				} else {
+					
+					logger.warning("[MagentoSchedulerService] Workitem already exists: "+workitem.getItemValueString(WorkflowService.UNIQUEID));
+				}
+
+			}
+		}
+
+	}
+
 }

@@ -8,9 +8,10 @@ import org.scribe.model.Token;
 /**
  * This Class extends the DefaultApi 1.0a and provides the access endpoints for
  * magento. The Class supports the Consumer and the Admin view. There for the
- * class provided different oauth URL pattern.
+ * class provided different oauth URL pattern. The Base URL can be set using the
+ * constructor. The Admin view can be configured by setting the property 'admin'
+ * to 'true'.
  * 
- * The Base URL can be set using the constructor.
  * 
  * 
  * @author rsoika
@@ -24,6 +25,11 @@ public class MagentoApi extends DefaultApi10a {
 	boolean adminAPI = false;
 
 	private static Logger logger = Logger.getLogger(MagentoApi.class.getName());
+
+	public MagentoApi(String baseURL) {
+		super();
+		this.baseURL = baseURL;
+	}
 
 	public String getBaseURL() {
 		return baseURL;
@@ -41,9 +47,9 @@ public class MagentoApi extends DefaultApi10a {
 
 	public void setAdminAPI(boolean adminAPI) {
 		this.adminAPI = adminAPI;
-		logger.fine("[MagentoApi] set adminAPI=" + adminAPI );
+		logger.fine("[MagentoApi] set adminAPI=" + adminAPI);
 	}
- 
+
 	@Override
 	public String getRequestTokenEndpoint() {
 		return getBaseURL() + "oauth/initiate";

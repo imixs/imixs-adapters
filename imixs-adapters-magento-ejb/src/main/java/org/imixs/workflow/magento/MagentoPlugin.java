@@ -28,6 +28,7 @@
 package org.imixs.workflow.magento;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -39,6 +40,7 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Plugin;
 import org.imixs.workflow.WorkflowContext;
 import org.imixs.workflow.exceptions.PluginException;
+import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
 import org.imixs.workflow.plugins.jee.AbstractPlugin;
 import org.scribe.builder.ServiceBuilder;
@@ -60,22 +62,23 @@ public class MagentoPlugin extends AbstractPlugin {
 
 	public final static String PROPERTYSERVICE_NOT_BOUND = "PROPERTYSERVICE_NOT_BOUND";
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
-
 	ItemCollection documentContext;
+
+	private ItemCollection magentoConfiguration = null;
 
 	private MagentoApi magentoApi = null;
 
 	String magentoApiURL = null;
 	String magentoBasisURL = null;
 
-	String magentoApiKey = null;
-	String magentoApiSecret = null;
+	String magentoConsumerKey = null;
+	String magentoConsumerSecret = null;
 
-	String magentoTokenKey = null;
-	String magentoTokenSecret = null;
+	String magentoAccessKey = null;
+	String magentoAccessSecret = null;
 
-	String basicAuthUser = null;
-	String basicAuthPassword = null;
+	// String basicAuthUser = null;
+	// String basicAuthPassword = null;
 
 	boolean debugMode = false;
 
@@ -86,6 +89,7 @@ public class MagentoPlugin extends AbstractPlugin {
 	OAuthService service = null;
 	Token accessToken = null;
 	private PropertyService propertyService = null;
+	private WorkflowService workflowSerivice = null;
 
 	private static Logger logger = Logger.getLogger(MagentoPlugin.class
 			.getName());
@@ -96,6 +100,12 @@ public class MagentoPlugin extends AbstractPlugin {
 	@Override
 	public void init(WorkflowContext actx) throws PluginException {
 		super.init(actx);
+
+		// check for an instance of WorkflowService
+		if (actx instanceof WorkflowService) {
+			// yes we are running in a WorkflowService EJB
+			workflowSerivice = (WorkflowService) actx;
+		}
 
 		try {
 			// lookup PropertyService
@@ -108,49 +118,80 @@ public class MagentoPlugin extends AbstractPlugin {
 					PROPERTYSERVICE_NOT_BOUND, "PropertyService not bound", e);
 		}
 
-		// read configuration....
-		magentoBasisURL = propertyService.getProperties().getProperty(
-				"magento.uri-basis");
-		logger.fine("[MagentoPlugin] magentoBasisURL='" + magentoBasisURL + "'");
+		// first try to lookup the mangento configuration entity. If found we
+		// can read the configuration there.
+		// if not we ask the property service.
+		String sQuery = "SELECT";
 
-		magentoApiURL = propertyService.getProperties().getProperty(
-				"magento.uri-api");
-		logger.fine("[MagentoPlugin] magentoApiURL='" + magentoApiURL + "'");
+		sQuery += " wi FROM Entity as wi " + " WHERE wi.type='"
+				+ MagentoSchedulerService.ENTITY_TYPE + "'";
+		Collection<ItemCollection> col = workflowSerivice.getEntityService()
+				.findAllEntities(sQuery, 0, 1);
+		if (col.size() > 0) {
+			magentoConfiguration = col.iterator().next();
+		}
 
-		magentoApiKey = propertyService.getProperties().getProperty(
-				"magento.token.consumer-key");
-		logger.fine("[MagentoPlugin] magentoApiKey='" + magentoApiKey + "'");
+		// read data from config entity....
+		if (magentoConfiguration != null) {
+			magentoBasisURL = magentoConfiguration
+					.getItemValueString("txtMagentoUriBasis");
+			magentoApiURL = magentoConfiguration
+					.getItemValueString("txtMagentoUriApi");
+			magentoConsumerKey = magentoConfiguration
+					.getItemValueString("txtMagentoTokenConsumerKey");
+			magentoConsumerSecret = magentoConfiguration
+					.getItemValueString("txtMagentoTokenConsumerSecret");
+			magentoAccessKey = magentoConfiguration
+					.getItemValueString("txtMagentoTokenAccessKey");
+			magentoAccessSecret = magentoConfiguration
+					.getItemValueString("txtMagentoTokenAccessSecret");
+		} else {
+			// read data from property service
+			magentoBasisURL = propertyService.getProperties().getProperty(
+					"magento.uri-basis");
+			magentoApiURL = propertyService.getProperties().getProperty(
+					"magento.uri-api");
+			magentoConsumerKey = propertyService.getProperties().getProperty(
+					"magento.token.consumer-key");
+			magentoConsumerSecret = propertyService.getProperties()
+					.getProperty("magento.token.consumer-secret");
+			magentoAccessKey = propertyService.getProperties().getProperty(
+					"magento.token.access-key");
 
-		magentoApiSecret = propertyService.getProperties().getProperty(
-				"magento.token.consumer-secret");
-		magentoTokenKey = propertyService.getProperties().getProperty(
-				"magento.token.access-key");
-		logger.fine("[MagentoPlugin] magentoTokenKey='" + magentoTokenKey + "'");
+			magentoAccessSecret = propertyService.getProperties().getProperty(
+					"magento.token.access-secret");
+		}
 
-		magentoTokenSecret = propertyService.getProperties().getProperty(
-				"magento.token.access-secret");
-
-		basicAuthUser = propertyService.getProperties().getProperty(
-				"magento.basicAuth.user");
-		basicAuthPassword = propertyService.getProperties().getProperty(
-				"magento.basicAuth.password");
+		// basicAuthUser = propertyService.getProperties().getProperty(
+		// "magento.basicAuth.user");
+		// basicAuthPassword = propertyService.getProperties().getProperty(
+		// "magento.basicAuth.password");
 
 		if ("true".equals(propertyService.getProperties().getProperty(
 				"magento.debug")))
 			debugMode = true;
 
+		logger.fine("[MagentoPlugin] magentoApiKey='" + magentoConsumerKey
+				+ "'");
+		logger.fine("[MagentoPlugin] magentoApiURL='" + magentoApiURL + "'");
+		logger.fine("[MagentoPlugin] magentoBasisURL='" + magentoBasisURL + "'");
+		logger.fine("[MagentoPlugin] magentoTokenKey='" + magentoAccessKey
+				+ "'");
+
 		// create api
-		magentoApi = new MagentoApi();
-		magentoApi.setAdminAPI(true);
-		magentoApi.setBaseURL(magentoBasisURL);
+		magentoApi = new MagentoApi(magentoBasisURL);
+		magentoApi.setAdminAPI(debugMode);
+		// magentoApi.setBaseURL();
 
 		// add basic auth if provided
-		this.addBasicAuthCredentials(basicAuthUser, basicAuthPassword);
+		// this.addBasicAuthCredentials(basicAuthUser, basicAuthPassword);
 
 		// Create a signed token....
-		logger.fine("[MagentoPlugin] generate access token: " + magentoTokenKey
-				+ " - " + magentoTokenSecret);
-		accessToken = new Token(magentoTokenKey, magentoTokenSecret);
+		logger.fine("[MagentoPlugin] generate access token: "
+				+ magentoAccessKey + " - " + magentoAccessSecret);
+		if (magentoAccessKey != null && magentoAccessSecret != null) {
+			accessToken = new Token(magentoAccessKey, magentoAccessSecret);
+		}
 
 	}
 
@@ -180,12 +221,12 @@ public class MagentoPlugin extends AbstractPlugin {
 		if (service == null) {
 			if (debugMode)
 				service = new ServiceBuilder().provider(magentoApi)
-						.apiKey(magentoApiKey).apiSecret(magentoApiSecret)
-						.debug().build();
+						.apiKey(magentoConsumerKey)
+						.apiSecret(magentoConsumerSecret).debug().build();
 			else
 				service = new ServiceBuilder().provider(magentoApi)
-						.apiKey(magentoApiKey).apiSecret(magentoApiSecret)
-						.build();
+						.apiKey(magentoConsumerKey)
+						.apiSecret(magentoConsumerSecret).build();
 		}
 		return service;
 	}
@@ -293,4 +334,32 @@ public class MagentoPlugin extends AbstractPlugin {
 		return result;
 	}
 
+	/**
+	 * This method finds a workitem for a magento order id. If no worktiem exits
+	 * the method returns null.
+	 * 
+	 * The order ID is stored in the proeprty txtName with the following format:
+	 * 
+	 * <code>
+	 *    magento:order:1
+	 *  </code>
+	 * 
+	 * @return workitem or null if no workitem exits
+	 */
+	public ItemCollection findWorkitemByOrderID(String id) {
+
+		String sKey = "magento:order:" + id;
+		String sQuery = "SELECT wi FROM Entity as wi";
+		sQuery += " JOIN wi.textItems as t ";
+		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
+		sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
+		Collection<ItemCollection> col = workflowSerivice.getEntityService()
+				.findAllEntities(sQuery, 0, 1);
+		if (col.size() > 0) {
+			return col.iterator().next();
+		}
+		// no order found
+		return null;
+
+	}
 }

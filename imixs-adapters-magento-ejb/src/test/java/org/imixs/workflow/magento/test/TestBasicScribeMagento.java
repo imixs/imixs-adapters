@@ -50,9 +50,9 @@ public class TestBasicScribeMagento {
 	@Before
 	public void setup() {
 
-		magentoApi = new MagentoApi();
+		magentoApi = new MagentoApi(MAGENTO_BASE_URL);
 		magentoApi.setAdminAPI(true);
-		magentoApi.setBaseURL(MAGENTO_BASE_URL);
+		//magentoApi.setBaseURL(MAGENTO_BASE_URL);
 
 		System.out.println("Base URL=" + magentoApi.getBaseURL());
 
