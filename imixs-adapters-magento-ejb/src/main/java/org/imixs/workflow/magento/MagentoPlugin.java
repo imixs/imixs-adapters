@@ -346,9 +346,9 @@ public class MagentoPlugin extends AbstractPlugin {
 	 * 
 	 * @return workitem or null if no workitem exits
 	 */
-	public ItemCollection findWorkitemByOrderID(String id) {
+	public ItemCollection findWorkitemByOrder(ItemCollection order) {
 
-		String sKey = "magento:order:" + id;
+		String sKey = MagentoPlugin.getOrderID(order);
 		String sQuery = "SELECT wi FROM Entity as wi";
 		sQuery += " JOIN wi.textItems as t ";
 		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
@@ -362,4 +362,16 @@ public class MagentoPlugin extends AbstractPlugin {
 		return null;
 
 	}
+
+	/**
+	 * this method creates the Magento oder ID to be stored in the property
+	 * 'txtName'. This property value need to be unique. The plugin can be
+	 * overwritten to change this behavior.
+	 * **/
+	public static String getOrderID(ItemCollection order) {
+		String sKey = "magento:order:"
+				+ order.getItemValueString("entity_id");
+		return sKey;
+	}
+
 }

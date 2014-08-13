@@ -39,11 +39,15 @@ import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.PluginException;
+import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.ModelService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
@@ -85,6 +89,43 @@ import org.imixs.workflow.jee.ejb.WorkflowService;
  * 
  * 
  * 
+ ******** Magento Import *************************************
+ * 
+ * The timer service starte the processImport method. this method is repsonsible
+ * for the import of orders from magento. To map the status defined in magento
+ * with the status defined in process modelel the two properties
+ * 'txtModelVersion' are defined. 'txtOrderStatusMapping'
+ * 
+ * txtModelVersion - defines the $modelversion to be defined for a new imported
+ * workitem.
+ * 
+ * txtOrderStatusMapping - holds a map of magento status keywords and the
+ * corresponding ProcessID in the Imixs Model. e.g.
+ * 
+ * <code>
+ *   pending=1010
+ *   processing=1050
+ * </code>
+ * 
+ * This example defines the a new order with the magento status 'pending' should
+ * be mapped to a ProcessID 1010 in the imixs workflow model.
+ * 
+ * All new imported Workitems will be automatically processed with the
+ * ActivityID 800. If for a magento order an imixs workitem still exits but the
+ * status is not equal to the txtOrderStatusMapping then the Service will change
+ * the $ProcessID to the corresponding ProcessID and process the workiem with
+ * the ActivityID 801.
+ * 
+ * NOTE: It is importand that in every workflow state defined by the
+ * txtOrderStatusMapping the ActiviyEntities 800 and 801 are defined! If not a
+ * WorkflowException will be thrown during the import process.
+ * 
+ * 
+ * The Magento ID will be stored in the proeprty 'txtName'. As this property
+ * need to be unique the method. createMagentoID of the MagentoPlugin will be
+ * used to generate an unique id.
+ * 
+ * 
  * @author rsoika
  * 
  */
@@ -101,6 +142,9 @@ public class MagentoSchedulerService {
 	private long interval;
 	private String id;
 	private ItemCollection configuration = null;
+	private int workitemsImported;
+	private int workitemsUpdated;
+	private int workitemsFailed;
 
 	public static final String ENTITY_TYPE = "ConfigMagento";
 	@Resource
@@ -314,6 +358,9 @@ public class MagentoSchedulerService {
 	@Timeout
 	public void processImport(javax.ejb.Timer timer) {
 		String sTimerID = null;
+		workitemsImported = 0;
+		workitemsUpdated = 0;
+		workitemsFailed = 0;
 
 		// Startzeit ermitteln
 		long lProfiler = System.currentTimeMillis();
@@ -328,6 +375,12 @@ public class MagentoSchedulerService {
 
 			configuration.replaceItemValue("errormessage", "");
 			configuration.replaceItemValue("datLastRun", new Date());
+			configuration.replaceItemValue("numWorkItemsImported",
+					workitemsImported);
+			configuration.replaceItemValue("numWorkItemsUpdated",
+					workitemsUpdated);
+			configuration.replaceItemValue("numWorkItemsFailed",
+					workitemsFailed);
 
 		} catch (PluginException e) {
 			e.printStackTrace();
@@ -348,7 +401,7 @@ public class MagentoSchedulerService {
 
 		}
 
-		System.out.println("[ImportSchedulerService]  finished successfull: "
+		logger.info("[ImportSchedulerService]  finished successfull: "
 				+ ((System.currentTimeMillis()) - lProfiler) + " ms");
 
 		/*
@@ -384,11 +437,25 @@ public class MagentoSchedulerService {
 	}
 
 	/**
-	 * This method imports all orders or update existing workitems
+	 * This method imports all orders or update existing workitems. The method
+	 * imports orders for all states defined in the configuration property
+	 * 'txtOrderStatusMapping'
+	 * 
+	 * If no workitem exits the method will create a new one with the
+	 * $ModelVersion defined by the configruation property 'txtModelVersion'.
+	 * THe new Workitem will be process with the ActivityID 800
+	 * 
+	 * If the workitem still exits but the state did not match the $ProcessID of
+	 * the workitem will be changed and th workitem will be processed withe
+	 * ActivityID 801.
+	 * 
 	 * 
 	 * @throws PluginException
 	 */
+	@SuppressWarnings("unchecked")
 	public void importOrders() throws PluginException {
+		int iProcessID = -1;
+		String sMagentoStatus = null;
 
 		// fetch pending orders
 		MagentoPlugin magentoPlugin = new MagentoPlugin();
@@ -402,43 +469,106 @@ public class MagentoSchedulerService {
 		// find processid....
 		// format: pending=1000
 		for (String mapping : orderStatusMapping) {
-			int pos = mapping.indexOf("=");
-			String status = mapping.substring(0, pos);
-			String processid = mapping.substring(pos + 1);
 
-			List<ItemCollection> orders = magentoPlugin.getOrders(status);
+			// read mapping string
+			try {
+				int pos = mapping.indexOf("=");
+				sMagentoStatus = mapping.substring(0, pos);
+				String sProcessid = mapping.substring(pos + 1);
+				iProcessID = new Integer(sProcessid);
+			} catch (Exception e) {
+				logger.warning("[MagentoSchedulerService] wrong order status mapping in '"
+						+ mapping + "' - check configuration");
+				continue;
+			}
+
+			// fetch orders by status.....
+			List<ItemCollection> orders = magentoPlugin
+					.getOrders(sMagentoStatus);
 
 			logger.info("[MagentoSchedulerSerivce] " + orders.size()
 					+ " pending orders found. ");
 
+			// verify orders....
 			for (ItemCollection order : orders) {
 
-				// verifiy if workitem exits!
-				ItemCollection workitem = magentoPlugin
-						.findWorkitemByOrderID(order
-								.getItemValueString("entity_id"));
+				try {
+					String sMagentoKey = MagentoPlugin.getOrderID(order);
 
-				if (workitem == null) {
-					workitem = new ItemCollection();
+					// check if workitem exits....
+					ItemCollection workitem = magentoPlugin
+							.findWorkitemByOrder(order);
 
-					workitem.replaceItemValue(WorkflowService.MODELVERSION,
-							orderModelVersion);
+					if (workitem == null) {
+						logger.fine("[MagentoSchedulerService] create new workitem: '"
+								+ sMagentoKey + "'");
+						workitem = new ItemCollection();
+						workitem.replaceItemValue("txtName", sMagentoKey);
+						workitem.replaceItemValue(WorkflowService.MODELVERSION,
+								orderModelVersion);
+						workitem.replaceItemValue("$ProcessID", new Integer(
+								iProcessID));
 
-					workitem.replaceItemValue("$ProcessID", new Integer(
-							processid));
+						// process activityId = 800
+						workitem.replaceItemValue("$ActivityID", new Integer(
+								800));
+						//workflowService.processWorkItem(workitem);
+						ctx.getBusinessObject(MagentoSchedulerService.class)
+						.processSingleWorkitem(workitem);
+						workitemsImported++;
 
-					// process activityId = 800
-					workitem.replaceItemValue("$ActivityID", new Integer(800));
-					workflowService.processWorkItem(workitem);
+					} else {
 
-				} else {
-					
-					logger.warning("[MagentoSchedulerService] Workitem already exists: "+workitem.getItemValueString(WorkflowService.UNIQUEID));
+						logger.fine("[MagentoSchedulerService] Workitem for order '"
+								+ sMagentoKey
+								+ "' already exists ("
+								+ workitem
+										.getItemValueString(WorkflowService.UNIQUEID)
+								+ ")");
+						// check if status has changed!
+						int iCurrentProcessId = workitem
+								.getItemValueInteger("$ProcessID");
+						if (iCurrentProcessId != iProcessID) {
+							logger.fine("[MagentoSchedulerService] update workitem: '"
+									+ sMagentoKey + "'");
+							// change processID and process workitem with
+							// activityId
+							// = 800
+							workitem.replaceItemValue("$ProcessID",
+									new Integer(800));
+							workitem.replaceItemValue("$ActivityID",
+									new Integer(800));
+							//workflowService.processWorkItem(workitem);
+							ctx.getBusinessObject(MagentoSchedulerService.class)
+							.processSingleWorkitem(workitem);
+							workitemsUpdated++;
+						}
+					}
+
+				} catch (Exception ew) {
+					workitemsFailed++;
+					logger.fine("[MagentoSchedulerService] failed to import order: "
+							+ ew.getMessage());
 				}
-
 			}
 		}
 
 	}
 
+	
+	/**
+	 * This method process a single workIten in a new transaction. The method is
+	 * called by processWorklist()
+	 * 
+	 * @param aWorkitem
+	 * @throws PluginException
+	 * @throws ProcessingErrorException
+	 * @throws AccessDeniedException
+	 */
+	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+	public void processSingleWorkitem(ItemCollection aWorkitem)
+			throws AccessDeniedException, ProcessingErrorException,
+			PluginException {
+		workflowService.processWorkItem(aWorkitem);
+	}
 }
