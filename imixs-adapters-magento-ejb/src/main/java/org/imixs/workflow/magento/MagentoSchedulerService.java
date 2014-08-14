@@ -503,6 +503,7 @@ public class MagentoSchedulerService {
 						logger.fine("[MagentoSchedulerService] create new workitem: '"
 								+ sMagentoKey + "'");
 						workitem = new ItemCollection();
+						workitem.replaceItemValue("type", "workitem");
 						workitem.replaceItemValue("txtName", sMagentoKey);
 						workitem.replaceItemValue(WorkflowService.MODELVERSION,
 								orderModelVersion);
