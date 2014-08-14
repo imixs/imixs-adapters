@@ -194,23 +194,23 @@ public class TestMagentoJsonParser {
 		}
 
 		Assert.assertNotNull(result);
-		Assert.assertEquals(1, result.size());
+		Assert.assertEquals(3, result.size());
 
-		ItemCollection entity = result.get(0);
+		ItemCollection entity = result.get(0); 
 		Assert.assertEquals("1", entity.getItemValueString("entity_id"));
 		Assert.assertEquals("pending", entity.getItemValueString("status"));
-		Assert.assertEquals(200.0000, entity.getItemValueDouble("base_subtotal"));
+		Assert.assertEquals(100.0000, entity.getItemValueDouble("base_subtotal"));
 
 		// test address
 		List<ItemCollection> addresses=entity.getItemValue("addresses");
 		Assert.assertNotNull(addresses);
 		Assert.assertEquals(2, addresses.size());
 		ItemCollection address = addresses.get(0);
-		Assert.assertEquals("Bayern", address.getItemValueString("region"));
-		Assert.assertEquals("80992", address.getItemValueString("postcode"));
+		Assert.assertEquals("Alabama", address.getItemValueString("region"));
+		Assert.assertEquals("345", address.getItemValueString("postcode"));
 		address = addresses.get(1);
-		Assert.assertEquals("Bayern", address.getItemValueString("region"));
-		Assert.assertEquals("80636", address.getItemValueString("postcode"));
+		Assert.assertEquals("Alabama", address.getItemValueString("region"));
+		Assert.assertEquals("345", address.getItemValueString("postcode"));
 		
 		
 		
@@ -220,7 +220,7 @@ public class TestMagentoJsonParser {
 		Assert.assertEquals(1, orderitems.size());
 		ItemCollection orderItem = orderitems.get(0);
 		Assert.assertEquals("1", orderItem.getItemValueString("item_id"));
-		Assert.assertEquals("Enterprise Servicevertrag", orderItem.getItemValueString("name"));
+		Assert.assertEquals("Business Servicevertrag", orderItem.getItemValueString("name"));
 		
 	}
 
