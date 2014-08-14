@@ -27,7 +27,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.annotation.Resource;
@@ -111,12 +113,17 @@ import org.imixs.workflow.jee.ejb.WorkflowService;
  * be mapped to a ProcessID 1010 in the imixs workflow model.
  * 
  * All new imported Workitems will be automatically processed with the
- * ActivityID 800. If for a magento order an imixs workitem still exits but the
- * status is not equal to the txtOrderStatusMapping then the Service will change
- * the $ProcessID to the corresponding ProcessID and process the workiem with
- * the ActivityID 801.
+ * ActivityID 800.
  * 
- * NOTE: It is importand that in every workflow state defined by the
+ * If for a magento order an imixs workitem still exits but the item is not
+ * equal then the Service will process the workiem with the ActivityID 801.
+ * 
+ * If for a magento order an imixs workitem still exits but the status is not
+ * equal to the txtOrderStatusMapping then the Service will change the
+ * $ProcessID to the corresponding ProcessID and process the workiem with the
+ * ActivityID 802.
+ * 
+ * NOTE: It is important that in every workflow state defined by the
  * txtOrderStatusMapping the ActiviyEntities 800 and 801 are defined! If not a
  * WorkflowException will be thrown during the import process.
  * 
@@ -512,10 +519,14 @@ public class MagentoSchedulerService {
 
 						// process activityId = 800
 						workitem.replaceItemValue("$ActivityID", new Integer(
-								800));
-						//workflowService.processWorkItem(workitem);
+								MagentoPlugin.ACTIVITY_CREATE));
+						
+						// transfer order items
+						MagentoPlugin.addMagentoEntity(workitem, order);
+						
+						// workflowService.processWorkItem(workitem);
 						ctx.getBusinessObject(MagentoSchedulerService.class)
-						.processSingleWorkitem(workitem);
+								.processSingleWorkitem(workitem);
 						workitemsImported++;
 
 					} else {
@@ -534,15 +545,39 @@ public class MagentoSchedulerService {
 									+ sMagentoKey + "'");
 							// change processID and process workitem with
 							// activityId
-							// = 800
+							// = 802
 							workitem.replaceItemValue("$ProcessID",
-									new Integer(800));
+									new Integer(iProcessID));
 							workitem.replaceItemValue("$ActivityID",
-									new Integer(800));
-							//workflowService.processWorkItem(workitem);
+									new Integer(MagentoPlugin.ACTIVITY_CHANGE));
+							
+							// transfer order items
+							MagentoPlugin.addMagentoEntity(workitem, order);
+							
+							// workflowService.processWorkItem(workitem);
 							ctx.getBusinessObject(MagentoSchedulerService.class)
-							.processSingleWorkitem(workitem);
+									.processSingleWorkitem(workitem);
 							workitemsUpdated++;
+						} else {
+							// check of order details have changed
+							ItemCollection imixsOrder=MagentoPlugin.createMagentoEntityFromWorkitem(workitem);
+							if (!order.equals(imixsOrder)) {
+								// data hase changed!
+								// transfer order items
+								MagentoPlugin.addMagentoEntity(workitem, order);
+								workitem.replaceItemValue("$ActivityID",
+										new Integer(MagentoPlugin.ACTIVITY_UPDATE));
+								
+								// transfer order items
+								MagentoPlugin.addMagentoEntity(workitem, order);
+								
+								// workflowService.processWorkItem(workitem);
+								ctx.getBusinessObject(MagentoSchedulerService.class)
+										.processSingleWorkitem(workitem);
+								workitemsUpdated++;
+							}
+							
+							
 						}
 					}
 
@@ -556,7 +591,6 @@ public class MagentoSchedulerService {
 
 	}
 
-	
 	/**
 	 * This method process a single workIten in a new transaction. The method is
 	 * called by processWorklist()
@@ -572,4 +606,7 @@ public class MagentoSchedulerService {
 			PluginException {
 		workflowService.processWorkItem(aWorkitem);
 	}
+
+	
+
 }

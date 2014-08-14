@@ -29,6 +29,7 @@ package org.imixs.workflow.magento;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -62,6 +63,10 @@ public class MagentoPlugin extends AbstractPlugin {
 
 	public final static String PROPERTYSERVICE_NOT_BOUND = "PROPERTYSERVICE_NOT_BOUND";
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
+	public final static int ACTIVITY_CREATE = 800; // create new order worktiem
+	public final static int ACTIVITY_UPDATE = 801; // update order workitem
+	public final static int ACTIVITY_CHANGE = 802; // change of process id
+
 	ItemCollection documentContext;
 
 	private ItemCollection magentoConfiguration = null;
@@ -369,9 +374,70 @@ public class MagentoPlugin extends AbstractPlugin {
 	 * overwritten to change this behavior.
 	 * **/
 	public static String getOrderID(ItemCollection order) {
-		String sKey = "magento:order:"
-				+ order.getItemValueString("entity_id");
+		String sKey = "magento:order:" + order.getItemValueString("entity_id");
 		return sKey;
 	}
 
+	/**
+	 * This method adds the properties form a magento entity to an existing
+	 * workitem. Each property of the magento entity will be prafixed with 'm_'.
+	 * 
+	 * <code>
+	 *   entity_id => m_entity_id
+	 * </code>
+	 * 
+	 * The method also clears all existing magento proeprties
+	 * 
+	 * @param workitem
+	 *            - a workItem instance
+	 * @param magentoEntity
+	 *            - holds the properties to be added into the workItem
+	 */
+	@SuppressWarnings("unchecked")
+	public static ItemCollection addMagentoEntity(ItemCollection workitem,
+			ItemCollection magentoEntity) {
+		// clear old magento proeperties
+		Iterator<String> keys = workitem.getAllItems().keySet().iterator();
+		while (keys.hasNext()) {
+			String sName = keys.next();
+			if (sName.startsWith("m_")) {
+				workitem.removeItem(sName);
+			}
+		}
+		
+		// add magento proeprties
+		keys = magentoEntity.getAllItems().keySet().iterator();
+		while (keys.hasNext()) {
+			String sName = keys.next();
+			workitem.replaceItemValue("m_" + sName,
+					magentoEntity.getItemValue(sName));
+		}
+		return workitem;
+	}
+
+	/**
+	 * This method extracts all properties with the prafix 'm_' from a workitem
+	 * and creates a Magento ItemCollection. This ItemCollection can be write
+	 * back to the Magento Rest API.
+	 * 
+	 * @param workitem
+	 * @return a magento entity
+	 */
+	@SuppressWarnings("unchecked")
+	public static ItemCollection createMagentoEntityFromWorkitem(
+			ItemCollection workitem) {
+		ItemCollection magentoEntity = new ItemCollection();
+		Iterator<String> keys = workitem.getAllItems().keySet().iterator();
+
+		while (keys.hasNext()) {
+
+			String sName = keys.next();
+			if (sName.startsWith("m_")) {
+				String sMagentoItemName = sName.substring(2);
+				magentoEntity.replaceItemValue(sMagentoItemName,
+						workitem.getItemValue(sName));
+			}
+		}
+		return magentoEntity;
+	}
 }
