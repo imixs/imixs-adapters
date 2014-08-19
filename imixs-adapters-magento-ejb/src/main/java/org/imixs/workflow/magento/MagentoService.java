@@ -105,6 +105,9 @@ public class MagentoService {
 	@EJB
 	WorkflowService workflowSerivice = null;
 
+	@EJB
+	MagentoCache magentoCache = null;
+
 	private static Logger logger = Logger.getLogger(MagentoService.class
 			.getName());
 
@@ -268,27 +271,38 @@ public class MagentoService {
 		if (sku == null || sku.isEmpty())
 			return null;
 
-		// TODO - Caching needed
+		ItemCollection product = magentoCache.getProduct(sku);
+		if (product == null) {
 
-		String sURL = magentoApiURL + "/products";
-		// add filter
-		sURL += "?filter[1][attribute]=sku&filter[1][in]=" + sku;
+			String sURL = magentoApiURL + "/products";
+			// add filter
+			sURL += "?filter[1][attribute]=sku&filter[1][in]=" + sku;
 
-		logger.fine("[MagentoPlugin] getProductBySKU : " + sURL);
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-		List<ItemCollection> result = new ArrayList<ItemCollection>();
+			logger.fine("[MagentoPlugin] getProductBySKU : " + sURL);
+			// Now let's go and ask for a protected resource!
+			OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
+			getService().signRequest(accessToken, request);
+			Response response = request.send();
+			List<ItemCollection> result = new ArrayList<ItemCollection>();
 
-		try {
-			result = MagentoJsonParser.parseObjectList(response.getBody());
-		} catch (PluginException e) {
-			logger.warning("[MagentoPlugin] getProductBySKU not found (" + sURL
-					+ ") : " + e.getMessage());
-			return null;
+			try {
+				result = MagentoJsonParser.parseObjectList(response.getBody());
+				if (result.size() > 0) {
+					product = result.get(0);
+				}
+			} catch (PluginException e) {
+				logger.warning("[MagentoPlugin] getProductBySKU not found ("
+						+ sURL + ") : " + e.getMessage());
+				product = null;
+			}
+
+			// cache product;
+			if (product != null) {
+				magentoCache.cacheProduct(sku, product);
+			}
 		}
-		return result.get(0);
+
+		return product;
 	}
 
 	/**
@@ -302,27 +316,40 @@ public class MagentoService {
 		if (id == null || id.isEmpty())
 			return null;
 
-		// TODO - Caching needed
+		ItemCollection customer = magentoCache.getCustomer(id);
+		if (customer == null) {
 
-		String sURL = magentoApiURL + "/customers/" + id;
-		// add filter
-		// sURL += "?filter[1][attribute]=sku&filter[1][in]=" + id;
+			String sURL = magentoApiURL + "/customers/" + id;
+			// add filter
+			// sURL += "?filter[1][attribute]=sku&filter[1][in]=" + id;
 
-		logger.fine("[MagentoPlugin] getCustomerById : " + sURL);
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-		List<ItemCollection> result = new ArrayList<ItemCollection>();
+			logger.fine("[MagentoPlugin] getCustomerById : " + sURL);
+			// Now let's go and ask for a protected resource!
+			OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
+			getService().signRequest(accessToken, request);
+			Response response = request.send();
+			List<ItemCollection> result = new ArrayList<ItemCollection>();
 
-		try {
-			result = MagentoJsonParser.parseObjectList(response.getBody());
-		} catch (PluginException e) {
-			logger.warning("[MagentoPlugin] getCustomerById not found (" + sURL
-					+ ") : " + e.getMessage());
-			return null;
+			try {
+				result = MagentoJsonParser.parseObjectList(response.getBody());
+
+				if (result.size() > 0) {
+					customer = result.get(0);
+				}
+			} catch (PluginException e) {
+				logger.warning("[MagentoPlugin] getCustomerById not found ("
+						+ sURL + ") : " + e.getMessage());
+				customer = null;
+			}
+
+			// cache product;
+			if (customer != null) {
+				magentoCache.cacheCustomer(id, customer);
+			}
+
 		}
-		return result.get(0);
+
+		return customer;
 	}
 
 	public List<ItemCollection> getStockitems() throws PluginException {
@@ -448,7 +475,6 @@ public class MagentoService {
 		return workitem;
 	}
 
-	
 	/**
 	 * This method compares the data of a Imixs Workitem with the data of a
 	 * magento entity. In a imixs worktiem all magento properties are starting
