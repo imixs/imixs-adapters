@@ -31,10 +31,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Vector;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.security.DeclareRoles;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
@@ -62,6 +67,18 @@ import org.scribe.oauth.OAuthService;
  * 
  * @author rsoika
  */
+@DeclareRoles({ "org.imixs.ACCESSLEVEL.NOACCESS",
+		"org.imixs.ACCESSLEVEL.READERACCESS",
+		"org.imixs.ACCESSLEVEL.AUTHORACCESS",
+		"org.imixs.ACCESSLEVEL.EDITORACCESS",
+		"org.imixs.ACCESSLEVEL.MANAGERACCESS" })
+@RolesAllowed({ "org.imixs.ACCESSLEVEL.NOACCESS",
+		"org.imixs.ACCESSLEVEL.READERACCESS",
+		"org.imixs.ACCESSLEVEL.AUTHORACCESS",
+		"org.imixs.ACCESSLEVEL.EDITORACCESS",
+		"org.imixs.ACCESSLEVEL.MANAGERACCESS" })
+@Stateless
+@LocalBean
 public class MagentoService {
 
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
@@ -237,10 +254,7 @@ public class MagentoService {
 
 		Response response = request.send();
 
-		List<ItemCollection> result = new ArrayList<ItemCollection>();
-		result = MagentoJsonParser.parseObjectList(response.getBody());
-
-		return result;
+		return MagentoJsonParser.parseObjectList(response.getBody());
 	}
 
 	/**
@@ -253,6 +267,8 @@ public class MagentoService {
 	public ItemCollection getProductBySKU(String sku) {
 		if (sku == null || sku.isEmpty())
 			return null;
+
+		// TODO - Caching needed
 
 		String sURL = magentoApiURL + "/products";
 		// add filter
@@ -275,20 +291,49 @@ public class MagentoService {
 		return result.get(0);
 	}
 
+	/**
+	 * returns a single itemCollection for a magento product entry
+	 * 
+	 * @param item_id
+	 * @return
+	 * @throws PluginException
+	 */
+	public ItemCollection getCustomerById(String id) {
+		if (id == null || id.isEmpty())
+			return null;
+
+		// TODO - Caching needed
+
+		String sURL = magentoApiURL + "/customers/" + id;
+		// add filter
+		// sURL += "?filter[1][attribute]=sku&filter[1][in]=" + id;
+
+		logger.fine("[MagentoPlugin] getCustomerById : " + sURL);
+		// Now let's go and ask for a protected resource!
+		OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
+		getService().signRequest(accessToken, request);
+		Response response = request.send();
+		List<ItemCollection> result = new ArrayList<ItemCollection>();
+
+		try {
+			result = MagentoJsonParser.parseObjectList(response.getBody());
+		} catch (PluginException e) {
+			logger.warning("[MagentoPlugin] getCustomerById not found (" + sURL
+					+ ") : " + e.getMessage());
+			return null;
+		}
+		return result.get(0);
+	}
+
 	public List<ItemCollection> getStockitems() throws PluginException {
 		// Now let's go and ask for a protected resource!
 		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
 				+ "/stockitems");
 
-		// addBasicAuthHeader(request);
-
 		getService().signRequest(accessToken, request);
 		Response response = request.send();
 
-		List<ItemCollection> result = new ArrayList<ItemCollection>();
-		result = MagentoJsonParser.parseObjectList(response.getBody());
-
-		return result;
+		return MagentoJsonParser.parseObjectList(response.getBody());
 	}
 
 	public List<ItemCollection> getOrders(String status, int page, int limit)
@@ -313,10 +358,7 @@ public class MagentoService {
 		getService().signRequest(accessToken, request);
 		Response response = request.send();
 
-		List<ItemCollection> result = new ArrayList<ItemCollection>();
-		result = MagentoJsonParser.parseObjectList(response.getBody());
-
-		return result;
+		return MagentoJsonParser.parseObjectList(response.getBody());
 	}
 
 	/**
@@ -366,7 +408,7 @@ public class MagentoService {
 	 *   entity_id => m_entity_id
 	 * </code>
 	 * 
-	 * The method also clears all existing magento proeprties
+	 * The method also clears all existing magento properties before!
 	 * 
 	 * @param workitem
 	 *            - a workItem instance
@@ -376,48 +418,81 @@ public class MagentoService {
 	@SuppressWarnings("unchecked")
 	public ItemCollection addMagentoEntity(ItemCollection workitem,
 			ItemCollection magentoEntity) {
-		// clear old magento proeperties
-		Iterator<String> keys = workitem.getAllItems().keySet().iterator();
-		while (keys.hasNext()) {
-			String sName = keys.next();
-			if (sName.startsWith("m_")) {
-				workitem.removeItem(sName);
-			}
-		}
 
 		// add magento proeprties
-		keys = magentoEntity.getAllItems().keySet().iterator();
+		Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
 		while (keys.hasNext()) {
 			String sName = keys.next();
 			workitem.replaceItemValue("m_" + sName,
 					magentoEntity.getItemValue(sName));
 		}
+
+		// now we need to verify if the workitem has more magento properties as
+		// the magento Entity.
+		Vector<String> removeItemList = new Vector<String>();
+		keys = workitem.getAllItems().keySet().iterator();
+		while (keys.hasNext()) {
+			String sName = keys.next();
+			// magento property??
+			if (sName.startsWith("m_")) {
+				String sMagento = sName.substring(2);
+				if (!magentoEntity.hasItem(sMagento)) {
+					removeItemList.add(sName);
+				}
+			}
+		}
+		for (String aName : removeItemList) {
+			workitem.removeItem(aName);
+		}
+
 		return workitem;
 	}
 
+	
 	/**
-	 * This method extracts all properties with the prafix 'm_' from a workitem
-	 * and creates a Magento ItemCollection. This ItemCollection can be write
-	 * back to the Magento Rest API.
+	 * This method compares the data of a Imixs Workitem with the data of a
+	 * magento entity. In a imixs worktiem all magento properties are starting
+	 * with 'm_'
 	 * 
 	 * @param workitem
-	 * @return a magento entity
+	 * @param magentoEntity
+	 * @return true if all magento properties of workitem equals to
+	 *         magentoEntity
 	 */
 	@SuppressWarnings("unchecked")
-	public ItemCollection createMagentoEntityFromWorkitem(
-			ItemCollection workitem) {
-		ItemCollection magentoEntity = new ItemCollection();
-		Iterator<String> keys = workitem.getAllItems().keySet().iterator();
+	public boolean isWorkitemEqualsToMagentoEntity(ItemCollection workitem,
+			ItemCollection magentoEntity) {
+
+		// first check the data of all magento proeprties.....
+		Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
 
 		while (keys.hasNext()) {
-
 			String sName = keys.next();
-			if (sName.startsWith("m_")) {
-				String sMagentoItemName = sName.substring(2);
-				magentoEntity.replaceItemValue(sMagentoItemName,
-						workitem.getItemValue(sName));
+
+			Object valueMagento = magentoEntity.getItemValue(sName);
+			Object valueWorkitem = workitem.getItemValue("m_" + sName);
+
+			if (!valueMagento.equals(valueWorkitem)) {
+				return false;
 			}
 		}
-		return magentoEntity;
+
+		// now we need to verify if the workitem has more magento properties as
+		// the magento Entity.
+		// first check the data of all magento proeprties.....
+		keys = workitem.getAllItems().keySet().iterator();
+		while (keys.hasNext()) {
+			String sName = keys.next();
+			// magento property??
+			if (sName.startsWith("m_")) {
+				sName = sName.substring(2);
+				if (!magentoEntity.hasItem(sName)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
+
 }

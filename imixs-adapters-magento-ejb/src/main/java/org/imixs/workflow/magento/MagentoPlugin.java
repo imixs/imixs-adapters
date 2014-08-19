@@ -49,11 +49,12 @@ import org.imixs.workflow.plugins.jee.AbstractPlugin;
  */
 public class MagentoPlugin extends AbstractPlugin {
 
-	public final static String MAGENTORSERVICE_NOT_BOUND = "MAGENTOSERVICE_NOT_BOUND";
+	public final static String MAGENTOSERVICE_NOT_BOUND = "MAGENTOSERVICE_NOT_BOUND";
+	public final static String MAGENTO_STATUS_NOT_SYNCHRONIZED = "MAGENTO_STATUS_NOT_SYNCHRONIZED";
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
-	public final static int ACTIVITY_CREATE = 800; // create new order worktiem
+	public final static int ACTIVITY_CREATE = 800; // create new order workitem
 	public final static int ACTIVITY_UPDATE = 801; // update order workitem
-	public final static int ACTIVITY_CHANGE = 802; // change of process id
+	public final static int ACTIVITY_NOT_SYNCHRONIZED = 802; // processid not equals magento status  
 
 	ItemCollection documentContext;
 
@@ -88,7 +89,7 @@ public class MagentoPlugin extends AbstractPlugin {
 			magentoService = (MagentoService) ctx.lookup(jndiName);
 		} catch (NamingException e) {
 			throw new PluginException(MagentoPlugin.class.getSimpleName(),
-					MAGENTORSERVICE_NOT_BOUND, "MagentoService not bound", e);
+					MAGENTOSERVICE_NOT_BOUND, "MagentoService not bound", e);
 		}
 
 	}

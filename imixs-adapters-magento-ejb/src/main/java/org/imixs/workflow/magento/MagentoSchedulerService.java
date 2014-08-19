@@ -40,14 +40,12 @@ import javax.ejb.Timeout;
 import javax.ejb.Timer;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.AccessDeniedException;
+import org.imixs.workflow.exceptions.InvalidAccessException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
-import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 
 /**
@@ -138,8 +136,8 @@ import org.imixs.workflow.jee.ejb.WorkflowService;
 @Local
 public class MagentoSchedulerService {
 
-	@PersistenceContext(unitName = "org.imixs.workflow.jee.jpa")
-	private EntityManager manager;
+	// @PersistenceContext(unitName = "org.imixs.workflow.jee.jpa")
+	// private EntityManager manager;
 
 	private Date startDate, endDate;
 	private long interval;
@@ -149,15 +147,14 @@ public class MagentoSchedulerService {
 	private int workitemsUpdated;
 	private int workitemsFailed;
 
-	
 	@Resource
 	SessionContext ctx;
 
 	@EJB
 	WorkflowService workflowService;
 
-	@EJB
-	EntityService entityService;
+	// @EJB
+	// EntityService entityService;
 
 	@EJB
 	MagentoService magentoService;
@@ -181,7 +178,8 @@ public class MagentoSchedulerService {
 				Calendar cal = Calendar.getInstance();
 				configuration.replaceItemValue("datStart", cal.getTime());
 				configuration.replaceItemValue("datStop", cal.getTime());
-				configuration.replaceItemValue("type", MagentoService.ENTITY_TYPE);
+				configuration.replaceItemValue("type",
+						MagentoService.ENTITY_TYPE);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -196,7 +194,7 @@ public class MagentoSchedulerService {
 
 		aconfig.removeItem("nextTimeout");
 		aconfig.removeItem("timeRemaining");
-		configuration = entityService.save(aconfig);
+		configuration = workflowService.getEntityService().save(aconfig);
 		return configuration;
 	}
 
@@ -452,10 +450,6 @@ public class MagentoSchedulerService {
 		int iProcessID = -1;
 		String sMagentoStatus = null;
 
-		// fetch pending orders
-		MagentoPlugin magentoPlugin = new MagentoPlugin();
-		magentoPlugin.init(workflowService);
-
 		List<String> orderStatusMapping = configuration
 				.getItemValue("txtOrderStatusMapping");
 		String orderModelVersion = configuration
@@ -464,7 +458,6 @@ public class MagentoSchedulerService {
 		// find processid....
 		// format: pending=1000
 		for (String mapping : orderStatusMapping) {
-
 			// read mapping string
 			try {
 				int pos = mapping.indexOf("=");
@@ -486,22 +479,26 @@ public class MagentoSchedulerService {
 			String sLastEntityID = null;
 
 			while (hasMore) {
-				logger.info("[MagentoSchedulerSerivce] read " + limit
-						+ " orders<" + sMagentoStatus + "> from page " + page);
+				logger.info("[MagentoSchedulerSerivce] read "
+						+ " orders (status=" + sMagentoStatus + ") - limit="
+						+ +limit + " page=" + page);
 
 				List<ItemCollection> orders = magentoService.getOrders(
 						sMagentoStatus, page, limit);
 
-				// test first entry to verify if this oder junk was already read
-				// before (magento delivers event if page is > max orders!)
-				if (orders.size() > 0) {
+				if (orders.size() == 0) {
+					logger.fine("[MagentoSchedulerSerivce] no more orders found ");
+					break;
+				} else {
+					// test first entry to verify if this oder junk was already
+					// read
+					// before (magento delivers event if page is > max orders!)
 					String sEntity_id = orders.get(0).getItemValueString(
 							"entity_id");
 					if (sEntity_id.equals(sLastEntityID)) {
 						// max enties read! we can leave here...
 						hasMore = false;
-
-						logger.info("[MagentoSchedulerSerivce] max entries read ");
+						logger.info("[MagentoSchedulerSerivce] max orders read ");
 						break;
 					}
 					sLastEntityID = sEntity_id;
@@ -511,8 +508,7 @@ public class MagentoSchedulerService {
 						+ " pending orders found. Start processing....");
 
 				// process order list
-				processOrderList(orders, orderModelVersion, iProcessID,
-						magentoPlugin);
+				processOrderList(orders, orderModelVersion, iProcessID);
 
 				// continue with next page!
 				page++;
@@ -527,8 +523,7 @@ public class MagentoSchedulerService {
 	 * @param orders
 	 */
 	private void processOrderList(List<ItemCollection> orders,
-			String orderModelVersion, int iProcessID,
-			MagentoPlugin magentoPlugin) {
+			String orderModelVersion, int iProcessID) {
 		// verify orders....
 		for (ItemCollection order : orders) {
 
@@ -574,15 +569,12 @@ public class MagentoSchedulerService {
 					int iCurrentProcessId = workitem
 							.getItemValueInteger("$ProcessID");
 					if (iCurrentProcessId != iProcessID) {
-						logger.fine("[MagentoSchedulerService] update workitem: '"
-								+ sMagentoKey + "'");
-						// change processID and process workitem with
-						// activityId
-						// = 802
-						workitem.replaceItemValue("$ProcessID", new Integer(
-								iProcessID));
+						logger.warning("[MagentoSchedulerService] update workitem: '"
+								+ sMagentoKey + "' - $ProcessID is not matching Magento Status");
+						// processID not equals magento state
 						workitem.replaceItemValue("$ActivityID", new Integer(
-								MagentoPlugin.ACTIVITY_CHANGE));
+								MagentoPlugin.ACTIVITY_NOT_SYNCHRONIZED));
+						workitem.replaceItemValue("txtMagentoError",MagentoPlugin.MAGENTO_STATUS_NOT_SYNCHRONIZED);
 
 						// transfer order items
 						magentoService.addMagentoEntity(workitem, order);
@@ -592,20 +584,12 @@ public class MagentoSchedulerService {
 								.processSingleWorkitem(workitem);
 						workitemsUpdated++;
 					} else {
-						// check of order details have changed
-						ItemCollection imixsOrder = magentoService
-								.createMagentoEntityFromWorkitem(workitem);
-						if (!order.equals(imixsOrder)) {
-							// data hase changed!
-							// transfer order items
+						// check if order details have changed
+						if (! magentoService.isWorkitemEqualsToMagentoEntity(workitem, order)) {
 							magentoService.addMagentoEntity(workitem, order);
 							workitem.replaceItemValue("$ActivityID",
 									new Integer(MagentoPlugin.ACTIVITY_UPDATE));
-
 							// transfer order items
-							magentoService.addMagentoEntity(workitem, order);
-
-							// workflowService.processWorkItem(workitem);
 							ctx.getBusinessObject(MagentoSchedulerService.class)
 									.processSingleWorkitem(workitem);
 							workitemsUpdated++;
@@ -614,10 +598,18 @@ public class MagentoSchedulerService {
 					}
 				}
 
-			} catch (Exception ew) {
+			} catch (InvalidAccessException ew) {
 				workitemsFailed++;
-				logger.fine("[MagentoSchedulerService] failed to import order: "
+				logger.warning("[MagentoSchedulerService] failed to import order: "
 						+ ew.getMessage());
+			} catch (PluginException e) {
+				workitemsFailed++;
+				logger.warning("[MagentoSchedulerService] failed to import order: "
+						+ e.getMessage());
+			} catch (IllegalStateException e) {
+				workitemsFailed++;
+				logger.warning("[MagentoSchedulerService] failed to import order: "
+						+ e.getMessage());
 			}
 		}
 	}
