@@ -229,6 +229,59 @@ public class TestMagentoJsonParser {
 	
 	
 	
+	
+	
+	
+
+	/**
+	 * This test imports the product_1.json file for parsing.
+	 * 
+	 */
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testProduct_1() {
+
+		// read stockitems.json
+		String sJson=readFile("/product_1.json");
+		
+		// error message
+		List<ItemCollection> result = null;
+		try {
+			result = MagentoJsonParser.parseObjectList(sJson);
+		} catch (PluginException e) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+
+		Assert.assertNotNull(result);
+		Assert.assertEquals(1, result.size());
+
+		ItemCollection entity = result.get(0); 
+		Assert.assertEquals("1", entity.getItemValueString("entity_id"));
+		
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * converts inputstream into string
 	 */

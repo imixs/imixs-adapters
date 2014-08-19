@@ -222,6 +222,12 @@ public class MagentoJsonParser {
 		// object contents
 		while (event != Event.END_OBJECT) {
 
+			// check if empty arry (from recursive call)
+			if (event == Event.END_ARRAY) {
+				return null;
+			}
+			
+			
 			if (event == Event.KEY_NAME) {
 				Object itemValue = null;
 				String itemName = parser.getString();
@@ -237,10 +243,19 @@ public class MagentoJsonParser {
 						ItemCollection embeddedItemCollection=parseItemCollection(parser);
 						if (embeddedItemCollection!=null) {
 							((List<ItemCollection>)itemValue).add(embeddedItemCollection);
+						} else {
+							// empty array!
+							break;
 						}
 						event = parser.next();
 					}
 					break;
+				}
+				
+				
+				case START_OBJECT: {
+					// embedded itemCollection
+				//	itemValue =parseItemCollection(parser);
 				}
 				
 
