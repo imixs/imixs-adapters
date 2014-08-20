@@ -299,6 +299,9 @@ public class MagentoService {
 			// cache product;
 			if (product != null) {
 				magentoCache.cacheProduct(sku, product);
+			} else {
+				// cache empty ItemCollection
+				magentoCache.cacheProduct(sku, new ItemCollection());
 			}
 		}
 
@@ -345,11 +348,50 @@ public class MagentoService {
 			// cache product;
 			if (customer != null) {
 				magentoCache.cacheCustomer(id, customer);
+			} else {
+				magentoCache.cacheCustomer(id, new ItemCollection());
 			}
 
 		}
 
 		return customer;
+	}
+
+	/**
+	 * returns a single itemCollection for a magento order entity
+	 * 
+	 * @param item_id
+	 * @return
+	 * @throws PluginException
+	 */
+	public ItemCollection getOrderById(String id) {
+		if (id == null || id.isEmpty())
+			return null;
+
+		ItemCollection order = null;
+
+		String sURL = magentoApiURL + "/orders/" + id;
+		// add filter
+		// sURL += "?filter[1][attribute]=sku&filter[1][in]=" + id;
+
+		logger.fine("[MagentoPlugin] getOrderById : " + sURL);
+		// Now let's go and ask for a protected resource!
+		OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
+		getService().signRequest(accessToken, request);
+		Response response = request.send();
+		List<ItemCollection> result = new ArrayList<ItemCollection>();
+		try {
+			result = MagentoJsonParser.parseObjectList(response.getBody());
+			if (result.size() > 0) {
+				order = result.get(0);
+			}
+		} catch (PluginException e) {
+			logger.warning("[MagentoPlugin] getOrderById not found (" + sURL
+					+ ") : " + e.getMessage());
+			order = null;
+		}
+
+		return order;
 	}
 
 	public List<ItemCollection> getStockitems() throws PluginException {
@@ -414,6 +456,32 @@ public class MagentoService {
 		}
 		// no order found
 		return null;
+
+	}
+
+	/**
+	 * This method finds the magento order entity for a workitem.
+	 * 
+	 * The order ID is stored in the property txtName with the following format:
+	 * 
+	 * <code>
+	 *    magento:order:1
+	 *  </code>
+	 * 
+	 * @return order or null if no order exits
+	 */
+	public ItemCollection findOrderByWorkitem(ItemCollection workitem) {
+
+		String sKey = workitem.getItemValueString("txtName");
+		if (sKey.isEmpty() || !sKey.startsWith("magento:order:")) {
+			logger.warning("[MagentoService] findOrderByWorkitem - wrong format of order id txtname='"
+					+ sKey + "' !");
+			return null;
+		}
+
+		sKey = sKey.substring(14);
+		ItemCollection order = getOrderById(sKey);
+		return order;
 
 	}
 
@@ -489,6 +557,12 @@ public class MagentoService {
 	public boolean isWorkitemEqualsToMagentoEntity(ItemCollection workitem,
 			ItemCollection magentoEntity) {
 
+		if (workitem == null && magentoEntity == null)
+			return true;
+
+		if (workitem == null || magentoEntity == null)
+			return false;
+
 		// first check the data of all magento proeprties.....
 		Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
 
@@ -520,5 +594,4 @@ public class MagentoService {
 
 		return true;
 	}
-
 }

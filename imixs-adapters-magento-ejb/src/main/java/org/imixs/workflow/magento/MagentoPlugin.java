@@ -27,6 +27,7 @@
 
 package org.imixs.workflow.magento;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.naming.Context;
@@ -54,7 +55,10 @@ public class MagentoPlugin extends AbstractPlugin {
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
 	public final static int ACTIVITY_CREATE = 800; // create new order workitem
 	public final static int ACTIVITY_UPDATE = 801; // update order workitem
-	public final static int ACTIVITY_NOT_SYNCHRONIZED = 802; // processid not equals magento status  
+	public final static int ACTIVITY_NOT_SYNCHRONIZED = 802; // processid not
+																// equals
+																// magento
+																// status
 
 	ItemCollection documentContext;
 
@@ -94,13 +98,40 @@ public class MagentoPlugin extends AbstractPlugin {
 
 	}
 
-	
 	/**
-	 *
+	 * This method lookups the order data and updates the magento properties of
+	 * the workitem
+	 * 
+	 * <code>
+	    txtMagentoCustomer=magento customer name (First- and Lastname)
+		txtMagentoCustomerEmail = E-Mail address of customer
+		txtMagentoOrderID = Order id of magento order
+       </code>
 	 */
 	@Override
-	public int run(ItemCollection adocumentContext,
-			ItemCollection documentActivity) throws PluginException {
+	public int run(ItemCollection workitem, ItemCollection documentActivity)
+			throws PluginException {
+
+		String sKey = workitem.getItemValueString("txtName");
+		if (sKey.startsWith("magento:order:")) {
+
+			// create custom magento fields
+			workitem.replaceItemValue("txtMagentoOrderID",
+					workitem.getItemValueString("m_entity_id"));
+			List<ItemCollection> addresses = workitem
+					.getItemValue("m_addresses");
+
+			if (addresses != null && addresses.size() > 0) {
+				ItemCollection address = addresses.get(0);
+				workitem.replaceItemValue(
+						"txtMagentoCustomer",
+						address.getItemValueString("firstname") + " "
+								+ address.getItemValueString("lastname"));
+				workitem.replaceItemValue("txtMagentoCustomerEmail",
+						address.getItemValueString("email"));
+			}
+
+		}
 
 		return Plugin.PLUGIN_OK;
 	}
@@ -111,7 +142,5 @@ public class MagentoPlugin extends AbstractPlugin {
 		// no op
 
 	}
-
-	
 
 }

@@ -37,9 +37,11 @@ import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.jee.util.PropertyService;
 
 /**
  * The MagentoCache is a sigelton EJB providing an application wide cache
@@ -77,9 +79,22 @@ public class MagentoCache {
 	private static Logger logger = Logger.getLogger(MagentoCache.class
 			.getName());
 
+	@EJB
+	PropertyService propertyService;
+
 	@PostConstruct
 	public void initialize() {
 		clearCache();
+
+		// read configuration
+		String sRefresh = propertyService.getProperties().getProperty(
+				"magento.cache.refresh", "600");
+		try {
+			refresh = Integer.parseInt(sRefresh);
+		} catch (NumberFormatException e) {
+			refresh = 600; // default 10 minutes
+		}
+
 	}
 
 	/**
@@ -108,7 +123,7 @@ public class MagentoCache {
 	 * @return
 	 */
 	public ItemCollection getProduct(String id) {
-		return getEntity(productCache,id);
+		return getEntity(productCache, id);
 	}
 
 	/**
@@ -119,7 +134,7 @@ public class MagentoCache {
 	 */
 	public ItemCollection getCustomer(String id) {
 
-		return getEntity(customerCache,id);
+		return getEntity(customerCache, id);
 
 	}
 
@@ -178,13 +193,13 @@ public class MagentoCache {
 			Date cached = entity.getItemValueDate("$cached");
 			if (cached == null
 					|| ((now.getTime() - cached.getTime()) / 1000) < refresh) {
-				logger.fine("[MagentoCache] deprecated entity: '" + key + "' will be remvoed");
+				logger.fine("[MagentoCache] deprecated entity: '" + key
+						+ "' will be remvoed");
 				cache.remove(key);
-				entity=null;
+				entity = null;
 			}
 		}
-		
-	
+
 		return entity;
 	}
 
@@ -202,7 +217,7 @@ public class MagentoCache {
 			Date cached = entity.getItemValueDate("$cached");
 			if (cached == null
 					|| ((now.getTime() - cached.getTime()) / 1000) < refresh) {
-				logger.fine("[MagentoCache] flush: '" + key+"'");
+				logger.fine("[MagentoCache] flush: '" + key + "'");
 				iter.remove();
 			}
 		}

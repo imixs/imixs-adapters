@@ -158,6 +158,9 @@ public class MagentoSchedulerService {
 
 	@EJB
 	MagentoService magentoService;
+	
+	@EJB 
+	MagentoCache magentoCache;
 
 	@Resource
 	javax.ejb.TimerService timerService;
@@ -340,8 +343,9 @@ public class MagentoSchedulerService {
 	 * This is the method which processes the timeout event depending on the
 	 * running timer settings.
 	 * 
-	 * Die methode ruft die methoden importArtikel und importLiferant auf und
-	 * liest die Daten aus den csv dateien aus.
+	 * The method imports all orders.
+	 * 
+	 * The method also makes a flush on the MagentoCache EJB. 
 	 * 
 	 * @param timer
 	 */
@@ -356,6 +360,10 @@ public class MagentoSchedulerService {
 		long lProfiler = System.currentTimeMillis();
 
 		logger.info("[MagentoSchedulerService] processing import....");
+
+		// flush cache
+		magentoCache.flush();
+		
 		try {
 			// configuration = (ItemCollection) timer.getInfo();
 			configuration = loadConfiguration();
@@ -544,6 +552,8 @@ public class MagentoSchedulerService {
 							orderModelVersion);
 					workitem.replaceItemValue("$ProcessID", new Integer(
 							iProcessID));
+					workitem.replaceItemValue("txtMagentoError","");
+
 
 					// process activityId = 800
 					workitem.replaceItemValue("$ActivityID", new Integer(
@@ -589,6 +599,8 @@ public class MagentoSchedulerService {
 							magentoService.addMagentoEntity(workitem, order);
 							workitem.replaceItemValue("$ActivityID",
 									new Integer(MagentoPlugin.ACTIVITY_UPDATE));
+							workitem.replaceItemValue("txtMagentoError","");
+
 							// transfer order items
 							ctx.getBusinessObject(MagentoSchedulerService.class)
 									.processSingleWorkitem(workitem);
