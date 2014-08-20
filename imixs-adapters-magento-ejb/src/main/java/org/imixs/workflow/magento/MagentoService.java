@@ -311,6 +311,15 @@ public class MagentoService {
 	/**
 	 * returns a single itemCollection for a magento product entry
 	 * 
+	 * The method also lookups the customer addresses and adds a property
+	 * 'addresses' with the collection of customers addresses
+	 * 
+	 * Rest URI: http://magentohost/api/rest/customers/:customer_id/addresses
+	 * 
+	 * @see: http://www.magentocommerce.com/api/rest/Resources/
+	 *       resource_customer_addresses.html
+	 * 
+	 * 
 	 * @param item_id
 	 * @return
 	 * @throws PluginException
@@ -331,13 +340,35 @@ public class MagentoService {
 			OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
 			getService().signRequest(accessToken, request);
 			Response response = request.send();
-			List<ItemCollection> result = new ArrayList<ItemCollection>();
-
 			try {
-				result = MagentoJsonParser.parseObjectList(response.getBody());
+				List<ItemCollection> result = MagentoJsonParser
+						.parseObjectList(response.getBody());
 
 				if (result.size() > 0) {
 					customer = result.get(0);
+
+					// lookup addresses....
+					if (customer != null) {
+						String entityID = customer
+								.getItemValueString("entity_id");
+						if (!entityID.isEmpty()) {
+							sURL = magentoApiURL + "/customers/" + id
+									+ "/addresses";
+							logger.fine("[MagentoPlugin] getCustomerById addresses : "
+									+ sURL);
+							// Now let's go and ask for a protected resource!
+							request = new OAuthRequest(Verb.GET, sURL);
+							getService().signRequest(accessToken, request);
+							response = request.send();
+							result = MagentoJsonParser.parseObjectList(response
+									.getBody());
+							if (result.size() > 0) {
+								customer.replaceItemValue("addresses", result);
+							}
+						}
+
+					}
+
 				}
 			} catch (PluginException e) {
 				logger.warning("[MagentoPlugin] getCustomerById not found ("

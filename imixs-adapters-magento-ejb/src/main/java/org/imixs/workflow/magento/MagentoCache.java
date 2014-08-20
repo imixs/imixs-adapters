@@ -192,9 +192,9 @@ public class MagentoCache {
 		if (entity != null) {
 			Date cached = entity.getItemValueDate("$cached");
 			if (cached == null
-					|| ((now.getTime() - cached.getTime()) / 1000) < refresh) {
+					|| ((now.getTime() - cached.getTime()) / 1000) > refresh) {
 				logger.fine("[MagentoCache] deprecated entity: '" + key
-						+ "' will be remvoed");
+						+ "' will be removed");
 				cache.remove(key);
 				entity = null;
 			}
@@ -216,7 +216,7 @@ public class MagentoCache {
 			ItemCollection entity = cache.get(key);
 			Date cached = entity.getItemValueDate("$cached");
 			if (cached == null
-					|| ((now.getTime() - cached.getTime()) / 1000) < refresh) {
+					|| ((now.getTime() - cached.getTime()) / 1000) > refresh) {
 				logger.fine("[MagentoCache] flush: '" + key + "'");
 				iter.remove();
 			}

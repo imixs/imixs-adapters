@@ -106,8 +106,10 @@ public class MagentoPlugin extends AbstractPlugin {
 	    txtMagentoCustomer=magento customer name (First- and Lastname)
 		txtMagentoCustomerEmail = E-Mail address of customer
 		txtMagentoOrderID = Order id of magento order
+		txtMagentoCustomerPhone = Telephone
        </code>
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public int run(ItemCollection workitem, ItemCollection documentActivity)
 			throws PluginException {
@@ -117,10 +119,11 @@ public class MagentoPlugin extends AbstractPlugin {
 
 			// create custom magento fields
 			workitem.replaceItemValue("txtMagentoOrderID",
-					workitem.getItemValueString("m_entity_id"));
+					workitem.getItemValueString("m_increment_id"));
 			List<ItemCollection> addresses = workitem
 					.getItemValue("m_addresses");
 
+			// check for name and email address
 			if (addresses != null && addresses.size() > 0) {
 				ItemCollection address = addresses.get(0);
 				workitem.replaceItemValue(
@@ -129,6 +132,31 @@ public class MagentoPlugin extends AbstractPlugin {
 								+ address.getItemValueString("lastname"));
 				workitem.replaceItemValue("txtMagentoCustomerEmail",
 						address.getItemValueString("email"));
+				
+				workitem.replaceItemValue(
+						"txtMagentoCustomerPhone",
+						address.getItemValueString("telephone"));
+			}
+			// if email not defined we need to lookup the customer id...
+			if (workitem.getItemValueString("txtMagentoCustomerEmail").isEmpty()) {
+				String customerID=workitem.getItemValueString("m_customer_id");
+				if (!customerID.isEmpty()) {
+					ItemCollection customer=magentoService.getCustomerById(customerID);
+					if (customer!=null) {
+						workitem.replaceItemValue("txtMagentoCustomerEmail",
+								customer.getItemValueString("email"));
+						
+						// check phonnumber from addresses
+						 addresses=customer.getItemValue("addresses");
+							// check for name and email address
+							if (addresses != null && addresses.size() > 0) {
+								ItemCollection address = addresses.get(0);
+								workitem.replaceItemValue(
+										"txtMagentoCustomerPhone",
+										address.getItemValueString("telephone"));
+							}
+					}
+				}
 			}
 
 		}
