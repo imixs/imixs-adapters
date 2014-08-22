@@ -123,38 +123,52 @@ public class MagentoPlugin extends AbstractPlugin {
 			List<ItemCollection> addresses = workitem
 					.getItemValue("m_addresses");
 
-			// check for name and email address
-			if (addresses != null && addresses.size() > 0) {
-				ItemCollection address = addresses.get(0);
+			// copy address data into Imixs Fields
+
+			for (ItemCollection address : addresses) {
+				// address_type = billing / shipping
+
 				workitem.replaceItemValue(
 						"txtMagentoCustomer",
 						address.getItemValueString("firstname") + " "
 								+ address.getItemValueString("lastname"));
 				workitem.replaceItemValue("txtMagentoCustomerEmail",
 						address.getItemValueString("email"));
-				
-				workitem.replaceItemValue(
-						"txtMagentoCustomerPhone",
+				workitem.replaceItemValue("txtMagentoCustomerPhone",
 						address.getItemValueString("telephone"));
+
+				// copy all standard fileds
+				// prafix field names with type (txtSilling/txtShipping
+				copyAddressData(workitem,address);
+				
 			}
+
 			// if email not defined we need to lookup the customer id...
-			if (workitem.getItemValueString("txtMagentoCustomerEmail").isEmpty()) {
-				String customerID=workitem.getItemValueString("m_customer_id");
+			if (workitem.getItemValueString("txtMagentoCustomerEmail")
+					.isEmpty()) {
+				String customerID = workitem
+						.getItemValueString("m_customer_id");
 				if (!customerID.isEmpty()) {
-					ItemCollection customer=magentoService.getCustomerById(customerID);
-					if (customer!=null) {
+					ItemCollection customer = magentoService
+							.getCustomerById(customerID);
+					if (customer != null) {
 						workitem.replaceItemValue("txtMagentoCustomerEmail",
 								customer.getItemValueString("email"));
-						
+
 						// check phonnumber from addresses
-						 addresses=customer.getItemValue("addresses");
-							// check for name and email address
-							if (addresses != null && addresses.size() > 0) {
-								ItemCollection address = addresses.get(0);
-								workitem.replaceItemValue(
-										"txtMagentoCustomerPhone",
-										address.getItemValueString("telephone"));
-							}
+						addresses = customer.getItemValue("addresses");
+						for (ItemCollection address : addresses) {
+							// address_type = billing / shipping
+							
+							workitem.replaceItemValue(
+									"txtMagentoCustomerPhone",
+									address.getItemValueString("telephone"));
+							
+							// copy all standard fileds
+							// prafix field names with type (txtSilling/txtShipping
+							copyAddressData(workitem,address);
+
+						}
 					}
 				}
 			}
@@ -171,4 +185,36 @@ public class MagentoPlugin extends AbstractPlugin {
 
 	}
 
+	/**
+	 * This method copies the address data fields from a magento address into a
+	 * workitem. Each fieldname will be prafixed with the address type
+	 * 
+	 * e.g. txtMagentoBillingFirstName
+	 * 
+	 */
+	private void copyAddressData(ItemCollection workitem, ItemCollection address) {
+		// copy all standard fileds
+		// prafix field names with type (txtSilling/txtShipping
+		String aType = "txtMagento"
+				+ address.getItemValueString("address_type");
+
+		workitem.replaceItemValue(aType + "firstname",
+				address.getItemValueString("firstname"));
+
+		workitem.replaceItemValue(aType + "lastname",
+				address.getItemValueString("lastname"));
+
+		workitem.replaceItemValue(aType + "email",
+				address.getItemValueString("email"));
+		workitem.replaceItemValue(aType + "telephone",
+				address.getItemValueString("telephone"));
+		workitem.replaceItemValue(aType + "company",
+				address.getItemValueString("company"));
+		workitem.replaceItemValue(aType + "street",
+				address.getItemValueString("street"));
+		workitem.replaceItemValue(aType + "postcode",
+				address.getItemValueString("postcode"));
+		workitem.replaceItemValue(aType + "city",
+				address.getItemValueString("city"));
+	}
 }
