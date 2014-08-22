@@ -89,9 +89,9 @@ public class TestMagentoService {
 	 * 
 	 */
 	@Test
-	//@Ignore
+	@Ignore
 	public void testRequestNewToken() {
-
+ 
 		Scanner in = new Scanner(System.in);
 
 		Token requestToken = magentoService.getRequestToken();
@@ -205,7 +205,7 @@ public class TestMagentoService {
 			Assert.fail();
 		}
 
-		Assert.assertNotNull(result);
+		Assert.assertNotNull(result); 
 		Assert.assertTrue(result.size() > 4);
 
 		ItemCollection entity = result.get(0);
