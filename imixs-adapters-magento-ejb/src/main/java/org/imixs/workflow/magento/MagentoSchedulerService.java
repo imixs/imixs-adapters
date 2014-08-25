@@ -610,6 +610,11 @@ public class MagentoSchedulerService {
 					}
 				}
 
+			} catch (ProcessingErrorException ew) {
+				workitemsFailed++;
+				logger.warning("[MagentoSchedulerService] failed to import order: "
+						+ ew.getMessage());
+		
 			} catch (InvalidAccessException ew) {
 				workitemsFailed++;
 				logger.warning("[MagentoSchedulerService] failed to import order: "
