@@ -8,6 +8,7 @@
 	<modules>
 		<module>imixs-adapters-magento-ejb</module>
 		<module>imixs-adapters-testing</module>
+		<module>imixs-adapters-magento-soap</module>
 	</modules>
 
 	<url>https://github.com/imixs/imixs-adapters</url>
