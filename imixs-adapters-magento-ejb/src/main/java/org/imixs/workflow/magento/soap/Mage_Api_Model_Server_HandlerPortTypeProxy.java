@@ -15,7 +15,7 @@ public class Mage_Api_Model_Server_HandlerPortTypeProxy implements Mage_Api_Mode
   
   private void _initMage_Api_Model_Server_HandlerPortTypeProxy() {
     try {
-      mage_Api_Model_Server_HandlerPortType = (new MagentoServiceLocator()).getMage_Api_Model_Server_HandlerPort();
+      mage_Api_Model_Server_HandlerPortType = (new MagentoSOAPServiceLocator()).getMage_Api_Model_Server_HandlerPort();
       if (mage_Api_Model_Server_HandlerPortType != null) {
         if (_endpoint != null)
           ((javax.xml.rpc.Stub)mage_Api_Model_Server_HandlerPortType)._setProperty("javax.xml.rpc.service.endpoint.address", _endpoint);

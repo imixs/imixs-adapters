@@ -46,6 +46,8 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
 import org.imixs.workflow.magento.MagentoCache;
+import org.imixs.workflow.magento.rest.MagentoJsonParser;
+import org.imixs.workflow.magento.rest.MagentoRestClient;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -92,8 +94,8 @@ public class MagentoService {
 	MagentoCache magentoCache = null;
 
 	String clientImplementationClassName = null;
-	
-	MagentoClient client=null;
+
+	MagentoClient client = null;
 
 	private static Logger logger = Logger.getLogger(MagentoService.class
 			.getName());
@@ -117,12 +119,19 @@ public class MagentoService {
 		// TODO
 	}
 
+	public MagentoClient getClient() {
+		return client;
+	}
+
 	/**
-	 * Loads the Magento configuration entity
+	 * Loads the Magento configuration entity. If no config entity was found the
+	 * service reads the configuration from the imixs.properties file.
 	 * 
 	 * @return
 	 */
 	public ItemCollection loadConfiguration() {
+
+		ItemCollection config = null;
 
 		// try to lookup the mangento configuration entity.
 		String sQuery = "SELECT";
@@ -131,13 +140,33 @@ public class MagentoService {
 		Collection<ItemCollection> col = workflowSerivice.getEntityService()
 				.findAllEntities(sQuery, 0, 1);
 		if (col.size() > 0) {
-			return col.iterator().next();
-		} else {
-			return null;
+			config = col.iterator().next();
 		}
-	}
 
-	
+		if (config == null) {
+			config = new ItemCollection();
+		}
+
+		//
+		// magentoBasisURL = propertyService.getProperties().getProperty(
+		// "magento.uri-basis");
+		// magentoApiURL = propertyService.getProperties().getProperty(
+		// "magento.uri-api");
+		// magentoConsumerKey = propertyService.getProperties().getProperty(
+		// "magento.token.consumer-key");
+		// magentoConsumerSecret = propertyService.getProperties()
+		// .getProperty("magento.token.consumer-secret");
+		// magentoAccessKey = propertyService.getProperties().getProperty(
+		// "magento.token.access-key");
+		//
+		// magentoAccessSecret = propertyService.getProperties().getProperty(
+		// "magento.token.access-secret");
+		//
+		
+		
+		return config;
+
+	}
 
 	/**
 	 * This method finds a workitem for a magento order id. If no worktiem exits
@@ -178,8 +207,9 @@ public class MagentoService {
 	 *  </code>
 	 * 
 	 * @return order or null if no order exits
+	 * @throws MagentoException 
 	 */
-	public ItemCollection findOrderByWorkitem(ItemCollection workitem) {
+	public ItemCollection findOrderByWorkitem(ItemCollection workitem) throws MagentoException {
 
 		String sKey = workitem.getItemValueString("txtName");
 		if (sKey.isEmpty() || !sKey.startsWith("magento:order:")) {
@@ -202,6 +232,64 @@ public class MagentoService {
 	public String getOrderID(ItemCollection order) {
 		String sKey = "magento:order:" + order.getItemValueString("entity_id");
 		return sKey;
+	}
+
+	/**
+	 * returns a single itemCollection for a magento product entry. The method
+	 * uses a cache
+	 * 
+	 * @param item_id
+	 * @return
+	 * @throws MagentoException 
+	 * @throws PluginException
+	 */
+	public ItemCollection getCustomerById(String id) throws MagentoException {
+		if (id == null || id.isEmpty())
+			return null;
+
+		ItemCollection customer = magentoCache.getCustomer(id);
+		if (customer == null) {
+
+			customer = client.getCustomerById(id);
+			// cache product;
+			if (customer != null) {
+				magentoCache.cacheCustomer(id, customer);
+			} else {
+				magentoCache.cacheCustomer(id, new ItemCollection());
+			}
+
+		}
+		return customer;
+	}
+
+	/**
+	 * returns a single itemCollection for a magento product entry. The method
+	 * uses cache.
+	 * 
+	 * @param item_id
+	 * @return
+	 * @throws MagentoException 
+	 * @throws PluginException
+	 */
+	public ItemCollection getProductBySKU(String sku) throws MagentoException {
+		if (sku == null || sku.isEmpty())
+			return null;
+
+		ItemCollection product = magentoCache.getProduct(sku);
+		if (product == null) {
+
+			product = client.getProductBySKU(sku);
+
+			// cache product;
+			if (product != null) {
+				magentoCache.cacheProduct(sku, product);
+			} else {
+				// cache empty ItemCollection
+				magentoCache.cacheProduct(sku, new ItemCollection());
+			}
+		}
+
+		return product;
 	}
 
 	/**

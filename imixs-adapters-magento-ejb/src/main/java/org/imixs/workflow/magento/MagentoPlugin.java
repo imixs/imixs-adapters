@@ -39,7 +39,7 @@ import org.imixs.workflow.Plugin;
 import org.imixs.workflow.WorkflowContext;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.magento.rest.MagentoRestClientService;
+import org.imixs.workflow.magento.rest.MagentoRestClient;
 import org.imixs.workflow.plugins.jee.AbstractPlugin;
 
 /**
@@ -61,7 +61,7 @@ public class MagentoPlugin extends AbstractPlugin {
 	String user = null;
 	String password = null;
 
-	private MagentoRestClientService magentoService = null;
+	private MagentoRestClient magentoService = null;
 	private WorkflowService workflowSerivice = null;
 
 	private static Logger logger = Logger.getLogger(MagentoPlugin.class
@@ -85,7 +85,7 @@ public class MagentoPlugin extends AbstractPlugin {
 			InitialContext ictx = new InitialContext();
 			Context ctx = (Context) ictx.lookup("java:comp/env");
 			String jndiName = "ejb/MagentoService";
-			magentoService = (MagentoRestClientService) ctx.lookup(jndiName);
+			magentoService = (MagentoRestClient) ctx.lookup(jndiName);
 		} catch (NamingException e) {
 			throw new PluginException(MagentoPlugin.class.getSimpleName(),
 					MAGENTOSERVICE_NOT_BOUND, "MagentoService not bound", e);

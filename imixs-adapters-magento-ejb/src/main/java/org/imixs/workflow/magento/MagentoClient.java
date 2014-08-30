@@ -44,14 +44,38 @@ import org.imixs.workflow.exceptions.PluginException;
  * 
  */
 public interface MagentoClient {
-	
+
 	/**
-	 * returns a List of itemCollection for  magento product entries
+	 * Connection the Client with the Magento Service. The configuration
+	 * ItemCollection contains optional properties to establish the connection.
+	 * 
+	 * @param config
+	 */
+	public void connect(ItemCollection config) throws MagentoException;
+
+	/**
+	 * Disconnects the Client with the Magento Service.
+	 * 
+	 * 
+	 */
+	public void disconnect();
+
+	/**
+	 * returns a List of itemCollection for magento product entries
 	 * 
 	 * @return
 	 * @throws PluginException
 	 */
-	public List<ItemCollection> getProducts() throws PluginException;
+	public List<ItemCollection> getProducts() throws MagentoException;
+
+	public ItemCollection getCustomerById(String id) throws MagentoException;
+
+	public ItemCollection getOrderById(String id) throws MagentoException;
+
+	public List<ItemCollection> getStockitems() throws MagentoException;
+
+	public List<ItemCollection> getOrders(String status, int page, int limit)
+			throws MagentoException;
 
 	/**
 	 * returns a single itemCollection for a magento product entry
@@ -60,14 +84,5 @@ public interface MagentoClient {
 	 * @return
 	 * @throws PluginException
 	 */
-	public ItemCollection getProductBySKU(String sku);
-
-	public ItemCollection getCustomerById(String id);
-
-	public ItemCollection getOrderById(String id);
-
-	public List<ItemCollection> getStockitems() throws PluginException;
-
-	public List<ItemCollection> getOrders(String status, int page, int limit);
-
+	public ItemCollection getProductBySKU(String sku) throws MagentoException;
 }

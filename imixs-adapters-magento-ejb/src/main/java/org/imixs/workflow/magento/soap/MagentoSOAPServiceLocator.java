@@ -7,19 +7,19 @@
 
 package org.imixs.workflow.magento.soap;
 
-public class MagentoServiceLocator extends org.apache.axis.client.Service
-		implements MagentoService {
+public class MagentoSOAPServiceLocator extends org.apache.axis.client.Service
+		implements MagentoSOAPService {
 
 	private static final long serialVersionUID = 1L;
 
-	public MagentoServiceLocator() {
+	public MagentoSOAPServiceLocator() {
 	}
 
-	public MagentoServiceLocator(org.apache.axis.EngineConfiguration config) {
+	public MagentoSOAPServiceLocator(org.apache.axis.EngineConfiguration config) {
 		super(config);
 	}
 
-	public MagentoServiceLocator(java.lang.String wsdlLoc,
+	public MagentoSOAPServiceLocator(java.lang.String wsdlLoc,
 			javax.xml.namespace.QName sName)
 			throws javax.xml.rpc.ServiceException {
 		super(wsdlLoc, sName);

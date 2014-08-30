@@ -49,7 +49,7 @@ import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.magento.rest.MagentoRestClientService;
+import org.imixs.workflow.magento.rest.MagentoRestClient;
 
 /**
  * Magento - Scheduler
@@ -136,11 +136,7 @@ import org.imixs.workflow.magento.rest.MagentoRestClientService;
 @Local
 public class MagentoSchedulerService {
 
-	// @PersistenceContext(unitName = "org.imixs.workflow.jee.jpa")
-	// private EntityManager manager;
-
-	private Date startDate, endDate;
-	private long interval;
+	private Date  endDate;
 	private String id;
 	private ItemCollection configuration = null;
 	private int workitemsImported;
@@ -154,11 +150,8 @@ public class MagentoSchedulerService {
 	@EJB
 	WorkflowService workflowService;
 
-	// @EJB
-	// EntityService entityService;
-
 	@EJB
-	MagentoRestClientService magentoService;
+	MagentoService magentoService;
 
 	@EJB
 	MagentoCache magentoCache;
@@ -183,7 +176,7 @@ public class MagentoSchedulerService {
 				configuration.replaceItemValue("datStart", cal.getTime());
 				configuration.replaceItemValue("datStop", cal.getTime());
 				configuration.replaceItemValue("type",
-						MagentoRestClientService.ENTITY_TYPE);
+						MagentoRestClient.ENTITY_TYPE);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -210,7 +203,7 @@ public class MagentoSchedulerService {
 	public ItemCollection saveConfiguration(ItemCollection configItemCollection)
 			throws AccessDeniedException {
 		// update write and read access
-		configItemCollection.replaceItemValue("type", MagentoRestClientService.ENTITY_TYPE);
+		configItemCollection.replaceItemValue("type", MagentoRestClient.ENTITY_TYPE);
 		//configItemCollection.replaceItemValue("txtName", NAME);
 		configItemCollection.replaceItemValue("$writeAccess",
 				"org.imixs.ACCESSLEVEL.MANAGERACCESS");
@@ -571,7 +564,7 @@ public class MagentoSchedulerService {
 						+ " orderstatus=" + sMagentoStatus + " (limit="
 						+ +limit + " page=" + page+")");
 
-				List<ItemCollection> orders = magentoService.getOrders(
+				List<ItemCollection> orders = magentoService.getClient().getOrders(
 						sMagentoStatus, page, limit);
 
 				logger.info("[MagentoSchedulerSerivce] " + orders.size()
