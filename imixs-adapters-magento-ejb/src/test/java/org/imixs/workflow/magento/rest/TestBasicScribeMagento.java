@@ -1,8 +1,8 @@
-package org.imixs.workflow.magento.test;
+package org.imixs.workflow.magento.rest;
 
 import java.util.Scanner;
 
-import org.imixs.workflow.magento.MagentoApi;
+import org.imixs.workflow.magento.rest.MagentoApi;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -64,7 +64,7 @@ public class TestBasicScribeMagento {
 	 */
 	@SuppressWarnings("resource")
 	@Test
-	//@Ignore
+	@Ignore
 	public void testConsumerAPI() {
 
 		magentoApi.setAdminAPI(false);

@@ -1,4 +1,4 @@
-package org.imixs.workflow.magento;
+package org.imixs.workflow.magento.rest;
 
 import java.io.StringReader;
 import java.math.BigDecimal;
@@ -12,6 +12,7 @@ import javax.json.stream.JsonParser.Event;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
+import org.imixs.workflow.magento.MagentoPlugin;
 
 /**
  * This class parses the Magento json structures and transforms objects into

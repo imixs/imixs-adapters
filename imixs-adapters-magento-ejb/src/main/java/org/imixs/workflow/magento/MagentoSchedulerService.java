@@ -49,6 +49,7 @@ import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
+import org.imixs.workflow.magento.rest.MagentoRestClientService;
 
 /**
  * Magento - Scheduler
@@ -157,7 +158,7 @@ public class MagentoSchedulerService {
 	// EntityService entityService;
 
 	@EJB
-	MagentoService magentoService;
+	MagentoRestClientService magentoService;
 
 	@EJB
 	MagentoCache magentoCache;
@@ -182,7 +183,7 @@ public class MagentoSchedulerService {
 				configuration.replaceItemValue("datStart", cal.getTime());
 				configuration.replaceItemValue("datStop", cal.getTime());
 				configuration.replaceItemValue("type",
-						MagentoService.ENTITY_TYPE);
+						MagentoRestClientService.ENTITY_TYPE);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -209,7 +210,7 @@ public class MagentoSchedulerService {
 	public ItemCollection saveConfiguration(ItemCollection configItemCollection)
 			throws AccessDeniedException {
 		// update write and read access
-		configItemCollection.replaceItemValue("type", MagentoService.ENTITY_TYPE);
+		configItemCollection.replaceItemValue("type", MagentoRestClientService.ENTITY_TYPE);
 		//configItemCollection.replaceItemValue("txtName", NAME);
 		configItemCollection.replaceItemValue("$writeAccess",
 				"org.imixs.ACCESSLEVEL.MANAGERACCESS");

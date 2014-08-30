@@ -45,6 +45,7 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
+import org.imixs.workflow.magento.MagentoCache;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -55,15 +56,9 @@ import org.scribe.oauth.OAuthService;
 
 /**
  * This EJB provides methods to interact with a magento instance through the
- * magento rest api. This service EJB is also used by the MagentoPlugin class.
+ * MagentoClient. This service EJB is also used by the MagentoPlugin class.
  * 
- * The service initialize the OAuth Data to access the Magento Web Service Rest
- * API. The configuration can be stored in a config Entity 'ConfigMagento' or in
- * the imixs.properties file.
- * 
- * The configuration is read during the @PostConstruct call back method.
- * 
- * The method getService() returns a OAuthService object.
+ * The service initialize a Client Implementation based on a configuration.
  * 
  * @author rsoika
  */
@@ -85,18 +80,6 @@ public class MagentoService {
 	public static final String ENTITY_TYPE = "ConfigMagento";
 	private ItemCollection magentoConfiguration = null;
 
-	private MagentoApi magentoApi = null;
-
-	String magentoApiURL = null;
-	String magentoBasisURL = null;
-
-	String magentoConsumerKey = null;
-	String magentoConsumerSecret = null;
-
-	String magentoAccessKey = null;
-	String magentoAccessSecret = null;
-	Token accessToken = null;
-
 	boolean debugMode = false;
 
 	@EJB
@@ -108,73 +91,30 @@ public class MagentoService {
 	@EJB
 	MagentoCache magentoCache = null;
 
+	String clientImplementationClassName = null;
+	
+	MagentoClient client=null;
+
 	private static Logger logger = Logger.getLogger(MagentoService.class
 			.getName());
 
 	/**
-	 * initial setup for magento REST API
+	 * initial setup the magento client implementation
 	 */
 	@PostConstruct
 	public void init() {
 
-		// first try to lookup the mangento configuration entity. If found we
-		// can read the configuration there.
-		// if not we ask the property service.
-		magentoConfiguration = loadConfiguration();
-
-		// read data from config entity....
-		if (magentoConfiguration != null) {
-			magentoBasisURL = magentoConfiguration
-					.getItemValueString("txtMagentoUriBasis");
-			magentoApiURL = magentoConfiguration
-					.getItemValueString("txtMagentoUriApi");
-			magentoConsumerKey = magentoConfiguration
-					.getItemValueString("txtMagentoTokenConsumerKey");
-			magentoConsumerSecret = magentoConfiguration
-					.getItemValueString("txtMagentoTokenConsumerSecret");
-			magentoAccessKey = magentoConfiguration
-					.getItemValueString("txtMagentoTokenAccessKey");
-			magentoAccessSecret = magentoConfiguration
-					.getItemValueString("txtMagentoTokenAccessSecret");
-		} else {
-			// read data from property service
-			magentoBasisURL = propertyService.getProperties().getProperty(
-					"magento.uri-basis");
-			magentoApiURL = propertyService.getProperties().getProperty(
-					"magento.uri-api");
-			magentoConsumerKey = propertyService.getProperties().getProperty(
-					"magento.token.consumer-key");
-			magentoConsumerSecret = propertyService.getProperties()
-					.getProperty("magento.token.consumer-secret");
-			magentoAccessKey = propertyService.getProperties().getProperty(
-					"magento.token.access-key");
-
-			magentoAccessSecret = propertyService.getProperties().getProperty(
-					"magento.token.access-secret");
-		}
+		// read data from property service
+		clientImplementationClassName = propertyService.getProperties()
+				.getProperty("magento.clientImplementationClassName");
 
 		if ("true".equals(propertyService.getProperties().getProperty(
 				"magento.debug")))
 			debugMode = true;
 
-		logger.fine("[MagentoPlugin] magentoApiKey='" + magentoConsumerKey
-				+ "'");
-		logger.fine("[MagentoPlugin] magentoApiURL='" + magentoApiURL + "'");
-		logger.fine("[MagentoPlugin] magentoBasisURL='" + magentoBasisURL + "'");
-		logger.fine("[MagentoPlugin] magentoTokenKey='" + magentoAccessKey
-				+ "'");
+		// create Client...
 
-		// create api
-		magentoApi = new MagentoApi(magentoBasisURL);
-		magentoApi.setAdminAPI(debugMode);
-
-		// Create a signed token....
-		logger.fine("[MagentoPlugin] generate access token: "
-				+ magentoAccessKey + " - " + magentoAccessSecret);
-		if (magentoAccessKey != null && magentoAccessSecret != null) {
-			accessToken = new Token(magentoAccessKey, magentoAccessSecret);
-		}
-
+		// TODO
 	}
 
 	/**
@@ -197,269 +137,7 @@ public class MagentoService {
 		}
 	}
 
-	/**
-	 * returns a OAuthService object...
-	 * 
-	 * @return
-	 */
-	public OAuthService getService() {
-		if (debugMode)
-			return new ServiceBuilder().provider(magentoApi)
-					.apiKey(magentoConsumerKey)
-					.apiSecret(magentoConsumerSecret).debug().build();
-		else
-			return new ServiceBuilder().provider(magentoApi)
-					.apiKey(magentoConsumerKey)
-					.apiSecret(magentoConsumerSecret).build();
-	}
-
-	/**
-	 * returns a new request token...
-	 * 
-	 * I cast here to class 'OAuth10aServiceImpl' to be able to use the
-	 * RequestTuner here.
-	 * 
-	 * @see https://github.com/fernandezpablo85/scribe-java/issues/504
-	 * 
-	 * @return
-	 */
-	public Token getRequestToken() {
-		// get a request token...
-		return getService().getRequestToken();
-	}
-
-	/**
-	 * returns a new authorization url...
-	 * 
-	 * @return
-	 */
-	public String getAuthorizationUrl(Token requestToken) {
-		return getService().getAuthorizationUrl(requestToken);
-	}
-
-	/**
-	 * This method requests a new access token....
-	 * 
-	 * @return
-	 */
-	public Token getAccessToken(Token requestToken, String averifier) {
-
-		Verifier verifier = new Verifier(averifier);
-		accessToken = getService().getAccessToken(requestToken, verifier);
-		return accessToken;
-	}
-
-	public List<ItemCollection> getProducts() throws PluginException {
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
-				+ "/products");
-		getService().signRequest(accessToken, request);
-
-		Response response = request.send();
-
-		return MagentoJsonParser.parseObjectList(response.getBody());
-	}
-
-	/**
-	 * returns a single itemCollection for a magento product entry
-	 * 
-	 * @param item_id
-	 * @return
-	 * @throws PluginException
-	 */
-	public ItemCollection getProductBySKU(String sku) {
-		if (sku == null || sku.isEmpty())
-			return null;
-
-		ItemCollection product = magentoCache.getProduct(sku);
-		if (product == null) {
-
-			String sURL = magentoApiURL + "/products";
-			// add filter
-			sURL += "?filter[1][attribute]=sku&filter[1][in]=" + sku;
-
-			logger.fine("[MagentoPlugin] getProductBySKU : " + sURL);
-			// Now let's go and ask for a protected resource!
-			OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
-			getService().signRequest(accessToken, request);
-			Response response = request.send();
-			List<ItemCollection> result = new ArrayList<ItemCollection>();
-
-			try {
-				result = MagentoJsonParser.parseObjectList(response.getBody());
-				if (result.size() > 0) {
-					product = result.get(0);
-				}
-			} catch (PluginException e) {
-				logger.warning("[MagentoPlugin] getProductBySKU not found ("
-						+ sURL + ") : " + e.getMessage());
-				product = null;
-			}
-
-			// cache product;
-			if (product != null) {
-				magentoCache.cacheProduct(sku, product);
-			} else {
-				// cache empty ItemCollection
-				magentoCache.cacheProduct(sku, new ItemCollection());
-			}
-		}
-
-		return product;
-	}
-
-	/**
-	 * returns a single itemCollection for a magento product entry
-	 * 
-	 * The method also lookups the customer addresses and adds a property
-	 * 'addresses' with the collection of customers addresses
-	 * 
-	 * Rest URI: http://magentohost/api/rest/customers/:customer_id/addresses
-	 * 
-	 * @see: http://www.magentocommerce.com/api/rest/Resources/
-	 *       resource_customer_addresses.html
-	 * 
-	 * 
-	 * @param item_id
-	 * @return
-	 * @throws PluginException
-	 */
-	public ItemCollection getCustomerById(String id) {
-		if (id == null || id.isEmpty())
-			return null;
-
-		ItemCollection customer = magentoCache.getCustomer(id);
-		if (customer == null) {
-
-			String sURL = magentoApiURL + "/customers/" + id;
-			// add filter
-			// sURL += "?filter[1][attribute]=sku&filter[1][in]=" + id;
-
-			logger.fine("[MagentoPlugin] getCustomerById : " + sURL);
-			// Now let's go and ask for a protected resource!
-			OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
-			getService().signRequest(accessToken, request);
-			Response response = request.send();
-			try {
-				List<ItemCollection> result = MagentoJsonParser
-						.parseObjectList(response.getBody());
-
-				if (result.size() > 0) {
-					customer = result.get(0);
-
-					// lookup addresses....
-					if (customer != null) {
-						String entityID = customer
-								.getItemValueString("entity_id");
-						if (!entityID.isEmpty()) {
-							sURL = magentoApiURL + "/customers/" + id
-									+ "/addresses";
-							logger.fine("[MagentoPlugin] getCustomerById addresses : "
-									+ sURL);
-							// Now let's go and ask for a protected resource!
-							request = new OAuthRequest(Verb.GET, sURL);
-							getService().signRequest(accessToken, request);
-							response = request.send();
-							result = MagentoJsonParser.parseObjectList(response
-									.getBody());
-							if (result.size() > 0) {
-								customer.replaceItemValue("addresses", result);
-							}
-						}
-
-					}
-
-				}
-			} catch (PluginException e) {
-				logger.warning("[MagentoPlugin] getCustomerById not found ("
-						+ sURL + ") : " + e.getMessage());
-				customer = null;
-			}
-
-			// cache product;
-			if (customer != null) {
-				magentoCache.cacheCustomer(id, customer);
-			} else {
-				magentoCache.cacheCustomer(id, new ItemCollection());
-			}
-
-		}
-
-		return customer;
-	}
-
-	/**
-	 * returns a single itemCollection for a magento order entity
-	 * 
-	 * @param item_id
-	 * @return
-	 * @throws PluginException
-	 */
-	public ItemCollection getOrderById(String id) {
-		if (id == null || id.isEmpty())
-			return null;
-
-		ItemCollection order = null;
-
-		String sURL = magentoApiURL + "/orders/" + id;
-		// add filter
-		// sURL += "?filter[1][attribute]=sku&filter[1][in]=" + id;
-
-		logger.fine("[MagentoPlugin] getOrderById : " + sURL);
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, sURL);
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-		List<ItemCollection> result = new ArrayList<ItemCollection>();
-		try {
-			result = MagentoJsonParser.parseObjectList(response.getBody());
-			if (result.size() > 0) {
-				order = result.get(0);
-			}
-		} catch (PluginException e) {
-			logger.warning("[MagentoPlugin] getOrderById not found (" + sURL
-					+ ") : " + e.getMessage());
-			order = null;
-		}
-
-		return order;
-	}
-
-	public List<ItemCollection> getStockitems() throws PluginException {
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
-				+ "/stockitems");
-
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-
-		return MagentoJsonParser.parseObjectList(response.getBody());
-	}
-
-	public List<ItemCollection> getOrders(String status, int page, int limit)
-			throws PluginException {
-
-		if (limit <= 0)
-			limit = 100;
-		if (page < 0)
-			page = 0;
-
-		String requestURL = magentoApiURL + "/orders?limit=" + limit + "&page="
-				+ page;
-
-		if (status != null && !status.isEmpty()) {
-			requestURL += "&filter[1][attribute]=status&filter[1][in]="
-					+ status;
-		}
-
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, requestURL);
-
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-
-		return MagentoJsonParser.parseObjectList(response.getBody());
-	}
+	
 
 	/**
 	 * This method finds a workitem for a magento order id. If no worktiem exits
@@ -511,7 +189,7 @@ public class MagentoService {
 		}
 
 		sKey = sKey.substring(14);
-		ItemCollection order = getOrderById(sKey);
+		ItemCollection order = client.getOrderById(sKey);
 		return order;
 
 	}

@@ -1,4 +1,4 @@
-package org.imixs.workflow.magento;
+package org.imixs.workflow.magento.rest;
 
 import java.util.logging.Logger;
 
