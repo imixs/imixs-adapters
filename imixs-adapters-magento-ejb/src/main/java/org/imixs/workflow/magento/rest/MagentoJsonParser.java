@@ -12,7 +12,7 @@ import javax.json.stream.JsonParser.Event;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.magento.MagentoPlugin;
+import org.imixs.workflow.magento.MagentoException;
 
 /**
  * This class parses the Magento json structures and transforms objects into
@@ -23,6 +23,7 @@ import org.imixs.workflow.magento.MagentoPlugin;
  * 
  */
 public class MagentoJsonParser {
+	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
 	private final static Logger logger = Logger
 			.getLogger(MagentoJsonParser.class.getName());
 
@@ -43,9 +44,9 @@ public class MagentoJsonParser {
 	 * @return an PluginException or null if no error message contained.
 	 * 
 	 */
-	public static PluginException parseError(String json) {
+	public static MagentoException parseError(String json) {
 
-		PluginException result = null;
+		MagentoException result = null;
 		if (json == null)
 			return null;
 
@@ -89,7 +90,7 @@ public class MagentoJsonParser {
 
 			// error message found?
 			if (code > -1 && message != null) {
-				result = new PluginException(MagentoPlugin.ERROR_MESSAGE, ""
+				result = new MagentoException(MagentoJsonParser.ERROR_MESSAGE, ""
 						+ code, message);
 				logger.fine("[MagentoJsonParser] found error message: " + code
 						+ " - " + message);
@@ -125,7 +126,7 @@ public class MagentoJsonParser {
 	 * 
 	 */
 	public static List<ItemCollection> parseObjectList(String json)
-			throws PluginException {
+			throws MagentoException{
 
 		List<ItemCollection> result = new ArrayList<ItemCollection>();
 		if (json == null)
@@ -136,7 +137,7 @@ public class MagentoJsonParser {
 			return result;
 
 		// test error message...
-		PluginException pluginException = parseError(json);
+		MagentoException pluginException = parseError(json);
 		if (pluginException != null) {
 			logger.severe("[MagentoParser] error parsing ObjectList!");
 			throw pluginException;
@@ -216,6 +217,7 @@ public class MagentoJsonParser {
 	 * @param parser
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	private static ItemCollection parseItemCollection(JsonParser parser) {
 		Event event = null;
 

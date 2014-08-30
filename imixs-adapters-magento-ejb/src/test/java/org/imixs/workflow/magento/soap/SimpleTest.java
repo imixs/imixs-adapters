@@ -10,8 +10,8 @@ import javax.xml.rpc.ServiceException;
 import junit.framework.Assert;
 
 import org.imixs.workflow.magento.soap.Mage_Api_Model_Server_HandlerPortType;
-import org.imixs.workflow.magento.soap.MagentoService;
-import org.imixs.workflow.magento.soap.MagentoServiceLocator;
+import org.imixs.workflow.magento.soap.MagentoSOAPService;
+import org.imixs.workflow.magento.soap.MagentoSOAPServiceLocator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ public class SimpleTest {
 	@Before
 	public void setup() throws ServiceException, RemoteException {
 		// double d = Double.valueOf(args[1]).doubleValue();
-		MagentoService service = new MagentoServiceLocator();
+		MagentoSOAPService service = new MagentoSOAPServiceLocator();
 		stub = service.getMage_Api_Model_Server_HandlerPort();
 
 		sessionId = stub.login("admin", "");

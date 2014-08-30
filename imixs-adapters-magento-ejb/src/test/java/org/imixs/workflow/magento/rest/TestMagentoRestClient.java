@@ -18,7 +18,7 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.util.PropertyService;
 import org.imixs.workflow.magento.rest.MagentoApi;
-import org.imixs.workflow.magento.rest.MagentoRestClientService;
+import org.imixs.workflow.magento.rest.MagentoRestClient;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -53,7 +53,7 @@ import org.scribe.model.Token;
  */
 public class TestMagentoRestClient {
 	MagentoApi magentoApi = null;
-	MagentoRestClientService magentoService = null;
+	MagentoRestClient magentoService = null;
 	EntityService entityService = null;
 	PropertyService propertyService = null;
 	Properties properties = null;
@@ -74,7 +74,7 @@ public class TestMagentoRestClient {
 				.getResource("imixs.properties").openStream());
 		when(propertyService.getProperties()).thenReturn(properties);
 
-		magentoService = Mockito.spy(new MagentoRestClientService());
+		magentoService = Mockito.spy(new MagentoRestClient());
 		magentoService.propertyService = propertyService;
 
 		Mockito.doReturn(null).when(magentoService).loadConfiguration();

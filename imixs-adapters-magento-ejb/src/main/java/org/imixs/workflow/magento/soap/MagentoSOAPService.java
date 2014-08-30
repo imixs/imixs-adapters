@@ -7,7 +7,7 @@
 
 package org.imixs.workflow.magento.soap;
 
-public interface MagentoService extends javax.xml.rpc.Service {
+public interface MagentoSOAPService extends javax.xml.rpc.Service {
     public java.lang.String getMage_Api_Model_Server_HandlerPortAddress();
 
     public Mage_Api_Model_Server_HandlerPortType getMage_Api_Model_Server_HandlerPort() throws javax.xml.rpc.ServiceException;
