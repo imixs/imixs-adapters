@@ -1,4 +1,4 @@
-package org.imixs.workflow.magento.test;
+package org.imixs.workflow.magento.rest;
 
 import static org.mockito.Mockito.when;
 
@@ -13,8 +13,8 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.magento.MagentoApi;
 import org.imixs.workflow.magento.MagentoPlugin;
+import org.imixs.workflow.magento.rest.MagentoApi;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;

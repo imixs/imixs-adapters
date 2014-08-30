@@ -1,4 +1,4 @@
-package org.imixs.workflow.magento;
+package org.imixs.workflow.magento.rest;
 
 import org.imixs.workflow.util.Base64;
 import org.scribe.model.Request;

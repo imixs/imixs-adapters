@@ -1,4 +1,4 @@
-package org.imixs.workflow.magento.test;
+package org.imixs.workflow.magento.rest;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,7 +9,7 @@ import junit.framework.Assert;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.magento.MagentoJsonParser;
+import org.imixs.workflow.magento.rest.MagentoJsonParser;
 import org.junit.Test;
 
 /**
