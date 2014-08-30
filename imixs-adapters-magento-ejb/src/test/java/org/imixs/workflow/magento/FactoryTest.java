@@ -3,11 +3,14 @@
  */
 package org.imixs.workflow.magento;
 
+import java.io.IOException;
 import java.util.Properties;
 
 import junit.framework.Assert;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.magento.rest.MagentoApi;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -15,7 +18,16 @@ import org.junit.Test;
  * 
  */
 public class FactoryTest {
+	Properties properties=null;
+	@Before
+	public void setup() throws IOException {
+		// setup from properties file...
+		properties = new Properties();
+		properties.load(Thread.currentThread().getContextClassLoader()
+				.getResource("imixs.properties").openStream());
 
+	}
+	
 	/**
 	 * Test the MagentoClientFactory for the SOAP Client
 	 */
@@ -26,10 +38,15 @@ public class FactoryTest {
 				.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
 
 		ItemCollection config = new ItemCollection();
+	
+		
+		config.replaceItemValue("txtMagentoAccessKey",
+				properties.getProperty("magento.soap.access-key"));
 
-		config.replaceItemValue("txtMagentoAccessKey", "admin");
-		config.replaceItemValue("txtMagentoAccessSecret", "barer47");
+		config.replaceItemValue("txtMagentoAccessSecret",
+				properties.getProperty("magento.soap.access-secret"));
 
+		
 		client.connect(config);
 		Assert.assertNotNull(client);
 
@@ -42,12 +59,7 @@ public class FactoryTest {
 	public void testRestClient() throws java.lang.Exception {
 
 		MagentoClient client = MagentoClientFactory
-				.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
-
-		// setup from properties file...
-		Properties properties = new Properties();
-		properties.load(Thread.currentThread().getContextClassLoader()
-				.getResource("imixs.properties").openStream());
+				.createClient("org.imixs.workflow.magento.rest.MagentoRestClient");
 
 		ItemCollection config = new ItemCollection();
 
@@ -61,10 +73,10 @@ public class FactoryTest {
 		config.replaceItemValue("txtMagentoOAuhtConsumerSecret",
 				properties.getProperty("magento.oauth.consumer-secret"));
 		config.replaceItemValue("txtMagentoAccessKey",
-				properties.getProperty("magento.access-key"));
+				properties.getProperty("magento.rest.access-key"));
 
 		config.replaceItemValue("txtMagentoAccessSecret",
-				properties.getProperty("magento.access-secret"));
+				properties.getProperty("magento.rest.access-secret"));
 
 		client.connect(config);
 		Assert.assertNotNull(client);
