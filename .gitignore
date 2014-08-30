@@ -13,3 +13,6 @@ target/
 .project
 .classpath
 .metadata/
+
+# testing
+src/test/resources/imixs.properties
