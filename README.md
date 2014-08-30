@@ -28,9 +28,8 @@ with the following minimal setup:
 ##############################
 
 ##############################
-# Magent REST Service Configuration 
+# Magento REST Service Configuration 
 ##############################
-
 # basi urls
 magento.rest.uri-basis=http://localhost:8080/magento/index.php/
 magento.rest.uri-api=http://localhost:8080/magento/api/rest
@@ -42,10 +41,9 @@ magento.access-key=bst0xf3knba73.......li8wm4a
 magento.access-secret=mhoifjombt.........aeurr04l
 
 ##############################
-# Magent SOAP Service Configuration (replaces the rest api configuration)
+# Magento SOAP Service Configuration (replaces the rest api configuration)
 ##############################
-#magento.soap.uri-api=http://localhost:8080/magento/api/rest
-
+#magento.soap.uri-api=http://localhost:8080/magento/index.php/api/index/index/
 # access token...
 #magento.access-key=your-useraccount
 #magento.access-secret=your-password
