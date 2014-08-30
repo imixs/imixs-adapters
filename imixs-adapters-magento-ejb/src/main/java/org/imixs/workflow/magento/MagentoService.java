@@ -147,21 +147,7 @@ public class MagentoService {
 			config = new ItemCollection();
 		}
 
-		//
-		// magentoBasisURL = propertyService.getProperties().getProperty(
-		// "magento.uri-basis");
-		// magentoApiURL = propertyService.getProperties().getProperty(
-		// "magento.uri-api");
-		// magentoConsumerKey = propertyService.getProperties().getProperty(
-		// "magento.token.consumer-key");
-		// magentoConsumerSecret = propertyService.getProperties()
-		// .getProperty("magento.token.consumer-secret");
-		// magentoAccessKey = propertyService.getProperties().getProperty(
-		// "magento.token.access-key");
-		//
-		// magentoAccessSecret = propertyService.getProperties().getProperty(
-		// "magento.token.access-secret");
-		//
+		
 		
 		
 		return config;
