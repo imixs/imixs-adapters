@@ -1,11 +1,10 @@
-package org.imixs.workflow.magento.rest;
+package org.imixs.workflow.magento.soap;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Scanner;
 
 import javax.naming.NamingException;
 
@@ -15,11 +14,11 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.util.PropertyService;
+import org.imixs.workflow.magento.MagentoClient;
 import org.imixs.workflow.magento.MagentoClientFactory;
+import org.imixs.workflow.magento.MagentoException;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.scribe.model.Token;
 
 /**
  * Dieser test testet die Magento Schnittstelle
@@ -47,89 +46,39 @@ import org.scribe.model.Token;
  * 
  * 
  */
-public class TestMagentoRestClient {
-	MagentoApi magentoApi = null;
-	MagentoRestClient magentoClient = null;
+public class TestMagentoSoapClient {
+	MagentoClient magentoClient = null;
 	EntityService entityService = null;
 	PropertyService propertyService = null;
 	Properties properties = null;
-	
+
 	Map<String, ItemCollection> database = new HashMap<String, ItemCollection>();
 
 	@Before
 	public void setup() throws PluginException, IOException, NamingException {
-		
-		// setup from properties file...
-				properties = new Properties();
-				properties.load(Thread.currentThread().getContextClassLoader()
-						.getResource("imixs.properties").openStream());
 
-				
-				
-		magentoClient = (MagentoRestClient) MagentoClientFactory
-				.createClient("org.imixs.workflow.magento.rest.MagentoRestClient");
+		// setup from properties file...
+		properties = new Properties();
+		properties.load(Thread.currentThread().getContextClassLoader()
+				.getResource("imixs.properties").openStream());
+
+		magentoClient =  MagentoClientFactory
+				.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
 
 		ItemCollection config = new ItemCollection();
 
-		config.replaceItemValue("txtMagentoUriBasis",
-				properties.getProperty("magento.rest.uri-basis"));
-
-		config.replaceItemValue("txtMagentoUriApi",
-				properties.getProperty("magento.rest.uri-api"));
-		config.replaceItemValue("txtMagentoOAuthConsumerKey",
-				properties.getProperty("magento.oauth.consumer-key"));
-		config.replaceItemValue("txtMagentoOAuhtConsumerSecret",
-				properties.getProperty("magento.oauth.consumer-secret"));
 		config.replaceItemValue("txtMagentoAccessKey",
-				properties.getProperty("magento.rest.access-key"));
+				properties.getProperty("magento.soap.access-key"));
 
 		config.replaceItemValue("txtMagentoAccessSecret",
-				properties.getProperty("magento.rest.access-secret"));
+				properties.getProperty("magento.soap.access-secret"));
 
 		magentoClient.connect(config);
 
 	}
 
 	/**
-	 * This Test requests a new AccessToken from magento OAuht...
-	 * 
-	 * There for the test print outs the request url and waits for an input of
-	 * the verifier finally it prints out the access token
-	 * 
-	 */
-	@Test
-	@Ignore
-	public void testRequestNewToken() {
- 
-		Scanner in = new Scanner(System.in);
-
-		Token requestToken = magentoClient.getRequestToken();
-		String url = magentoClient.getAuthorizationUrl(requestToken);
-
-		System.out
-				.println("Open Browser Window and authorize the Imixs MagentoPlugin here:");
-		System.out.println(url);
-
-		System.out.println("And paste the verifier here");
-		System.out.print(">>");
-
-		Token accessToken = magentoClient.getAccessToken(requestToken,
-				in.nextLine());
-
-		Assert.assertNotNull(accessToken);
-
-		System.out.println("Got the Access Token!");
-		System.out.println("   key=" + accessToken.getToken());
-		System.out.println("   secret=" + accessToken.getSecret());
-		System.out.println();
-
-		in.close();
-	}
-
-
-
-	/**
-	 * This Test checks the Magento Connection...
+	 * This Test checks the getProducts method...
 	 * 
 	 */
 	@Test
@@ -138,7 +87,6 @@ public class TestMagentoRestClient {
 		List<ItemCollection> result = null;
 		try {
 			result = magentoClient.getProducts();
-			// result = magentoPlugin.getStockitems();
 		} catch (PluginException e) {
 
 			e.printStackTrace();
@@ -148,12 +96,13 @@ public class TestMagentoRestClient {
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size() > 0);
 		ItemCollection entity = result.get(0);
-		Assert.assertTrue(entity.hasItem("entity_id"));
-		Assert.assertEquals("simple", entity.getItemValueString("type_id"));
-		
-		
 
+		Assert.assertTrue(entity.hasItem("sku"));
+		Assert.assertTrue(entity.hasItem("product_id"));
+		Assert.assertTrue(entity.hasItem("name"));
 	}
+
+
 
 	/**
 	 * This Test checks the Magento Connection...
@@ -165,7 +114,13 @@ public class TestMagentoRestClient {
 
 		ItemCollection result = null;
 
-		result = magentoClient.getProductBySKU("100");
+		try {
+			result = magentoClient.getProductBySKU("100");
+		} catch (MagentoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			Assert.fail();
+		}
 		// result = magentoPlugin.getStockitems();
 
 		Assert.assertTrue(result.hasItem("entity_id"));
@@ -178,6 +133,28 @@ public class TestMagentoRestClient {
 
 	}
 
+	
+	/**
+	 * This Test adds a comment
+	 * 
+	 */
+	@Test
+	public void testAddComment() {
+
+		
+		try {
+			magentoClient.getAddOrderComment("100000012","pending","junit test");
+			
+		} catch (MagentoException e) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+
+
+	}
+
+	
+	
 	/**
 	 * This Test checks the Magento Connection...
 	 * 
@@ -194,7 +171,7 @@ public class TestMagentoRestClient {
 			Assert.fail();
 		}
 
-		Assert.assertNotNull(result); 
+		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size() > 4);
 
 		ItemCollection entity = result.get(0);

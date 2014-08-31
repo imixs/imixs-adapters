@@ -81,8 +81,8 @@ public class MagentoRestClient implements MagentoClient {
 			.getName());
 
 	/**
-	 * Connects the Client to the magento REST API. The ItemCollection 
-	 * contains properties needed to establish the connection
+	 * Connects the Client to the magento REST API. The ItemCollection contains
+	 * properties needed to establish the connection
 	 */
 	public void connect(ItemCollection magentoConfiguration) {
 
@@ -124,12 +124,12 @@ public class MagentoRestClient implements MagentoClient {
 		}
 
 	}
-	
+
 	/**
 	 * Disconnects the client
 	 */
 	public void disconnect() {
-		accessToken=null;
+		accessToken = null;
 	}
 
 	/**
@@ -339,17 +339,6 @@ public class MagentoRestClient implements MagentoClient {
 		return order;
 	}
 
-	public List<ItemCollection> getStockitems() throws MagentoException {
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
-				+ "/stockitems");
-
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-
-		return MagentoJsonParser.parseObjectList(response.getBody());
-	}
-
 	public List<ItemCollection> getOrders(String status, int page, int limit)
 			throws MagentoException {
 
@@ -401,13 +390,11 @@ public class MagentoRestClient implements MagentoClient {
 
 	}
 
-	/**
-	 * this method creates the Magento oder ID to be stored in the property
-	 * 'txtName'. This property value need to be unique. The plugin can be
-	 * overwritten to change this behavior.
-	 * **/
-	public String getOrderID(ItemCollection order) {
-		String sKey = "magento:order:" + order.getItemValueString("entity_id");
-		return sKey;
+	@Override
+	public void getAddOrderComment(String orderIncrementId, String status,
+			String comment) throws MagentoException {
+		logger.warning("[MagentoSOAPClient] method not implemented: getAddOrderComment");
+		// TODO Auto-generated method stub
 	}
+
 }
