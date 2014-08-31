@@ -9,9 +9,9 @@ import javax.xml.rpc.ServiceException;
 
 import junit.framework.Assert;
 
-import org.imixs.workflow.magento.soap.Mage_Api_Model_Server_HandlerPortType;
-import org.imixs.workflow.magento.soap.MagentoSOAPService;
-import org.imixs.workflow.magento.soap.MagentoSOAPServiceLocator;
+import org.imixs.workflow.magento.soap.generated.Mage_Api_Model_Server_V2_HandlerPortType;
+import org.imixs.workflow.magento.soap.generated.MagentoService;
+import org.imixs.workflow.magento.soap.generated.MagentoServiceLocator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ import org.junit.Test;
 public class SimpleTest {
 
 	String sessionId = null;
-	Mage_Api_Model_Server_HandlerPortType stub = null;
+	Mage_Api_Model_Server_V2_HandlerPortType stub = null;
 
 	/**
 	 * create session id
@@ -32,8 +32,8 @@ public class SimpleTest {
 	@Before
 	public void setup() throws ServiceException, RemoteException {
 		// double d = Double.valueOf(args[1]).doubleValue();
-		MagentoSOAPService service = new MagentoSOAPServiceLocator();
-		stub = service.getMage_Api_Model_Server_HandlerPort();
+		MagentoService service = new MagentoServiceLocator();
+		stub = service.getMage_Api_Model_Server_V2_HandlerPort();
 
 		sessionId = stub.login("admin", "");
 
@@ -60,16 +60,9 @@ public class SimpleTest {
 		String status = "pending";
 		String comment = "Hello World - Axis1Soap1";
 
-		// $result = $client->call($session, 'sales_order.addComment',
-		// array('orderIncrementId' => '200000004', 'status' => 'processing'));
+		
 
-		java.lang.Object[] args = new Object[4];
-		args[0] = orderIncrementId;
-		args[1] = status;
-		args[2] = comment;
-		args[3] = "false";
-
-		stub.call(sessionId, "sales_order.addComment", args);
+		stub.salesOrderAddComment(sessionId, orderIncrementId, status,comment,"false");
 
 	}
 
@@ -80,7 +73,7 @@ public class SimpleTest {
 		Assert.assertNotNull(sessionId);
 
 		java.lang.Object[] args = new Object[0];
-		Object result = stub.call(sessionId, "sales_order.list", args);
+		Object result = stub.salesOrderList(sessionId,null);
 		Assert.assertNotNull(result);
 		System.out.println("SalesOrderListEntity=" + result);
 	}

@@ -236,7 +236,7 @@ public class MagentoService {
 		ItemCollection customer = magentoCache.getCustomer(id);
 		if (customer == null) {
 
-			customer = client.getCustomerById(id);
+			customer = client.getCustomerById(new Integer(id));
 			// cache product;
 			if (customer != null) {
 				magentoCache.cacheCustomer(id, customer);

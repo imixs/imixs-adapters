@@ -1,6 +1,6 @@
 /*******************************************************************************
  *  Imixs Workflow 
- *  Copyright (C) 2001, 2011 Imixs Software Solutions GmbH,  
+ *  Copyright (C) 2001, 2011, 2012, 2013, 2014 Imixs Software Solutions GmbH,  
  *  http://www.imixs.com
  *  
  *  This program is free software; you can redistribute it and/or 
@@ -18,7 +18,7 @@
  *  
  *  Project: 
  *  	http://www.imixs.org
- *  	http://java.net/projects/imixs-workflow
+ *  	https://github.com/imixs
  *  
  *  Contributors:  
  *  	Imixs Software Solutions GmbH - initial API and implementation

@@ -68,7 +68,7 @@ public interface MagentoClient {
 	 */
 	public List<ItemCollection> getProducts() throws MagentoException;
 
-	public ItemCollection getCustomerById(String id) throws MagentoException;
+	public ItemCollection getCustomerById(int id) throws MagentoException;
 
 	public ItemCollection getOrderById(String id) throws MagentoException;
 

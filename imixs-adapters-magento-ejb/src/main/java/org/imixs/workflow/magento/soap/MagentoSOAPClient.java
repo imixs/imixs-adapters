@@ -1,3 +1,29 @@
+/*******************************************************************************
+ *  Imixs Workflow 
+ *  Copyright (C) 2001, 2011, 2012, 2013, 2014 Imixs Software Solutions GmbH,  
+ *  http://www.imixs.com
+ *  
+ *  This program is free software; you can redistribute it and/or 
+ *  modify it under the terms of the GNU General Public License 
+ *  as published by the Free Software Foundation; either version 2 
+ *  of the License, or (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful, 
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *  General Public License for more details.
+ *  
+ *  You can receive a copy of the GNU General Public
+ *  License at http://www.gnu.org/licenses/gpl.html
+ *  
+ *  Project: 
+ *  	http://www.imixs.org
+ *  	https://github.com/imixs
+ *  
+ *  Contributors:  
+ *  	Imixs Software Solutions GmbH - initial API and implementation
+ *  	Ralph Soika - Software Developer
+ *******************************************************************************/
 package org.imixs.workflow.magento.soap;
 
 import java.rmi.RemoteException;
@@ -15,6 +41,16 @@ import javax.xml.rpc.ServiceException;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.magento.MagentoClient;
 import org.imixs.workflow.magento.MagentoException;
+import org.imixs.workflow.magento.soap.generated.AssociativeEntity;
+import org.imixs.workflow.magento.soap.generated.CatalogProductEntity;
+import org.imixs.workflow.magento.soap.generated.CatalogProductReturnEntity;
+import org.imixs.workflow.magento.soap.generated.CustomerCustomerEntity;
+import org.imixs.workflow.magento.soap.generated.Filters;
+import org.imixs.workflow.magento.soap.generated.Mage_Api_Model_Server_V2_HandlerPortType;
+import org.imixs.workflow.magento.soap.generated.MagentoService;
+import org.imixs.workflow.magento.soap.generated.MagentoServiceLocator;
+import org.imixs.workflow.magento.soap.generated.SalesOrderEntity;
+import org.imixs.workflow.magento.soap.generated.SalesOrderListEntity;
 
 public class MagentoSOAPClient implements MagentoClient {
 
@@ -23,7 +59,7 @@ public class MagentoSOAPClient implements MagentoClient {
 	private String magentoAccessSecret = null;
 
 	private String sessionId = null;
-	private Mage_Api_Model_Server_HandlerPortType stub = null;
+	private Mage_Api_Model_Server_V2_HandlerPortType stub = null;
 
 	private static Logger logger = Logger.getLogger(MagentoSOAPClient.class
 			.getName());
@@ -36,9 +72,9 @@ public class MagentoSOAPClient implements MagentoClient {
 		magentoAccessSecret = magentoConfiguration
 				.getItemValueString("txtMagentoAccessSecret");
 
-		MagentoSOAPService service = new MagentoSOAPServiceLocator();
+		MagentoService service = new MagentoServiceLocator();
 		try {
-			stub = service.getMage_Api_Model_Server_HandlerPort();
+			stub = service.getMage_Api_Model_Server_V2_HandlerPort();
 			sessionId = stub.login(magentoAccessKey, magentoAccessSecret);
 
 			logger.fine("[MagentoSOAPClient] connected - sessionId="
@@ -59,166 +95,122 @@ public class MagentoSOAPClient implements MagentoClient {
 	}
 
 	@Override
-	public void getAddOrderComment(String orderIncrementId, String status, String comment)
-			throws MagentoException {
-		
+	public void getAddOrderComment(String orderIncrementId, String status,
+			String comment) throws MagentoException {
+
 		logger.fine("[MagentoSOAPClient] getAddOrderComment - sessionId="
 				+ sessionId);
 
-		
-		java.lang.Object[] args=new Object[4];
-		args[0]=orderIncrementId;
-		args[1]=status;
-		args[2]=comment;
-		args[3]="false";
-		
+		java.lang.Object[] args = new Object[4];
+		args[0] = orderIncrementId;
+		args[1] = status;
+		args[2] = comment;
+		args[3] = "false";
+
 		try {
-			stub.call(sessionId, "sales_order.addComment", args);
+			stub.salesOrderAddComment(sessionId, orderIncrementId, status,
+					comment, "false");
+
+			// .call(sessionId, "sales_order.addComment", args);
 		} catch (RemoteException e) {
 			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
 					CONNECTION_FAILURE, "getAddOrderComment failed: ", e);
 		}
-		
-		
-		
+
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public List<ItemCollection> getProducts() throws MagentoException {
-		logger.fine("[MagentoSOAPClient] getStockItems - sessionId="
-				+ sessionId);
+		logger.fine("[MagentoSOAPClient] getProducts - sessionId=" + sessionId);
 
 		List<ItemCollection> result = new ArrayList<ItemCollection>();
-
-		java.lang.Object[] args = new String[0];
-		Map[] responseObject;
 		try {
-			responseObject = (Map[]) stub.call(sessionId,
-					"catalog_product.list", args);
-
+			CatalogProductEntity[] responseObject = stub.catalogProductList(
+					sessionId, null, null);
 			if (responseObject != null) {
-
-				for (Map entity : responseObject) {
-					ItemCollection itemCol = convertToItemCollection(entity);
+				for (CatalogProductEntity entity : responseObject) {
+					ItemCollection itemCol = MagentoSOAPAdapter.adapt(entity);
 					if (itemCol != null) {
 						result.add(itemCol);
 					}
 				}
-
 			}
 		} catch (RemoteException e) {
 			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
-					CONNECTION_FAILURE, "getStockitems failed: ", e);
+					CONNECTION_FAILURE, "getProducts failed: ", e);
 		}
-
 		return result;
 	}
 
 	@Override
-	public ItemCollection getCustomerById(String id) {
-		logger.warning("[MagentoSOAPClient] method not implemented: getCustomerById");
-		// TODO Auto-generated method stub
-		return null;
+	public ItemCollection getCustomerById(int id) throws MagentoException {
+		logger.fine("[MagentoSOAPClient] getCustomerById - sessionId="
+				+ sessionId);
+		try {
+			CustomerCustomerEntity result = stub.customerCustomerInfo(
+					sessionId, id, null);
+
+			return MagentoSOAPAdapter.adapt(result);
+
+		} catch (RemoteException e) {
+			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
+					CONNECTION_FAILURE, "getCustomerById failed: ", e);
+		}
 	}
 
 	@Override
-	public ItemCollection getOrderById(String id) {
-		logger.warning("[MagentoSOAPClient] method not implemented: getOrderById");
-		// TODO Auto-generated method stub
-		return null;
+	public ItemCollection getOrderById(String id) throws MagentoException {
+		logger.fine("[MagentoSOAPClient] getOrderById - sessionId=" + sessionId);
+		try {
+			SalesOrderEntity result = stub.salesOrderInfo(sessionId, id);
+
+			return MagentoSOAPAdapter.adapt(result);
+		} catch (RemoteException e) {
+			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
+					CONNECTION_FAILURE, "getCustomerById failed: ", e);
+		}
 	}
 
 	@Override
 	public List<ItemCollection> getOrders(String status, int page, int limit) {
-		logger.warning("[MagentoSOAPClient] method not implemented: getOrders");
-		// TODO Auto-generated method stub
-		return null;
+		logger.fine("[MagentoSOAPClient] getOrders - sessionId=" + sessionId);
+
+		Filters filters = new Filters();
+		filters.setFilter(new AssociativeEntity[] { new AssociativeEntity(
+				"status", status) });
+		List<ItemCollection> result = new ArrayList<ItemCollection>();
+		try {
+			SalesOrderListEntity[] responseObject = stub.salesOrderList(
+					sessionId, filters);
+			if (responseObject != null) {
+				for (SalesOrderListEntity entity : responseObject) {
+//					ItemCollection itemCol = MagentoSOAPAdapter.adapt(entity);
+//					if (itemCol != null) {
+//						result.add(itemCol);
+//					}
+				}
+			}
+		} catch (RemoteException e) {
+//			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
+//					CONNECTION_FAILURE, "getOrders failed: ", e);
+		}
+		return result;
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public ItemCollection getProductBySKU(String sku) throws MagentoException {
-		Set<String> attributes=new HashSet<String>();
+		Set<String> attributes = new HashSet<String>();
 		attributes.add("product_id");
-		
-		Object[] arguments = new Object[] { sku+" ", null, attributes };
-		
-		Map responseObject;
-		try {
-			Object irgendwas =  stub.call(sessionId,
-					"catalog_product.info", arguments);
 
-//			if (responseObject != null) {
-//				ItemCollection itemCol = convertToItemCollection(responseObject);
-//				return itemCol;
-//			}
+		try {
+			CatalogProductReturnEntity productEntity = stub.catalogProductInfo(
+					sessionId, sku, null, null, "sku");
+
+			return MagentoSOAPAdapter.adapt(productEntity);
 		} catch (RemoteException e) {
 			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
 					CONNECTION_FAILURE, "getProductBySKU failed: ", e);
 		}
-		return null;
-	}
-
-	/**
-	 * This method converts the elements of a Map into a ItemCollection. The
-	 * method takes care about ArrayList and String[] Arrays and converts them
-	 * into a Vector.
-	 * 
-	 * If one element is an embedded Map then this will result in embedded
-	 * ItemCollection
-	 * 
-	 * @param entity
-	 * @return
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private ItemCollection convertToItemCollection(Map entity) {
-
-		ItemCollection result = new ItemCollection();
-
-		Iterator iter = entity.keySet().iterator();
-		while (iter.hasNext()) {
-			String itemName = (String) iter.next();
-			Object itemValue = entity.get(itemName);
-
-			// print object types....
-			logger.fine("Entry " + itemName + " is a "
-					+ itemValue.getClass().getName());
-
-			if (itemValue instanceof Object[]) {
-				logger.fine("value type is Array");
-				Vector<?> v = new Vector();
-				v.copyInto((Object[]) itemValue);
-				result.replaceItemValue(itemName, v);
-			} else {
-				if (itemValue instanceof ArrayList) {
-					logger.fine("value type is ArrayList");
-					
-					ArrayList arrayList=(ArrayList) itemValue;
-					// test if first element of the list is a Map 
-					// then call recursiv
-					if (arrayList.size()>0 && arrayList.get(0) instanceof Map) {
-						List<Map> mapList=arrayList;
-						Vector vItemColList=new Vector();
-						for (Map embeddedEntity: mapList) {
-							vItemColList.add(convertToItemCollection(embeddedEntity));
-						}
-						result.replaceItemValue(itemName, vItemColList);
-					} else {
-						result.replaceItemValue(itemName, itemValue);
-					}
-					
-				} else {
-					// default - should be a basic object (String)
-					result.replaceItemValue(itemName, itemValue);
-					logger.fine(" Value="+itemValue);
-				}
-			}
-			
-
-		}
-
-		return result;
 
 	}
 }

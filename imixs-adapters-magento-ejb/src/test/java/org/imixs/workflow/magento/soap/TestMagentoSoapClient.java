@@ -117,14 +117,12 @@ public class TestMagentoSoapClient {
 		try {
 			result = magentoClient.getProductBySKU("100");
 		} catch (MagentoException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			Assert.fail();
 		}
-		// result = magentoPlugin.getStockitems();
 
-		Assert.assertTrue(result.hasItem("entity_id"));
-		Assert.assertFalse(result.getItemValueString("entity_id").isEmpty());
+		Assert.assertTrue(result.hasItem("product_id"));
+		Assert.assertFalse(result.getItemValueString("product_id").isEmpty());
 		Assert.assertEquals("100", result.getItemValueString("sku"));
 		Assert.assertEquals("simple", result.getItemValueString("type_id"));
 
