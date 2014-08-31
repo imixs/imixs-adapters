@@ -38,6 +38,7 @@ import org.imixs.workflow.magento.soap.generated.CatalogProductReturnEntity;
 import org.imixs.workflow.magento.soap.generated.CustomerCustomerEntity;
 import org.imixs.workflow.magento.soap.generated.SalesOrderAddressEntity;
 import org.imixs.workflow.magento.soap.generated.SalesOrderEntity;
+import org.imixs.workflow.magento.soap.generated.SalesOrderListEntity;
 
 /**
  * Adapter Class to convert Magento SOAP Client Object Classes into
@@ -183,6 +184,28 @@ public class MagentoSOAPAdapter {
 		return customer;
 	}
 	
+	
+	public static ItemCollection adapt(SalesOrderListEntity entity) {
+		if (entity == null) {
+			return null;
+		}
+		ItemCollection customer = new ItemCollection();
+
+
+		customer.replaceItemValue("Created_at", entity.getCreated_at());
+		customer.replaceItemValue("customer_id", entity.getCustomer_id());
+		customer.replaceItemValue("Increment_id", entity.getIncrement_id());
+		customer.replaceItemValue("Store_id", entity.getStore_id());
+		customer.replaceItemValue("updated_at", entity.getUpdated_at());
+
+		customer.replaceItemValue("order_id", entity.getOrder_id());
+		customer.replaceItemValue("state", entity.getState());
+		customer.replaceItemValue("status", entity.getStatus());
+		
+		// we skip address info here!
+		
+		return customer;
+	}
 	
 	public static ItemCollection adapt(SalesOrderAddressEntity entity) {
 		if (entity == null) {

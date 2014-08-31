@@ -53,19 +53,17 @@ public class TestMagentoRestClient {
 	EntityService entityService = null;
 	PropertyService propertyService = null;
 	Properties properties = null;
-	
+
 	Map<String, ItemCollection> database = new HashMap<String, ItemCollection>();
 
 	@Before
 	public void setup() throws PluginException, IOException, NamingException {
-		
-		// setup from properties file...
-				properties = new Properties();
-				properties.load(Thread.currentThread().getContextClassLoader()
-						.getResource("imixs.properties").openStream());
 
-				
-				
+		// setup from properties file...
+		properties = new Properties();
+		properties.load(Thread.currentThread().getContextClassLoader()
+				.getResource("imixs.properties").openStream());
+
 		magentoClient = (MagentoRestClient) MagentoClientFactory
 				.createClient("org.imixs.workflow.magento.rest.MagentoRestClient");
 
@@ -100,7 +98,7 @@ public class TestMagentoRestClient {
 	@Test
 	@Ignore
 	public void testRequestNewToken() {
- 
+
 		Scanner in = new Scanner(System.in);
 
 		Token requestToken = magentoClient.getRequestToken();
@@ -126,8 +124,6 @@ public class TestMagentoRestClient {
 		in.close();
 	}
 
-
-
 	/**
 	 * This Test checks the Magento Connection...
 	 * 
@@ -150,8 +146,6 @@ public class TestMagentoRestClient {
 		ItemCollection entity = result.get(0);
 		Assert.assertTrue(entity.hasItem("entity_id"));
 		Assert.assertEquals("simple", entity.getItemValueString("type_id"));
-		
-		
 
 	}
 
@@ -187,24 +181,19 @@ public class TestMagentoRestClient {
 
 		List<ItemCollection> result = null;
 		try {
-			result = magentoClient.getOrders("pending", 0, 0);
+			result = magentoClient.getOrders("pending");
 		} catch (PluginException e) {
 
 			e.printStackTrace();
 			Assert.fail();
 		}
 
-		Assert.assertNotNull(result); 
+		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size() > 4);
 
 		ItemCollection entity = result.get(0);
-		Assert.assertTrue(entity.hasItem("entity_id"));
+		Assert.assertTrue(entity.hasItem("order_id"));
 		Assert.assertEquals("pending", entity.getItemValueString("status"));
-
-		List<ItemCollection> addresses = entity.getItemValue("addresses");
-		Assert.assertTrue(addresses.size() == 2);
-		ItemCollection address = addresses.get(0);
-		Assert.assertEquals("Alabama", address.getItemValueString("region"));
 
 	}
 

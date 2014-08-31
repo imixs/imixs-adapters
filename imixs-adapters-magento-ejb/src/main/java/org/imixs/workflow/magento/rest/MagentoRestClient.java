@@ -250,9 +250,7 @@ public class MagentoRestClient implements MagentoClient {
 	 * @throws PluginException
 	 */
 	public ItemCollection getCustomerById(int id) {
-	
 		ItemCollection customer = null;
-
 		String sURL = magentoApiURL + "/customers/" + id;
 		// add filter
 		// sURL += "?filter[1][attribute]=sku&filter[1][in]=" + id;
@@ -287,9 +285,7 @@ public class MagentoRestClient implements MagentoClient {
 							customer.replaceItemValue("addresses", result);
 						}
 					}
-
 				}
-
 			}
 		} catch (PluginException e) {
 			logger.warning("[MagentoPlugin] getCustomerById not found (" + sURL
@@ -337,55 +333,64 @@ public class MagentoRestClient implements MagentoClient {
 		return order;
 	}
 
-	public List<ItemCollection> getOrders(String status, int page, int limit)
+	/**
+	 * This method implements a paging mechanism because the Rest API only
+	 * returns a maximum of 100 entries per call!
+	 */
+	public List<ItemCollection> getOrders(String status)
 			throws MagentoException {
 
-		if (limit <= 0)
-			limit = 100;
-		if (page < 0)
-			page = 0;
+		List<ItemCollection> resultList = new ArrayList<ItemCollection>();
 
-		String requestURL = magentoApiURL + "/orders?limit=" + limit + "&page="
-				+ page;
+		// we need to implement a paging here, because magento deliveres
+		// only max of 100 entries.
+		boolean hasMore = true;
+		int page = 1;
+		int limit = 100;
+		String sLastEntityID = null;
+		while (hasMore) {
+			// build request url with paging info..
+			String requestURL = magentoApiURL + "/orders?limit=" + limit
+					+ "&page=" + page;
 
-		if (status != null && !status.isEmpty()) {
-			requestURL += "&filter[1][attribute]=status&filter[1][in]="
-					+ status;
+			if (status != null && !status.isEmpty()) {
+				requestURL += "&filter[1][attribute]=status&filter[1][in]="
+						+ status;
+			}
+
+			// Now let's go and ask for a protected resource!
+			OAuthRequest request = new OAuthRequest(Verb.GET, requestURL);
+			getService().signRequest(accessToken, request);
+			Response response = request.send();
+			List<ItemCollection> pageResult = MagentoJsonParser
+					.parseObjectList(response.getBody());
+
+			if (pageResult.size() == 0) {
+				logger.fine("[MagentoRestClient] no more orders found.");
+				break;
+			} else {
+				// test first entry to verify if this oder junk was already
+				// read
+				// before (magento delivers event if page is > max orders!)
+				String sEntity_id = pageResult.get(0).getItemValueString(
+						"entity_id");
+				if (sEntity_id.equals(sLastEntityID)) {
+					// max enties read! we can leave here...
+					hasMore = false;
+					logger.info("[MagentoRestClient] max orders read ");
+					break;
+				}
+				sLastEntityID = sEntity_id;
+			}
+			logger.fine("[MagentoSchedulerSerivce] add page result....");
+			for (ItemCollection aEntity : pageResult) {
+				aEntity.replaceItemValue("order_id", aEntity.getItemValue("entity_id"));
+				resultList.add(aEntity);
+			}
+			// continue with next page!
+			page++;
 		}
-
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, requestURL);
-
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-
-		return MagentoJsonParser.parseObjectList(response.getBody());
-	}
-
-	/**
-	 * This method finds the magento order entity for a workitem.
-	 * 
-	 * The order ID is stored in the property txtName with the following format:
-	 * 
-	 * <code>
-	 *    magento:order:1
-	 *  </code>
-	 * 
-	 * @return order or null if no order exits
-	 */
-	public ItemCollection findOrderByWorkitem(ItemCollection workitem) {
-
-		String sKey = workitem.getItemValueString("txtName");
-		if (sKey.isEmpty() || !sKey.startsWith("magento:order:")) {
-			logger.warning("[MagentoService] findOrderByWorkitem - wrong format of order id txtname='"
-					+ sKey + "' !");
-			return null;
-		}
-
-		sKey = sKey.substring(14);
-		ItemCollection order = getOrderById(sKey);
-		return order;
-
+		return resultList;
 	}
 
 	@Override
@@ -393,6 +398,8 @@ public class MagentoRestClient implements MagentoClient {
 			String comment) throws MagentoException {
 		logger.warning("[MagentoSOAPClient] method not implemented: getAddOrderComment");
 		// TODO Auto-generated method stub
+		// not implemented because this method is not supported by Magento Rest
+		// API!
 	}
 
 }

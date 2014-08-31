@@ -61,7 +61,7 @@ public class MagentoPlugin extends AbstractPlugin {
 	String user = null;
 	String password = null;
 
-	private MagentoRestClient magentoService = null;
+	private MagentoClient magentoService = null;
 	private WorkflowService workflowSerivice = null;
 
 	private static Logger logger = Logger.getLogger(MagentoPlugin.class
@@ -145,7 +145,7 @@ public class MagentoPlugin extends AbstractPlugin {
 						.getItemValueString("m_customer_id");
 				if (!customerID.isEmpty()) {
 					ItemCollection customer = magentoService
-							.getCustomerById(customerID);
+							.getCustomerById(new Integer(customerID));
 					if (customer != null) {
 						workitem.replaceItemValue("txtMagentoCustomerEmail",
 								customer.getItemValueString("email"));

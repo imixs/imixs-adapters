@@ -136,7 +136,7 @@ import org.imixs.workflow.magento.rest.MagentoRestClient;
 @Local
 public class MagentoSchedulerService {
 
-	private Date  endDate;
+	private Date endDate;
 	private String id;
 	private ItemCollection configuration = null;
 	private int workitemsImported;
@@ -203,8 +203,9 @@ public class MagentoSchedulerService {
 	public ItemCollection saveConfiguration(ItemCollection configItemCollection)
 			throws AccessDeniedException {
 		// update write and read access
-		configItemCollection.replaceItemValue("type", MagentoRestClient.ENTITY_TYPE);
-		//configItemCollection.replaceItemValue("txtName", NAME);
+		configItemCollection.replaceItemValue("type",
+				MagentoRestClient.ENTITY_TYPE);
+		// configItemCollection.replaceItemValue("txtName", NAME);
 		configItemCollection.replaceItemValue("$writeAccess",
 				"org.imixs.ACCESSLEVEL.MANAGERACCESS");
 		configItemCollection.replaceItemValue("$readAccess",
@@ -215,13 +216,12 @@ public class MagentoSchedulerService {
 
 		configItemCollection = updateTimerDetails(configItemCollection);
 		// save entity
-		configuration =  workflowService.getEntityService().save(configItemCollection);
+		configuration = workflowService.getEntityService().save(
+				configItemCollection);
 
 		return configuration;
 	}
 
-
-	
 	/**
 	 * This Method starts the TimerService.
 	 * 
@@ -312,8 +312,7 @@ public class MagentoSchedulerService {
 
 		return configItemCollection;
 	}
-	
-	
+
 	/**
 	 * Cancels a running timer instance. After cancel a timer the corresponding
 	 * timerDescripton (ItemCollection) is no longer valid
@@ -406,7 +405,7 @@ public class MagentoSchedulerService {
 		workitemsImported = 0;
 		workitemsUpdated = 0;
 		workitemsFailed = 0;
-		magentoOrdersTotal=0;
+		magentoOrdersTotal = 0;
 
 		// Startzeit ermitteln
 		long lProfiler = System.currentTimeMillis();
@@ -431,11 +430,9 @@ public class MagentoSchedulerService {
 					workitemsUpdated);
 			configuration.replaceItemValue("numWorkItemsFailed",
 					workitemsFailed);
-			
-			configuration.replaceItemValue("numOrdersTotal",
-					magentoOrdersTotal);
-			
-			
+
+			configuration
+					.replaceItemValue("numOrdersTotal", magentoOrdersTotal);
 
 		} catch (PluginException e) {
 			e.printStackTrace();
@@ -459,12 +456,14 @@ public class MagentoSchedulerService {
 		logger.info("[ImportSchedulerService] import finished successfull: "
 				+ ((System.currentTimeMillis()) - lProfiler) + " ms");
 
-		logger.info("[ImportSchedulerService] " + magentoOrdersTotal + " magento orders verified");
-		logger.info("[ImportSchedulerService] " + workitemsImported + " workitems created");
-		logger.info("[ImportSchedulerService] " + workitemsUpdated + " workitems updated");
+		logger.info("[ImportSchedulerService] " + magentoOrdersTotal
+				+ " magento orders verified");
+		logger.info("[ImportSchedulerService] " + workitemsImported
+				+ " workitems created");
+		logger.info("[ImportSchedulerService] " + workitemsUpdated
+				+ " workitems updated");
 		logger.info("[ImportSchedulerService] " + workitemsFailed + " errors");
 
-		
 		/*
 		 * Check if Timer should be canceld now?
 		 */
@@ -551,51 +550,18 @@ public class MagentoSchedulerService {
 				continue;
 			}
 
-			// fetch orders by status.....
-			// we need to implement a paging here, because magento deliveres
-			// only max of 100 entries.
-			boolean hasMore = true;
-			int page = 1;
-			int limit = 100;
-			String sLastEntityID = null;
+			logger.info("[MagentoSchedulerSerivce] read orders "
+					+ " orderstatus=" + sMagentoStatus);
 
-			while (hasMore) {
-				logger.info("[MagentoSchedulerSerivce] check "
-						+ " orderstatus=" + sMagentoStatus + " (limit="
-						+ +limit + " page=" + page+")");
+			List<ItemCollection> orders = magentoService.getClient().getOrders(
+					sMagentoStatus);
 
-				List<ItemCollection> orders = magentoService.getClient().getOrders(
-						sMagentoStatus, page, limit);
+			logger.info("[MagentoSchedulerSerivce] " + orders.size()
+					+ " orders found, start processing....");
 
-				logger.info("[MagentoSchedulerSerivce] " + orders.size()
-						+ " orders found.");
+			// process order list
+			processOrderList(orders, orderModelVersion, iProcessID);
 
-				if (orders.size() == 0) {
-					logger.fine("[MagentoSchedulerSerivce] no more orders found, stop processing.");
-					break;
-				} else {
-					// test first entry to verify if this oder junk was already
-					// read
-					// before (magento delivers event if page is > max orders!)
-					String sEntity_id = orders.get(0).getItemValueString(
-							"entity_id");
-					if (sEntity_id.equals(sLastEntityID)) {
-						// max enties read! we can leave here...
-						hasMore = false;
-						logger.info("[MagentoSchedulerSerivce] max orders read ");
-						break;
-					}
-					sLastEntityID = sEntity_id;
-				}
-
-				logger.info("[MagentoSchedulerSerivce] start processing....");
-
-				// process order list
-				processOrderList(orders, orderModelVersion, iProcessID);
-
-				// continue with next page!
-				page++;
-			}
 		}
 
 	}
@@ -672,9 +638,8 @@ public class MagentoSchedulerService {
 					}
 
 				}
-				
-				magentoOrdersTotal++;
 
+				magentoOrdersTotal++;
 
 				if (bUpdate) {
 					// process activityId = 800
@@ -708,9 +673,6 @@ public class MagentoSchedulerService {
 			PluginException {
 		workflowService.processWorkItem(aWorkitem);
 	}
-	
-	
-	
 
 	/**
 	 * Create an interval timer whose first expiration occurs at a given point
@@ -832,7 +794,6 @@ public class MagentoSchedulerService {
 
 	}
 
-	
 	/**
 	 * Update the timer details of a running timer service. The method updates
 	 * the properties netxtTimeout and timeRemaining and store them into the
@@ -869,7 +830,4 @@ public class MagentoSchedulerService {
 		return configuration;
 	}
 
-	
-	
-	
 }

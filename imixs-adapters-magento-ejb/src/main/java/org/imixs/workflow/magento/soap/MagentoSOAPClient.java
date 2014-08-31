@@ -29,11 +29,8 @@ package org.imixs.workflow.magento.soap;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 import javax.xml.rpc.ServiceException;
@@ -57,21 +54,23 @@ public class MagentoSOAPClient implements MagentoClient {
 	public final static String CONNECTION_FAILURE = "CONNECTION_FAILURE";
 	private String magentoAccessKey = null;
 	private String magentoAccessSecret = null;
-
 	private String sessionId = null;
 	private Mage_Api_Model_Server_V2_HandlerPortType stub = null;
-
 	private static Logger logger = Logger.getLogger(MagentoSOAPClient.class
 			.getName());
 
 	@Override
 	public void connect(ItemCollection magentoConfiguration)
 			throws MagentoException {
+		
+		if (sessionId!=null) {
+			// already connected
+			return;
+		}
 		magentoAccessKey = magentoConfiguration
 				.getItemValueString("txtMagentoAccessKey");
 		magentoAccessSecret = magentoConfiguration
 				.getItemValueString("txtMagentoAccessSecret");
-
 		MagentoService service = new MagentoServiceLocator();
 		try {
 			stub = service.getMage_Api_Model_Server_V2_HandlerPort();
@@ -86,7 +85,6 @@ public class MagentoSOAPClient implements MagentoClient {
 			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
 					CONNECTION_FAILURE, "Connection failed: ", e);
 		}
-
 	}
 
 	@Override
@@ -97,26 +95,15 @@ public class MagentoSOAPClient implements MagentoClient {
 	@Override
 	public void getAddOrderComment(String orderIncrementId, String status,
 			String comment) throws MagentoException {
-
 		logger.fine("[MagentoSOAPClient] getAddOrderComment - sessionId="
 				+ sessionId);
-
-		java.lang.Object[] args = new Object[4];
-		args[0] = orderIncrementId;
-		args[1] = status;
-		args[2] = comment;
-		args[3] = "false";
-
 		try {
 			stub.salesOrderAddComment(sessionId, orderIncrementId, status,
 					comment, "false");
-
-			// .call(sessionId, "sales_order.addComment", args);
 		} catch (RemoteException e) {
 			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
 					CONNECTION_FAILURE, "getAddOrderComment failed: ", e);
 		}
-
 	}
 
 	@Override
@@ -172,7 +159,8 @@ public class MagentoSOAPClient implements MagentoClient {
 	}
 
 	@Override
-	public List<ItemCollection> getOrders(String status, int page, int limit) {
+	public List<ItemCollection> getOrders(String status)
+			throws MagentoException {
 		logger.fine("[MagentoSOAPClient] getOrders - sessionId=" + sessionId);
 
 		Filters filters = new Filters();
@@ -184,15 +172,15 @@ public class MagentoSOAPClient implements MagentoClient {
 					sessionId, filters);
 			if (responseObject != null) {
 				for (SalesOrderListEntity entity : responseObject) {
-//					ItemCollection itemCol = MagentoSOAPAdapter.adapt(entity);
-//					if (itemCol != null) {
-//						result.add(itemCol);
-//					}
+					ItemCollection itemCol = MagentoSOAPAdapter.adapt(entity);
+					if (itemCol != null) {
+						result.add(itemCol);
+					}
 				}
 			}
 		} catch (RemoteException e) {
-//			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
-//					CONNECTION_FAILURE, "getOrders failed: ", e);
+			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
+					CONNECTION_FAILURE, "getOrders failed: ", e);
 		}
 		return result;
 	}
@@ -211,6 +199,5 @@ public class MagentoSOAPClient implements MagentoClient {
 			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
 					CONNECTION_FAILURE, "getProductBySKU failed: ", e);
 		}
-
 	}
 }

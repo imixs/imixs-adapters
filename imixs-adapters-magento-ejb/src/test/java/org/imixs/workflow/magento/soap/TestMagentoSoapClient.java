@@ -57,6 +57,9 @@ public class TestMagentoSoapClient {
 	@Before
 	public void setup() throws PluginException, IOException, NamingException {
 
+		if (magentoClient!=null) {
+			return;
+		}
 		// setup from properties file...
 		properties = new Properties();
 		properties.load(Thread.currentThread().getContextClassLoader()
@@ -162,7 +165,7 @@ public class TestMagentoSoapClient {
 
 		List<ItemCollection> result = null;
 		try {
-			result = magentoClient.getOrders("pending", 0, 0);
+			result = magentoClient.getOrders("pending");
 		} catch (PluginException e) {
 
 			e.printStackTrace();
@@ -171,15 +174,9 @@ public class TestMagentoSoapClient {
 
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size() > 4);
-
 		ItemCollection entity = result.get(0);
-		Assert.assertTrue(entity.hasItem("entity_id"));
+		Assert.assertTrue(entity.hasItem("order_id"));
 		Assert.assertEquals("pending", entity.getItemValueString("status"));
-
-		List<ItemCollection> addresses = entity.getItemValue("addresses");
-		Assert.assertTrue(addresses.size() == 2);
-		ItemCollection address = addresses.get(0);
-		Assert.assertEquals("Alabama", address.getItemValueString("region"));
 
 	}
 

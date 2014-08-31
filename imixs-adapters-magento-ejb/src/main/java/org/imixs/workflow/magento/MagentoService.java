@@ -27,10 +27,8 @@
 
 package org.imixs.workflow.magento;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -45,16 +43,6 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
-import org.imixs.workflow.magento.MagentoCache;
-import org.imixs.workflow.magento.rest.MagentoJsonParser;
-import org.imixs.workflow.magento.rest.MagentoRestClient;
-import org.scribe.builder.ServiceBuilder;
-import org.scribe.model.OAuthRequest;
-import org.scribe.model.Response;
-import org.scribe.model.Token;
-import org.scribe.model.Verb;
-import org.scribe.model.Verifier;
-import org.scribe.oauth.OAuthService;
 
 /**
  * This EJB provides methods to interact with a magento instance through the
@@ -80,7 +68,6 @@ public class MagentoService {
 
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
 	public static final String ENTITY_TYPE = "ConfigMagento";
-	private ItemCollection magentoConfiguration = null;
 
 	boolean debugMode = false;
 
