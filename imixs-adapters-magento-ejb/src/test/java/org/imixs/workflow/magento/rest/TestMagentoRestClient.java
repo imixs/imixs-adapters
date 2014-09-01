@@ -178,7 +178,7 @@ public class TestMagentoRestClient {
 	 */
 	@Test
 	public void testGetPendingOrders() { 
-
+ 
 		List<ItemCollection> result = null;
 		try {
 			result = magentoClient.getOrders("pending");

@@ -97,22 +97,41 @@ public class MagentoService {
 	}
 
 	/**
+	 * resetzs the connections
+	 */
+	public void reset() {
+
+		configuration = loadConfiguration();
+
+		if (magentoSOAPClient != null) {
+			magentoSOAPClient.disconnect();
+			magentoSOAPClient = null;
+		}
+		if (magentoRestClient != null) {
+			magentoRestClient.disconnect();
+			magentoRestClient = null;
+		}
+	}
+
+	/**
 	 * implements a lazzy loading
 	 * 
 	 * @return
 	 */
 	public MagentoClient getSOAPClient() {
+
 		if (magentoSOAPClient == null) {
+
 			magentoSOAPClient = MagentoClientFactory
 					.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
 
-			
 			try {
 				magentoSOAPClient.connect(configuration);
 			} catch (MagentoException e) {
-				logger.severe("[MagentoService] unable to connect SOAP Client ! " + e.getMessage());
+				logger.severe("[MagentoService] unable to connect SOAP Client ! "
+						+ e.getMessage());
 				e.printStackTrace();
-				magentoSOAPClient=null;
+				magentoSOAPClient = null;
 			}
 		}
 
@@ -127,9 +146,10 @@ public class MagentoService {
 			try {
 				magentoRestClient.connect(configuration);
 			} catch (MagentoException e) {
-				logger.severe("[MagentoService] unable to connect Rest Client ! " + e.getMessage());
+				logger.severe("[MagentoService] unable to connect Rest Client ! "
+						+ e.getMessage());
 				e.printStackTrace();
-				magentoRestClient=null;
+				magentoRestClient = null;
 			}
 		}
 

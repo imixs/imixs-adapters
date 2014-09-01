@@ -307,7 +307,7 @@ public class MagentoSchedulerService {
 					+ configItemCollection.getItemValueString("txtName")
 					+ " started: " + id);
 		}
-
+		configuration.replaceItemValue("errormessage", "");
 		configItemCollection = saveConfiguration(configItemCollection);
 
 		return configItemCollection;
@@ -434,15 +434,14 @@ public class MagentoSchedulerService {
 			configuration
 					.replaceItemValue("numOrdersTotal", magentoOrdersTotal);
 
-		} catch (PluginException e) {
+		} catch (MagentoException e) {
 			e.printStackTrace();
 			// stop timer!
 			timer.cancel();
-			System.out
-					.println("[ImportSchedulerService] Timeout sevice stopped: "
+			logger.severe("[ImportSchedulerService] Timeout sevice stopped: "
 							+ sTimerID);
 			configuration.replaceItemValue("errormessage", e.toString());
-
+			magentoService.reset();
 		}
 
 		// Save statistic in configuration
@@ -516,7 +515,7 @@ public class MagentoSchedulerService {
 	 * @throws PluginException
 	 */
 	@SuppressWarnings("unchecked")
-	public void importOrders() throws PluginException {
+	public void importOrders() throws MagentoException {
 		int iProcessID = -1;
 		String sMagentoStatus = null;
 

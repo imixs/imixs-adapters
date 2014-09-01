@@ -61,7 +61,7 @@ public class MagentoPlugin extends AbstractPlugin {
 	String user = null;
 	String password = null;
 
-	private MagentoClient magentoService = null;
+	private MagentoService magentoService = null;
 	private WorkflowService workflowSerivice = null;
 
 	private static Logger logger = Logger.getLogger(MagentoPlugin.class
@@ -85,7 +85,7 @@ public class MagentoPlugin extends AbstractPlugin {
 			InitialContext ictx = new InitialContext();
 			Context ctx = (Context) ictx.lookup("java:comp/env");
 			String jndiName = "ejb/MagentoService";
-			magentoService = (MagentoRestClient) ctx.lookup(jndiName);
+			magentoService = (MagentoService) ctx.lookup(jndiName);
 		} catch (NamingException e) {
 			throw new PluginException(MagentoPlugin.class.getSimpleName(),
 					MAGENTOSERVICE_NOT_BOUND, "MagentoService not bound", e);
@@ -144,7 +144,7 @@ public class MagentoPlugin extends AbstractPlugin {
 				String customerID = workitem
 						.getItemValueString("m_customer_id");
 				if (!customerID.isEmpty()) {
-					ItemCollection customer = magentoService
+					ItemCollection customer = magentoService.getRestClient()
 							.getCustomerById(new Integer(customerID));
 					if (customer != null) {
 						workitem.replaceItemValue("txtMagentoCustomerEmail",

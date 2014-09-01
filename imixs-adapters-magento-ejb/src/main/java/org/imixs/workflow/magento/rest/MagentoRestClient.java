@@ -29,6 +29,7 @@ package org.imixs.workflow.magento.rest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
@@ -75,8 +76,6 @@ public class MagentoRestClient implements MagentoClient {
 	String magentoAccessSecret = null;
 	Token accessToken = null;
 
-	boolean debugMode = false;
-
 	private static Logger logger = Logger.getLogger(MagentoRestClient.class
 			.getName());
 
@@ -101,8 +100,6 @@ public class MagentoRestClient implements MagentoClient {
 			magentoAccessSecret = magentoConfiguration
 					.getItemValueString("txtMagentoRestAccessSecret");
 
-			debugMode = magentoConfiguration
-					.getItemValueBoolean("keyMagentoDebug");
 		}
 
 		logger.fine("[MagentoPlugin] magentoApiKey='" + magentoConsumerKey
@@ -114,7 +111,7 @@ public class MagentoRestClient implements MagentoClient {
 
 		// create api
 		magentoApi = new MagentoApi(magentoBasisURL);
-		magentoApi.setAdminAPI(debugMode);
+		magentoApi.setAdminAPI(true);
 
 		// Create a signed token....
 		logger.fine("[MagentoPlugin] generate access token: "
@@ -138,7 +135,7 @@ public class MagentoRestClient implements MagentoClient {
 	 * @return
 	 */
 	public OAuthService getService() {
-		if (debugMode)
+		if (logger.isLoggable( Level.FINE))
 			return new ServiceBuilder().provider(magentoApi)
 					.apiKey(magentoConsumerKey)
 					.apiSecret(magentoConsumerSecret).debug().build();
