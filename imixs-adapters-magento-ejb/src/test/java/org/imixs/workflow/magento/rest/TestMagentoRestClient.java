@@ -69,19 +69,19 @@ public class TestMagentoRestClient {
 
 		ItemCollection config = new ItemCollection();
 
-		config.replaceItemValue("txtMagentoUriBasis",
+		config.replaceItemValue("txtMagentoRestUriBasis",
 				properties.getProperty("magento.rest.uri-basis"));
 
-		config.replaceItemValue("txtMagentoUriApi",
+		config.replaceItemValue("txtMagentoRestUriApi",
 				properties.getProperty("magento.rest.uri-api"));
 		config.replaceItemValue("txtMagentoOAuthConsumerKey",
 				properties.getProperty("magento.oauth.consumer-key"));
-		config.replaceItemValue("txtMagentoOAuhtConsumerSecret",
+		config.replaceItemValue("txtMagentoOAuthConsumerSecret",
 				properties.getProperty("magento.oauth.consumer-secret"));
-		config.replaceItemValue("txtMagentoAccessKey",
+		config.replaceItemValue("txtMagentoRestAccessKey",
 				properties.getProperty("magento.rest.access-key"));
 
-		config.replaceItemValue("txtMagentoAccessSecret",
+		config.replaceItemValue("txtMagentoRestAccessSecret",
 				properties.getProperty("magento.rest.access-secret"));
 
 		magentoClient.connect(config);
@@ -177,7 +177,7 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
-	public void testGetPendingOrders() {
+	public void testGetPendingOrders() { 
 
 		List<ItemCollection> result = null;
 		try {

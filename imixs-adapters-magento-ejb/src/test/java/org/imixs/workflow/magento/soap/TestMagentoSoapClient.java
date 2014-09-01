@@ -60,17 +60,13 @@ public class TestMagentoSoapClient {
 		if (magentoClient!=null) {
 			return;
 		}
-		// setup from properties file...
-		properties = new Properties();
-		properties.load(Thread.currentThread().getContextClassLoader()
-				.getResource("imixs.properties").openStream());
-
+	
 		magentoClient =  MagentoClientFactory
 				.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
 
 		ItemCollection config = new ItemCollection();
 
-		config.replaceItemValue("txtMagentoAccessKey",
+		config.replaceItemValue("txtMagentoSOAPAccessKey",
 				properties.getProperty("magento.soap.access-key"));
 
 		config.replaceItemValue("txtMagentoAccessSecret",

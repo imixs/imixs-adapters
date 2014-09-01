@@ -68,9 +68,9 @@ public class MagentoSOAPClient implements MagentoClient {
 			return;
 		}
 		magentoAccessKey = magentoConfiguration
-				.getItemValueString("txtMagentoAccessKey");
+				.getItemValueString("txtMagentoSOAPAccessKey");
 		magentoAccessSecret = magentoConfiguration
-				.getItemValueString("txtMagentoAccessSecret");
+				.getItemValueString("txtMagentoSOAPAccessSecret");
 		MagentoService service = new MagentoServiceLocator();
 		try {
 			stub = service.getMage_Api_Model_Server_V2_HandlerPort();

@@ -50,6 +50,9 @@ import org.imixs.workflow.jee.util.PropertyService;
  * 
  * The service initialize a Client Implementation based on a configuration.
  * 
+ * The Service EJB provides to both client types the MagentoSOAPClient and the
+ * MagnetoRestClient. The clients are lazy loaded in the getter methods.
+ * 
  * @author rsoika
  */
 @DeclareRoles({ "org.imixs.ACCESSLEVEL.NOACCESS",
@@ -69,8 +72,6 @@ public class MagentoService {
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
 	public static final String ENTITY_TYPE = "ConfigMagento";
 
-	boolean debugMode = false;
-
 	@EJB
 	PropertyService propertyService = null;
 
@@ -80,10 +81,9 @@ public class MagentoService {
 	@EJB
 	MagentoCache magentoCache = null;
 
-	String clientImplementationClassName = null;
-
-	MagentoClient client = null;
-
+	private MagentoClient magentoSOAPClient = null;
+	private MagentoClient magentoRestClient = null;
+	private ItemCollection configuration = null;
 	private static Logger logger = Logger.getLogger(MagentoService.class
 			.getName());
 
@@ -93,21 +93,47 @@ public class MagentoService {
 	@PostConstruct
 	public void init() {
 
-		// read data from property service
-		clientImplementationClassName = propertyService.getProperties()
-				.getProperty("magento.clientImplementationClassName");
-
-		if ("true".equals(propertyService.getProperties().getProperty(
-				"magento.debug")))
-			debugMode = true;
-
-		// create Client...
-
-		// TODO
+		configuration = loadConfiguration();
 	}
 
-	public MagentoClient getClient() {
-		return client;
+	/**
+	 * implements a lazzy loading
+	 * 
+	 * @return
+	 */
+	public MagentoClient getSOAPClient() {
+		if (magentoSOAPClient == null) {
+			magentoSOAPClient = MagentoClientFactory
+					.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
+
+			
+			try {
+				magentoSOAPClient.connect(configuration);
+			} catch (MagentoException e) {
+				logger.severe("[MagentoService] unable to connect SOAP Client ! " + e.getMessage());
+				e.printStackTrace();
+				magentoSOAPClient=null;
+			}
+		}
+
+		return magentoSOAPClient;
+	}
+
+	public MagentoClient getRestClient() {
+		if (magentoRestClient == null) {
+			magentoRestClient = MagentoClientFactory
+					.createClient("org.imixs.workflow.magento.rest.MagentoRestClient");
+
+			try {
+				magentoRestClient.connect(configuration);
+			} catch (MagentoException e) {
+				logger.severe("[MagentoService] unable to connect Rest Client ! " + e.getMessage());
+				e.printStackTrace();
+				magentoRestClient=null;
+			}
+		}
+
+		return magentoRestClient;
 	}
 
 	/**
@@ -134,9 +160,6 @@ public class MagentoService {
 			config = new ItemCollection();
 		}
 
-		
-		
-		
 		return config;
 
 	}
@@ -180,9 +203,10 @@ public class MagentoService {
 	 *  </code>
 	 * 
 	 * @return order or null if no order exits
-	 * @throws MagentoException 
+	 * @throws MagentoException
 	 */
-	public ItemCollection findOrderByWorkitem(ItemCollection workitem) throws MagentoException {
+	public ItemCollection findOrderByWorkitem(ItemCollection workitem)
+			throws MagentoException {
 
 		String sKey = workitem.getItemValueString("txtName");
 		if (sKey.isEmpty() || !sKey.startsWith("magento:order:")) {
@@ -192,7 +216,7 @@ public class MagentoService {
 		}
 
 		sKey = sKey.substring(14);
-		ItemCollection order = client.getOrderById(sKey);
+		ItemCollection order = this.getRestClient().getOrderById(sKey);
 		return order;
 
 	}
@@ -213,7 +237,7 @@ public class MagentoService {
 	 * 
 	 * @param item_id
 	 * @return
-	 * @throws MagentoException 
+	 * @throws MagentoException
 	 * @throws PluginException
 	 */
 	public ItemCollection getCustomerById(String id) throws MagentoException {
@@ -223,7 +247,7 @@ public class MagentoService {
 		ItemCollection customer = magentoCache.getCustomer(id);
 		if (customer == null) {
 
-			customer = client.getCustomerById(new Integer(id));
+			customer = this.getRestClient().getCustomerById(new Integer(id));
 			// cache product;
 			if (customer != null) {
 				magentoCache.cacheCustomer(id, customer);
@@ -241,7 +265,7 @@ public class MagentoService {
 	 * 
 	 * @param item_id
 	 * @return
-	 * @throws MagentoException 
+	 * @throws MagentoException
 	 * @throws PluginException
 	 */
 	public ItemCollection getProductBySKU(String sku) throws MagentoException {
@@ -251,7 +275,7 @@ public class MagentoService {
 		ItemCollection product = magentoCache.getProduct(sku);
 		if (product == null) {
 
-			product = client.getProductBySKU(sku);
+			product = this.getRestClient().getProductBySKU(sku);
 
 			// cache product;
 			if (product != null) {

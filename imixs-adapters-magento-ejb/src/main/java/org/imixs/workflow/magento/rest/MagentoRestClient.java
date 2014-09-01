@@ -89,17 +89,17 @@ public class MagentoRestClient implements MagentoClient {
 		// read data from config entity....
 		if (magentoConfiguration != null) {
 			magentoBasisURL = magentoConfiguration
-					.getItemValueString("txtMagentoUriBasis");
+					.getItemValueString("txtMagentoRestUriBasis");
 			magentoApiURL = magentoConfiguration
-					.getItemValueString("txtMagentoUriApi");
+					.getItemValueString("txtMagentoRestUriApi");
 			magentoConsumerKey = magentoConfiguration
 					.getItemValueString("txtMagentoOAuthConsumerKey");
 			magentoConsumerSecret = magentoConfiguration
-					.getItemValueString("txtMagentoOAuhtConsumerSecret");
+					.getItemValueString("txtMagentoOAuthConsumerSecret");
 			magentoAccessKey = magentoConfiguration
-					.getItemValueString("txtMagentoAccessKey");
+					.getItemValueString("txtMagentoRestAccessKey");
 			magentoAccessSecret = magentoConfiguration
-					.getItemValueString("txtMagentoAccessSecret");
+					.getItemValueString("txtMagentoRestAccessSecret");
 
 			debugMode = magentoConfiguration
 					.getItemValueBoolean("keyMagentoDebug");

@@ -553,7 +553,7 @@ public class MagentoSchedulerService {
 			logger.info("[MagentoSchedulerSerivce] read orders "
 					+ " orderstatus=" + sMagentoStatus);
 
-			List<ItemCollection> orders = magentoService.getClient().getOrders(
+			List<ItemCollection> orders = magentoService.getRestClient().getOrders(
 					sMagentoStatus);
 
 			logger.info("[MagentoSchedulerSerivce] " + orders.size()
