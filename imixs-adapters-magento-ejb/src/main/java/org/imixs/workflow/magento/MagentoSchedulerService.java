@@ -310,6 +310,10 @@ public class MagentoSchedulerService {
 		configuration.replaceItemValue("errormessage", "");
 		configItemCollection = saveConfiguration(configItemCollection);
 
+		
+		// clear Cache!
+		magentoService.clearCache();
+		
 		return configItemCollection;
 	}
 

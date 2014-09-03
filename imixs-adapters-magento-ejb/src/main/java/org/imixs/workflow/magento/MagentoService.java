@@ -408,4 +408,8 @@ public class MagentoService {
 
 		return true;
 	}
+
+	public void clearCache() {
+		magentoCache.clearCache();
+	}
 }
