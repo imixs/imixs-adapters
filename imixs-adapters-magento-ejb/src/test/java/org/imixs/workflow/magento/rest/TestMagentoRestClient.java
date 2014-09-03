@@ -1,6 +1,8 @@
 package org.imixs.workflow.magento.rest;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +98,7 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
-	@Ignore
+	//@Ignore
 	public void testRequestNewToken() {
 
 		Scanner in = new Scanner(System.in);
@@ -159,7 +161,24 @@ public class TestMagentoRestClient {
 
 		ItemCollection result = null;
 
-		result = magentoClient.getProductBySKU("100");
+	//	result = magentoClient.getProductBySKU("100");
+		
+		
+		String sSKU="1000-4IH + 1200-11IHSP120cm90cm";
+		String sEncodedSKU=	null;
+		try {
+			 sEncodedSKU=	URLEncoder.encode(sSKU, "UTF-8");
+			 sEncodedSKU=sEncodedSKU.replace("+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	//	sEncodedSKU="1000-4IH%20%2B%201200-11IHSP120cm90cm";
+		
+		result = magentoClient.getProductBySKU(sEncodedSKU);
+		
 		// result = magentoPlugin.getStockitems();
 
 		Assert.assertTrue(result.hasItem("entity_id"));

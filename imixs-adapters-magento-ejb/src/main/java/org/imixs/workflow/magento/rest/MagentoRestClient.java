@@ -27,6 +27,8 @@
 
 package org.imixs.workflow.magento.rest;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -202,6 +204,17 @@ public class MagentoRestClient implements MagentoClient {
 	public ItemCollection getProductBySKU(String sku) {
 		if (sku == null || sku.isEmpty())
 			return null;
+		
+		
+		
+		// now we need to encode the SKU with special character check!
+		try {
+			sku=	URLEncoder.encode(sku, "UTF-8");
+			sku=sku.replace("+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
 
 		ItemCollection product = null;
 
