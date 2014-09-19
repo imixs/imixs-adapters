@@ -147,7 +147,7 @@ public class MagentoHTMLClient {
 		long l = System.currentTimeMillis();
 
 		String result = readPage(basisURL+uri, basisURL+uri);
-		logger.info("[HTMLClient] read page in "
+		logger.fine("[HTMLClient] read page in "
 				+ (System.currentTimeMillis() - l) + " ms");
 		return result;
 	}
@@ -156,7 +156,7 @@ public class MagentoHTMLClient {
 		String pageContent = null;
 		URL obj = new URL(uri);
 
-		logger.info("[HTMLClient] Sending 'GET' request to URL : " + uri);
+		logger.fine("[HTMLClient] Sending 'GET' request to URL : " + uri);
 		HttpURLConnection urlConnection = (HttpURLConnection) obj
 				.openConnection();
 
@@ -249,10 +249,10 @@ public class MagentoHTMLClient {
 			wr.flush();
 			wr.close();
 
-			logger.fine("loginData=" + loginData);
+			logger.finest("loginData=" + loginData);
 
 			responseCode = urlConnection.getResponseCode();
-			logger.fine("[HTMLClient] Response POST Code : " + responseCode);
+			logger.finest("[HTMLClient] Response POST Code : " + responseCode);
 
 			boolean redirect = false;
 			if (responseCode != HttpURLConnection.HTTP_OK) {
@@ -271,23 +271,7 @@ public class MagentoHTMLClient {
 				// get the cookie if need, for login
 				cookies = urlConnection.getHeaderField("Set-Cookie");
 
-				return readPage(newUrl, uri);
-
-				// // open the new connnection again
-				// urlConnection = (HttpURLConnection) new URL(newUrl)
-				// .openConnection();
-				// urlConnection.setRequestProperty("Cookie", cookies);
-				// urlConnection.addRequestProperty("Accept-Language",
-				// "en-US,en;q=0.8");
-				// urlConnection.addRequestProperty("User-Agent", USER_AGENT);
-				// urlConnection.addRequestProperty("Referer", uri);
-				//
-				// logger.fine("Redirect to URL : " + newUrl);
-				// responseCode = urlConnection.getResponseCode();
-				//
-				//
-				// return this.readResponse(urlConnection);
-
+				return readPage(newUrl, uri);				
 			} else {
 				// get the cookie if need, for login
 				cookies = urlConnection.getHeaderField("Set-Cookie");
@@ -347,7 +331,7 @@ public class MagentoHTMLClient {
 	 */
 	private String readResponse(URLConnection urlConnection) throws IOException {
 		// get content of result
-		logger.fine("[RestClient] readResponse....");
+		logger.finest("[RestClient] readResponse....");
 		StringWriter writer = new StringWriter();
 		BufferedReader in = null;
 		try {
@@ -368,7 +352,7 @@ public class MagentoHTMLClient {
 						urlConnection.getInputStream()));
 			String inputLine;
 			while ((inputLine = in.readLine()) != null) {
-				logger.fine(inputLine);
+				logger.finest(inputLine);
 				writer.write(inputLine);
 			}
 		} catch (IOException e) {
