@@ -64,8 +64,7 @@ import org.scribe.oauth.OAuthService;
 public class MagentoRestClient implements MagentoClient {
 
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
-	public static final String ENTITY_TYPE = "ConfigMagento";
-
+	
 	private MagentoApi magentoApi = null;
 
 	String magentoApiURL = null;

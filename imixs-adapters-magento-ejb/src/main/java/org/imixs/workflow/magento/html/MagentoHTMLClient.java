@@ -67,7 +67,7 @@ import org.imixs.workflow.util.Base64;
  * @author Ralph Soika
  * @version 1.0
  */
-public class HTMLClient {
+public class MagentoHTMLClient {
 	private final String USER_AGENT = "Mozilla/5.0";
 
 	private String basicAuthUser = null;
@@ -75,13 +75,14 @@ public class HTMLClient {
 
 	private String user = null;
 	private String password = null;
+	private String basisURL=null;
 
 	private String cookies = null;
 	private String encoding = "UTF-8";
 
 	private String loginFormKey = null;
 
-	private final static Logger logger = Logger.getLogger(HTMLClient.class
+	private final static Logger logger = Logger.getLogger(MagentoHTMLClient.class
 			.getName());
 
 	/**
@@ -90,10 +91,11 @@ public class HTMLClient {
 	 * @param user
 	 * @param password
 	 */
-	public HTMLClient(String user, String password) {
+	public MagentoHTMLClient(String user, String password,String basisURL) {
 		super();
 		this.user = user;
 		this.password = password;
+		this.basisURL=basisURL;
 	}
 
 	/**
@@ -144,7 +146,7 @@ public class HTMLClient {
 	public String readPage(String uri) throws Exception {
 		long l = System.currentTimeMillis();
 
-		String result = readPage(uri, uri);
+		String result = readPage(basisURL+uri, basisURL+uri);
 		logger.info("[HTMLClient] read page in "
 				+ (System.currentTimeMillis() - l) + " ms");
 		return result;

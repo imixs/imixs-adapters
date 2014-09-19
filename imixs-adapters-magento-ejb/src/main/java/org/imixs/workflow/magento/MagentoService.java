@@ -43,6 +43,7 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
+import org.imixs.workflow.magento.html.MagentoHTMLClient;
 
 /**
  * This EJB provides methods to interact with a magento instance through the
@@ -70,7 +71,10 @@ import org.imixs.workflow.jee.util.PropertyService;
 public class MagentoService {
 
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
-	public static final String ENTITY_TYPE = "ConfigMagento";
+	
+	final static public String TYPE = "configuration";
+	final static public String NAME = "MAGENTO";
+
 
 	@EJB
 	PropertyService propertyService = null;
@@ -83,6 +87,7 @@ public class MagentoService {
 
 	private MagentoClient magentoSOAPClient = null;
 	private MagentoClient magentoRestClient = null;
+	private MagentoHTMLClient magentoHTMLClient = null;
 	private ItemCollection configuration = null;
 	private static Logger logger = Logger.getLogger(MagentoService.class
 			.getName());
@@ -111,6 +116,11 @@ public class MagentoService {
 			magentoRestClient.disconnect();
 			magentoRestClient = null;
 		}
+
+		if (magentoHTMLClient != null) {
+			magentoHTMLClient = null;
+		}
+
 	}
 
 	/**
@@ -156,33 +166,72 @@ public class MagentoService {
 		return magentoRestClient;
 	}
 
+	public MagentoHTMLClient getHTMLClient() {
+		if (magentoHTMLClient == null) {
+
+			// read data from config entity....
+			if (configuration != null) {
+				String magentoBasisURL = configuration
+						.getItemValueString("txtMagentoHTMLUriBasis");
+
+				String magentoAccessKey = configuration
+						.getItemValueString("txtMagentoHTMLAccessKey");
+				String magentoAccessSecret = configuration
+						.getItemValueString("txtMagentoHTMLAccessSecret");
+
+				logger.fine("[MagentoService] magentoHTMLBasisURL='"
+						+ magentoBasisURL + "'");
+				logger.fine("[MagentoService] magentoHTMLAccessKey='"
+						+ magentoAccessKey + "'");
+				logger.fine("[MagentoService] magentoBasisURL='"
+						+ magentoBasisURL + "'");
+
+				magentoHTMLClient = new MagentoHTMLClient(magentoAccessKey,
+						magentoAccessSecret,magentoBasisURL);
+			}
+
+		}
+
+		return magentoHTMLClient;
+	}
+
+
 	/**
-	 * Loads the Magento configuration entity. If no config entity was found the
-	 * service reads the configuration from the imixs.properties file.
+	 * This method loads the current magento configuration. If no
+	 * configuration entity yet exists the method returns an empty
+	 * ItemCollection. The method updates the timer details netxtTimeout and
+	 * timeRemaining of a running timer service.
 	 * 
-	 * @return
+	 * @return configuration ItemCollection
 	 */
 	public ItemCollection loadConfiguration() {
+		ItemCollection configItemCollection = null;
+		String sQuery = "SELECT config FROM Entity AS config "
+				+ " JOIN config.textItems AS t2" + " WHERE config.type = '"
+				+ TYPE + "'" + " AND t2.itemName = 'txtname'"
+				+ " AND t2.itemValue = '" + NAME + "'"
+				+ " ORDER BY t2.itemValue asc";
+		Collection<ItemCollection> col = workflowSerivice.getEntityService().findAllEntities(sQuery,
+				0, 1);
 
-		ItemCollection config = null;
-
-		// try to lookup the mangento configuration entity.
-		String sQuery = "SELECT";
-		sQuery += " wi FROM Entity as wi " + " WHERE wi.type='"
-				+ MagentoService.ENTITY_TYPE + "'";
-		Collection<ItemCollection> col = workflowSerivice.getEntityService()
-				.findAllEntities(sQuery, 0, 1);
 		if (col.size() > 0) {
-			config = col.iterator().next();
+			configItemCollection = col.iterator().next();
+
+		} else {
+			// create default values
+			configItemCollection = new ItemCollection();
+			try {
+				configItemCollection.replaceItemValue("type", TYPE);
+				configItemCollection.replaceItemValue("txtname", NAME);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
-		if (config == null) {
-			config = new ItemCollection();
-		}
-
-		return config;
-
+		return configItemCollection;
 	}
+
 
 	/**
 	 * This method finds a workitem for a magento order id. If no worktiem exits

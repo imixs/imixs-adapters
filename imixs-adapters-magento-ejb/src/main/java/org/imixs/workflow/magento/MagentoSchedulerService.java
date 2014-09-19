@@ -167,20 +167,6 @@ public class MagentoSchedulerService {
 	 */
 	public ItemCollection loadConfiguration() {
 		configuration = magentoService.loadConfiguration();
-		if (configuration == null) {
-			try {
-				// create an empty entity with type and with start and stop
-				// default values
-				configuration = new ItemCollection();
-				Calendar cal = Calendar.getInstance();
-				configuration.replaceItemValue("datStart", cal.getTime());
-				configuration.replaceItemValue("datStop", cal.getTime());
-				configuration.replaceItemValue("type",
-						MagentoRestClient.ENTITY_TYPE);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 		updateTimerDetails();
 		return configuration;
 	}
@@ -204,7 +190,7 @@ public class MagentoSchedulerService {
 			throws AccessDeniedException {
 		// update write and read access
 		configItemCollection.replaceItemValue("type",
-				MagentoRestClient.ENTITY_TYPE);
+				MagentoService.TYPE);
 		// configItemCollection.replaceItemValue("txtName", NAME);
 		configItemCollection.replaceItemValue("$writeAccess",
 				"org.imixs.ACCESSLEVEL.MANAGERACCESS");
@@ -416,6 +402,8 @@ public class MagentoSchedulerService {
 
 		logger.info("[MagentoSchedulerService] processing import....");
 
+		// reset clients
+		magentoService.reset();
 		// flush cache
 		magentoCache.flush();
 
