@@ -289,7 +289,7 @@ public class MagentoSchedulerService {
 				configItemCollection.replaceItemValue("Schedule", "");
 
 			}
-			logger.info("[WorkflowSchedulerService] "
+			logger.info("[MagentoSchedulerService] "
 					+ configItemCollection.getItemValueString("txtName")
 					+ " started: " + id);
 		}
@@ -327,7 +327,7 @@ public class MagentoSchedulerService {
 					+ " by " + ctx.getCallerPrincipal().getName();
 			configuration.replaceItemValue("statusmessage", msg);
 
-			logger.info("[WorkflowSchedulerService] "
+			logger.info("[MagentoSchedulerService] "
 					+ configuration.getItemValueString("txtName")
 					+ " stopped: " + id);
 		} else {
@@ -683,7 +683,7 @@ public class MagentoSchedulerService {
 		if (endDate != null)
 			calEnd.setTime(endDate);
 		if (calNow.after(calEnd)) {
-			logger.warning("[WorkflowSchedulerService] "
+			logger.warning("[MagentoSchedulerService] "
 					+ configItemCollection.getItemValueString("txtName")
 					+ " stop-date is in the past");
 
@@ -812,7 +812,7 @@ public class MagentoSchedulerService {
 
 			}
 		} catch (Exception e) {
-			logger.warning("[WorkflowSchedulerService] unable to updateTimerDetails: "
+			logger.warning("[MagentoSchedulerService] unable to updateTimerDetails: "
 					+ e.getMessage());
 			configuration.removeItem("nextTimeout");
 			configuration.removeItem("timeRemaining");
