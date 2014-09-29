@@ -136,7 +136,7 @@ public class MagentoPlugin extends AbstractPlugin {
 				String customerID = workitem
 						.getItemValueString("m_customer_id");
 				if (!customerID.isEmpty()) {
-					ItemCollection customer = magentoService.getRestClient()
+					ItemCollection customer = magentoService.getRestClient(workitem.getItemValueString("txtMagentoConfiguration"))
 							.getCustomerById(new Integer(customerID));
 					if (customer != null) {
 						workitem.replaceItemValue("txtMagentoCustomerEmail",

@@ -28,7 +28,9 @@
 package org.imixs.workflow.magento;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -71,16 +73,14 @@ import org.imixs.workflow.magento.html.MagentoHTMLClient;
 public class MagentoService {
 
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
-	
-	final static public String TYPE = "configuration";
-	final static public String NAME = "MAGENTO";
 
+	final static public String TYPE = "magento";
 
 	@EJB
 	PropertyService propertyService = null;
 
 	@EJB
-	WorkflowService workflowSerivice = null;
+	WorkflowService workflowService = null;
 
 	@EJB
 	MagentoCache magentoCache = null;
@@ -88,7 +88,7 @@ public class MagentoService {
 	private MagentoClient magentoSOAPClient = null;
 	private MagentoClient magentoRestClient = null;
 	private MagentoHTMLClient magentoHTMLClient = null;
-	private ItemCollection configuration = null;
+	private Map<String, ItemCollection> configurations = null;
 	private static Logger logger = Logger.getLogger(MagentoService.class
 			.getName());
 
@@ -97,16 +97,16 @@ public class MagentoService {
 	 */
 	@PostConstruct
 	public void init() {
-
-		configuration = loadConfiguration();
+		// initialize the configuration cache
+		configurations = new HashMap<String, ItemCollection>();
 	}
 
 	/**
 	 * resetzs the connections
 	 */
 	public void reset() {
-
-		configuration = loadConfiguration();
+		// reset cache
+		configurations = new HashMap<String, ItemCollection>();
 
 		if (magentoSOAPClient != null) {
 			magentoSOAPClient.disconnect();
@@ -124,11 +124,14 @@ public class MagentoService {
 	}
 
 	/**
-	 * implements a lazzy loading
+	 * Returns an instance of a SOAPClient for a specified magento shop
+	 * configuration
 	 * 
+	 * @param configID
+	 *            - id of the shop configuration entity
 	 * @return
 	 */
-	public MagentoClient getSOAPClient() {
+	public MagentoClient getSOAPClient(String configID) {
 
 		if (magentoSOAPClient == null) {
 
@@ -136,7 +139,7 @@ public class MagentoService {
 					.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
 
 			try {
-				magentoSOAPClient.connect(configuration);
+				magentoSOAPClient.connect(loadConfiguration(configID));
 			} catch (MagentoException e) {
 				logger.severe("[MagentoService] unable to connect SOAP Client ! "
 						+ e.getMessage());
@@ -148,13 +151,21 @@ public class MagentoService {
 		return magentoSOAPClient;
 	}
 
-	public MagentoClient getRestClient() {
+	/**
+	 * Returns an instance of a Rest Client for a specified magento shop
+	 * configuration
+	 * 
+	 * @param configID
+	 *            - id of the shop configuration entity
+	 * @return
+	 */
+	public MagentoClient getRestClient(String configID) {
 		if (magentoRestClient == null) {
 			magentoRestClient = MagentoClientFactory
 					.createClient("org.imixs.workflow.magento.rest.MagentoRestClient");
 
 			try {
-				magentoRestClient.connect(configuration);
+				magentoRestClient.connect(loadConfiguration(configID));
 			} catch (MagentoException e) {
 				logger.severe("[MagentoService] unable to connect Rest Client ! "
 						+ e.getMessage());
@@ -166,9 +177,18 @@ public class MagentoService {
 		return magentoRestClient;
 	}
 
-	public MagentoHTMLClient getHTMLClient() {
+	/**
+	 * Returns an instance of a HTMLClient for a specified magento shop
+	 * configuration
+	 * 
+	 * @param configID
+	 *            - id of the shop configuration entity
+	 * @return
+	 */
+	public MagentoHTMLClient getHTMLClient(String configID) {
 		if (magentoHTMLClient == null) {
 
+			ItemCollection configuration = loadConfiguration(configID);
 			// read data from config entity....
 			if (configuration != null) {
 				String magentoBasisURL = configuration
@@ -187,7 +207,7 @@ public class MagentoService {
 						+ magentoBasisURL + "'");
 
 				magentoHTMLClient = new MagentoHTMLClient(magentoAccessKey,
-						magentoAccessSecret,magentoBasisURL);
+						magentoAccessSecret, magentoBasisURL);
 			}
 
 		}
@@ -195,43 +215,55 @@ public class MagentoService {
 		return magentoHTMLClient;
 	}
 
-
 	/**
-	 * This method loads the current magento configuration. If no
-	 * configuration entity yet exists the method returns an empty
-	 * ItemCollection. The method updates the timer details netxtTimeout and
-	 * timeRemaining of a running timer service.
+	 * This method loads a magento configuration. If no configuration entity yet
+	 * exists the method returns an empty ItemCollection. The method updates the
+	 * timer details netxtTimeout and timeRemaining of a running timer service.
+	 * 
+	 * The method uses a caching mechanism to store still loaded conigurations.
 	 * 
 	 * @return configuration ItemCollection
 	 */
-	public ItemCollection loadConfiguration() {
-		ItemCollection configItemCollection = null;
-		String sQuery = "SELECT config FROM Entity AS config "
-				+ " JOIN config.textItems AS t2" + " WHERE config.type = '"
-				+ TYPE + "'" + " AND t2.itemName = 'txtname'"
-				+ " AND t2.itemValue = '" + NAME + "'"
-				+ " ORDER BY t2.itemValue asc";
-		Collection<ItemCollection> col = workflowSerivice.getEntityService().findAllEntities(sQuery,
-				0, 1);
+	public ItemCollection loadConfiguration(String id) {
 
-		if (col.size() > 0) {
-			configItemCollection = col.iterator().next();
-
-		} else {
-			// create default values
-			configItemCollection = new ItemCollection();
-			try {
-				configItemCollection.replaceItemValue("type", TYPE);
-				configItemCollection.replaceItemValue("txtname", NAME);
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		if (id == null || id.isEmpty()) {
+			logger.warning("[MagentoService] invalid shop configuration id="
+					+ id);
 		}
+		ItemCollection configItemCollection = configurations.get(id);
+		if (configItemCollection == null) {
+			String sQuery = "SELECT config FROM Entity AS config "
+					+ " JOIN config.textItems AS t2" + " WHERE config.type = '"
+					+ TYPE + "'" + " AND t2.itemName = 'txtname'"
+					+ " AND t2.itemValue = '" + id + "'"
+					+ " ORDER BY t2.itemValue asc";
+			Collection<ItemCollection> col = workflowService
+					.getEntityService().findAllEntities(sQuery, 0, 1);
 
+			if (col.size() > 0) {
+				configItemCollection = col.iterator().next();
+				logger.fine("[MagentoService] shop configuration id=" + id
+						+ " loaded");
+
+			} else {
+				logger.fine("[MagentoService] shop configuration id=" + id
+						+ " not defined - creating new one");
+				// create default values
+				configItemCollection = new ItemCollection();
+				try {
+					configItemCollection.replaceItemValue("type", TYPE);
+					configItemCollection.replaceItemValue("txtname", id);
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+			// put new configuration into cache
+			configurations.put(id, configItemCollection);
+		}
 		return configItemCollection;
 	}
-
 
 	/**
 	 * This method finds a workitem for a magento order id. If no worktiem exits
@@ -252,7 +284,7 @@ public class MagentoService {
 		sQuery += " JOIN wi.textItems as t ";
 		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
 		sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
-		Collection<ItemCollection> col = workflowSerivice.getEntityService()
+		Collection<ItemCollection> col = workflowService.getEntityService()
 				.findAllEntities(sQuery, 0, 1);
 		if (col.size() > 0) {
 			return col.iterator().next();
@@ -285,7 +317,13 @@ public class MagentoService {
 		}
 
 		sKey = sKey.substring(14);
-		ItemCollection order = this.getRestClient().getOrderById(sKey);
+
+		// test configuration....
+		String sConfigurationID = workitem
+				.getItemValueString("txtMagentoConfiguration");
+
+		ItemCollection order = this.getRestClient(sConfigurationID)
+				.getOrderById(sKey);
 		return order;
 
 	}
@@ -304,19 +342,23 @@ public class MagentoService {
 	 * returns a single itemCollection for a magento product entry. The method
 	 * uses a cache
 	 * 
-	 * @param item_id
+	 * @param id
+	 * @param configID
+	 *            - id of the shop configuration entity
 	 * @return
 	 * @throws MagentoException
 	 * @throws PluginException
 	 */
-	public ItemCollection getCustomerById(String id) throws MagentoException {
+	public ItemCollection getCustomerById(String id, String configID)
+			throws MagentoException {
 		if (id == null || id.isEmpty())
 			return null;
 
 		ItemCollection customer = magentoCache.getCustomer(id);
 		if (customer == null) {
 
-			customer = this.getRestClient().getCustomerById(new Integer(id));
+			customer = this.getRestClient(configID).getCustomerById(
+					new Integer(id));
 			// cache product;
 			if (customer != null) {
 				magentoCache.cacheCustomer(id, customer);
@@ -332,19 +374,22 @@ public class MagentoService {
 	 * returns a single itemCollection for a magento product entry. The method
 	 * uses cache.
 	 * 
-	 * @param item_id
+	 * @param sku
+	 * @param configID
+	 *            - id of the shop configuration entity
 	 * @return
 	 * @throws MagentoException
 	 * @throws PluginException
 	 */
-	public ItemCollection getProductBySKU(String sku) throws MagentoException {
+	public ItemCollection getProductBySKU(String sku, String configID)
+			throws MagentoException {
 		if (sku == null || sku.isEmpty())
 			return null;
 
 		ItemCollection product = magentoCache.getProduct(sku);
 		if (product == null) {
 
-			product = this.getRestClient().getProductBySKU(sku);
+			product = this.getRestClient(configID).getProductBySKU(sku);
 
 			// cache product;
 			if (product != null) {

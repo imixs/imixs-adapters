@@ -127,7 +127,7 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 			logger.fine("[MagentoStatusPlugin] add new comment: "
 					+ sMagentoorderIncrementId + "=" + sNewMagentoStatus + " ("
 					+ sNewMagentoComment + ")");
-			MagentoClient magentoClient = magentoService.getSOAPClient();
+			MagentoClient magentoClient = magentoService.getSOAPClient(workitem.getItemValueString("txtMagentoConfiguration"));
 			magentoClient.addOrderComment(sMagentoorderIncrementId,
 					sNewMagentoStatus, sNewMagentoComment,notify);
 		}

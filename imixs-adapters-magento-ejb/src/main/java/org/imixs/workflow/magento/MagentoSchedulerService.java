@@ -49,7 +49,6 @@ import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.magento.rest.MagentoRestClient;
 
 /**
  * Magento - Scheduler
@@ -137,8 +136,6 @@ import org.imixs.workflow.magento.rest.MagentoRestClient;
 public class MagentoSchedulerService {
 
 	private Date endDate;
-	private String id;
-	private ItemCollection configuration = null;
 	private int workitemsImported;
 	private int workitemsUpdated;
 	private int workitemsFailed;
@@ -163,15 +160,6 @@ public class MagentoSchedulerService {
 			.getLogger(MagentoSchedulerService.class.getName());
 
 	/**
-	 * This method loads the configuration from an entity with type=ENTITY_TYPE
-	 */
-	public ItemCollection loadConfiguration() {
-		configuration = magentoService.loadConfiguration();
-		updateTimerDetails();
-		return configuration;
-	}
-
-	/**
 	 * This method saves the timer configuration. The method ensures that the
 	 * following properties are set to default.
 	 * <ul>
@@ -189,8 +177,7 @@ public class MagentoSchedulerService {
 	public ItemCollection saveConfiguration(ItemCollection configItemCollection)
 			throws AccessDeniedException {
 		// update write and read access
-		configItemCollection.replaceItemValue("type",
-				MagentoService.TYPE);
+		configItemCollection.replaceItemValue("type", MagentoService.TYPE);
 		// configItemCollection.replaceItemValue("txtName", NAME);
 		configItemCollection.replaceItemValue("$writeAccess",
 				"org.imixs.ACCESSLEVEL.MANAGERACCESS");
@@ -202,10 +189,10 @@ public class MagentoSchedulerService {
 
 		configItemCollection = updateTimerDetails(configItemCollection);
 		// save entity
-		configuration = workflowService.getEntityService().save(
+		configItemCollection = workflowService.getEntityService().save(
 				configItemCollection);
 
-		return configuration;
+		return configItemCollection;
 	}
 
 	/**
@@ -242,8 +229,8 @@ public class MagentoSchedulerService {
 	 * @throws AccessDeniedException
 	 * @throws ParseException
 	 */
-	public ItemCollection start() throws AccessDeniedException, ParseException {
-		ItemCollection configItemCollection = loadConfiguration();
+	public ItemCollection start(ItemCollection configItemCollection)
+			throws AccessDeniedException, ParseException {
 		Timer timer = null;
 		if (configItemCollection == null)
 			return null;
@@ -293,13 +280,12 @@ public class MagentoSchedulerService {
 					+ configItemCollection.getItemValueString("txtName")
 					+ " started: " + id);
 		}
-		configuration.replaceItemValue("errormessage", "");
+		configItemCollection.replaceItemValue("errormessage", "");
 		configItemCollection = saveConfiguration(configItemCollection);
 
-		
 		// clear Cache!
 		magentoService.clearCache();
-		
+
 		return configItemCollection;
 	}
 
@@ -308,9 +294,7 @@ public class MagentoSchedulerService {
 	 * timerDescripton (ItemCollection) is no longer valid
 	 * 
 	 */
-	public ItemCollection stop() throws Exception {
-		configuration = loadConfiguration();
-		id = configuration.getItemValueString("$uniqueid");
+	public void stop(String id) throws Exception {
 
 		boolean found = false;
 		while (this.findTimer(id) != null) {
@@ -318,7 +302,7 @@ public class MagentoSchedulerService {
 			found = true;
 		}
 		if (found) {
-
+			ItemCollection configuration = workflowService.getWorkItem(id);
 			Calendar calNow = Calendar.getInstance();
 			SimpleDateFormat dateFormatDE = new SimpleDateFormat(
 					"dd.MM.yy hh:mm:ss");
@@ -330,14 +314,13 @@ public class MagentoSchedulerService {
 			logger.info("[MagentoSchedulerService] "
 					+ configuration.getItemValueString("txtName")
 					+ " stopped: " + id);
-		} else {
-			configuration.replaceItemValue("statusmessage", "");
+
+			configuration.removeItem("nextTimeout");
+			configuration.removeItem("timeRemaining");
+
+			configuration = saveConfiguration(configuration);
 		}
-
-		updateTimerDetails();
-		configuration = saveConfiguration(configuration);
-
-		return configuration;
+		// return configuration;
 	}
 
 	/**
@@ -361,29 +344,47 @@ public class MagentoSchedulerService {
 		return null;
 	}
 
-	private void updateTimerDetails() {
+	/**
+	 * Update the timer details of a running timer service. The method updates
+	 * the properties netxtTimeout and timeRemaining and store them into the
+	 * timer configuration.
+	 * 
+	 * @param configuration
+	 */
+	private ItemCollection updateTimerDetails(ItemCollection configuration) {
 		if (configuration == null)
-			return;
-		id = configuration.getItemValueString("$uniqueid");
-		Timer timer = this.findTimer(id);
-		if (timer != null) {
-			// load current timer details
-			configuration.replaceItemValue("nextTimeout",
-					timer.getNextTimeout());
-			configuration.replaceItemValue("timeRemaining",
-					timer.getTimeRemaining());
-		} else {
-			configuration.replaceItemValue("nextTimeout", "");
-			configuration.replaceItemValue("timeRemaining", "");
+			return configuration;
+		String id = configuration.getItemValueString("$uniqueid");
+		Timer timer;
+		try {
+			timer = this.findTimer(id);
+
+			if (timer != null) {
+				// load current timer details
+				configuration.replaceItemValue("nextTimeout",
+						timer.getNextTimeout());
+				configuration.replaceItemValue("timeRemaining",
+						timer.getTimeRemaining());
+			} else {
+				configuration.removeItem("nextTimeout");
+				configuration.removeItem("timeRemaining");
+
+			}
+		} catch (Exception e) {
+			logger.warning("[MagentoSchedulerService] unable to updateTimerDetails: "
+					+ e.getMessage());
+			configuration.removeItem("nextTimeout");
+			configuration.removeItem("timeRemaining");
 
 		}
+		return configuration;
 	}
 
 	/**
 	 * This is the method which processes the timeout event depending on the
 	 * running timer settings.
 	 * 
-	 * The method imports all orders.
+	 * For each defined Shop Configuration the method imports all orders.
 	 * 
 	 * The method also makes a flush on the MagentoCache EJB.
 	 * 
@@ -407,12 +408,13 @@ public class MagentoSchedulerService {
 		// flush cache
 		magentoCache.flush();
 
+		// load configuration...
+		ItemCollection configuration = (ItemCollection) timer.getInfo();
 		try {
-			// configuration = (ItemCollection) timer.getInfo();
-			configuration = loadConfiguration();
+
 			sTimerID = configuration.getItemValueString("$uniqueid");
 
-			importOrders();
+			importOrders(configuration);
 
 			configuration.replaceItemValue("errormessage", "");
 			configuration.replaceItemValue("datLastRun", new Date());
@@ -431,7 +433,7 @@ public class MagentoSchedulerService {
 			// stop timer!
 			timer.cancel();
 			logger.severe("[ImportSchedulerService] Timeout sevice stopped: "
-							+ sTimerID);
+					+ sTimerID);
 			configuration.replaceItemValue("errormessage", e.toString());
 			magentoService.reset();
 		}
@@ -494,22 +496,30 @@ public class MagentoSchedulerService {
 	 * 
 	 * If no workitem exits the method will create a new one with the
 	 * $ModelVersion defined by the configruation property 'txtModelVersion'.
-	 * THe new Workitem will be process with the ActivityID 800
+	 * The new Workitem will be process with the ActivityID 800. The method also
+	 * stores the property txtMagentoConfiguration with the id of the
+	 * configuration entity
 	 * 
 	 * If the workitem still exits but the state did not match the $ProcessID of
 	 * the workitem will be changed and th workitem will be processed withe
 	 * ActivityID 801.
 	 * 
 	 * 
-	 * The method implements a paging meachanism because magento returns maximum
+	 * The method implements a paging mechanism because magento returns maximum
 	 * 100 order per request.
 	 * 
+	 * @param configuration
+	 *            - the configuration entity for the magento shop system
 	 * @throws PluginException
 	 */
 	@SuppressWarnings("unchecked")
-	public void importOrders() throws MagentoException {
+	public void importOrders(ItemCollection configuration)
+			throws MagentoException {
 		int iProcessID = -1;
 		String sMagentoStatus = null;
+		String sShopID = configuration.getItemValueString("txtName");
+		logger.info("[MagentoSchedulerSerivce] importOrders for magento shop id= "
+				+ sShopID);
 
 		List<String> orderStatusMapping = configuration
 				.getItemValue("txtOrderStatusMapping");
@@ -544,14 +554,14 @@ public class MagentoSchedulerService {
 			logger.info("[MagentoSchedulerSerivce] read orders "
 					+ " orderstatus=" + sMagentoStatus);
 
-			List<ItemCollection> orders = magentoService.getRestClient().getOrders(
-					sMagentoStatus);
+			List<ItemCollection> orders = magentoService.getRestClient(sShopID)
+					.getOrders(sMagentoStatus);
 
 			logger.info("[MagentoSchedulerSerivce] " + orders.size()
 					+ " orders found, start processing....");
 
 			// process order list
-			processOrderList(orders, orderModelVersion, iProcessID);
+			processOrderList(orders, orderModelVersion, iProcessID,sShopID);
 
 		}
 
@@ -561,11 +571,15 @@ public class MagentoSchedulerService {
 	 * This method processes the orders read form magento. A new or changed
 	 * workitem will be process by the activity ID 800.
 	 * 
+	 * The method also stores the property txtMagentoConfiguration with the id
+	 * of the configuration entity
+	 * 
+	 * 
 	 * @param orders
 	 *            - list of orders
 	 */
 	private void processOrderList(List<ItemCollection> orders,
-			String orderModelVersion, int iProcessID) {
+			String orderModelVersion, int iProcessID,String shopConfigID) {
 
 		/*
 		 * check if an activity 800 in the current model exits
@@ -603,6 +617,10 @@ public class MagentoSchedulerService {
 					workitem.replaceItemValue("$ProcessID", new Integer(
 							iProcessID));
 					workitem.replaceItemValue("txtMagentoError", "");
+					
+					// store magento Shop id
+					workitem.replaceItemValue("txtMagentoConfiguration", shopConfigID);
+					
 
 					// transfer order items
 					magentoService.addMagentoEntity(workitem, order);
@@ -783,42 +801,6 @@ public class MagentoSchedulerService {
 
 		return timer;
 
-	}
-
-	/**
-	 * Update the timer details of a running timer service. The method updates
-	 * the properties netxtTimeout and timeRemaining and store them into the
-	 * timer configuration.
-	 * 
-	 * @param configuration
-	 */
-	private ItemCollection updateTimerDetails(ItemCollection configuration) {
-		if (configuration == null)
-			return configuration;
-		String id = configuration.getItemValueString("$uniqueid");
-		Timer timer;
-		try {
-			timer = this.findTimer(id);
-
-			if (timer != null) {
-				// load current timer details
-				configuration.replaceItemValue("nextTimeout",
-						timer.getNextTimeout());
-				configuration.replaceItemValue("timeRemaining",
-						timer.getTimeRemaining());
-			} else {
-				configuration.removeItem("nextTimeout");
-				configuration.removeItem("timeRemaining");
-
-			}
-		} catch (Exception e) {
-			logger.warning("[MagentoSchedulerService] unable to updateTimerDetails: "
-					+ e.getMessage());
-			configuration.removeItem("nextTimeout");
-			configuration.removeItem("timeRemaining");
-
-		}
-		return configuration;
 	}
 
 }
