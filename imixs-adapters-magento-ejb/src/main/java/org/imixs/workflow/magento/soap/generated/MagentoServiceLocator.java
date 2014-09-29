@@ -13,6 +13,13 @@ public class MagentoServiceLocator extends org.apache.axis.client.Service implem
     }
 
 
+    
+    public MagentoServiceLocator(String serviceURL) {
+    	Mage_Api_Model_Server_V2_HandlerPort_address=serviceURL;
+    }
+
+    
+    
     public MagentoServiceLocator(org.apache.axis.EngineConfiguration config) {
         super(config);
     }

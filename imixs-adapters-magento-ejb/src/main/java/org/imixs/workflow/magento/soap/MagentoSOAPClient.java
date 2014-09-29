@@ -71,7 +71,17 @@ public class MagentoSOAPClient implements MagentoClient {
 				.getItemValueString("txtMagentoSOAPAccessKey");
 		magentoAccessSecret = magentoConfiguration
 				.getItemValueString("txtMagentoSOAPAccessSecret");
-		MagentoService service = new MagentoServiceLocator();
+		MagentoService service =null;
+		
+		
+		String soapLocation=magentoConfiguration
+				.getItemValueString("txtMagentoSOAPUriApi");
+		if (!soapLocation.isEmpty()) {
+			service= new MagentoServiceLocator(soapLocation);
+		} else {
+			service=new MagentoServiceLocator();
+		}
+		
 		try {
 			stub = service.getMage_Api_Model_Server_V2_HandlerPort();
 			sessionId = stub.login(magentoAccessKey, magentoAccessSecret);
