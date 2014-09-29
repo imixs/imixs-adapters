@@ -88,41 +88,5 @@ public class SimpleTest {
 
 	}
 
-	/**
-	 * This test reads a sales order
-	 */
-	// @Ignore
-	@Test
-	public void testSsgGetOrder() {
-		MagentoHTMLClient restClient = new MagentoHTMLClient("imixs", "14imissxsgmo11","http://staging.badsanitaer.de/index.php/admin");
-
-		try {
-
-			String page = restClient
-					.readPage("/sales_order/view/order_id/322");
-
-			// String path = "/home/rsoika/Downloads/magento-test.html";
-			// Files.write(Paths.get(path), page.getBytes(),
-			// StandardOpenOption.CREATE);
-
-			// expected not null
-			Assert.assertNotNull(page);
-			
-
-		String	path = "/home/rsoika/Downloads/magento-ssg-test.html";
-			Files.write(Paths.get(path), page.getBytes(),
-					StandardOpenOption.CREATE);
-
-			Assert.assertTrue(page.contains("Bestellung"));
-			Assert.assertTrue(page.contains("Wanneneinbaumass  rechter Schenkel"));
-
-		} catch (Exception e) {
-
-			e.printStackTrace();
-			Assert.fail();
-		}
-
-	}
-
 	
 }
