@@ -48,6 +48,7 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
+import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 
 /**
@@ -158,6 +159,16 @@ public class MagentoSchedulerService {
 
 	private static Logger logger = Logger
 			.getLogger(MagentoSchedulerService.class.getName());
+
+	
+	/***
+	 * retruns a list of all existing Magento Shop Configurations
+	 * @return
+	 */
+	public List<ItemCollection> findAllConfigurations() {
+		// load all configurations...
+		return magentoService.findAllConfigurations();
+	}
 
 	/**
 	 * This method saves the timer configuration. The method ensures that the
@@ -294,8 +305,8 @@ public class MagentoSchedulerService {
 	 * timerDescripton (ItemCollection) is no longer valid
 	 * 
 	 */
-	public void stop(String id) throws Exception {
-
+	public ItemCollection stop(ItemCollection config) throws Exception {
+		String id = config.getItemValueString(EntityService.UNIQUEID);
 		boolean found = false;
 		while (this.findTimer(id) != null) {
 			this.findTimer(id).cancel();
@@ -319,8 +330,9 @@ public class MagentoSchedulerService {
 			configuration.removeItem("timeRemaining");
 
 			configuration = saveConfiguration(configuration);
+			return configuration;
 		}
-		// return configuration;
+		return config;
 	}
 
 	/**
@@ -351,7 +363,7 @@ public class MagentoSchedulerService {
 	 * 
 	 * @param configuration
 	 */
-	private ItemCollection updateTimerDetails(ItemCollection configuration) {
+	public ItemCollection updateTimerDetails(ItemCollection configuration) {
 		if (configuration == null)
 			return configuration;
 		String id = configuration.getItemValueString("$uniqueid");
@@ -561,7 +573,7 @@ public class MagentoSchedulerService {
 					+ " orders found, start processing....");
 
 			// process order list
-			processOrderList(orders, orderModelVersion, iProcessID,sShopID);
+			processOrderList(orders, orderModelVersion, iProcessID, sShopID);
 
 		}
 
@@ -579,7 +591,7 @@ public class MagentoSchedulerService {
 	 *            - list of orders
 	 */
 	private void processOrderList(List<ItemCollection> orders,
-			String orderModelVersion, int iProcessID,String shopConfigID) {
+			String orderModelVersion, int iProcessID, String shopConfigID) {
 
 		/*
 		 * check if an activity 800 in the current model exits
@@ -617,10 +629,10 @@ public class MagentoSchedulerService {
 					workitem.replaceItemValue("$ProcessID", new Integer(
 							iProcessID));
 					workitem.replaceItemValue("txtMagentoError", "");
-					
+
 					// store magento Shop id
-					workitem.replaceItemValue("txtMagentoConfiguration", shopConfigID);
-					
+					workitem.replaceItemValue("txtMagentoConfiguration",
+							shopConfigID);
 
 					// transfer order items
 					magentoService.addMagentoEntity(workitem, order);

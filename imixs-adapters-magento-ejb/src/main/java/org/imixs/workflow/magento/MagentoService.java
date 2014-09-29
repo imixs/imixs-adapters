@@ -30,6 +30,7 @@ package org.imixs.workflow.magento;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Logger;
@@ -121,6 +122,22 @@ public class MagentoService {
 			magentoHTMLClient = null;
 		}
 
+	}
+
+	/***
+	 * retruns a list of all existing Magento Shop Configurations
+	 * 
+	 * @return
+	 */
+	public List<ItemCollection> findAllConfigurations() {
+		// load all configurations...
+		String sQuery = "SELECT config FROM Entity AS config "
+				+ " JOIN config.textItems t1" + " WHERE config.type = '"
+				+ MagentoService.TYPE + "'" + " AND t1.itemName='txtname'"
+				+ " ORDER BY t1.itemValue";
+		List<ItemCollection> col = workflowService.getEntityService()
+				.findAllEntities(sQuery, 0, -1);
+		return col;
 	}
 
 	/**
@@ -232,35 +249,28 @@ public class MagentoService {
 		}
 		ItemCollection configItemCollection = configurations.get(id);
 		if (configItemCollection == null) {
+			// try to load....
 			String sQuery = "SELECT config FROM Entity AS config "
 					+ " JOIN config.textItems AS t2" + " WHERE config.type = '"
 					+ TYPE + "'" + " AND t2.itemName = 'txtname'"
 					+ " AND t2.itemValue = '" + id + "'"
 					+ " ORDER BY t2.itemValue asc";
-			Collection<ItemCollection> col = workflowService
-					.getEntityService().findAllEntities(sQuery, 0, 1);
+			Collection<ItemCollection> col = workflowService.getEntityService()
+					.findAllEntities(sQuery, 0, 1);
 
 			if (col.size() > 0) {
 				configItemCollection = col.iterator().next();
 				logger.fine("[MagentoService] shop configuration id=" + id
 						+ " loaded");
+				// put new configuration into cache
+				configurations.put(id, configItemCollection);
 
 			} else {
-				logger.fine("[MagentoService] shop configuration id=" + id
-						+ " not defined - creating new one");
-				// create default values
-				configItemCollection = new ItemCollection();
-				try {
-					configItemCollection.replaceItemValue("type", TYPE);
-					configItemCollection.replaceItemValue("txtname", id);
+				logger.warning("[MagentoService] shop configuration id=" + id
+						+ " not defined!");
 
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
 			}
 
-			// put new configuration into cache
-			configurations.put(id, configItemCollection);
 		}
 		return configItemCollection;
 	}
