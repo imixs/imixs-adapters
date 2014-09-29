@@ -1,8 +1,8 @@
 package org.imixs.workflow.magento.rest;
 
-import static org.mockito.Mockito.when;
-
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,12 +17,10 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.util.PropertyService;
-import org.imixs.workflow.magento.rest.MagentoApi;
-import org.imixs.workflow.magento.rest.MagentoRestClient;
+import org.imixs.workflow.magento.MagentoClientFactory;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.scribe.model.Token;
 
 /**
@@ -53,7 +51,7 @@ import org.scribe.model.Token;
  */
 public class TestMagentoRestClient {
 	MagentoApi magentoApi = null;
-	MagentoRestClient magentoService = null;
+	MagentoRestClient magentoClient = null;
 	EntityService entityService = null;
 	PropertyService propertyService = null;
 	Properties properties = null;
@@ -62,24 +60,33 @@ public class TestMagentoRestClient {
 
 	@Before
 	public void setup() throws PluginException, IOException, NamingException {
-		ItemCollection entity = null;
 
-		// Mockito setup
-		entityService = Mockito.mock(EntityService.class);
-		propertyService = Mockito.mock(PropertyService.class);
-
-		// Simulate entityService.load()...
+		// setup from properties file...
 		properties = new Properties();
 		properties.load(Thread.currentThread().getContextClassLoader()
 				.getResource("imixs.properties").openStream());
-		when(propertyService.getProperties()).thenReturn(properties);
 
-		magentoService = Mockito.spy(new MagentoRestClient());
-		magentoService.propertyService = propertyService;
+		magentoClient = (MagentoRestClient) MagentoClientFactory
+				.createClient("org.imixs.workflow.magento.rest.MagentoRestClient");
 
-		Mockito.doReturn(null).when(magentoService).loadConfiguration();
+		ItemCollection config = new ItemCollection();
 
-		magentoService.init();
+		config.replaceItemValue("txtMagentoRestUriBasis",
+				properties.getProperty("magento.rest.uri-basis"));
+
+		config.replaceItemValue("txtMagentoRestUriApi",
+				properties.getProperty("magento.rest.uri-api"));
+		config.replaceItemValue("txtMagentoOAuthConsumerKey",
+				properties.getProperty("magento.oauth.consumer-key"));
+		config.replaceItemValue("txtMagentoOAuthConsumerSecret",
+				properties.getProperty("magento.oauth.consumer-secret"));
+		config.replaceItemValue("txtMagentoRestAccessKey",
+				properties.getProperty("magento.rest.access-key"));
+
+		config.replaceItemValue("txtMagentoRestAccessSecret",
+				properties.getProperty("magento.rest.access-secret"));
+
+		magentoClient.connect(config);
 
 	}
 
@@ -93,11 +100,11 @@ public class TestMagentoRestClient {
 	@Test
 	@Ignore
 	public void testRequestNewToken() {
- 
+
 		Scanner in = new Scanner(System.in);
 
-		Token requestToken = magentoService.getRequestToken();
-		String url = magentoService.getAuthorizationUrl(requestToken);
+		Token requestToken = magentoClient.getRequestToken();
+		String url = magentoClient.getAuthorizationUrl(requestToken);
 
 		System.out
 				.println("Open Browser Window and authorize the Imixs MagentoPlugin here:");
@@ -106,7 +113,7 @@ public class TestMagentoRestClient {
 		System.out.println("And paste the verifier here");
 		System.out.print(">>");
 
-		Token accessToken = magentoService.getAccessToken(requestToken,
+		Token accessToken = magentoClient.getAccessToken(requestToken,
 				in.nextLine());
 
 		Assert.assertNotNull(accessToken);
@@ -124,36 +131,11 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
-	public void testGetStockitems() {
-
-		List<ItemCollection> result = null;
-		try {
-			result = magentoService.getStockitems();
-		} catch (PluginException e) {
-
-			e.printStackTrace();
-			Assert.fail();
-		}
-
-		Assert.assertNotNull(result);
-		Assert.assertTrue(result.size() > 0);
-		ItemCollection entity = result.get(0);
-
-		Assert.assertTrue(entity.hasItem("item_id"));
-		Assert.assertTrue(entity.hasItem("product_id"));
-		Assert.assertTrue(entity.hasItem("stock_id"));
-	}
-
-	/**
-	 * This Test checks the Magento Connection...
-	 * 
-	 */
-	@Test
 	public void testGetProducts() {
 
 		List<ItemCollection> result = null;
 		try {
-			result = magentoService.getProducts();
+			result = magentoClient.getProducts();
 			// result = magentoPlugin.getStockitems();
 		} catch (PluginException e) {
 
@@ -175,15 +157,33 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
-	public void testGetProduct1() {
+	public void testGetProductBySKU() {
 
 		ItemCollection result = null;
 
-		result = magentoService.getProductBySKU("1");
+	//	result = magentoClient.getProductBySKU("100");
+		
+		
+		String sSKU="1000-4IH + 1200-11IHSP120cm90cm";
+		String sEncodedSKU=	null;
+		try {
+			 sEncodedSKU=	URLEncoder.encode(sSKU, "UTF-8");
+			 sEncodedSKU=sEncodedSKU.replace("+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	//	sEncodedSKU="1000-4IH%20%2B%201200-11IHSP120cm90cm";
+		
+		result = magentoClient.getProductBySKU(sEncodedSKU);
+		
 		// result = magentoPlugin.getStockitems();
 
 		Assert.assertTrue(result.hasItem("entity_id"));
-		Assert.assertEquals("1", result.getItemValueString("entity_id"));
+		Assert.assertFalse(result.getItemValueString("entity_id").isEmpty());
+		Assert.assertEquals("100", result.getItemValueString("sku"));
 		Assert.assertEquals("simple", result.getItemValueString("type_id"));
 
 		Assert.assertEquals("Imixs Business Servicevertrag",
@@ -196,28 +196,23 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
-	public void testGetPendingOrders() {
-
+	public void testGetPendingOrders() { 
+ 
 		List<ItemCollection> result = null;
 		try {
-			result = magentoService.getOrders("pending", 0, 0);
+			result = magentoClient.getOrders("pending");
 		} catch (PluginException e) {
 
 			e.printStackTrace();
 			Assert.fail();
 		}
 
-		Assert.assertNotNull(result); 
+		Assert.assertNotNull(result);
 		Assert.assertTrue(result.size() > 4);
 
 		ItemCollection entity = result.get(0);
-		Assert.assertTrue(entity.hasItem("entity_id"));
+		Assert.assertTrue(entity.hasItem("order_id"));
 		Assert.assertEquals("pending", entity.getItemValueString("status"));
-
-		List<ItemCollection> addresses = entity.getItemValue("addresses");
-		Assert.assertTrue(addresses.size() == 2);
-		ItemCollection address = addresses.get(0);
-		Assert.assertEquals("Alabama", address.getItemValueString("region"));
 
 	}
 

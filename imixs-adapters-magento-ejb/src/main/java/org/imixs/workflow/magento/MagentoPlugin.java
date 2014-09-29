@@ -1,6 +1,6 @@
 /*******************************************************************************
  *  Imixs Workflow 
- *  Copyright (C) 2001, 2011 Imixs Software Solutions GmbH,  
+ *  Copyright (C) 2001, 2011, 2012, 2013, 2014 Imixs Software Solutions GmbH,  
  *  http://www.imixs.com
  *  
  *  This program is free software; you can redistribute it and/or 
@@ -18,7 +18,7 @@
  *  
  *  Project: 
  *  	http://www.imixs.org
- *  	http://java.net/projects/imixs-workflow
+ *  	https://github.com/imixs
  *  
  *  Contributors:  
  *  	Imixs Software Solutions GmbH - initial API and implementation
@@ -38,8 +38,6 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Plugin;
 import org.imixs.workflow.WorkflowContext;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.magento.rest.MagentoRestClient;
 import org.imixs.workflow.plugins.jee.AbstractPlugin;
 
 /**
@@ -61,8 +59,7 @@ public class MagentoPlugin extends AbstractPlugin {
 	String user = null;
 	String password = null;
 
-	private MagentoRestClient magentoService = null;
-	private WorkflowService workflowSerivice = null;
+	private MagentoService magentoService = null;
 
 	private static Logger logger = Logger.getLogger(MagentoPlugin.class
 			.getName());
@@ -74,18 +71,12 @@ public class MagentoPlugin extends AbstractPlugin {
 	public void init(WorkflowContext actx) throws PluginException {
 		super.init(actx);
 
-		// check for an instance of WorkflowService
-		if (actx instanceof WorkflowService) {
-			// yes we are running in a WorkflowService EJB
-			workflowSerivice = (WorkflowService) actx;
-		}
-
 		try {
 			// lookup PropertyService
 			InitialContext ictx = new InitialContext();
 			Context ctx = (Context) ictx.lookup("java:comp/env");
 			String jndiName = "ejb/MagentoService";
-			magentoService = (MagentoRestClient) ctx.lookup(jndiName);
+			magentoService = (MagentoService) ctx.lookup(jndiName);
 		} catch (NamingException e) {
 			throw new PluginException(MagentoPlugin.class.getSimpleName(),
 					MAGENTOSERVICE_NOT_BOUND, "MagentoService not bound", e);
@@ -122,7 +113,7 @@ public class MagentoPlugin extends AbstractPlugin {
 
 			for (ItemCollection address : addresses) {
 				// address_type = billing / shipping
-
+				logger.fine("[MagentoPlugin] update magentoCustomer data...");
 				workitem.replaceItemValue(
 						"txtMagentoCustomer",
 						address.getItemValueString("firstname") + " "
@@ -141,11 +132,12 @@ public class MagentoPlugin extends AbstractPlugin {
 			// if email not defined we need to lookup the customer id...
 			if (workitem.getItemValueString("txtMagentoCustomerEmail")
 					.isEmpty()) {
+				logger.fine("[MagentoPlugin] update magentoCustomer E-Mail...");
 				String customerID = workitem
 						.getItemValueString("m_customer_id");
 				if (!customerID.isEmpty()) {
-					ItemCollection customer = magentoService
-							.getCustomerById(customerID);
+					ItemCollection customer = magentoService.getRestClient()
+							.getCustomerById(new Integer(customerID));
 					if (customer != null) {
 						workitem.replaceItemValue("txtMagentoCustomerEmail",
 								customer.getItemValueString("email"));

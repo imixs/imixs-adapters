@@ -1,6 +1,6 @@
 /*******************************************************************************
  *  Imixs Workflow 
- *  Copyright (C) 2001, 2011 Imixs Software Solutions GmbH,  
+ *  Copyright (C) 2001, 2011, 2012, 2013, 2014 Imixs Software Solutions GmbH,  
  *  http://www.imixs.com
  *  
  *  This program is free software; you can redistribute it and/or 
@@ -18,7 +18,7 @@
  *  
  *  Project: 
  *  	http://www.imixs.org
- *  	http://java.net/projects/imixs-workflow
+ *  	https://github.com/imixs
  *  
  *  Contributors:  
  *  	Imixs Software Solutions GmbH - initial API and implementation
@@ -27,8 +27,11 @@
 
 package org.imixs.workflow.magento.rest;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
@@ -61,8 +64,7 @@ import org.scribe.oauth.OAuthService;
 public class MagentoRestClient implements MagentoClient {
 
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
-	public static final String ENTITY_TYPE = "ConfigMagento";
-
+	
 	private MagentoApi magentoApi = null;
 
 	String magentoApiURL = null;
@@ -75,34 +77,30 @@ public class MagentoRestClient implements MagentoClient {
 	String magentoAccessSecret = null;
 	Token accessToken = null;
 
-	boolean debugMode = false;
-
 	private static Logger logger = Logger.getLogger(MagentoRestClient.class
 			.getName());
 
 	/**
-	 * Connects the Client to the magento REST API. The ItemCollection 
-	 * contains properties needed to establish the connection
+	 * Connects the Client to the magento REST API. The ItemCollection contains
+	 * properties needed to establish the connection
 	 */
 	public void connect(ItemCollection magentoConfiguration) {
 
 		// read data from config entity....
 		if (magentoConfiguration != null) {
 			magentoBasisURL = magentoConfiguration
-					.getItemValueString("txtMagentoUriBasis");
+					.getItemValueString("txtMagentoRestUriBasis");
 			magentoApiURL = magentoConfiguration
-					.getItemValueString("txtMagentoUriApi");
+					.getItemValueString("txtMagentoRestUriApi");
 			magentoConsumerKey = magentoConfiguration
 					.getItemValueString("txtMagentoOAuthConsumerKey");
 			magentoConsumerSecret = magentoConfiguration
-					.getItemValueString("txtMagentoOAuhtConsumerSecret");
+					.getItemValueString("txtMagentoOAuthConsumerSecret");
 			magentoAccessKey = magentoConfiguration
-					.getItemValueString("txtMagentoAccessKey");
+					.getItemValueString("txtMagentoRestAccessKey");
 			magentoAccessSecret = magentoConfiguration
-					.getItemValueString("txtMagentoAccessSecret");
+					.getItemValueString("txtMagentoRestAccessSecret");
 
-			debugMode = magentoConfiguration
-					.getItemValueBoolean("keyMagentoDebug");
 		}
 
 		logger.fine("[MagentoPlugin] magentoApiKey='" + magentoConsumerKey
@@ -114,7 +112,7 @@ public class MagentoRestClient implements MagentoClient {
 
 		// create api
 		magentoApi = new MagentoApi(magentoBasisURL);
-		magentoApi.setAdminAPI(debugMode);
+		magentoApi.setAdminAPI(true);
 
 		// Create a signed token....
 		logger.fine("[MagentoPlugin] generate access token: "
@@ -124,12 +122,12 @@ public class MagentoRestClient implements MagentoClient {
 		}
 
 	}
-	
+
 	/**
 	 * Disconnects the client
 	 */
 	public void disconnect() {
-		accessToken=null;
+		accessToken = null;
 	}
 
 	/**
@@ -138,7 +136,7 @@ public class MagentoRestClient implements MagentoClient {
 	 * @return
 	 */
 	public OAuthService getService() {
-		if (debugMode)
+		if (logger.isLoggable( Level.FINE))
 			return new ServiceBuilder().provider(magentoApi)
 					.apiKey(magentoConsumerKey)
 					.apiSecret(magentoConsumerSecret).debug().build();
@@ -205,6 +203,17 @@ public class MagentoRestClient implements MagentoClient {
 	public ItemCollection getProductBySKU(String sku) {
 		if (sku == null || sku.isEmpty())
 			return null;
+		
+		
+		
+		// now we need to encode the SKU with special character check!
+		try {
+			sku=	URLEncoder.encode(sku, "UTF-8");
+			sku=sku.replace("+", "%20");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
 
 		ItemCollection product = null;
 
@@ -249,12 +258,8 @@ public class MagentoRestClient implements MagentoClient {
 	 * @return
 	 * @throws PluginException
 	 */
-	public ItemCollection getCustomerById(String id) {
-		if (id == null || id.isEmpty())
-			return null;
-
+	public ItemCollection getCustomerById(int id) {
 		ItemCollection customer = null;
-
 		String sURL = magentoApiURL + "/customers/" + id;
 		// add filter
 		// sURL += "?filter[1][attribute]=sku&filter[1][in]=" + id;
@@ -289,9 +294,7 @@ public class MagentoRestClient implements MagentoClient {
 							customer.replaceItemValue("addresses", result);
 						}
 					}
-
 				}
-
 			}
 		} catch (PluginException e) {
 			logger.warning("[MagentoPlugin] getCustomerById not found (" + sURL
@@ -339,75 +342,73 @@ public class MagentoRestClient implements MagentoClient {
 		return order;
 	}
 
-	public List<ItemCollection> getStockitems() throws MagentoException {
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, magentoApiURL
-				+ "/stockitems");
-
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-
-		return MagentoJsonParser.parseObjectList(response.getBody());
-	}
-
-	public List<ItemCollection> getOrders(String status, int page, int limit)
+	/**
+	 * This method implements a paging mechanism because the Rest API only
+	 * returns a maximum of 100 entries per call!
+	 */
+	public List<ItemCollection> getOrders(String status)
 			throws MagentoException {
 
-		if (limit <= 0)
-			limit = 100;
-		if (page < 0)
-			page = 0;
+		List<ItemCollection> resultList = new ArrayList<ItemCollection>();
 
-		String requestURL = magentoApiURL + "/orders?limit=" + limit + "&page="
-				+ page;
+		// we need to implement a paging here, because magento deliveres
+		// only max of 100 entries.
+		boolean hasMore = true;
+		int page = 1;
+		int limit = 100;
+		String sLastEntityID = null;
+		while (hasMore) {
+			// build request url with paging info..
+			String requestURL = magentoApiURL + "/orders?limit=" + limit
+					+ "&page=" + page;
 
-		if (status != null && !status.isEmpty()) {
-			requestURL += "&filter[1][attribute]=status&filter[1][in]="
-					+ status;
+			if (status != null && !status.isEmpty()) {
+				requestURL += "&filter[1][attribute]=status&filter[1][in]="
+						+ status;
+			}
+
+			// Now let's go and ask for a protected resource!
+			OAuthRequest request = new OAuthRequest(Verb.GET, requestURL);
+			getService().signRequest(accessToken, request);
+			Response response = request.send();
+			List<ItemCollection> pageResult = MagentoJsonParser
+					.parseObjectList(response.getBody());
+
+			if (pageResult.size() == 0) {
+				logger.fine("[MagentoRestClient] no more orders found.");
+				break;
+			} else {
+				// test first entry to verify if this oder junk was already
+				// read
+				// before (magento delivers event if page is > max orders!)
+				String sEntity_id = pageResult.get(0).getItemValueString(
+						"entity_id");
+				if (sEntity_id.equals(sLastEntityID)) {
+					// max enties read! we can leave here...
+					hasMore = false;
+					logger.info("[MagentoRestClient] max orders read ");
+					break;
+				}
+				sLastEntityID = sEntity_id;
+			}
+			logger.fine("[MagentoSchedulerSerivce] add page result....");
+			for (ItemCollection aEntity : pageResult) {
+				aEntity.replaceItemValue("order_id", aEntity.getItemValue("entity_id"));
+				resultList.add(aEntity);
+			}
+			// continue with next page!
+			page++;
 		}
-
-		// Now let's go and ask for a protected resource!
-		OAuthRequest request = new OAuthRequest(Verb.GET, requestURL);
-
-		getService().signRequest(accessToken, request);
-		Response response = request.send();
-
-		return MagentoJsonParser.parseObjectList(response.getBody());
+		return resultList;
 	}
 
-	/**
-	 * This method finds the magento order entity for a workitem.
-	 * 
-	 * The order ID is stored in the property txtName with the following format:
-	 * 
-	 * <code>
-	 *    magento:order:1
-	 *  </code>
-	 * 
-	 * @return order or null if no order exits
-	 */
-	public ItemCollection findOrderByWorkitem(ItemCollection workitem) {
-
-		String sKey = workitem.getItemValueString("txtName");
-		if (sKey.isEmpty() || !sKey.startsWith("magento:order:")) {
-			logger.warning("[MagentoService] findOrderByWorkitem - wrong format of order id txtname='"
-					+ sKey + "' !");
-			return null;
-		}
-
-		sKey = sKey.substring(14);
-		ItemCollection order = getOrderById(sKey);
-		return order;
-
+	@Override
+	public void addOrderComment(String orderIncrementId, String status,
+			String comment,boolean notify) throws MagentoException {
+		logger.warning("[MagentoSOAPClient] method not implemented: getAddOrderComment");
+		// TODO Auto-generated method stub
+		// not implemented because this method is not supported by Magento Rest
+		// API!
 	}
 
-	/**
-	 * this method creates the Magento oder ID to be stored in the property
-	 * 'txtName'. This property value need to be unique. The plugin can be
-	 * overwritten to change this behavior.
-	 * **/
-	public String getOrderID(ItemCollection order) {
-		String sKey = "magento:order:" + order.getItemValueString("entity_id");
-		return sKey;
-	}
 }

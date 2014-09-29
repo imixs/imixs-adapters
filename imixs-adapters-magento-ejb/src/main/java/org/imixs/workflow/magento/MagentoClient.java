@@ -68,13 +68,11 @@ public interface MagentoClient {
 	 */
 	public List<ItemCollection> getProducts() throws MagentoException;
 
-	public ItemCollection getCustomerById(String id) throws MagentoException;
+	public ItemCollection getCustomerById(int id) throws MagentoException;
 
 	public ItemCollection getOrderById(String id) throws MagentoException;
 
-	public List<ItemCollection> getStockitems() throws MagentoException;
-
-	public List<ItemCollection> getOrders(String status, int page, int limit)
+	public List<ItemCollection> getOrders(String status)
 			throws MagentoException;
 
 	/**
@@ -85,4 +83,15 @@ public interface MagentoClient {
 	 * @throws PluginException
 	 */
 	public ItemCollection getProductBySKU(String sku) throws MagentoException;
+
+	/**
+	 * adds a comment to an order
+	 * 
+	 * @param item_id
+	 * @return
+	 * @throws PluginException
+	 */
+	public void addOrderComment(String orderIncrementId, String status,
+			String comment,boolean notify) throws MagentoException;
+
 }

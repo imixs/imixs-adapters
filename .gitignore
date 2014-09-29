@@ -13,3 +13,6 @@ target/
 .project
 .classpath
 .metadata/
+
+# testing
+imixs-adapters-magento-ejb/src/test/resources/imixs.properties
