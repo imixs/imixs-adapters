@@ -140,7 +140,7 @@ public class TestMagentoSoapClient {
 
 		
 		try {
-			magentoClient.getAddOrderComment("100000012","pending","junit test");
+			magentoClient.addOrderComment("100000012","pending","junit test");
 			
 		} catch (MagentoException e) {
 			e.printStackTrace();

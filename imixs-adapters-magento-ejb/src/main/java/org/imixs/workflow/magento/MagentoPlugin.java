@@ -38,8 +38,6 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Plugin;
 import org.imixs.workflow.WorkflowContext;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.magento.rest.MagentoRestClient;
 import org.imixs.workflow.plugins.jee.AbstractPlugin;
 
 /**
@@ -62,7 +60,6 @@ public class MagentoPlugin extends AbstractPlugin {
 	String password = null;
 
 	private MagentoService magentoService = null;
-	private WorkflowService workflowSerivice = null;
 
 	private static Logger logger = Logger.getLogger(MagentoPlugin.class
 			.getName());
@@ -73,12 +70,6 @@ public class MagentoPlugin extends AbstractPlugin {
 	@Override
 	public void init(WorkflowContext actx) throws PluginException {
 		super.init(actx);
-
-		// check for an instance of WorkflowService
-		if (actx instanceof WorkflowService) {
-			// yes we are running in a WorkflowService EJB
-			workflowSerivice = (WorkflowService) actx;
-		}
 
 		try {
 			// lookup PropertyService
@@ -122,7 +113,7 @@ public class MagentoPlugin extends AbstractPlugin {
 
 			for (ItemCollection address : addresses) {
 				// address_type = billing / shipping
-
+				logger.fine("[MagentoPlugin] update magentoCustomer data...");
 				workitem.replaceItemValue(
 						"txtMagentoCustomer",
 						address.getItemValueString("firstname") + " "
@@ -141,6 +132,7 @@ public class MagentoPlugin extends AbstractPlugin {
 			// if email not defined we need to lookup the customer id...
 			if (workitem.getItemValueString("txtMagentoCustomerEmail")
 					.isEmpty()) {
+				logger.fine("[MagentoPlugin] update magentoCustomer E-Mail...");
 				String customerID = workitem
 						.getItemValueString("m_customer_id");
 				if (!customerID.isEmpty()) {

@@ -91,7 +91,7 @@ public interface MagentoClient {
 	 * @return
 	 * @throws PluginException
 	 */
-	public void getAddOrderComment(String orderIncrementId, String status,
+	public void addOrderComment(String orderIncrementId, String status,
 			String comment) throws MagentoException;
 
 }
