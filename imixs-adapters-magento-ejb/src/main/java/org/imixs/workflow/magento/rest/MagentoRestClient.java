@@ -404,7 +404,7 @@ public class MagentoRestClient implements MagentoClient {
 
 	@Override
 	public void addOrderComment(String orderIncrementId, String status,
-			String comment) throws MagentoException {
+			String comment,boolean notify) throws MagentoException {
 		logger.warning("[MagentoSOAPClient] method not implemented: getAddOrderComment");
 		// TODO Auto-generated method stub
 		// not implemented because this method is not supported by Magento Rest

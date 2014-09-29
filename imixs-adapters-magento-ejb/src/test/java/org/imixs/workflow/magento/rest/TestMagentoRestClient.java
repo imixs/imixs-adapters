@@ -98,7 +98,7 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
-	//@Ignore
+	@Ignore
 	public void testRequestNewToken() {
 
 		Scanner in = new Scanner(System.in);

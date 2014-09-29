@@ -124,7 +124,7 @@ public class TestBasicScribeMagento {
 	 */
 	@SuppressWarnings("resource")
 	@Test
-	//@Ignore
+	@Ignore
 	public void testAdminAPI() {
 
 		OAuthService service = new ServiceBuilder().provider(magentoApi)

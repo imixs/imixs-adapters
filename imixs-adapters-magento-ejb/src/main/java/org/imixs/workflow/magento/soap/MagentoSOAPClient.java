@@ -104,12 +104,12 @@ public class MagentoSOAPClient implements MagentoClient {
 
 	@Override
 	public void addOrderComment(String orderIncrementId, String status,
-			String comment) throws MagentoException {
+			String comment,boolean notify) throws MagentoException {
 		logger.fine("[MagentoSOAPClient] getAddOrderComment - sessionId="
 				+ sessionId);
 		try {
 			stub.salesOrderAddComment(sessionId, orderIncrementId, status,
-					comment, "false");
+					comment, notify+"");
 		} catch (RemoteException e) {
 			throw new MagentoException(MagentoSOAPClient.class.getSimpleName(),
 					CONNECTION_FAILURE, "getAddOrderComment failed: ", e);

@@ -50,6 +50,8 @@ import org.imixs.workflow.plugins.jee.AbstractPlugin;
  * 
  * txtMagentoComment - optional comment
  * 
+ * keyMagentoNotify - indicates if a customer notification should be send
+ * 
  * 
  * The magento uses the SOAPClient to send a comment with a new state
  * 
@@ -63,6 +65,7 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 
 	public final static String MAGENTO_STATUS_PROPERTY = "txtMagentoStatus";
 	public final static String MAGENTO_COMMENT_PROPERTY = "txtMagentoComment";
+	public final static String MAGENTO_NOTIFY_PROPERTY = "keyMagentoNotify";
 
 	ItemCollection documentContext;
 
@@ -114,6 +117,9 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 				.getItemValueString(MAGENTO_STATUS_PROPERTY);
 		String sNewMagentoComment = evalItemCollection
 				.getItemValueString(MAGENTO_COMMENT_PROPERTY);
+		
+		boolean notify = evalItemCollection
+				.getItemValueBoolean(MAGENTO_NOTIFY_PROPERTY);
 
 		// try to send the new status
 		// if it breaks we throw a plugin exception
@@ -123,7 +129,7 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 					+ sNewMagentoComment + ")");
 			MagentoClient magentoClient = magentoService.getSOAPClient();
 			magentoClient.addOrderComment(sMagentoorderIncrementId,
-					sNewMagentoStatus, sNewMagentoComment);
+					sNewMagentoStatus, sNewMagentoComment,notify);
 		}
 		return Plugin.PLUGIN_OK;
 	}
