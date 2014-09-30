@@ -44,9 +44,14 @@ import org.imixs.workflow.plugins.jee.AbstractPlugin;
  * This plugin allows to change the status for an existing Sales Order in a
  * magento shop. The Plugin evaluates the activity result items
  * 
- * txtMagentoStatus - new state
  * 
- * and
+ * <code>
+    <item name="txtMagentoStatus">complete</item>
+    <item name="txtMagentoComment">some comment</item>
+    <item name="keyMagentoNotify">true</item>
+ * </code>
+ * 
+ * txtMagentoStatus - new state
  * 
  * txtMagentoComment - optional comment
  * 
@@ -117,7 +122,7 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 				.getItemValueString(MAGENTO_STATUS_PROPERTY);
 		String sNewMagentoComment = evalItemCollection
 				.getItemValueString(MAGENTO_COMMENT_PROPERTY);
-		
+
 		boolean notify = evalItemCollection
 				.getItemValueBoolean(MAGENTO_NOTIFY_PROPERTY);
 
@@ -127,9 +132,10 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 			logger.fine("[MagentoStatusPlugin] add new comment: "
 					+ sMagentoorderIncrementId + "=" + sNewMagentoStatus + " ("
 					+ sNewMagentoComment + ")");
-			MagentoClient magentoClient = magentoService.getSOAPClient(workitem.getItemValueString("txtMagentoConfiguration"));
+			MagentoClient magentoClient = magentoService.getSOAPClient(workitem
+					.getItemValueString("txtMagentoConfiguration"));
 			magentoClient.addOrderComment(sMagentoorderIncrementId,
-					sNewMagentoStatus, sNewMagentoComment,notify);
+					sNewMagentoStatus, sNewMagentoComment, notify);
 		}
 		return Plugin.PLUGIN_OK;
 	}

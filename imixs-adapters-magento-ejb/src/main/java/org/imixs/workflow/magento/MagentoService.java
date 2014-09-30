@@ -86,10 +86,11 @@ public class MagentoService {
 	@EJB
 	MagentoCache magentoCache = null;
 
-	private MagentoClient magentoSOAPClient = null;
-	private MagentoClient magentoRestClient = null;
-	private MagentoHTMLClient magentoHTMLClient = null;
+	// private MagentoClient magentoSOAPClient = null;
+	// private MagentoClient magentoRestClient = null;
+	// private MagentoHTMLClient magentoHTMLClient = null;
 	private Map<String, ItemCollection> configurations = null;
+	private Map<String, Object> clients = null;
 	private static Logger logger = Logger.getLogger(MagentoService.class
 			.getName());
 
@@ -100,27 +101,27 @@ public class MagentoService {
 	public void init() {
 		// initialize the configuration cache
 		configurations = new HashMap<String, ItemCollection>();
+		clients = new HashMap<String, Object>();
 	}
 
 	/**
-	 * resetzs the connections
+	 * resets the connections
 	 */
 	public void reset() {
 		// reset cache
 		configurations = new HashMap<String, ItemCollection>();
 
-		if (magentoSOAPClient != null) {
-			magentoSOAPClient.disconnect();
-			magentoSOAPClient = null;
+		// disconnect magento clients
+		if (clients != null) {
+			for (Map.Entry<String, Object> entry : clients.entrySet()) {
+				Object client=entry.getValue();
+				if (client instanceof MagentoClient) {
+					((MagentoClient) entry.getValue()).disconnect();
+				}
+			}
 		}
-		if (magentoRestClient != null) {
-			magentoRestClient.disconnect();
-			magentoRestClient = null;
-		}
-
-		if (magentoHTMLClient != null) {
-			magentoHTMLClient = null;
-		}
+		// reset clients
+		clients = new HashMap<String, Object>();
 
 	}
 
@@ -150,22 +151,23 @@ public class MagentoService {
 	 */
 	public MagentoClient getSOAPClient(String configID) {
 
-		if (magentoSOAPClient == null) {
-
-			magentoSOAPClient = MagentoClientFactory
+		// try to get client form cache
+		MagentoClient client = (MagentoClient) clients.get(configID);
+		if (client == null) {
+			client = MagentoClientFactory
 					.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
-
 			try {
-				magentoSOAPClient.connect(loadConfiguration(configID));
+				client.connect(loadConfiguration(configID));
+				clients.put(configID, client);
 			} catch (MagentoException e) {
 				logger.severe("[MagentoService] unable to connect SOAP Client ! "
 						+ e.getMessage());
 				e.printStackTrace();
-				magentoSOAPClient = null;
+				client = null;
 			}
 		}
 
-		return magentoSOAPClient;
+		return client;
 	}
 
 	/**
@@ -177,21 +179,24 @@ public class MagentoService {
 	 * @return
 	 */
 	public MagentoClient getRestClient(String configID) {
-		if (magentoRestClient == null) {
-			magentoRestClient = MagentoClientFactory
+		// try to get client form cache
+		MagentoClient client = (MagentoClient) clients.get(configID);
+		if (client == null) {
+			client = MagentoClientFactory
 					.createClient("org.imixs.workflow.magento.rest.MagentoRestClient");
 
 			try {
-				magentoRestClient.connect(loadConfiguration(configID));
+				client.connect(loadConfiguration(configID));
+				clients.put(configID, client);
 			} catch (MagentoException e) {
 				logger.severe("[MagentoService] unable to connect Rest Client ! "
 						+ e.getMessage());
 				e.printStackTrace();
-				magentoRestClient = null;
+				client = null;
 			}
 		}
 
-		return magentoRestClient;
+		return client;
 	}
 
 	/**
@@ -203,8 +208,10 @@ public class MagentoService {
 	 * @return
 	 */
 	public MagentoHTMLClient getHTMLClient(String configID) {
-		if (magentoHTMLClient == null) {
-
+	
+		// try to get client form cache
+		MagentoHTMLClient client = (MagentoHTMLClient) clients.get(configID);
+		if (client == null) {
 			ItemCollection configuration = loadConfiguration(configID);
 			// read data from config entity....
 			if (configuration != null) {
@@ -223,13 +230,14 @@ public class MagentoService {
 				logger.fine("[MagentoService] magentoBasisURL='"
 						+ magentoBasisURL + "'");
 
-				magentoHTMLClient = new MagentoHTMLClient(magentoAccessKey,
+				client = new MagentoHTMLClient(magentoAccessKey,
 						magentoAccessSecret, magentoBasisURL);
+				clients.put(configID, client);
 			}
 
 		}
 
-		return magentoHTMLClient;
+		return client;
 	}
 
 	/**
