@@ -160,9 +160,9 @@ public class MagentoSchedulerService {
 	private static Logger logger = Logger
 			.getLogger(MagentoSchedulerService.class.getName());
 
-	
 	/***
 	 * retruns a list of all existing Magento Shop Configurations
+	 * 
 	 * @return
 	 */
 	public List<ItemCollection> findAllConfigurations() {
@@ -422,10 +422,9 @@ public class MagentoSchedulerService {
 
 		// load configuration...
 		ItemCollection configuration = (ItemCollection) timer.getInfo();
+		sTimerID = configuration.getItemValueString(EntityService.UNIQUEID);
+		configuration = workflowService.getEntityService().load(sTimerID);
 		try {
-
-			sTimerID = configuration.getItemValueString("$uniqueid");
-
 			importOrders(configuration);
 
 			configuration.replaceItemValue("errormessage", "");
