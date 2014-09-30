@@ -51,6 +51,8 @@ public class MagentoPlugin extends AbstractPlugin {
 
 	public final static String MAGENTOSERVICE_NOT_BOUND = "MAGENTOSERVICE_NOT_BOUND";
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
+	
+	public final static String MAGENTO_CONFIGURATION_ID= "txtMagentoConfiguration";
 	public final static int ACTIVITY_MAGENTO_UPDATE = 800; // import magento order data
 
 	ItemCollection documentContext;
@@ -136,7 +138,7 @@ public class MagentoPlugin extends AbstractPlugin {
 				String customerID = workitem
 						.getItemValueString("m_customer_id");
 				if (!customerID.isEmpty()) {
-					ItemCollection customer = magentoService.getRestClient(workitem.getItemValueString("txtMagentoConfiguration"))
+					ItemCollection customer = magentoService.getRestClient(workitem.getItemValueString(MAGENTO_CONFIGURATION_ID))
 							.getCustomerById(new Integer(customerID));
 					if (customer != null) {
 						workitem.replaceItemValue("txtMagentoCustomerEmail",

@@ -609,6 +609,11 @@ public class MagentoSchedulerService {
 		for (ItemCollection order : orders) {
 
 			try {
+				// store shopID
+				if (!shopConfigID.equals(order.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID))) {
+					order.replaceItemValue(MagentoPlugin.MAGENTO_CONFIGURATION_ID, shopConfigID);
+				}
+				
 				boolean bUpdate = false;
 				String sMagentoKey = magentoService.getOrderID(order);
 
@@ -630,7 +635,7 @@ public class MagentoSchedulerService {
 					workitem.replaceItemValue("txtMagentoError", "");
 
 					// store magento Shop id
-					workitem.replaceItemValue("txtMagentoConfiguration",
+					workitem.replaceItemValue(MagentoPlugin.MAGENTO_CONFIGURATION_ID,
 							shopConfigID);
 
 					// transfer order items

@@ -133,7 +133,7 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 					+ sMagentoorderIncrementId + "=" + sNewMagentoStatus + " ("
 					+ sNewMagentoComment + ")");
 			MagentoClient magentoClient = magentoService.getSOAPClient(workitem
-					.getItemValueString("txtMagentoConfiguration"));
+					.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID));
 			magentoClient.addOrderComment(sMagentoorderIncrementId,
 					sNewMagentoStatus, sNewMagentoComment, notify);
 		}

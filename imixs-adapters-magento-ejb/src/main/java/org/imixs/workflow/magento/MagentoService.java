@@ -47,6 +47,8 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
 import org.imixs.workflow.magento.html.MagentoHTMLClient;
+import org.imixs.workflow.magento.rest.MagentoRestClient;
+import org.imixs.workflow.magento.soap.MagentoSOAPClient;
 
 /**
  * This EJB provides methods to interact with a magento instance through the
@@ -90,7 +92,9 @@ public class MagentoService {
 	// private MagentoClient magentoRestClient = null;
 	// private MagentoHTMLClient magentoHTMLClient = null;
 	private Map<String, ItemCollection> configurations = null;
-	private Map<String, Object> clients = null;
+	private Map<String, MagentoSOAPClient> soapClients = null;
+	private Map<String, MagentoRestClient> restClients = null;
+	private Map<String, MagentoHTMLClient> htmlClients = null;
 	private static Logger logger = Logger.getLogger(MagentoService.class
 			.getName());
 
@@ -101,7 +105,9 @@ public class MagentoService {
 	public void init() {
 		// initialize the configuration cache
 		configurations = new HashMap<String, ItemCollection>();
-		clients = new HashMap<String, Object>();
+		soapClients = new HashMap<String, MagentoSOAPClient>();
+		restClients = new HashMap<String, MagentoRestClient>();
+		htmlClients = new HashMap<String, MagentoHTMLClient>();
 	}
 
 	/**
@@ -111,17 +117,26 @@ public class MagentoService {
 		// reset cache
 		configurations = new HashMap<String, ItemCollection>();
 
-		// disconnect magento clients
-		if (clients != null) {
-			for (Map.Entry<String, Object> entry : clients.entrySet()) {
-				Object client=entry.getValue();
-				if (client instanceof MagentoClient) {
-					((MagentoClient) entry.getValue()).disconnect();
-				}
+		// disconnect Soap clients
+		if (soapClients != null) {
+			for (Map.Entry<String, MagentoSOAPClient> entry : soapClients
+					.entrySet()) {
+				entry.getValue().disconnect();
 			}
 		}
+
+		// disconnect Rest clients
+		if (restClients != null) {
+			for (Map.Entry<String, MagentoRestClient> entry : restClients
+					.entrySet()) {
+				entry.getValue().disconnect();
+			}
+		}
+
 		// reset clients
-		clients = new HashMap<String, Object>();
+		soapClients = new HashMap<String, MagentoSOAPClient>();
+		restClients = new HashMap<String, MagentoRestClient>();
+		htmlClients = new HashMap<String, MagentoHTMLClient>();
 
 	}
 
@@ -152,13 +167,13 @@ public class MagentoService {
 	public MagentoClient getSOAPClient(String configID) {
 
 		// try to get client form cache
-		MagentoClient client = (MagentoClient) clients.get(configID);
+		MagentoSOAPClient client = soapClients.get(configID);
 		if (client == null) {
-			client = MagentoClientFactory
+			client = (MagentoSOAPClient) MagentoClientFactory
 					.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
 			try {
 				client.connect(loadConfiguration(configID));
-				clients.put(configID, client);
+				soapClients.put(configID, client);
 			} catch (MagentoException e) {
 				logger.severe("[MagentoService] unable to connect SOAP Client ! "
 						+ e.getMessage());
@@ -180,20 +195,14 @@ public class MagentoService {
 	 */
 	public MagentoClient getRestClient(String configID) {
 		// try to get client form cache
-		MagentoClient client = (MagentoClient) clients.get(configID);
+		MagentoRestClient client = restClients.get(configID);
 		if (client == null) {
-			client = MagentoClientFactory
+			client = (MagentoRestClient) MagentoClientFactory
 					.createClient("org.imixs.workflow.magento.rest.MagentoRestClient");
 
-			try {
-				client.connect(loadConfiguration(configID));
-				clients.put(configID, client);
-			} catch (MagentoException e) {
-				logger.severe("[MagentoService] unable to connect Rest Client ! "
-						+ e.getMessage());
-				e.printStackTrace();
-				client = null;
-			}
+			client.connect(loadConfiguration(configID));
+			restClients.put(configID, client);
+
 		}
 
 		return client;
@@ -208,9 +217,9 @@ public class MagentoService {
 	 * @return
 	 */
 	public MagentoHTMLClient getHTMLClient(String configID) {
-	
+
 		// try to get client form cache
-		MagentoHTMLClient client = (MagentoHTMLClient) clients.get(configID);
+		MagentoHTMLClient client = htmlClients.get(configID);
 		if (client == null) {
 			ItemCollection configuration = loadConfiguration(configID);
 			// read data from config entity....
@@ -232,7 +241,7 @@ public class MagentoService {
 
 				client = new MagentoHTMLClient(magentoAccessKey,
 						magentoAccessSecret, magentoBasisURL);
-				clients.put(configID, client);
+				htmlClients.put(configID, client);
 			}
 
 		}
@@ -290,7 +299,7 @@ public class MagentoService {
 	 * The order ID is stored in the proeprty txtName with the following format:
 	 * 
 	 * <code>
-	 *    magento:order:1
+	 *    magento:order:[SHOPID]:1
 	 *  </code>
 	 * 
 	 * @return workitem or null if no workitem exits
@@ -338,7 +347,7 @@ public class MagentoService {
 
 		// test configuration....
 		String sConfigurationID = workitem
-				.getItemValueString("txtMagentoConfiguration");
+				.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID);
 
 		ItemCollection order = this.getRestClient(sConfigurationID)
 				.getOrderById(sKey);
@@ -348,11 +357,13 @@ public class MagentoService {
 
 	/**
 	 * this method creates the Magento oder ID to be stored in the property
-	 * 'txtName'. This property value need to be unique. The plugin can be
-	 * overwritten to change this behavior.
+	 * 'txtName'. This property value need to be unique. The key is computed by
+	 * the shopconfig id and the entity_id of the sales order
 	 * **/
 	public String getOrderID(ItemCollection order) {
-		String sKey = "magento:order:" + order.getItemValueString("entity_id");
+		String sKey = "magento:order:"
+				+ order.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID)
+				+ ":" + order.getItemValueString("entity_id");
 		return sKey;
 	}
 
