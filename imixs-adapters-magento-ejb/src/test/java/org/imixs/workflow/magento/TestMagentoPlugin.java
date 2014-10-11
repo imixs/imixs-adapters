@@ -1,4 +1,4 @@
-package org.imixs.workflow.magento.rest;
+package org.imixs.workflow.magento;
 
 import static org.mockito.Mockito.when;
 
@@ -47,7 +47,7 @@ import org.mockito.stubbing.Answer;
  * 
  */
 public class TestMagentoPlugin {
-	MagentoApi magentoApi = null;
+	MagentoApi magentoApi = null; 
 	MagentoPlugin magentoPlugin = null;
 	ItemCollection documentActivity;
 	ItemCollection documentContext;

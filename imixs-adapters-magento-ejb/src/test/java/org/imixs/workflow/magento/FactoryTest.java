@@ -36,10 +36,8 @@ public class FactoryTest {
 
 		MagentoClient client = MagentoClientFactory
 				.createClient("org.imixs.workflow.magento.soap.MagentoSOAPClient");
-
 		ItemCollection config = new ItemCollection();
-	
-		
+	 		
 		config.replaceItemValue("txtMagentoAccessKey",
 				properties.getProperty("magento.soap.access-key"));
 

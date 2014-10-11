@@ -31,6 +31,7 @@ import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.json.Json;
@@ -117,8 +118,8 @@ public class MagentoJsonParser {
 
 			// error message found?
 			if (code > -1 && message != null) {
-				result = new MagentoException(MagentoJsonParser.ERROR_MESSAGE, ""
-						+ code, message);
+				result = new MagentoException(MagentoJsonParser.ERROR_MESSAGE,
+						"" + code, message);
 				logger.fine("[MagentoJsonParser] found error message: " + code
 						+ " - " + message);
 				break;
@@ -153,7 +154,7 @@ public class MagentoJsonParser {
 	 * 
 	 */
 	public static List<ItemCollection> parseObjectList(String json)
-			throws MagentoException{
+			throws MagentoException {
 
 		List<ItemCollection> result = new ArrayList<ItemCollection>();
 		if (json == null)
@@ -210,7 +211,8 @@ public class MagentoJsonParser {
 	 * </code>
 	 * 
 	 * an item can contain embedded items. The method then makes a recursive
-	 * call and embeds a new itemcolleciton into the current
+	 * call and embeds the values of an embedded ItemCollection as a Map into
+	 * the current ItemCollection
 	 * 
 	 * <code>
 	 * ....
@@ -256,8 +258,7 @@ public class MagentoJsonParser {
 			if (event == Event.END_ARRAY) {
 				return null;
 			}
-			
-			
+
 			if (event == Event.KEY_NAME) {
 				Object itemValue = null;
 				String itemName = parser.getString();
@@ -265,14 +266,16 @@ public class MagentoJsonParser {
 				event = parser.next();
 
 				switch (event) {
-				
-				
+
 				case START_ARRAY: {
-					itemValue = new ArrayList<ItemCollection>();
+					itemValue = new ArrayList<Map<String,Object>>();
 					while (event != Event.END_ARRAY) {
-						ItemCollection embeddedItemCollection=parseItemCollection(parser);
-						if (embeddedItemCollection!=null) {
-							((List<ItemCollection>)itemValue).add(embeddedItemCollection);
+						ItemCollection embeddedItemCollection = parseItemCollection(parser);
+						if (embeddedItemCollection != null) {
+							// here we may not embed the ItemCollection but the
+							// Map to guaranty compatibility with new versions of the
+							// Class ItemCollection
+							((List<Map<String,Object>>) itemValue).add(embeddedItemCollection.getAllItems());
 						} else {
 							// empty array!
 							break;
@@ -281,13 +284,11 @@ public class MagentoJsonParser {
 					}
 					break;
 				}
-				
-				
+
 				case START_OBJECT: {
 					// embedded itemCollection
-				//	itemValue =parseItemCollection(parser);
+					// itemValue =parseItemCollection(parser);
 				}
-				
 
 				case VALUE_FALSE: {
 					itemValue = false;

@@ -1,8 +1,9 @@
-package org.imixs.workflow.magento.rest;
+package org.imixs.workflow.magento;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
@@ -202,23 +203,31 @@ public class TestMagentoJsonParser {
 		Assert.assertEquals(100.0000, entity.getItemValueDouble("base_subtotal"));
 
 		// test address
-		List<ItemCollection> addresses=entity.getItemValue("addresses");
+		List<Map<String,Object>> addresses=entity.getItemValue("addresses");
 		Assert.assertNotNull(addresses);
 		Assert.assertEquals(2, addresses.size());
-		ItemCollection address = addresses.get(0);
+		// get embedded map...
+		Map<String,Object> addressMap = (Map<String,Object>) addresses.get(0);
+		ItemCollection address= new ItemCollection(addressMap);	
+		
 		Assert.assertEquals("Alabama", address.getItemValueString("region"));
 		Assert.assertEquals("345", address.getItemValueString("postcode"));
-		address = addresses.get(1);
+		addressMap = (Map<String,Object>) addresses.get(1);
+		address= new ItemCollection(addressMap);	
 		Assert.assertEquals("Alabama", address.getItemValueString("region"));
 		Assert.assertEquals("345", address.getItemValueString("postcode"));
 		
 		
 		
 		// test orderitems
-		List<ItemCollection> orderitems=entity.getItemValue("order_items");
+		List<Map<String,Object>> orderitems=entity.getItemValue("order_items");
 		Assert.assertNotNull(orderitems);
 		Assert.assertEquals(1, orderitems.size());
-		ItemCollection orderItem = orderitems.get(0);
+		
+		Map<String,Object> orderItemMap = (Map<String,Object>) orderitems.get(0);
+		ItemCollection orderItem =new ItemCollection(orderItemMap);
+		
+		
 		Assert.assertEquals("1", orderItem.getItemValueString("item_id"));
 		Assert.assertEquals("Business Servicevertrag", orderItem.getItemValueString("name"));
 		
@@ -237,7 +246,6 @@ public class TestMagentoJsonParser {
 	 * This test imports the product_1.json file for parsing.
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testProduct_1() {
 
