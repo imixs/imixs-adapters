@@ -490,7 +490,7 @@ public class MagentoService {
 	 * @return true if all magento properties of workitem equals to
 	 *         magentoEntity
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public boolean isWorkitemEqualsToMagentoEntity(ItemCollection workitem,
 			ItemCollection magentoEntity) {
 
@@ -500,35 +500,79 @@ public class MagentoService {
 		if (workitem == null || magentoEntity == null)
 			return false;
 
-		// first check the data of all magento proeprties.....
-		Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
+		try {
+			// first check the data of all magento proeprties.....
+			Iterator<String> keys = magentoEntity.getAllItems().keySet()
+					.iterator();
 
-		while (keys.hasNext()) {
-			String sName = keys.next();
+			while (keys.hasNext()) {
+				String sName = keys.next();
 
-			Object valueMagento = magentoEntity.getItemValue(sName);
-			Object valueWorkitem = workitem.getItemValue("m_" + sName);
+				List<?> valueMagento = magentoEntity.getItemValue(sName);
+				List<?> valueWorkitem = workitem.getItemValue("m_" + sName);
 
-			if (!valueMagento.equals(valueWorkitem)) {
-				return false;
-			}
-		}
+				// if value is embedded Map we need to compare the details
+				if (valueMagento.size() > 0
+						&& valueMagento.get(0) instanceof Map) {
+					if (valueWorkitem.size() == 0
+							|| !(valueWorkitem.get(0) instanceof Map)) {
+						return false;
+					}
+					for (int j = 0; j < valueMagento.size(); j++) {
 
-		// now we need to verify if the workitem has more magento properties as
-		// the magento Entity.
-		// first check the data of all magento proeprties.....
-		keys = workitem.getAllItems().keySet().iterator();
-		while (keys.hasNext()) {
-			String sName = keys.next();
-			// magento property??
-			if (sName.startsWith("m_")) {
-				sName = sName.substring(2);
-				if (!magentoEntity.hasItem(sName)) {
-					return false;
+						Map embeddedMagentoMap = (Map) valueMagento.get(j);
+						Map embeddedWorkitemMap = (Map) valueWorkitem.get(j);
+						// interate over the values from the embedded magento
+						// map
+						// and compare it to the workitem map values...
+						Iterator<String> keysEmbedded = embeddedMagentoMap
+								.keySet().iterator();
+						while (keysEmbedded.hasNext()) {
+							String sEmbeddedName = keysEmbedded.next();
+							if (!embeddedMagentoMap.get(sEmbeddedName).equals(
+									embeddedWorkitemMap.get(sEmbeddedName))) {
+								logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - embedded Map Field='"
+										+ sName + ">" + sEmbeddedName);
+
+								return false;
+							}
+						}
+					}
+
+				} else {
+					// direct compare...
+					if (!valueMagento.equals(valueWorkitem)) {
+						logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - Field='"
+								+ sName
+								+ " values: "
+								+ valueMagento
+								+ "!="
+								+ valueWorkitem);
+
+						return false;
+					}
 				}
 			}
-		}
 
+			// now we need to verify if the workitem has more magento properties
+			// as
+			// the magento Entity.
+			// first check the data of all magento proeprties.....
+			keys = workitem.getAllItems().keySet().iterator();
+			while (keys.hasNext()) {
+				String sName = keys.next();
+				// magento property??
+				if (sName.startsWith("m_")) {
+					sName = sName.substring(2);
+					if (!magentoEntity.hasItem(sName)) {
+						return false;
+					}
+				}
+			}
+		} catch (Exception e) {
+			logger.warning("[MagentoService] isWorkitemEqualsToMagentoEntity unable to compare workitem: " + e.getMessage());
+			return false;
+		}
 		return true;
 	}
 

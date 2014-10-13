@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Resource;
@@ -198,7 +201,7 @@ public class MagentoSchedulerService {
 		// configItemCollection.replaceItemValue("$writeAccess", "");
 		// configItemCollection.replaceItemValue("$readAccess", "");
 
-		configItemCollection = updateTimerDetails(configItemCollection);
+		configItemCollection = updateTimerDetails(configItemCollection,false);
 		// save entity
 		configItemCollection = workflowService.getEntityService().save(
 				configItemCollection);
@@ -362,11 +365,20 @@ public class MagentoSchedulerService {
 	 * timer configuration.
 	 * 
 	 * @param configuration
+	 * @param reload
+	 *            - if true the confiugration will be reloaded from the database
 	 */
-	public ItemCollection updateTimerDetails(ItemCollection configuration) {
+	public ItemCollection updateTimerDetails(ItemCollection configuration,
+			boolean reload) {
 		if (configuration == null)
 			return configuration;
 		String id = configuration.getItemValueString("$uniqueid");
+
+		// reload from database...
+		if (reload) {
+			configuration = workflowService.getEntityService().load(id);
+		}
+
 		Timer timer;
 		try {
 			timer = this.findTimer(id);
@@ -440,12 +452,13 @@ public class MagentoSchedulerService {
 					.replaceItemValue("numOrdersTotal", magentoOrdersTotal);
 
 		} catch (MagentoException e) {
-			e.printStackTrace();
-			// stop timer!
-			timer.cancel();
-			logger.severe("[ImportSchedulerService] Timeout sevice stopped: "
-					+ sTimerID);
-			configuration.replaceItemValue("errormessage", e.toString());
+			// in case of an exception we did not cancel the Tiner service
+			if (logger.isLoggable(Level.FINE)) {
+				e.printStackTrace();
+			}
+			logger.severe("[ImportSchedulerService] importOrders failed for: "
+					+ sTimerID + " Error=" + e.getMessage());
+			configuration.replaceItemValue("errormessage", e.getMessage());
 			magentoService.reset();
 		}
 
@@ -610,10 +623,14 @@ public class MagentoSchedulerService {
 
 			try {
 				// store shopID
-				if (!shopConfigID.equals(order.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID))) {
-					order.replaceItemValue(MagentoPlugin.MAGENTO_CONFIGURATION_ID, shopConfigID);
+				if (!shopConfigID
+						.equals(order
+								.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID))) {
+					order.replaceItemValue(
+							MagentoPlugin.MAGENTO_CONFIGURATION_ID,
+							shopConfigID);
 				}
-				
+
 				boolean bUpdate = false;
 				String sMagentoKey = magentoService.getOrderID(order);
 
@@ -635,7 +652,8 @@ public class MagentoSchedulerService {
 					workitem.replaceItemValue("txtMagentoError", "");
 
 					// store magento Shop id
-					workitem.replaceItemValue(MagentoPlugin.MAGENTO_CONFIGURATION_ID,
+					workitem.replaceItemValue(
+							MagentoPlugin.MAGENTO_CONFIGURATION_ID,
 							shopConfigID);
 
 					// transfer order items
@@ -697,6 +715,64 @@ public class MagentoSchedulerService {
 			throws AccessDeniedException, ProcessingErrorException,
 			PluginException {
 		workflowService.processWorkItem(aWorkitem);
+	}
+
+	/**
+	 * This is a helper method to migrate embedded ItemCollections and replace
+	 * them with Map interfaces. This is important to guarantee the
+	 * compatibility with further releases of imixs-core.
+	 */
+	public void migrateEmbeddedItemCollections() {
+
+		int maxcount = 0;
+		int count = 0;
+		String sQuery = "SELECT workitem FROM Entity AS workitem "
+				+ "  WHERE workitem.type IN ('workitem','workitemarchive', 'workitemdeleted') "
+				+ " ORDER BY workitem.modified ASC";
+		List<ItemCollection> col = workflowService.getEntityService()
+				.findAllEntities(sQuery, 0, -1);
+		maxcount = col.size();
+		for (ItemCollection aworkitem : col) {
+			boolean update = false;
+			String id = aworkitem.getItemValueString(EntityService.UNIQUEID);
+			Map<String, List<?>> map = aworkitem.getAllItems();
+
+			for (Map.Entry<String, List<?>> entry : map.entrySet()) {
+
+				// test values for embedded ItemCollections
+				List values = entry.getValue();
+				if (values != null && !values.isEmpty()
+						&& values.get(0) instanceof ItemCollection) {
+
+					logger.info("migrateEmbeddedItemCollections - found embedded ItemCollection in "
+							+ id + "... migrate...");
+
+					Vector<Map> newValues = new Vector<Map>();
+					for (Object wert : values) {
+
+						newValues.add(((ItemCollection) wert).getAllItems());
+					}
+
+					// now replace this value!
+					entry.setValue(newValues);
+					update = true;
+
+				}
+			}
+
+			// save worktiem with new values
+			if (update) {
+				workflowService.getEntityService().saveByNewTransaction(
+						aworkitem);
+				count++;
+			}
+
+		}
+
+		logger.info("migrateEmbeddedItemCollections finished");
+		logger.info(maxcount + " workitems checked");
+		logger.info(count + " workitems updated sucessfull");
+
 	}
 
 	/**

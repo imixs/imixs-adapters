@@ -28,6 +28,7 @@
 package org.imixs.workflow.magento;
 
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.naming.Context;
@@ -108,12 +109,13 @@ public class MagentoPlugin extends AbstractPlugin {
 			// create custom magento fields
 			workitem.replaceItemValue("txtMagentoOrderID",
 					workitem.getItemValueString("m_increment_id"));
-			List<ItemCollection> addresses = workitem
+			List<Map> addresses = workitem
 					.getItemValue("m_addresses");
 
 			// copy address data into Imixs Fields
 
-			for (ItemCollection address : addresses) {
+			for (Map addressMap : addresses) {
+				ItemCollection address=new ItemCollection(addressMap);
 				// address_type = billing / shipping
 				logger.fine("[MagentoPlugin] update magentoCustomer data...");
 				workitem.replaceItemValue(
@@ -146,8 +148,9 @@ public class MagentoPlugin extends AbstractPlugin {
 
 						// check phonnumber from addresses
 						addresses = customer.getItemValue("addresses");
-						for (ItemCollection address : addresses) {
+						for (Map addressMap : addresses) {
 							// address_type = billing / shipping
+							ItemCollection address=new ItemCollection(addressMap);
 							
 							workitem.replaceItemValue(
 									"txtMagentoCustomerPhone",

@@ -31,6 +31,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,7 +65,7 @@ import org.scribe.oauth.OAuthService;
 public class MagentoRestClient implements MagentoClient {
 
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
-	
+
 	private MagentoApi magentoApi = null;
 
 	String magentoApiURL = null;
@@ -136,7 +137,7 @@ public class MagentoRestClient implements MagentoClient {
 	 * @return
 	 */
 	public OAuthService getService() {
-		if (logger.isLoggable( Level.FINE))
+		if (logger.isLoggable(Level.FINE))
 			return new ServiceBuilder().provider(magentoApi)
 					.apiKey(magentoConsumerKey)
 					.apiSecret(magentoConsumerSecret).debug().build();
@@ -203,17 +204,14 @@ public class MagentoRestClient implements MagentoClient {
 	public ItemCollection getProductBySKU(String sku) {
 		if (sku == null || sku.isEmpty())
 			return null;
-		
-		
-		
+
 		// now we need to encode the SKU with special character check!
 		try {
-			sku=	URLEncoder.encode(sku, "UTF-8");
-			sku=sku.replace("+", "%20");
+			sku = URLEncoder.encode(sku, "UTF-8");
+			sku = sku.replace("+", "%20");
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-		
 
 		ItemCollection product = null;
 
@@ -258,6 +256,7 @@ public class MagentoRestClient implements MagentoClient {
 	 * @return
 	 * @throws PluginException
 	 */
+	@SuppressWarnings("rawtypes")
 	public ItemCollection getCustomerById(int id) {
 		ItemCollection customer = null;
 		String sURL = magentoApiURL + "/customers/" + id;
@@ -291,7 +290,15 @@ public class MagentoRestClient implements MagentoClient {
 						result = MagentoJsonParser.parseObjectList(response
 								.getBody());
 						if (result.size() > 0) {
-							customer.replaceItemValue("addresses", result);
+							// convert List of ItemCollections into a List of
+							// Map Objects because we embedd this list into a
+							// ItemCollection!
+							List<Map> embeddedAddList = new ArrayList<Map>();
+							for (ItemCollection aAdress : result) {
+								embeddedAddList.add(aAdress.getAllItems());
+							}
+							customer.replaceItemValue("addresses",
+									embeddedAddList);
 						}
 					}
 				}
@@ -393,7 +400,8 @@ public class MagentoRestClient implements MagentoClient {
 			}
 			logger.fine("[MagentoSchedulerSerivce] add page result....");
 			for (ItemCollection aEntity : pageResult) {
-				aEntity.replaceItemValue("order_id", aEntity.getItemValue("entity_id"));
+				aEntity.replaceItemValue("order_id",
+						aEntity.getItemValue("entity_id"));
 				resultList.add(aEntity);
 			}
 			// continue with next page!
@@ -404,7 +412,7 @@ public class MagentoRestClient implements MagentoClient {
 
 	@Override
 	public void addOrderComment(String orderIncrementId, String status,
-			String comment,boolean notify) throws MagentoException {
+			String comment, boolean notify) throws MagentoException {
 		logger.warning("[MagentoSOAPClient] method not implemented: getAddOrderComment");
 		// TODO Auto-generated method stub
 		// not implemented because this method is not supported by Magento Rest
