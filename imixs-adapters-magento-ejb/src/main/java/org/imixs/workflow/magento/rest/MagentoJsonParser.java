@@ -172,26 +172,35 @@ public class MagentoJsonParser {
 		}
 
 		// parse the data string
-		JsonParser parser = Json.createParser(new StringReader(json));
+		try {
+			JsonParser parser = Json.createParser(new StringReader(json));
 
-		Event event = null;
-		// Advance to "messages" key
-		while (parser.hasNext()) {
-			event = parser.next();
-			// object start...
+			Event event = null;
+			// Advance to "messages" key
+			while (parser.hasNext()) {
+				event = parser.next();
+				// object start...
 
-			if (event == Event.START_OBJECT) {
+				if (event == Event.START_OBJECT) {
 
-				// parse the item collection...
-				ItemCollection entity = parseItemCollection(parser);
+					// parse the item collection...
+					ItemCollection entity = parseItemCollection(parser);
 
-				// add itemCollection into result
-				if (entity != null) {
-					result.add(entity);
-					entity = null;
+					// add itemCollection into result
+					if (entity != null) {
+						result.add(entity);
+						entity = null;
+					}
+
 				}
 
 			}
+		} catch (Exception e) {
+			logger.severe("[MagentoParser] error parsing ObjectList! : "
+					+ e.getMessage());
+			throw new MagentoException(MagentoJsonParser.ERROR_MESSAGE,
+					MagentoJsonParser.ERROR_MESSAGE,
+					"error parsing ObjectList!", e);
 
 		}
 
@@ -268,14 +277,16 @@ public class MagentoJsonParser {
 				switch (event) {
 
 				case START_ARRAY: {
-					itemValue = new ArrayList<Map<String,Object>>();
+					itemValue = new ArrayList<Map<String, Object>>();
 					while (event != Event.END_ARRAY) {
 						ItemCollection embeddedItemCollection = parseItemCollection(parser);
 						if (embeddedItemCollection != null) {
 							// here we may not embed the ItemCollection but the
-							// Map to guaranty compatibility with new versions of the
+							// Map to guaranty compatibility with new versions
+							// of the
 							// Class ItemCollection
-							((List<Map<String,Object>>) itemValue).add(embeddedItemCollection.getAllItems());
+							((List<Map<String, Object>>) itemValue)
+									.add(embeddedItemCollection.getAllItems());
 						} else {
 							// empty array!
 							break;
