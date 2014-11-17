@@ -53,6 +53,7 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
+import org.imixs.workflow.magento.rest.MagentoJsonParser;
 
 /**
  * Magento - Scheduler
@@ -145,6 +146,8 @@ public class MagentoSchedulerService {
 	private int workitemsFailed;
 	private int magentoOrdersTotal;
 
+	public final static String IMPORT_ERROR = "IMPORT_ERROR";
+
 	@Resource
 	SessionContext ctx;
 
@@ -201,7 +204,7 @@ public class MagentoSchedulerService {
 		// configItemCollection.replaceItemValue("$writeAccess", "");
 		// configItemCollection.replaceItemValue("$readAccess", "");
 
-		configItemCollection = updateTimerDetails(configItemCollection,false);
+		configItemCollection = updateTimerDetails(configItemCollection, false);
 		// save entity
 		configItemCollection = workflowService.getEntityService().save(
 				configItemCollection);
@@ -452,11 +455,11 @@ public class MagentoSchedulerService {
 					.replaceItemValue("numOrdersTotal", magentoOrdersTotal);
 
 		} catch (MagentoException e) {
-			// in case of an exception we did not cancel the Tiner service
+			// in case of an exception we did not cancel the Timer service
 			if (logger.isLoggable(Level.FINE)) {
 				e.printStackTrace();
 			}
-			logger.severe("[ImportSchedulerService] importOrders failed for: "
+			logger.severe("[MagentoSchedulerService] importOrders failed for: "
 					+ sTimerID + " Error=" + e.getMessage());
 			configuration.replaceItemValue("errormessage", e.getMessage());
 			magentoService.reset();
@@ -470,16 +473,16 @@ public class MagentoSchedulerService {
 
 		}
 
-		logger.info("[ImportSchedulerService] import finished successfull: "
+		logger.info("[MagentoSchedulerService] import finished successfull: "
 				+ ((System.currentTimeMillis()) - lProfiler) + " ms");
 
-		logger.info("[ImportSchedulerService] " + magentoOrdersTotal
+		logger.info("[MagentoSchedulerService] " + magentoOrdersTotal
 				+ " magento orders verified");
-		logger.info("[ImportSchedulerService] " + workitemsImported
+		logger.info("[MagentoSchedulerService] " + workitemsImported
 				+ " workitems created");
-		logger.info("[ImportSchedulerService] " + workitemsUpdated
+		logger.info("[MagentoSchedulerService] " + workitemsUpdated
 				+ " workitems updated");
-		logger.info("[ImportSchedulerService] " + workitemsFailed + " errors");
+		logger.info("[MagentoSchedulerService] " + workitemsFailed + " errors");
 
 		/*
 		 * Check if Timer should be canceld now?
@@ -490,7 +493,7 @@ public class MagentoSchedulerService {
 			if (calNow.getTime().after(endDate)) {
 				timer.cancel();
 				System.out
-						.println("[ImportSchedulerService] Timeout sevice stopped: "
+						.println("[MagentoSchedulerService] Timeout sevice stopped: "
 								+ sTimerID);
 			}
 		}
@@ -575,17 +578,25 @@ public class MagentoSchedulerService {
 				continue;
 			}
 
-			logger.info("[MagentoSchedulerSerivce] read orders "
-					+ " orderstatus=" + sMagentoStatus);
+			try {
+				logger.info("[MagentoSchedulerSerivce] read orders "
+						+ " orderstatus=" + sMagentoStatus);
 
-			List<ItemCollection> orders = magentoService.getRestClient(sShopID)
-					.getOrders(sMagentoStatus);
+				List<ItemCollection> orders = magentoService.getRestClient(
+						sShopID).getOrders(sMagentoStatus);
 
-			logger.info("[MagentoSchedulerSerivce] " + orders.size()
-					+ " orders found, start processing....");
+				logger.info("[MagentoSchedulerSerivce] " + orders.size()
+						+ " orders found, start processing....");
 
-			// process order list
-			processOrderList(orders, orderModelVersion, iProcessID, sShopID);
+				// process order list
+				processOrderList(orders, orderModelVersion, iProcessID, sShopID);
+			} catch (Exception e) {
+				String errorMessage = "unable to read orders "
+						+ " orderstatus=" + sMagentoStatus + " error message="
+						+ e.getMessage();
+				throw new MagentoException(IMPORT_ERROR, IMPORT_ERROR,
+						errorMessage, e);
+			}
 
 		}
 
