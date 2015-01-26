@@ -160,6 +160,10 @@ public class MagentoJsonParser {
 		if (json == null)
 			return result;
 
+		if (json.trim().startsWith("<")) {
+			logger.warning("[MagentoJsonParser] INVALID JSON FORMAT! starting with character '<'. Maybe the magento REST API is no longer working? ");
+		}
+
 		json = json.trim();
 		if (json.isEmpty())
 			return result;
@@ -198,6 +202,8 @@ public class MagentoJsonParser {
 		} catch (Exception e) {
 			logger.severe("[MagentoParser] error parsing ObjectList! : "
 					+ e.getMessage());
+
+			logger.fine(json);
 			throw new MagentoException(MagentoJsonParser.ERROR_MESSAGE,
 					MagentoJsonParser.ERROR_MESSAGE,
 					"error parsing ObjectList!", e);

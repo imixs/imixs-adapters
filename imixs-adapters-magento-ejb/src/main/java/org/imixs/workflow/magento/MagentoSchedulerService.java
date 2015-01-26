@@ -729,64 +729,6 @@ public class MagentoSchedulerService {
 	}
 
 	/**
-	 * This is a helper method to migrate embedded ItemCollections and replace
-	 * them with Map interfaces. This is important to guarantee the
-	 * compatibility with further releases of imixs-core.
-	 */
-	public void migrateEmbeddedItemCollections() {
-
-		int maxcount = 0;
-		int count = 0;
-		String sQuery = "SELECT workitem FROM Entity AS workitem "
-				+ "  WHERE workitem.type IN ('workitem','workitemarchive', 'workitemdeleted') "
-				+ " ORDER BY workitem.modified ASC";
-		List<ItemCollection> col = workflowService.getEntityService()
-				.findAllEntities(sQuery, 0, -1);
-		maxcount = col.size();
-		for (ItemCollection aworkitem : col) {
-			boolean update = false;
-			String id = aworkitem.getItemValueString(EntityService.UNIQUEID);
-			Map<String, List<?>> map = aworkitem.getAllItems();
-
-			for (Map.Entry<String, List<?>> entry : map.entrySet()) {
-
-				// test values for embedded ItemCollections
-				List values = entry.getValue();
-				if (values != null && !values.isEmpty()
-						&& values.get(0) instanceof ItemCollection) {
-
-					logger.info("migrateEmbeddedItemCollections - found embedded ItemCollection in "
-							+ id + "... migrate...");
-
-					Vector<Map> newValues = new Vector<Map>();
-					for (Object wert : values) {
-
-						newValues.add(((ItemCollection) wert).getAllItems());
-					}
-
-					// now replace this value!
-					entry.setValue(newValues);
-					update = true;
-
-				}
-			}
-
-			// save worktiem with new values
-			if (update) {
-				workflowService.getEntityService().saveByNewTransaction(
-						aworkitem);
-				count++;
-			}
-
-		}
-
-		logger.info("migrateEmbeddedItemCollections finished");
-		logger.info(maxcount + " workitems checked");
-		logger.info(count + " workitems updated sucessfull");
-
-	}
-
-	/**
 	 * Create an interval timer whose first expiration occurs at a given point
 	 * in time and whose subsequent expirations occur after a specified
 	 * interval.
