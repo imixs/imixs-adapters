@@ -28,8 +28,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,7 +51,6 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.magento.rest.MagentoJsonParser;
 
 /**
  * Magento - Scheduler
@@ -683,6 +680,7 @@ public class MagentoSchedulerService {
 					// check if order details have changed
 					if (!magentoService.isWorkitemEqualsToMagentoEntity(
 							workitem, order)) {
+						logger.fine("[MagentoSchedulerService] Workitem not equal! Update needed...");
 						magentoService.addMagentoEntity(workitem, order);
 
 						workitem.replaceItemValue("txtMagentoError", "");

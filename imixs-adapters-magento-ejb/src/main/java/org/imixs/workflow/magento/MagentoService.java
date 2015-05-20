@@ -37,10 +37,8 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.security.DeclareRoles;
-import javax.annotation.security.RolesAllowed;
 import javax.annotation.security.RunAs;
 import javax.ejb.EJB;
-import javax.ejb.Local;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 
@@ -446,7 +444,7 @@ public class MagentoService {
 	public ItemCollection addMagentoEntity(ItemCollection workitem,
 			ItemCollection magentoEntity) {
 
-		// add magento proeprties
+		// add magento properties
 		Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
 		while (keys.hasNext()) {
 			String sName = keys.next();
@@ -511,6 +509,8 @@ public class MagentoService {
 						&& valueMagento.get(0) instanceof Map) {
 					if (valueWorkitem.size() == 0
 							|| !(valueWorkitem.get(0) instanceof Map)) {
+
+						logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - embedded Map not found in existing workitem!");
 						return false;
 					}
 					for (int j = 0; j < valueMagento.size(); j++) {
@@ -550,22 +550,21 @@ public class MagentoService {
 			}
 
 			// now we need to verify if the workitem has more magento properties
-			// as
-			// the magento Entity.
-			// first check the data of all magento proeprties.....
-			keys = workitem.getAllItems().keySet().iterator();
+			// as the magento Entity....
+			keys = magentoEntity.getAllItems().keySet().iterator();
 			while (keys.hasNext()) {
 				String sName = keys.next();
-				// magento property??
-				if (sName.startsWith("m_")) {
-					sName = sName.substring(2);
-					if (!magentoEntity.hasItem(sName)) {
-						return false;
-					}
+				// did magento property exist in workitem?
+				if (!workitem.hasItem("m_" + sName)) {
+					logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - Field='"
+							+ sName + " did not exist in current workitem");
+
+					return false;
 				}
 			}
 		} catch (Exception e) {
-			logger.warning("[MagentoService] isWorkitemEqualsToMagentoEntity unable to compare workitem: " + e.getMessage());
+			logger.warning("[MagentoService] isWorkitemEqualsToMagentoEntity unable to compare workitem: "
+					+ e.getMessage());
 			return false;
 		}
 		return true;
