@@ -430,7 +430,9 @@ public class MagentoSchedulerService {
 		// reset clients
 		magentoService.reset();
 		// flush cache
-		magentoCache.flush();
+		// magentoCache.flush();
+		// issue #17 - clear cache!
+		magentoCache.clearCache();
 
 		// load configuration...
 		ItemCollection configuration = (ItemCollection) timer.getInfo();
@@ -480,6 +482,11 @@ public class MagentoSchedulerService {
 		logger.info("[MagentoSchedulerService] " + workitemsUpdated
 				+ " workitems updated");
 		logger.info("[MagentoSchedulerService] " + workitemsFailed + " errors");
+
+		// reset clients
+		magentoService.reset();
+		// issue #17 - clear cache!
+		magentoCache.clearCache();
 
 		/*
 		 * Check if Timer should be canceld now?

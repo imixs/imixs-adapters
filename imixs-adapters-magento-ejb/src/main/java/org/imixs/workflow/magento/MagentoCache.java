@@ -111,9 +111,9 @@ public class MagentoCache {
 	}
 
 	public void clearCache() {
+		logger.info("[MagentoCache] clear cache...");
 		this.customerCache = new ConcurrentHashMap<String, ItemCollection>();
 		this.productCache = new ConcurrentHashMap<String, ItemCollection>();
-
 	}
 
 	/**
