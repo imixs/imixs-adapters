@@ -75,15 +75,15 @@ public class MagentoHTMLClient {
 
 	private String user = null;
 	private String password = null;
-	private String basisURL=null;
+	private String basisURL = null;
 
 	private String cookies = null;
 	private String encoding = "UTF-8";
 
 	private String loginFormKey = null;
 
-	private final static Logger logger = Logger.getLogger(MagentoHTMLClient.class
-			.getName());
+	private final static Logger logger = Logger
+			.getLogger(MagentoHTMLClient.class.getName());
 
 	/**
 	 * Creates a HTMLCLient instance with backend userid and password.
@@ -91,11 +91,11 @@ public class MagentoHTMLClient {
 	 * @param user
 	 * @param password
 	 */
-	public MagentoHTMLClient(String user, String password,String basisURL) {
+	public MagentoHTMLClient(String user, String password, String basisURL) {
 		super();
 		this.user = user;
 		this.password = password;
-		this.basisURL=basisURL;
+		this.basisURL = basisURL;
 	}
 
 	/**
@@ -144,11 +144,17 @@ public class MagentoHTMLClient {
 	 * @return HTTPResult
 	 */
 	public String readPage(String uri) throws Exception {
-		long l = System.currentTimeMillis();
+		long lStart = System.currentTimeMillis();
+		String result = readPage(basisURL + uri, basisURL + uri);
+		// test response Time...
+		long lEnd = System.currentTimeMillis();
+		if (((lEnd - lStart) / 1000) > 2) {
+			logger.warning("WARNING: MagentoHTMLClient readPage resonse time>2 seconds! - "
+					+ ((lEnd - lStart) / 1000) + "seconds overall!");
+		}
 
-		String result = readPage(basisURL+uri, basisURL+uri);
 		logger.fine("[HTMLClient] read page in "
-				+ (System.currentTimeMillis() - l) + " ms");
+				+ (System.currentTimeMillis() - lStart) + " ms");
 		return result;
 	}
 
@@ -271,7 +277,7 @@ public class MagentoHTMLClient {
 				// get the cookie if need, for login
 				cookies = urlConnection.getHeaderField("Set-Cookie");
 
-				return readPage(newUrl, uri);				
+				return readPage(newUrl, uri);
 			} else {
 				// get the cookie if need, for login
 				cookies = urlConnection.getHeaderField("Set-Cookie");

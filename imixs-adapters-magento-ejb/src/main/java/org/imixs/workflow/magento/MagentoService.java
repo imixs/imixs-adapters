@@ -411,7 +411,15 @@ public class MagentoService {
 		ItemCollection product = magentoCache.getProduct(sku);
 		if (product == null) {
 
+			long lStart = System.currentTimeMillis();
 			product = this.getRestClient(configID).getProductBySKU(sku);
+
+			// test resposnse Time...
+			long lEnd = System.currentTimeMillis();
+			if (((lEnd - lStart) / 1000) > 2) {
+				logger.warning("WARNING: MagentoService getProductBySKU resonse time>2 seconds! - "
+						+ ((lEnd - lStart) / 1000) + "seconds overall!");
+			}
 
 			// cache product;
 			if (product != null) {
