@@ -624,7 +624,7 @@ public class MagentoSchedulerService {
 		 * check if an activity 800 in the current model exits
 		 */
 		ItemCollection activityEntity = workflowService.getModelService()
-				.getActivityEntityByVersion(iProcessID,
+				.getActivityEntity(iProcessID,
 						MagentoPlugin.ACTIVITY_MAGENTO_UPDATE,
 						orderModelVersion);
 		if (activityEntity == null) {
