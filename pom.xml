@@ -7,7 +7,6 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>imixs-adapters-magento-ejb</module>
-		<module>imixs-adapters-lucene-ejb</module>
 		<module>imixs-adapters-testing</module>
 	</modules>
 
@@ -63,9 +62,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- 3.1.7, 3.1.8-SNAPSHOT 3.1.7 -->
 		<org.imixs.workflow.version>3.3.0</org.imixs.workflow.version>
-		<!-- 4.5.1 -->
-		<lucene.version>4.10.4</lucene.version>
-		
 	</properties>
 	<build>
 		<plugins>
