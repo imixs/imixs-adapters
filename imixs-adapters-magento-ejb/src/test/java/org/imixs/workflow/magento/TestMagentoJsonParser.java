@@ -2,9 +2,13 @@ package org.imixs.workflow.magento;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import javax.json.Json;
+import javax.json.stream.JsonParser;
 
 import junit.framework.Assert;
 
@@ -270,11 +274,19 @@ public class TestMagentoJsonParser {
 	}
 
 	
+
+	/**
+	 * This test simply test the json parser class
+	 * 
+	 */
+	@Test
+	public void testJsonParser() {
 	
-	
-	
-	
-	
+		String json="{\"2\":{\"entity_id\":\"2\",\"attribute_set_id\":\"4\",\"type_id\":\"simple\",\"sku\":\"1\",\"status\":\"1\",\"visibility\":\"4\",\"enable_googlecheckout\":\"1\",\"tax_class_id\":\"0\",\"manufacturer\":\"3\",\"weight\":\"1.0000\",\"price\":\"200.0000\",\"special_price\":null,\"msrp\":null,\"name\":\"Enterprise Servicevertrag\",\"url_key\":\"enterprise-servicevertrag\",\"country_of_manufacture\":null,\"msrp_enabled\":\"2\",\"msrp_display_actual_price_type\":\"4\",\"meta_title\":null,\"meta_description\":null,\"custom_design\":null,\"page_layout\":null,\"options_container\":\"container2\",\"gift_message_available\":null,\"news_from_date\":null,\"news_to_date\":null,\"special_from_date\":null,\"special_to_date\":null,\"custom_design_from\":null,\"custom_design_to\":null,\"description\":\"Imixs Enterprise Servicevertrag\",\"short_description\":\"Imixs Enterprise Servicevertrag\",\"meta_keyword\":null,\"custom_layout_update\":null}}";
+		JsonParser parser = Json.createParser(new StringReader(json));
+
+		Assert.assertNotNull(parser);
+	}
 	
 	
 	
