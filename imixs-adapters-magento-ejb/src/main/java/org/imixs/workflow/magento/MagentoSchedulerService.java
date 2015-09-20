@@ -51,6 +51,8 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
+import org.imixs.workflow.xml.XMLItemCollection;
+import org.imixs.workflow.xml.XMLItemCollectionAdapter;
 
 /**
  * Magento - Scheduler
@@ -350,8 +352,10 @@ public class MagentoSchedulerService {
 	private Timer findTimer(String id) {
 		for (Object obj : timerService.getTimers()) {
 			Timer timer = (javax.ejb.Timer) obj;
-			if (timer.getInfo() instanceof ItemCollection) {
-				ItemCollection adescription = (ItemCollection) timer.getInfo();
+			
+			if (timer.getInfo() instanceof XMLItemCollection) {
+				XMLItemCollection xmlItemCollection = (XMLItemCollection) timer.getInfo();
+				ItemCollection adescription = XMLItemCollectionAdapter.getItemCollection(xmlItemCollection);
 				if (id.equals(adescription.getItemValueString("$uniqueid"))) {
 					return timer;
 				}
@@ -436,7 +440,9 @@ public class MagentoSchedulerService {
 		magentoCache.clearCache();
 
 		// load configuration...
-		ItemCollection configuration = (ItemCollection) timer.getInfo();
+		
+		XMLItemCollection xmlItemCollection = (XMLItemCollection) timer.getInfo();
+		ItemCollection configuration = XMLItemCollectionAdapter.getItemCollection(xmlItemCollection);
 		sTimerID = configuration.getItemValueString(EntityService.UNIQUEID);
 		configuration = workflowService.getEntityService().load(sTimerID);
 		try {
@@ -758,8 +764,19 @@ public class MagentoSchedulerService {
 
 			endDate = startDate;
 		}
+		
+		XMLItemCollection xmlConfigItem = null;
+		try {
+			xmlConfigItem = XMLItemCollectionAdapter
+					.putItemCollection(configItemCollection);
+		} catch (Exception e) {
+			logger.severe("Unable to serialize confitItemCollection into a XML object");
+			e.printStackTrace();
+			return null;
+		}
+		
 		Timer timer = timerService.createTimer(startDate, interval,
-				configItemCollection);
+				xmlConfigItem);
 
 		return timer;
 
@@ -787,7 +804,18 @@ public class MagentoSchedulerService {
 			throws ParseException {
 
 		TimerConfig timerConfig = new TimerConfig();
-		timerConfig.setInfo(configItemCollection);
+		
+		XMLItemCollection xmlConfigItem = null;
+		try {
+			xmlConfigItem = XMLItemCollectionAdapter
+					.putItemCollection(configItemCollection);
+		} catch (Exception e) {
+			logger.severe("Unable to serialize confitItemCollection into a XML object");
+			e.printStackTrace();
+			return null;
+		}
+		
+		timerConfig.setInfo(xmlConfigItem);
 		ScheduleExpression scheduerExpression = new ScheduleExpression();
 
 		@SuppressWarnings("unchecked")
@@ -847,6 +875,7 @@ public class MagentoSchedulerService {
 
 		}
 
+		
 		Timer timer = timerService.createCalendarTimer(scheduerExpression,
 				timerConfig);
 
