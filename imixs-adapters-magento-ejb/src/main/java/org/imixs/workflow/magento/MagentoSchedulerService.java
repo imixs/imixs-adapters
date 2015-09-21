@@ -133,11 +133,10 @@ import org.imixs.workflow.xml.XMLItemCollectionAdapter;
  * @author rsoika
  * 
  */
-@DeclareRoles({ "org.imixs.ACCESSLEVEL.MANAGERACCESS" })
 @Stateless
-@RunAs("org.imixs.ACCESSLEVEL.MANAGERACCESS")
-//@Local
 @LocalBean
+@DeclareRoles({ "org.imixs.ACCESSLEVEL.MANAGERACCESS" })
+@RunAs("org.imixs.ACCESSLEVEL.MANAGERACCESS")
 public class MagentoSchedulerService {
 
 	private Date endDate;
