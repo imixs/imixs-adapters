@@ -207,16 +207,16 @@ public class TestMagentoJsonParser {
 		Assert.assertEquals(100.0000, entity.getItemValueDouble("base_subtotal"));
 
 		// test address
-		List<Map<String,Object>> addresses=entity.getItemValue("addresses");
+		List<Map<String,?>> addresses=entity.getItemValue("addresses");
 		Assert.assertNotNull(addresses);
 		Assert.assertEquals(2, addresses.size());
 		// get embedded map...
-		Map<String,Object> addressMap = (Map<String,Object>) addresses.get(0);
+		Map<String,List<Object>> addressMap = (Map<String,List<Object>>) addresses.get(0);
 		ItemCollection address= new ItemCollection(addressMap);	
 		
 		Assert.assertEquals("Alabama", address.getItemValueString("region"));
 		Assert.assertEquals("345", address.getItemValueString("postcode"));
-		addressMap = (Map<String,Object>) addresses.get(1);
+		addressMap = (Map<String,List<Object>>) addresses.get(1);
 		address= new ItemCollection(addressMap);	
 		Assert.assertEquals("Alabama", address.getItemValueString("region"));
 		Assert.assertEquals("345", address.getItemValueString("postcode"));
@@ -224,11 +224,11 @@ public class TestMagentoJsonParser {
 		
 		
 		// test orderitems
-		List<Map<String,Object>> orderitems=entity.getItemValue("order_items");
+		List<Map<String,List<Object>>> orderitems=entity.getItemValue("order_items");
 		Assert.assertNotNull(orderitems);
 		Assert.assertEquals(1, orderitems.size());
 		
-		Map<String,Object> orderItemMap = (Map<String,Object>) orderitems.get(0);
+		Map<String,List<Object>> orderItemMap = (Map<String,List<Object>>) orderitems.get(0);
 		ItemCollection orderItem =new ItemCollection(orderItemMap);
 		
 		
