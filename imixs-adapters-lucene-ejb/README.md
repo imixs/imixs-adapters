@@ -46,16 +46,46 @@ In an EAR the imixs-adapter-lucene-ejb.jar can be listed as a jar module:
 							<artifactId>imixs-workflow-engine </artifactId>
 							<bundleDir>/</bundleDir>
 						</JarModule>
-
 						<JarModule>
 							<groupId>org.imixs.workflow</groupId>
 							<artifactId>imixs-adapters-lucene-ejb</artifactId>
 							<bundleDir>/</bundleDir>
 						</JarModule>
-
 					</modules>
       .....
 		</configuration>
+		...
+		</plugin>
+	</plugins>
+		.....
+		
+	<dependecies>
+		
+		 ....
+		 	<!-- lucene -->
+			<dependency>
+				<groupId>org.imixs.workflow</groupId>
+				<artifactId>imixs-adapters-lucene-ejb</artifactId>
+			</dependency>
+		.....
+	</dependecies>
 
 ##LucenePlugin
+
+To bind the LucenePlugin into the WorkflService EJB a reference to the LuceneUpdateService EJB need to be added to the WorkflowService. 
+The configuration can be done in the ejb-jar.xml deployment descriptor:
+
+	<session>
+			<ejb-name>WorkflowService</ejb-name>
+			<ejb-class>org.imixs.workflow.jee.ejb.WorkflowService</ejb-class>
+			<session-type>Stateless</session-type>
+			....
+			<ejb-ref>
+				<ejb-ref-name>ejb/LuceneUpdateService</ejb-ref-name>
+				<ejb-ref-type>Session</ejb-ref-type>
+				<remote>org.imixs.workflow.lucene.LuceneUpdateService</remote>
+			</ejb-ref> 
+			....
+	</session
+
 The LucenePlugin documentation is available here: http://www.imixs.org/doc/engine/plugins/luceneplugin.html 
