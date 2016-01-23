@@ -291,7 +291,7 @@ public class MagentoJsonParser {
 							// Map to guaranty compatibility with new versions
 							// of the
 							// Class ItemCollection
-							((List<Map<String, Object>>) itemValue)
+							((List<Map<String, ?>>) itemValue)
 									.add(embeddedItemCollection.getAllItems());
 						} else {
 							// empty array!

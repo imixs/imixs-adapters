@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.imixs.workflow</groupId>
 		<artifactId>imixs-adapters</artifactId>
-		<version>1.3.0</version>
+		<version>1.4.0</version>
 	</parent>
 	<artifactId>imixs-adapters-magento-ejb</artifactId>
 
