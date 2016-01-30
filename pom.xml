@@ -40,17 +40,11 @@
 	<issueManagement>
 		<url>https://github.com/imixs/imixs-adapters/issues</url>
 	</issueManagement>
-
-
-
-
 	<scm>
 		<connection>scm:git:https://github.com/imixs/imixs-adapters.git</connection>
 		<developerConnection>scm:git:https://github.com/imixs/imixs-adapters.git</developerConnection>
 		<url>https://github.com/imixs/imixs-adapters/</url>
 	</scm>
-
-
 	<licenses>
 		<license>
 			<name>GNU General Public License</name>
@@ -60,10 +54,22 @@
 		</license>
 	</licenses>
 
+	<distributionManagement>
+		<repository>
+			<id>internal.repo</id>
+			<name>Temporary Staging Repository</name>
+			<url>file://${project.build.directory}/mvn-repo</url>
+		</repository>
+	</distributionManagement>
+
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.imixs.workflow.version>3.6.0-SNAPSHOT</org.imixs.workflow.version>
 		<lucene.version>4.10.4</lucene.version>
+		
+		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
+    	<github.global.server>imixs-github-repo</github.global.server>
 	</properties>
 	<build>
 		<plugins>
@@ -118,6 +124,51 @@
 					</reportPlugins>
 				</configuration>
 			</plugin>
+
+
+			<!-- Maven Deployment -->
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>2.8.1</version>
+				<configuration>
+					<altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.github</groupId>
+				<artifactId>site-maven-plugin</artifactId>
+				<version>0.12</version>
+				<configuration>
+					<!-- git commit message -->
+					<message>Maven artifacts for ${project.version}</message>
+					<!-- disable webpage processing -->
+					<noJekyll>true</noJekyll>
+					<!-- matches distribution management repository url above -->
+					<outputDirectory>${project.build.directory}/mvn-repo</outputDirectory>
+					<!-- remote branch name -->
+					<branch>refs/heads/master</branch>
+					<!-- If you remove this then the old artifact will be removed and new 
+						one will replace. But with the merge tag you can just release by changing 
+						the version -->
+					<merge>true</merge>
+					<includes>
+						<include>**/*</include>
+					</includes>
+					<!-- github repo name -->
+					<repositoryName>imixs-mvn-repo</repositoryName>
+					<!-- github username -->
+					<repositoryOwner>imixs</repositoryOwner>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>site</goal>
+						</goals>
+						<phase>deploy</phase>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 
