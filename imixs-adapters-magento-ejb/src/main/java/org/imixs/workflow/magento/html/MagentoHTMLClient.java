@@ -82,8 +82,7 @@ public class MagentoHTMLClient {
 
 	private String loginFormKey = null;
 
-	private final static Logger logger = Logger
-			.getLogger(MagentoHTMLClient.class.getName());
+	private final static Logger logger = Logger.getLogger(MagentoHTMLClient.class.getName());
 
 	/**
 	 * Creates a HTMLCLient instance with backend userid and password.
@@ -136,35 +135,70 @@ public class MagentoHTMLClient {
 	}
 
 	/**
-	 * This method get the content of a GET request
+	 * This method get the content of a GET request. If the response is a
+	 * Magento login form the method will proceed a form base authentication.
 	 * 
 	 * @param uri
-	 *            - Rest Endpoint RUI
+	 *            - Rest Endpoint URI
 	 * 
 	 * @return HTTPResult
 	 */
 	public String readPage(String uri) throws Exception {
+		// allow login redirect
+		return readPage(uri, true);
+	}
+
+	/**
+	 * This method get the content of a GET request. If the response is a
+	 * Magento login form the method will proceed a form base authentication.
+	 * 
+	 * @param uri
+	 *            - Rest Endpoint URI
+	 * 
+	 * @param redirectWithLogin
+	 *            - indicates if a form based login form in the response should
+	 *            be processed
+	 * 
+	 * @return HTTPResult
+	 */
+	public String readPage(final String uri, final boolean redirectWithLogin) throws Exception {
 		long lStart = System.currentTimeMillis();
-		String result = readPage(basisURL + uri, basisURL + uri);
+		String result = readPageContent(uri, redirectWithLogin);
 		// test response Time...
 		long lEnd = System.currentTimeMillis();
 		if (((lEnd - lStart) / 1000) > 2) {
-			logger.warning("WARNING: MagentoHTMLClient readPage resonse time>2 seconds! - "
-					+ ((lEnd - lStart) / 1000) + "seconds overall!");
+			logger.warning("WARNING: MagentoHTMLClient readPage resonse time>2 seconds! - " + ((lEnd - lStart) / 1000)
+					+ "seconds overall!");
 		}
 
-		logger.fine("[HTMLClient] read page in "
-				+ (System.currentTimeMillis() - lStart) + " ms");
+		logger.fine("[HTMLClient] read page in " + (System.currentTimeMillis() - lStart) + " ms");
 		return result;
 	}
 
-	private String readPage(String uri, String referer) throws Exception {
+	/**
+	 * This method reads a page and verifies if the response is a Magento Login
+	 * form. In this case the method starts a form-based login process.
+	 * 
+	 * With the boolean redirectWithLogin==false it is possible to avoid this
+	 * login procedure.
+	 * 
+	 * @param uri
+	 * @param referer
+	 * @param redirectWithLogin
+	 * @return
+	 * @throws Exception
+	 */
+	private String readPageContent(final String uri, final boolean redirectWithLogin) throws Exception {
 		String pageContent = null;
-		URL obj = new URL(uri);
+		URL urlObj = null;
+		if (!uri.startsWith(basisURL)) {
+			urlObj = new URL(basisURL + uri);
+		} else {
+			urlObj = new URL(uri);
+		}
 
-		logger.fine("[HTMLClient] Sending 'GET' request to URL : " + uri);
-		HttpURLConnection urlConnection = (HttpURLConnection) obj
-				.openConnection();
+		logger.fine("[HTMLClient] Sending 'GET' request: " + urlObj.toString());
+		HttpURLConnection urlConnection = (HttpURLConnection) urlObj.openConnection();
 
 		// optional default is GET
 		urlConnection.setRequestMethod("GET");
@@ -174,30 +208,33 @@ public class MagentoHTMLClient {
 		urlConnection.setAllowUserInteraction(false);
 		urlConnection.setRequestProperty("User-Agent", USER_AGENT);
 		urlConnection.setRequestProperty("Cache-Control", "max-age=0");
-		urlConnection.addRequestProperty("Referer", uri);
+		urlConnection.addRequestProperty("Referer", urlObj.toString());
 
-		if (cookies != null) {
-			urlConnection.setRequestProperty("Cookie", cookies);
-		}
+		addCookies(urlConnection);
+
 		// Authorization
 		if (basicAuthUser != null) {
-			urlConnection.setRequestProperty("Authorization",
-					"Basic " + this.getAccessByUser());
+			logger.fine("[HTMLClient] set Basic Authorization...");
+			urlConnection.setRequestProperty("Authorization", "Basic " + this.getAccessByUser());
 		}
-
-		// addCookies(urlConnection);
 
 		int responseCode = urlConnection.getResponseCode();
 
 		logger.fine("[HTMLClient] Response GET Code : " + responseCode);
 		if (responseCode >= 200 && responseCode <= 299) {
-			// read cookies
-			// readCookies(urlConnection);
-			pageContent = readResponse(urlConnection);
+			readCookies(urlConnection);
 
+			pageContent = readResponse(urlConnection);
+			// check if response is a login form
 			if (isLoginPage(pageContent)) {
-				parseFormKey(pageContent);
-				pageContent = readPageWithLogin(uri);
+				logger.fine("[HTMLClient] response == Magento Login Page");
+				// process a form-based login?
+				if (redirectWithLogin) {
+					parseFormKey(pageContent);
+					pageContent = processFormBasedLogin(uri);
+				} else {
+					logger.warning("[HTMLClient] Response is Magento Login Page, but redirectWithLogin is disabled!");
+				}
 			}
 
 		}
@@ -216,26 +253,23 @@ public class MagentoHTMLClient {
 	 * @param uri
 	 * @return page content or null if not readable
 	 */
-	private String readPageWithLogin(String uri) throws Exception {
+	private String processFormBasedLogin(final String requestUri) throws Exception {
 		// PrintWriter printWriter = null;
-		logger.info("[HTMLClient] Login... 'POST' request to URL : " + uri);
+		logger.info("[HTMLClient] processFormBasedLogin for URL : " + basisURL + requestUri);
 		HttpURLConnection urlConnection = null;
 		int responseCode = 500;
 		try {
-			String loginData = "form_key="
-					+ URLEncoder.encode(loginFormKey, "UTF-8") + "&"
-					+ "login%5Busername%5D=" + URLEncoder.encode(user, "UTF-8")
-					+ "&" + "login%5Bpassword%5D="
+			String loginData = "form_key=" + URLEncoder.encode(loginFormKey, "UTF-8") + "&" + "login%5Busername%5D="
+					+ URLEncoder.encode(user, "UTF-8") + "&" + "login%5Bpassword%5D="
 					+ URLEncoder.encode(password, "UTF-8");
 
 			// create a POST request......
-			urlConnection = (HttpURLConnection) new URL(uri).openConnection();
-			urlConnection.setRequestMethod("POST");
-			urlConnection.setRequestProperty("Content-Type",
-					"application/x-www-form-urlencoded");
+			urlConnection = (HttpURLConnection) new URL(basisURL + requestUri).openConnection();
 
-			urlConnection.setRequestProperty("Content-Length",
-					"" + Integer.toString(loginData.getBytes().length));
+			urlConnection.setRequestMethod("POST");
+			urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+			urlConnection.setRequestProperty("Content-Length", "" + Integer.toString(loginData.getBytes().length));
 			urlConnection.setRequestProperty("Content-Language", "en-US");
 
 			urlConnection.setUseCaches(false);
@@ -246,11 +280,10 @@ public class MagentoHTMLClient {
 			urlConnection.setInstanceFollowRedirects(false);
 			HttpURLConnection.setFollowRedirects(false);
 
-			// addCookies(urlConnection);
+			addCookies(urlConnection);
 
 			// Send request
-			DataOutputStream wr = new DataOutputStream(
-					urlConnection.getOutputStream());
+			DataOutputStream wr = new DataOutputStream(urlConnection.getOutputStream());
 			wr.writeBytes(loginData);
 			wr.flush();
 			wr.close();
@@ -258,31 +291,30 @@ public class MagentoHTMLClient {
 			logger.finest("loginData=" + loginData);
 
 			responseCode = urlConnection.getResponseCode();
-			logger.finest("[HTMLClient] Response POST Code : " + responseCode);
+			logger.fine("[HTMLClient] Response POST Code : " + responseCode);
 
-			boolean redirect = false;
-			if (responseCode != HttpURLConnection.HTTP_OK) {
-				if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP
-						|| responseCode == HttpURLConnection.HTTP_MOVED_PERM
-						|| responseCode == HttpURLConnection.HTTP_SEE_OTHER)
-					redirect = true;
-			}
-
-			// if redirect then we now send a new request!
-			if (redirect) {
+			if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP 
+					|| responseCode == HttpURLConnection.HTTP_MOVED_PERM
+					|| responseCode == HttpURLConnection.HTTP_SEE_OTHER) {
 
 				// get redirect url from "location" header field
 				String newUrl = urlConnection.getHeaderField("Location");
+				logger.fine("[HTMLClient] redirected to " + newUrl);
+			}
 
-				// get the cookie if need, for login
-				cookies = urlConnection.getHeaderField("Set-Cookie");
+			// if no bad request
+			if (responseCode<HttpURLConnection.HTTP_BAD_REQUEST) {
+				logger.fine("[HTMLClient] processFormBasedLogin OK - repeat request...");
+				readCookies(urlConnection);
 
-				return readPage(newUrl, uri);
-			} else {
-				// get the cookie if need, for login
-				cookies = urlConnection.getHeaderField("Set-Cookie");
+				// Issue #21
+				// try to read again the uri with no login!
+				return readPage(requestUri, false);
 				// get content of result
-				return readResponse(urlConnection);
+				// return readResponse(urlConnection);
+			} else {
+				logger.fine("[HTMLClient] processFormBasedLogin FAILED ");
+				return null;
 			}
 
 		} catch (Exception ioe) {
@@ -303,8 +335,7 @@ public class MagentoHTMLClient {
 	boolean isLoginPage(String page) {
 		boolean bLoginPage = false;
 
-		if (page.contains("form_key") && page.contains("login[username]")
-				&& page.contains("login[password]")) {
+		if (page.contains("form_key") && page.contains("login[username]") && page.contains("login[password]")) {
 			bLoginPage = true;
 		}
 
@@ -327,17 +358,35 @@ public class MagentoHTMLClient {
 		int iStart = page.indexOf("value=\"", iPos + 1) + 7;
 		int iEnd = page.indexOf("\"", iStart + 1);
 		loginFormKey = page.substring(iStart, iEnd);
+		logger.fine("[HTMLClient] loginFormKey=" + loginFormKey);
+	}
+
+	private void addCookies(URLConnection urlConnection) {
+		if (cookies != null) {
+			logger.fine("[HTMLClient] set cookies=" + cookies);
+			urlConnection.setRequestProperty("Cookie", cookies);
+		}
+	}
+
+	private void readCookies(URLConnection urlConnection) {
+		String newCookies = urlConnection.getHeaderField("Set-Cookie");
+		if (newCookies != null) {
+			cookies = newCookies;
+			logger.fine("[HTMLClient] read cookies=" + cookies);
+		} else {
+			logger.fine("[HTMLClient] no cookies read");
+		}
 	}
 
 	/**
-	 * Put the resonse string into the content property
+	 * Get the response
 	 * 
 	 * @param urlConnection
 	 * @throws IOException
 	 */
 	private String readResponse(URLConnection urlConnection) throws IOException {
 		// get content of result
-		logger.finest("[RestClient] readResponse....");
+		logger.fine("[RestClient] readResponse....");
 		StringWriter writer = new StringWriter();
 		BufferedReader in = null;
 		try {
@@ -351,11 +400,9 @@ public class MagentoHTMLClient {
 
 			// if an encoding is provided read stream with encoding.....
 			if (sContentEncoding != null && !sContentEncoding.isEmpty())
-				in = new BufferedReader(new InputStreamReader(
-						urlConnection.getInputStream(), sContentEncoding));
+				in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), sContentEncoding));
 			else
-				in = new BufferedReader(new InputStreamReader(
-						urlConnection.getInputStream()));
+				in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
 			String inputLine;
 			while ((inputLine = in.readLine()) != null) {
 				logger.finest(inputLine);
