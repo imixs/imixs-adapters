@@ -320,7 +320,14 @@ public class DatevService {
 		while (st.hasMoreTokens()) {
 			String field=st.nextToken();
 			if (!field.isEmpty()) {
+				field=field.replace(' ','_');
+				field=field.replace('/','_');
+				field=field.replace('\\','_');
+				field=field.replace('.','_');
 				result.add(field);
+			} else {
+				// add dummy entry
+				result.add(null);
 			}
 			
 		}

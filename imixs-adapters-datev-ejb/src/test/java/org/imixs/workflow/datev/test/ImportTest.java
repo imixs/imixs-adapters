@@ -1,5 +1,6 @@
 package org.imixs.workflow.datev.test;
 
+
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
@@ -14,6 +15,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 /**
  * Dieser Test testet den Inport einer datev datei
@@ -21,20 +24,18 @@ import org.mockito.Mockito;
  * @author rsoika
  * 
  */
-public class ImportTest {
+public class ImportTest { 
  
-	
-	
+	@Spy
 	private DatevService datevService;
-
+	
+	
 	@Before
 	public void setup() throws PluginException {
-
-		// mock EJBs and inject them into theworkflowService EJB
-		datevService = Mockito.mock(DatevService.class);
-		
-		int i=1;
-	}
+		// bezieht sich auf obige(s) @Mock
+		MockitoAnnotations.initMocks(this); 
+	
+	} 
 
 
 	/**
@@ -55,7 +56,8 @@ public class ImportTest {
 			DataInputStream in = new DataInputStream(fis);
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, "ISO-8859-1"));
 
-		
+			// ignore first line
+			br.readLine();
 			// read the first line containing the field names
 			String fieldnames = br.readLine();
 			

@@ -69,9 +69,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.imixs.workflow.version>3.6.0</org.imixs.workflow.version>
 		<lucene.version>4.10.4</lucene.version>
-		
+
 		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
-    	<github.global.server>imixs-github-repo</github.global.server>
+		<github.global.server>imixs-github-repo</github.global.server>
 	</properties>
 	<build>
 		<plugins>
@@ -174,7 +174,7 @@
 		</plugins>
 	</build>
 
-	<dependencyManagement>
+		<dependencyManagement>
 		<dependencies>
 			<!-- WORKFLOW -->
 			<dependency>
