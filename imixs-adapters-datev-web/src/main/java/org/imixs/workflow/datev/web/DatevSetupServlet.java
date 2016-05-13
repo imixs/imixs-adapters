@@ -1,4 +1,4 @@
-package org.imixs.workflow.datev.cdi;
+package org.imixs.workflow.datev.web;
 
 
 import java.util.Collection;

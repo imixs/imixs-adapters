@@ -27,11 +27,17 @@
 
 package org.imixs.workflow.datev;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -43,6 +49,7 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
 
@@ -65,6 +72,7 @@ import org.imixs.workflow.jee.util.PropertyService;
 public class DatevService {
 
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
+	public final static String FILE_NOT_FOUND = "FILE_NOT_FOUND";
 
 	final static public String TYPE = "datev";
 
@@ -73,27 +81,14 @@ public class DatevService {
 
 	@EJB
 	WorkflowService workflowService = null;
-	private Map<String, ItemCollection> configurations = null;
-		private static Logger logger = Logger.getLogger(DatevService.class
-			.getName());
+	private static Logger logger = Logger.getLogger(DatevService.class.getName());
 
 	/**
 	 * initial setup the magento client implementation
 	 */
 	@PostConstruct
 	public void init() {
-		// initialize the configuration cache
-		configurations = new HashMap<String, ItemCollection>();
-	}
 
-	/**
-	 * resets the connections
-	 */
-	public void reset() {
-		// reset cache
-		configurations = new HashMap<String, ItemCollection>();
-
-		
 	}
 
 	/***
@@ -103,16 +98,12 @@ public class DatevService {
 	 */
 	public List<ItemCollection> findAllConfigurations() {
 		// load all configurations...
-		String sQuery = "SELECT config FROM Entity AS config "
-				+ " JOIN config.textItems t1" + " WHERE config.type = '"
-				+ DatevService.TYPE + "'" + " AND t1.itemName='txtname'"
-				+ " ORDER BY t1.itemValue";
-		List<ItemCollection> col = workflowService.getEntityService()
-				.findAllEntities(sQuery, 0, -1);
+		String sQuery = "SELECT config FROM Entity AS config " + " JOIN config.textItems t1" + " WHERE config.type = '"
+				+ DatevService.TYPE + "'" + " AND t1.itemName='txtname'" + " ORDER BY t1.itemValue";
+		List<ItemCollection> col = workflowService.getEntityService().findAllEntities(sQuery, 0, -1);
 		return col;
 	}
 
-	
 	/**
 	 * This method loads a datev configuration. If no configuration entity yet
 	 * exists the method returns an empty ItemCollection. The method updates the
@@ -125,34 +116,24 @@ public class DatevService {
 	public ItemCollection loadConfiguration(String id) {
 
 		if (id == null || id.isEmpty()) {
-			logger.warning("[DatevService] invalid shop configuration id="
-					+ id);
+			logger.warning("[DatevService] invalid shop configuration id=" + id);
 		}
-		ItemCollection configItemCollection = configurations.get(id);
-		if (configItemCollection == null) {
-			// try to load....
-			String sQuery = "SELECT config FROM Entity AS config "
-					+ " JOIN config.textItems AS t2" + " WHERE config.type = '"
-					+ TYPE + "'" + " AND t2.itemName = 'txtname'"
-					+ " AND t2.itemValue = '" + id + "'"
-					+ " ORDER BY t2.itemValue asc";
-			Collection<ItemCollection> col = workflowService.getEntityService()
-					.findAllEntities(sQuery, 0, 1);
+		ItemCollection configItemCollection = null;
+		// try to load....
+		String sQuery = "SELECT config FROM Entity AS config " + " JOIN config.textItems AS t2"
+				+ " WHERE config.type = '" + TYPE + "'" + " AND t2.itemName = 'txtname'" + " AND t2.itemValue = '" + id
+				+ "'" + " ORDER BY t2.itemValue asc";
+		Collection<ItemCollection> col = workflowService.getEntityService().findAllEntities(sQuery, 0, 1);
 
-			if (col.size() > 0) {
-				configItemCollection = col.iterator().next();
-				logger.fine("[DatevService] shop configuration id=" + id
-						+ " loaded");
-				// put new configuration into cache
-				configurations.put(id, configItemCollection);
+		if (col.size() > 0) {
+			configItemCollection = col.iterator().next();
+			logger.fine("[DatevService] datev configuration id=" + id + " loaded");
 
-			} else {
-				logger.warning("[DatevService] shop configuration id=" + id
-						+ " not defined!");
-
-			}
+		} else {
+			logger.warning("[DatevService] datev configuration id=" + id + " not defined!");
 
 		}
+
 		return configItemCollection;
 	}
 
@@ -171,13 +152,12 @@ public class DatevService {
 	@Deprecated
 	public ItemCollection findWorkitemByOrder(ItemCollection order) {
 
-		String sKey ="";
+		String sKey = "";
 		String sQuery = "SELECT wi FROM Entity as wi";
 		sQuery += " JOIN wi.textItems as t ";
 		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
 		sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
-		Collection<ItemCollection> col = workflowService.getEntityService()
-				.findAllEntities(sQuery, 0, 1);
+		Collection<ItemCollection> col = workflowService.getEntityService().findAllEntities(sQuery, 0, 1);
 		if (col.size() > 0) {
 			return col.iterator().next();
 		}
@@ -186,10 +166,6 @@ public class DatevService {
 
 	}
 
-	
-
-
-	
 	/**
 	 * This method adds the properties form a magento entity to an existing
 	 * workitem. Each property of the magento entity will be prafixed with 'm_'.
@@ -205,18 +181,16 @@ public class DatevService {
 	 * @param magentoEntity
 	 *            - holds the properties to be added into the workItem
 	 */
-	
+
 	@Deprecated
 	@SuppressWarnings("unchecked")
-	public ItemCollection addDatevEntity(ItemCollection workitem,
-			ItemCollection magentoEntity) {
+	public ItemCollection addDatevEntity(ItemCollection workitem, ItemCollection magentoEntity) {
 
 		// add magento properties
 		Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
 		while (keys.hasNext()) {
 			String sName = keys.next();
-			workitem.replaceItemValue("m_" + sName,
-					magentoEntity.getItemValue(sName));
+			workitem.replaceItemValue("m_" + sName, magentoEntity.getItemValue(sName));
 		}
 
 		// now we need to verify if the workitem has more magento properties as
@@ -240,5 +214,117 @@ public class DatevService {
 		return workitem;
 	}
 
+	/**
+	 * This method imports all entities from a csv file.
+	 * 
+	 * The Paremeter start and count can be used to import only a part of the
+	 * file.
+	 * 
+	 * 
+	 * @param configuration
+	 *            - the configuration entity for the Datev import
+	 * 
+	 * @param start
+	 *            - optional start position
+	 * @param count
+	 *            - optional count (default =-1)
+	 * @throws PluginException
+	 */
+	@SuppressWarnings("unchecked")
+	public void importEntities(ItemCollection configuration, int start, int count) throws DatevException {
+
+		String modelversion = null;
+		String filename = null;
+		String encoding=null;
+		int processID, activityID;
+		Long lastImport = null;
+		long modifiedTime = 0;
+
+		String sDatevStatus = null;
+		String sDatevID = configuration.getItemValueString("txtName");
+		logger.info("[DatevSchedulerSerivce] import Datev id= " + sDatevID);
+
+		filename = configuration.getItemValueString("_datev_path");
+		modelversion = configuration.getItemValueString("_datev_modelversion");
+		encoding = configuration.getItemValueString("_datev_encoding");
+		if (encoding.isEmpty()) {
+			encoding="UTF-8";
+		}
+
+		List<?> vtime = configuration.getItemValue("_datev_lLastImport");
+		if (vtime.size() == 0)
+			lastImport = new Long(0);
+		else {
+			try {
+				lastImport = (Long) vtime.get(0);
+			} catch (ClassCastException e) {
+				lastImport = new Long(0);
+			}
+		}
+		
+		processID = Integer.parseInt(configuration.getItemValueString("_datev_processid"));
+		activityID = Integer.parseInt(configuration.getItemValueString("_datev_activityid"));
+
+		File file = new File(filename);
+		modifiedTime = file.lastModified();
+		if (modifiedTime == 0)
+			throw new DatevException(sDatevID,FILE_NOT_FOUND,"Datev importfile '" + filename + "' not found!");
+
+		if (lastImport < modifiedTime) {
+			DataInputStream in = null;
+			try {
+				FileInputStream fis = new FileInputStream(filename);
+			
+				in = new DataInputStream(fis);
+
+				BufferedReader br = new BufferedReader(new InputStreamReader(in, encoding));
+
+				String strLine;
+
+				// read the first line containing the field names
+				String fieldnames = br.readLine();
+
+				// skipp start pos....
+				if (start > 0) {
+					for (int i = 0; i < start; i++) {
+						// skip line
+						if (br.readLine() == null)
+							break;
+					}
+				}
+
+			} catch (IOException ex) {
+
+				ex.printStackTrace();
+			} finally {
+				// Close the input stream
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+	}
 	
+	
+	
+	/**
+	 * This method parses a DATEV field description (first line of the csv file)
+	 * @return list of fieldnames
+	 */
+	public List<String> parseFieldList(String data) {
+		List<String> result = new ArrayList<String>(); 
+		StringTokenizer st=new StringTokenizer(data, ";");
+		while (st.hasMoreTokens()) {
+			String field=st.nextToken();
+			if (!field.isEmpty()) {
+				result.add(field);
+			}
+			
+		}
+		return result;
+	}
+
 }

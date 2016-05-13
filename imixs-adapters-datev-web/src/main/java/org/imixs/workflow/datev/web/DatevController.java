@@ -1,4 +1,4 @@
-package org.imixs.workflow.datev.cdi;
+package org.imixs.workflow.datev.web;
 /*******************************************************************************
  *  Imixs Workflow Technology
  *  Copyright (C) 2003, 2008 Imixs Software Solutions GmbH,  
@@ -128,7 +128,7 @@ public class DatevController implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public void doSaveConfiguration(ActionEvent event) {
+	public void saveConfiguration(ActionEvent event) {
 		// save entity
 		try {
 			configItemCollection.replaceItemValue("datLastModified", new Date());
@@ -183,7 +183,7 @@ public class DatevController implements Serializable {
 		logger.fine("DatevController - +++ reset configuration lists +++");
 		
 		configurations = null;
-		datevService.reset();
+		
 	}
 
 	
