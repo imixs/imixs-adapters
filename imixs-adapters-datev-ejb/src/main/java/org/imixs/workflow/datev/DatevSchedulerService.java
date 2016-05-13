@@ -22,14 +22,8 @@ package org.imixs.workflow.datev;
  *  	Ralph Soika
  *******************************************************************************/
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -47,13 +41,9 @@ import javax.ejb.Stateless;
 import javax.ejb.Timeout;
 import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.AccessDeniedException;
-import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.xml.XMLItemCollection;
@@ -111,10 +101,6 @@ import org.imixs.workflow.xml.XMLItemCollectionAdapter;
 public class DatevSchedulerService {
 
 	private Date endDate;
-	private int workitemsImported;
-	private int workitemsUpdated;
-	private int workitemsFailed;
-	private int workitemsTotal;
 
 	public final static String IMPORT_ERROR = "IMPORT_ERROR";
 
@@ -356,10 +342,7 @@ public class DatevSchedulerService {
 	@Timeout
 	public void processImport(javax.ejb.Timer timer) {
 		String sTimerID = null;
-		workitemsImported = 0;
-		workitemsUpdated = 0;
-		workitemsFailed = 0;
-		workitemsTotal = 0;
+		
 
 		// Startzeit ermitteln
 		long lProfiler = System.currentTimeMillis();
@@ -373,16 +356,9 @@ public class DatevSchedulerService {
 		sTimerID = configuration.getItemValueString(EntityService.UNIQUEID);
 		configuration = workflowService.getEntityService().load(sTimerID);
 		try {
-			datevService.importEntities(configuration,0,-1);
+			configuration=datevService.importEntities(configuration,0,-1);
 
-			configuration.replaceItemValue("errormessage", "");
-			configuration.replaceItemValue("datLastRun", new Date());
-			configuration.replaceItemValue("numWorkItemsImported", workitemsImported);
-			configuration.replaceItemValue("numWorkItemsUpdated", workitemsUpdated);
-			configuration.replaceItemValue("numWorkItemsFailed", workitemsFailed);
-
-			configuration.replaceItemValue("numWorkitemsTotal", workitemsTotal);
-
+			
 		} catch (DatevException e) {
 			// in case of an exception we did not cancel the Timer service
 			if (logger.isLoggable(Level.FINE)) {
@@ -404,11 +380,6 @@ public class DatevSchedulerService {
 		logger.info("[DatevSchedulerService] import finished successfull: " + ((System.currentTimeMillis()) - lProfiler)
 				+ " ms");
 
-		logger.info("[DatevSchedulerService] " + workitemsTotal + " Datev orders verified");
-		logger.info("[DatevSchedulerService] " + workitemsImported + " workitems created");
-		logger.info("[DatevSchedulerService] " + workitemsUpdated + " workitems updated");
-		logger.info("[DatevSchedulerService] " + workitemsFailed + " errors");
-
 		/*
 		 * Check if Timer should be canceld now?
 		 */
@@ -423,37 +394,9 @@ public class DatevSchedulerService {
 	}
 
 	
-	/**
-	 * This method processes the orders read form Datev. A new or changed
-	 * workitem will be process by the activity ID 800.
-	 * 
-	 * The method also stores the property txtDatevConfiguration with the id of
-	 * the configuration entity
-	 * 
-	 * 
-	 * @param orders
-	 *            - list of orders
-	 */
-	private void processOrderList(List<ItemCollection> orders, String orderModelVersion, int iProcessID,
-			String shopConfigID) {
+	
 
-	}
-
-	/**
-	 * This method process a single workIten in a new transaction. The method is
-	 * called by processWorklist()
-	 * 
-	 * @param aWorkitem
-	 * @throws PluginException
-	 * @throws ProcessingErrorException
-	 * @throws AccessDeniedException
-	 */
-	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-	public void processSingleWorkitem(ItemCollection aWorkitem)
-			throws AccessDeniedException, ProcessingErrorException, PluginException {
-		workflowService.processWorkItem(aWorkitem);
-	}
-
+	
 	/**
 	 * Create an interval timer whose first expiration occurs at a given point
 	 * in time and whose subsequent expirations occur after a specified

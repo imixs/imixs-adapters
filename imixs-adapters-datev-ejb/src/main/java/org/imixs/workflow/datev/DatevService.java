@@ -35,10 +35,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
@@ -47,9 +47,13 @@ import javax.annotation.security.RunAs;
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.PluginException;
+import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
 
@@ -138,21 +142,12 @@ public class DatevService {
 	}
 
 	/**
-	 * This method finds a workitem for a magento order id. If no worktiem exits
-	 * the method returns null.
-	 * 
-	 * The order ID is stored in the proeprty txtName with the following format:
-	 * 
-	 * <code>
-	 *    magento:order:[SHOPID]:1
-	 *  </code>
+	 * This method finds a workitem by the attribute 'txtName'
 	 * 
 	 * @return workitem or null if no workitem exits
 	 */
-	@Deprecated
-	public ItemCollection findWorkitemByOrder(ItemCollection order) {
+	public ItemCollection findWorkitemByName(String sKey) {
 
-		String sKey = "";
 		String sQuery = "SELECT wi FROM Entity as wi";
 		sQuery += " JOIN wi.textItems as t ";
 		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
@@ -164,54 +159,6 @@ public class DatevService {
 		// no order found
 		return null;
 
-	}
-
-	/**
-	 * This method adds the properties form a magento entity to an existing
-	 * workitem. Each property of the magento entity will be prafixed with 'm_'.
-	 * 
-	 * <code>
-	 *   entity_id => m_entity_id
-	 * </code>
-	 * 
-	 * The method also clears all existing magento properties before!
-	 * 
-	 * @param workitem
-	 *            - a workItem instance
-	 * @param magentoEntity
-	 *            - holds the properties to be added into the workItem
-	 */
-
-	@Deprecated
-	@SuppressWarnings("unchecked")
-	public ItemCollection addDatevEntity(ItemCollection workitem, ItemCollection magentoEntity) {
-
-		// add magento properties
-		Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
-		while (keys.hasNext()) {
-			String sName = keys.next();
-			workitem.replaceItemValue("m_" + sName, magentoEntity.getItemValue(sName));
-		}
-
-		// now we need to verify if the workitem has more magento properties as
-		// the magento Entity.
-		Vector<String> removeItemList = new Vector<String>();
-		keys = workitem.getAllItems().keySet().iterator();
-		while (keys.hasNext()) {
-			String sName = keys.next();
-			// magento property??
-			if (sName.startsWith("m_")) {
-				String sMagento = sName.substring(2);
-				if (!magentoEntity.hasItem(sMagento)) {
-					removeItemList.add(sName);
-				}
-			}
-		}
-		for (String aName : removeItemList) {
-			workitem.removeItem(aName);
-		}
-
-		return workitem;
 	}
 
 	/**
@@ -230,17 +177,22 @@ public class DatevService {
 	 *            - optional count (default =-1)
 	 * @throws PluginException
 	 */
-	@SuppressWarnings("unchecked")
-	public void importEntities(ItemCollection configuration, int start, int count) throws DatevException {
+	public ItemCollection importEntities(ItemCollection configuration, int start, int maxcount) throws DatevException {
 
+		int count = 0;
 		String modelversion = null;
 		String filename = null;
-		String encoding=null;
+		String encoding = null;
 		int processID, activityID;
 		Long lastImport = null;
 		long modifiedTime = 0;
+		
+	int	workitemsImported = 0;
+	int	workitemsUpdated = 0;
+	int	workitemsFailed = 0;
+	int	workitemsTotal = 0;
 
-		String sDatevStatus = null;
+
 		String sDatevID = configuration.getItemValueString("txtName");
 		logger.info("[DatevSchedulerSerivce] import Datev id= " + sDatevID);
 
@@ -248,7 +200,7 @@ public class DatevService {
 		modelversion = configuration.getItemValueString("_datev_modelversion");
 		encoding = configuration.getItemValueString("_datev_encoding");
 		if (encoding.isEmpty()) {
-			encoding="UTF-8";
+			encoding = "UTF-8";
 		}
 
 		List<?> vtime = configuration.getItemValue("_datev_lLastImport");
@@ -261,28 +213,33 @@ public class DatevService {
 				lastImport = new Long(0);
 			}
 		}
-		
+
 		processID = Integer.parseInt(configuration.getItemValueString("_datev_processid"));
 		activityID = Integer.parseInt(configuration.getItemValueString("_datev_activityid"));
 
 		File file = new File(filename);
 		modifiedTime = file.lastModified();
 		if (modifiedTime == 0)
-			throw new DatevException(sDatevID,FILE_NOT_FOUND,"Datev importfile '" + filename + "' not found!");
+			throw new DatevException(sDatevID, FILE_NOT_FOUND, "Datev importfile '" + filename + "' not found!");
 
 		if (lastImport < modifiedTime) {
 			DataInputStream in = null;
 			try {
 				FileInputStream fis = new FileInputStream(filename);
-			
+
 				in = new DataInputStream(fis);
 
 				BufferedReader br = new BufferedReader(new InputStreamReader(in, encoding));
 
 				String strLine;
 
+				// skip first line
+				br.readLine();
+
 				// read the first line containing the field names
 				String fieldnames = br.readLine();
+
+				List<String> fields = parseFieldList(fieldnames);
 
 				// skipp start pos....
 				if (start > 0) {
@@ -293,6 +250,60 @@ public class DatevService {
 					}
 				}
 
+				// now we read all entities until maxcount
+
+				while ((strLine = br.readLine()) != null) {
+
+					ItemCollection entity = readEntity(strLine, fields);
+
+					// test if workitem already exits....
+					ItemCollection oldEntity = findWorkitemByName(entity.getItemValueString("txtName"));
+
+					if (oldEntity == null) {
+						// create new workitem
+
+						entity.replaceItemValue(WorkflowService.MODELVERSION, modelversion);
+						entity.replaceItemValue(WorkflowService.PROCESSID, processID);
+						entity.replaceItemValue(WorkflowService.ACTIVITYID, activityID);
+					} else {
+						// test if modified....
+						if (!isEqualEntity(oldEntity,entity)) {
+							logger.info("NOT IMPLEMENTED - compare only field names!!!");
+						}
+						
+					}
+
+					// process workitem
+					try {
+						processSingleWorkitem(entity);
+					} catch (AccessDeniedException e) {
+						logger.severe("[DatevSchedulerSerivce] unable to import: " + strLine);
+						e.printStackTrace();
+					} catch (ProcessingErrorException e) {
+						logger.severe("[DatevSchedulerSerivce] unable to import: " + strLine);
+						e.printStackTrace();
+					} catch (PluginException e) {
+						logger.severe("[DatevSchedulerSerivce] unable to import: " + strLine);
+						e.printStackTrace();
+					}
+
+					count++;
+
+					if (maxcount > 0 && count >= maxcount) {
+						logger.info("[DatevSchedulerSerivce] maximum lines read (" + maxcount + ") !");
+
+						break;
+					}
+				}
+
+				configuration.replaceItemValue("errormessage", "");
+				configuration.replaceItemValue("datLastRun", new Date());
+				configuration.replaceItemValue("numWorkItemsImported", workitemsImported);
+				configuration.replaceItemValue("numWorkItemsUpdated", workitemsUpdated);
+				configuration.replaceItemValue("numWorkItemsFailed", workitemsFailed);
+
+				configuration.replaceItemValue("numWorkitemsTotal", workitemsTotal);
+				
 			} catch (IOException ex) {
 
 				ex.printStackTrace();
@@ -306,32 +317,93 @@ public class DatevService {
 			}
 		}
 
+		
+		
+		return configuration;
 	}
-	
-	
+
 	
 	/**
+	 * This method compares two datev entities based on the datev fields 
+	 * @param oldEntity
+	 * @param entity
+	 * @param fields
+	 * @return
+	 */
+	private boolean isEqualEntity(ItemCollection oldEntity, ItemCollection entity) {
+		
+		Set<String> fields = entity.getAllItems().keySet();
+		for (String itemName:fields) {
+			if (!entity.getItemValue(itemName).equals(oldEntity.getItemValue(itemName))) {
+				// not equal
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * This method parses a DATEV field description (first line of the csv file)
+	 * 
 	 * @return list of fieldnames
 	 */
 	public List<String> parseFieldList(String data) {
-		List<String> result = new ArrayList<String>(); 
-		StringTokenizer st=new StringTokenizer(data, ";");
+		List<String> result = new ArrayList<String>();
+		StringTokenizer st = new StringTokenizer(data, ";");
 		while (st.hasMoreTokens()) {
-			String field=st.nextToken();
+			String field = st.nextToken();
 			if (!field.isEmpty()) {
-				field=field.replace(' ','_');
-				field=field.replace('/','_');
-				field=field.replace('\\','_');
-				field=field.replace('.','_');
+				field = field.replace(' ', '_');
+				field = field.replace('/', '_');
+				field = field.replace('\\', '_');
+				field = field.replace('.', '_');
 				result.add(field);
 			} else {
 				// add dummy entry
 				result.add(null);
 			}
-			
+
 		}
 		return result;
+	}
+
+	/**
+	 * This method creates a ItemCollection from a csv file data line
+	 * 
+	 * @param data
+	 * @param fieldnames
+	 * @return
+	 */
+	public ItemCollection readEntity(String data, List<String> fieldnames) {
+		ItemCollection result = new ItemCollection();
+
+		int iCol = 0;
+		StringTokenizer st = new StringTokenizer(data, ";");
+		while (st.hasMoreTokens()) {
+			// test if the token has content
+			String itemValue = st.nextToken();
+			if (!itemValue.isEmpty()) {
+				// create a itemvalue with the corresponding fieldname
+				result.replaceItemValue("_datev_" + fieldnames.get(iCol), itemValue);
+			}
+			iCol++;
+		}
+		return result;
+	}
+
+	/**
+	 * This method process a single workIten in a new transaction. The method is
+	 * called by processWorklist()
+	 * 
+	 * @param aWorkitem
+	 * @throws PluginException
+	 * @throws ProcessingErrorException
+	 * @throws AccessDeniedException
+	 */
+	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+	public void processSingleWorkitem(ItemCollection aWorkitem)
+			throws AccessDeniedException, ProcessingErrorException, PluginException {
+		workflowService.processWorkItem(aWorkitem);
 	}
 
 }
