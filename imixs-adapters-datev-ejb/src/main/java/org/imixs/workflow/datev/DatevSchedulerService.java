@@ -226,7 +226,7 @@ public class DatevSchedulerService {
 				configItemCollection.replaceItemValue("Schedule", "");
 
 			}
-			logger.info("[DatevSchedulerService] " + configItemCollection.getItemValueString("txtName") + " started: "
+			logger.info("DATEV import " + configItemCollection.getItemValueString("txtName") + " scheduled: "
 					+ id);
 		}
 		configItemCollection.replaceItemValue("errormessage", "");
@@ -256,7 +256,7 @@ public class DatevSchedulerService {
 					+ ctx.getCallerPrincipal().getName();
 			configuration.replaceItemValue("statusmessage", msg);
 
-			logger.info("[DatevSchedulerService] " + configuration.getItemValueString("txtName") + " stopped: " + id);
+			logger.info(" " + configuration.getItemValueString("txtName") + " stopped: " + id);
 
 			configuration.removeItem("nextTimeout");
 			configuration.removeItem("timeRemaining");
@@ -323,7 +323,7 @@ public class DatevSchedulerService {
 
 			}
 		} catch (Exception e) {
-			logger.warning("[DatevSchedulerService] unable to updateTimerDetails: " + e.getMessage());
+			logger.warning(" unable to updateTimerDetails: " + e.getMessage());
 			configuration.removeItem("nextTimeout");
 			configuration.removeItem("timeRemaining");
 
@@ -342,42 +342,35 @@ public class DatevSchedulerService {
 	@Timeout
 	public void processImport(javax.ejb.Timer timer) {
 		String sTimerID = null;
-		
-
-		// Startzeit ermitteln
+		// get millis...
 		long lProfiler = System.currentTimeMillis();
-
-		logger.info("[DatevSchedulerService] processing import....");
+		logger.info("processing DATEV import....");
 
 		// load configuration...
-
 		XMLItemCollection xmlItemCollection = (XMLItemCollection) timer.getInfo();
 		ItemCollection configuration = XMLItemCollectionAdapter.getItemCollection(xmlItemCollection);
 		sTimerID = configuration.getItemValueString(EntityService.UNIQUEID);
 		configuration = workflowService.getEntityService().load(sTimerID);
 		try {
 			configuration=datevService.importEntities(configuration,0,-1);
-
-			
 		} catch (DatevException e) {
 			// in case of an exception we did not cancel the Timer service
 			if (logger.isLoggable(Level.FINE)) {
 				e.printStackTrace();
 			}
-			logger.severe("[DatevSchedulerService] importOrders failed for: " + sTimerID + " Error=" + e.getMessage());
+			logger.severe(" DATEV import failed for: " + sTimerID + " Error=" + e.getMessage());
 			configuration.replaceItemValue("errormessage", e.getMessage());
+			configuration.replaceItemValue("datLastRun", new Date());
+			configuration.replaceItemValue("numWorkItemsImported", 0);
+			configuration.replaceItemValue("numWorkItemsUpdated", 0);
+			configuration.replaceItemValue("numWorkItemsFailed", 0);
+			configuration.replaceItemValue("numWorkitemsTotal", 0);
 
 		}
 
 		// Save statistic in configuration
-		try {
-			configuration = this.saveConfiguration(configuration);
-		} catch (Exception e2) {
-			e2.printStackTrace();
-
-		}
-
-		logger.info("[DatevSchedulerService] import finished successfull: " + ((System.currentTimeMillis()) - lProfiler)
+		configuration = this.saveConfiguration(configuration);
+		logger.info("DATEV import finished : " + ((System.currentTimeMillis()) - lProfiler)
 				+ " ms");
 
 		/*
@@ -385,10 +378,9 @@ public class DatevSchedulerService {
 		 */
 		if (endDate != null) {
 			Calendar calNow = Calendar.getInstance();
-
 			if (calNow.getTime().after(endDate)) {
 				timer.cancel();
-				System.out.println("[DatevSchedulerService] Timeout sevice stopped: " + sTimerID);
+				System.out.println(" Timeout sevice stopped: " + sTimerID);
 			}
 		}
 	}
@@ -415,7 +407,7 @@ public class DatevSchedulerService {
 		if (endDate != null)
 			calEnd.setTime(endDate);
 		if (calNow.after(calEnd)) {
-			logger.warning("[DatevSchedulerService] " + configItemCollection.getItemValueString("txtName")
+			logger.warning(" " + configItemCollection.getItemValueString("txtName")
 					+ " stop-date is in the past");
 
 			endDate = startDate;

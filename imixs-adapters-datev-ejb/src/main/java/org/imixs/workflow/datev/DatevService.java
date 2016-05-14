@@ -52,8 +52,10 @@ import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.AccessDeniedException;
+import org.imixs.workflow.exceptions.InvalidAccessException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
+import org.imixs.workflow.exceptions.WorkflowException;
 import org.imixs.workflow.jee.ejb.WorkflowService;
 import org.imixs.workflow.jee.util.PropertyService;
 
@@ -75,7 +77,11 @@ import org.imixs.workflow.jee.util.PropertyService;
 @LocalBean
 public class DatevService {
 
-	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
+	// public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
+	public final static String MODEL_ERROR = "MODEL_ERROR";
+	public final static String PROCESSING_ERROR = "PROCESSING_ERROR";
+	public final static String CONFIG_ERROR = "CONFIG_ERROR";
+	public final static String IO_ERROR = "IO_ERROR";
 	public final static String FILE_NOT_FOUND = "FILE_NOT_FOUND";
 
 	final static public String TYPE = "datev";
@@ -120,7 +126,7 @@ public class DatevService {
 	public ItemCollection loadConfiguration(String id) {
 
 		if (id == null || id.isEmpty()) {
-			logger.warning("[DatevService] invalid shop configuration id=" + id);
+			logger.warning("invalid shop configuration id=" + id);
 		}
 		ItemCollection configItemCollection = null;
 		// try to load....
@@ -131,10 +137,10 @@ public class DatevService {
 
 		if (col.size() > 0) {
 			configItemCollection = col.iterator().next();
-			logger.fine("[DatevService] datev configuration id=" + id + " loaded");
+			logger.fine("datev configuration id=" + id + " loaded");
 
 		} else {
-			logger.warning("[DatevService] datev configuration id=" + id + " not defined!");
+			logger.warning("datev configuration id=" + id + " not defined!");
 
 		}
 
@@ -180,23 +186,24 @@ public class DatevService {
 	public ItemCollection importEntities(ItemCollection configuration, int start, int maxcount) throws DatevException {
 
 		int count = 0;
+		int line = 0;
+		String datevLine = null;
 		String modelversion = null;
 		String filename = null;
 		String encoding = null;
 		int processID, activityID;
 		Long lastImport = null;
 		long modifiedTime = 0;
-		
-	int	workitemsImported = 0;
-	int	workitemsUpdated = 0;
-	int	workitemsFailed = 0;
-	int	workitemsTotal = 0;
 
+		int workitemsImported = 0;
+		int workitemsUpdated = 0;
+		int workitemsFailed = 0;
+		int workitemsTotal = 0;
 
 		String sDatevID = configuration.getItemValueString("txtName");
-		logger.info("[DatevSchedulerSerivce] import Datev id= " + sDatevID);
-
 		filename = configuration.getItemValueString("_datev_path");
+		logger.info("DATEV import id= " + sDatevID + " : " + filename);
+
 		modelversion = configuration.getItemValueString("_datev_modelversion");
 		encoding = configuration.getItemValueString("_datev_encoding");
 		if (encoding.isEmpty()) {
@@ -217,6 +224,13 @@ public class DatevService {
 		processID = Integer.parseInt(configuration.getItemValueString("_datev_processid"));
 		activityID = Integer.parseInt(configuration.getItemValueString("_datev_activityid"));
 
+		// validate model information
+		if (modelversion.isEmpty() || processID == 0 || activityID == 0) {
+			logger.severe("Invalid Model Information: " + modelversion + " " + processID + "." + activityID
+					+ " - Verify DATEV configuration " + sDatevID);
+			throw new DatevException(MODEL_ERROR, MODEL_ERROR, "Invalid Model Information");
+		}
+
 		File file = new File(filename);
 		modifiedTime = file.lastModified();
 		if (modifiedTime == 0)
@@ -226,19 +240,16 @@ public class DatevService {
 			DataInputStream in = null;
 			try {
 				FileInputStream fis = new FileInputStream(filename);
-
 				in = new DataInputStream(fis);
-
 				BufferedReader br = new BufferedReader(new InputStreamReader(in, encoding));
-
-				String strLine;
 
 				// skip first line
 				br.readLine();
+				line++;
 
 				// read the first line containing the field names
 				String fieldnames = br.readLine();
-
+				line++;
 				List<String> fields = parseFieldList(fieldnames);
 
 				// skipp start pos....
@@ -251,47 +262,29 @@ public class DatevService {
 				}
 
 				// now we read all entities until maxcount
-
-				while ((strLine = br.readLine()) != null) {
-
-					ItemCollection entity = readEntity(strLine, fields);
-
+				while ((datevLine = br.readLine()) != null) {
+					line++;
+					ItemCollection entity = readEntity(datevLine, fields);
 					// test if workitem already exits....
 					ItemCollection oldEntity = findWorkitemByName(entity.getItemValueString("txtName"));
-
 					if (oldEntity == null) {
 						// create new workitem
-
 						entity.replaceItemValue(WorkflowService.MODELVERSION, modelversion);
 						entity.replaceItemValue(WorkflowService.PROCESSID, processID);
 						entity.replaceItemValue(WorkflowService.ACTIVITYID, activityID);
 					} else {
 						// test if modified....
-						if (!isEqualEntity(oldEntity,entity)) {
+						if (!isEqualEntity(oldEntity, entity)) {
 							logger.info("NOT IMPLEMENTED - compare only field names!!!");
 						}
-						
+
 					}
 
 					// process workitem
-					try {
-						processSingleWorkitem(entity);
-					} catch (AccessDeniedException e) {
-						logger.severe("[DatevSchedulerSerivce] unable to import: " + strLine);
-						e.printStackTrace();
-					} catch (ProcessingErrorException e) {
-						logger.severe("[DatevSchedulerSerivce] unable to import: " + strLine);
-						e.printStackTrace();
-					} catch (PluginException e) {
-						logger.severe("[DatevSchedulerSerivce] unable to import: " + strLine);
-						e.printStackTrace();
-					}
-
+					processSingleWorkitem(entity);
 					count++;
-
 					if (maxcount > 0 && count >= maxcount) {
-						logger.info("[DatevSchedulerSerivce] maximum lines read (" + maxcount + ") !");
-
+						logger.info("maximum lines read (" + maxcount + ") !");
 						break;
 					}
 				}
@@ -301,13 +294,27 @@ public class DatevService {
 				configuration.replaceItemValue("numWorkItemsImported", workitemsImported);
 				configuration.replaceItemValue("numWorkItemsUpdated", workitemsUpdated);
 				configuration.replaceItemValue("numWorkItemsFailed", workitemsFailed);
-
 				configuration.replaceItemValue("numWorkitemsTotal", workitemsTotal);
-				
-			} catch (IOException ex) {
+			} catch (IOException ioex) {
+				throw new DatevException(DatevService.class.getName(), IO_ERROR, "" + ioex, ioex);
+			}
+			// catch workflow exceptions (as RuntimeExceptions)...
+			catch (RuntimeException oe) {
+				logger.severe("DATEV import error at line " + line + ": " + datevLine);
+				if (oe.getCause() instanceof InvalidAccessException) {
+					throw new DatevException(DatevService.class.getName(), ((InvalidAccessException) oe.getCause()).getErrorCode(),
+							((InvalidAccessException) oe.getCause()).getMessage(), oe);
+				} else {
+					throw new DatevException(DatevService.class.getName(), PROCESSING_ERROR, oe.getMessage(), oe);
+				}
+			}
 
-				ex.printStackTrace();
-			} finally {
+			catch (PluginException e) {
+				logger.severe("DATEV import error at line " + line + ": " + datevLine);
+				throw new DatevException(DatevService.class.getName(), e.getErrorCode(), e.getMessage(), e);
+			}
+
+			finally {
 				// Close the input stream
 				try {
 					in.close();
@@ -317,23 +324,21 @@ public class DatevService {
 			}
 		}
 
-		
-		
 		return configuration;
 	}
 
-	
 	/**
-	 * This method compares two datev entities based on the datev fields 
+	 * This method compares two datev entities based on the datev fields
+	 * 
 	 * @param oldEntity
 	 * @param entity
 	 * @param fields
 	 * @return
 	 */
 	private boolean isEqualEntity(ItemCollection oldEntity, ItemCollection entity) {
-		
+
 		Set<String> fields = entity.getAllItems().keySet();
-		for (String itemName:fields) {
+		for (String itemName : fields) {
 			if (!entity.getItemValue(itemName).equals(oldEntity.getItemValue(itemName))) {
 				// not equal
 				return false;

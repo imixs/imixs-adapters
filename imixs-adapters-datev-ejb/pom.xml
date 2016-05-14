@@ -6,7 +6,7 @@
     <version>1.4.1-SNAPSHOT</version>
   </parent>
   <artifactId>imixs-adapters-datev-ejb</artifactId>
-  <name>DATEV Import</name>
+  <name>DATEV Import EJB</name>
   
   
   <dependencies>
