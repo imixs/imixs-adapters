@@ -353,22 +353,19 @@ public class DatevSchedulerService {
 		configuration = workflowService.getEntityService().load(sTimerID);
 		try {
 			configuration=datevService.importEntities(configuration,0,-1);
+			// clear error message
+			configuration.replaceItemValue("errormessage", "");
 		} catch (DatevException e) {
 			// in case of an exception we did not cancel the Timer service
 			if (logger.isLoggable(Level.FINE)) {
 				e.printStackTrace();
 			}
-			logger.severe(" DATEV import failed for: " + sTimerID + " Error=" + e.getMessage());
+			logger.severe("DATEV import failed for: " + sTimerID + " Error=" + e.getMessage());
 			configuration.replaceItemValue("errormessage", e.getMessage());
-			configuration.replaceItemValue("datLastRun", new Date());
-			configuration.replaceItemValue("numWorkItemsImported", 0);
-			configuration.replaceItemValue("numWorkItemsUpdated", 0);
-			configuration.replaceItemValue("numWorkItemsFailed", 0);
-			configuration.replaceItemValue("numWorkitemsTotal", 0);
-
 		}
 
 		// Save statistic in configuration
+		configuration.replaceItemValue("datLastRun", new Date());
 		configuration = this.saveConfiguration(configuration);
 		logger.info("DATEV import finished : " + ((System.currentTimeMillis()) - lProfiler)
 				+ " ms");
@@ -380,7 +377,7 @@ public class DatevSchedulerService {
 			Calendar calNow = Calendar.getInstance();
 			if (calNow.getTime().after(endDate)) {
 				timer.cancel();
-				System.out.println(" Timeout sevice stopped: " + sTimerID);
+				System.out.println("Timeout sevice stopped: " + sTimerID);
 			}
 		}
 	}

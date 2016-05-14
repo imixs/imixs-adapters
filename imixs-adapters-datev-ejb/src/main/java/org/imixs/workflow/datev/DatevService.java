@@ -170,12 +170,15 @@ public class DatevService {
 	/**
 	 * This method imports all entities from a csv file.
 	 * 
-	 * The Paremeter start and count can be used to import only a part of the
+	 * The method runs in a new transaction so processing exceptions can be
+	 * caught and stored in the DATEV configuration entity
+	 * 
+	 * The parameter start and count can be used to import only a part of the
 	 * file.
 	 * 
 	 * 
 	 * @param configuration
-	 *            - the configuration entity for the Datev import
+	 *            - the configuration entity for the DATEV import
 	 * 
 	 * @param start
 	 *            - optional start position
@@ -183,9 +186,9 @@ public class DatevService {
 	 *            - optional count (default =-1)
 	 * @throws PluginException
 	 */
+	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 	public ItemCollection importEntities(ItemCollection configuration, int start, int maxcount) throws DatevException {
 
-		int count = 0;
 		int line = 0;
 		String datevLine = null;
 		String modelversion = null;
@@ -201,6 +204,7 @@ public class DatevService {
 		int workitemsTotal = 0;
 
 		String sDatevID = configuration.getItemValueString("txtName");
+		String sDatevPrimaryKey= configuration.getItemValueString("_datev_primarykey");
 		filename = configuration.getItemValueString("_datev_path");
 		logger.info("DATEV import id= " + sDatevID + " : " + filename);
 
@@ -264,7 +268,12 @@ public class DatevService {
 				// now we read all entities until maxcount
 				while ((datevLine = br.readLine()) != null) {
 					line++;
+					workitemsTotal++;
 					ItemCollection entity = readEntity(datevLine, fields);
+					
+					// replace txtName by the DATEV key field
+					entity.replaceItemValue("txtname", entity.getItemValue("_datev_"+sDatevPrimaryKey));
+					
 					// test if workitem already exits....
 					ItemCollection oldEntity = findWorkitemByName(entity.getItemValueString("txtName"));
 					if (oldEntity == null) {
@@ -272,49 +281,46 @@ public class DatevService {
 						entity.replaceItemValue(WorkflowService.MODELVERSION, modelversion);
 						entity.replaceItemValue(WorkflowService.PROCESSID, processID);
 						entity.replaceItemValue(WorkflowService.ACTIVITYID, activityID);
+						processSingleWorkitem(entity);
+						workitemsImported++;
 					} else {
 						// test if modified....
 						if (!isEqualEntity(oldEntity, entity)) {
 							logger.info("NOT IMPLEMENTED - compare only field names!!!");
+							processSingleWorkitem(entity);
+							workitemsUpdated++;
 						}
-
-					}
-
-					// process workitem
-					processSingleWorkitem(entity);
-					count++;
-					if (maxcount > 0 && count >= maxcount) {
-						logger.info("maximum lines read (" + maxcount + ") !");
-						break;
 					}
 				}
+				
+				configuration.replaceItemValue("_datev_lLastImport", modifiedTime);
+				configuration.replaceItemValue("_datev_datLastImport", new Date(modifiedTime));
+			} catch (IOException ioex) {
+				throw new DatevException(DatevService.class.getName(), IO_ERROR, "" + ioex, ioex);
+			} catch (Exception e) {
+				// Catch Workflow Exceptions
+				workitemsFailed++;
 
-				configuration.replaceItemValue("errormessage", "");
-				configuration.replaceItemValue("datLastRun", new Date());
+				logger.severe("DATEV import error at line " + line + ": " + datevLine);
+				if (e.getCause() instanceof InvalidAccessException) {
+					throw new DatevException(DatevService.class.getName(),
+							((InvalidAccessException) e.getCause()).getErrorCode(),
+							((InvalidAccessException) e.getCause()).getMessage(), e);
+				}
+				if (e.getCause() instanceof WorkflowException) {
+					throw new DatevException(DatevService.class.getName(),
+							((WorkflowException) e.getCause()).getErrorCode(),
+							((WorkflowException) e.getCause()).getMessage(), e);
+				}
+				throw new DatevException(DatevService.class.getName(), PROCESSING_ERROR, "" + e, e);
+			}
+
+			finally {
 				configuration.replaceItemValue("numWorkItemsImported", workitemsImported);
 				configuration.replaceItemValue("numWorkItemsUpdated", workitemsUpdated);
 				configuration.replaceItemValue("numWorkItemsFailed", workitemsFailed);
 				configuration.replaceItemValue("numWorkitemsTotal", workitemsTotal);
-			} catch (IOException ioex) {
-				throw new DatevException(DatevService.class.getName(), IO_ERROR, "" + ioex, ioex);
-			}
-			// catch workflow exceptions (as RuntimeExceptions)...
-			catch (RuntimeException oe) {
-				logger.severe("DATEV import error at line " + line + ": " + datevLine);
-				if (oe.getCause() instanceof InvalidAccessException) {
-					throw new DatevException(DatevService.class.getName(), ((InvalidAccessException) oe.getCause()).getErrorCode(),
-							((InvalidAccessException) oe.getCause()).getMessage(), oe);
-				} else {
-					throw new DatevException(DatevService.class.getName(), PROCESSING_ERROR, oe.getMessage(), oe);
-				}
-			}
 
-			catch (PluginException e) {
-				logger.severe("DATEV import error at line " + line + ": " + datevLine);
-				throw new DatevException(DatevService.class.getName(), e.getErrorCode(), e.getMessage(), e);
-			}
-
-			finally {
 				// Close the input stream
 				try {
 					in.close();
@@ -381,7 +387,6 @@ public class DatevService {
 	 */
 	public ItemCollection readEntity(String data, List<String> fieldnames) {
 		ItemCollection result = new ItemCollection();
-
 		int iCol = 0;
 		StringTokenizer st = new StringTokenizer(data, ";");
 		while (st.hasMoreTokens()) {
