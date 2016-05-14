@@ -14,7 +14,7 @@
 
 					<div class="imixs-header">
 						<h1>
-							<h:outputText value="Datev Import" />
+							<h:outputText value="DATEV Import" />
 						</h1>
 					</div>
 
@@ -26,7 +26,7 @@
 							<div class="imixs-form-section">
 								<dl>
 									<dt>
-										Import<span class="imixs-required">*</span>
+										ID<span class="imixs-required">*</span>
 									</dt>
 									<dd>
 										<h:inputText required="true"
@@ -37,7 +37,7 @@
 
 								<dl>
 									<dt>
-										Pfad<span class="imixs-required">*</span>
+										Import<span class="imixs-required">*</span>
 									</dt>
 									<dd>
 										<h:inputText required="true"
@@ -55,10 +55,10 @@
 
 								<dl>
 									<dt>
-										<h:outputLabel value="Model Version" />
+										<h:outputLabel value="Model Version" /><span class="imixs-required">*</span>
 									</dt>
 									<dd>
-										<h:inputText required="false"
+										<h:inputText required="true"
 											value="#{datevController.configuration.item['_datev_modelversion']}">
 										</h:inputText>
 									</dd>
@@ -68,10 +68,10 @@
 
 								<dl>
 									<dt>
-										<h:outputLabel value="Initial Process" />
+										<h:outputLabel value="Initial Process" /><span class="imixs-required">*</span>
 									</dt>
 									<dd>
-										<h:inputText required="false"
+										<h:inputText required="true"
 											value="#{datevController.configuration.item['_datev_processid']}">
 										</h:inputText>
 									</dd>
@@ -80,10 +80,10 @@
 
 								<dl>
 									<dt>
-										<h:outputLabel value="Initial Event" />
+										<h:outputLabel value="Initial Event" /><span class="imixs-required">*</span>
 									</dt>
 									<dd>
-										<h:inputText required="false"
+										<h:inputText required="true"
 											value="#{datevController.configuration.item['_datev_activityid']}">
 										</h:inputText>
 									</dd>
@@ -93,51 +93,31 @@
 
 								<dl>
 									<dt>
-										<h:outputLabel value="DATEV Primary Key" />
+										<h:outputLabel value="Primary Key" /><span class="imixs-required">*</span>
 									</dt>
 									<dd>
-										<h:inputText required="false"
+										<h:inputText required="true"
 											value="#{datevController.configuration.item['_datev_primarykey']}">
 										</h:inputText>
 									</dd>
-
 								</dl>
-
-
-
 							</div>
-
 						</div>
-
-
-
-
-
-
-
 
 
 
 						<!-- **** General info ***** -->
 						<div class="imixs-form-panel">
 							<h1>Timer Settings</h1>
-
-
 							<h:inputTextarea required="false"
 								converter="org.imixs.VectorConverter"
 								style="height: 8em; width: 100%;"
 								value="#{datevController.configuration.itemList['txtConfiguration']}">
 							</h:inputTextarea>
-
-
 						</div>
 
 
-
-
-
 						<!-- **** Status ***** -->
-
 						<div class="imixs-form-panel">
 							<h1>
 								<h:outputText
@@ -308,22 +288,11 @@
 							value="clear-cache">
 						</h:commandButton>
 
-
-
-						<h:commandButton value="#{message.close}"
+						<h:commandButton value="#{message.close}" immediate="true"
 							action="datev_config_list" />
 
-
-
-
 					</div>
-
-
 				</div>
-
-
-
-
 			</h:form>
 		</f:view>
 	</ui:define>
