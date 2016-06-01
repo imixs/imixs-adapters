@@ -286,8 +286,12 @@ public class DatevService {
 					} else {
 						// test if modified....
 						if (!isEqualEntity(oldEntity, entity)) {
-							logger.info("NOT IMPLEMENTED - compare only field names!!!");
-							processSingleWorkitem(entity);
+							logger.fine("update exsting DATV entity: " + oldEntity.getUniqueID());
+							
+							// copy all datev entries from the import into the existing entity
+							oldEntity.replaceAllItems(entity.getAllItems());
+							oldEntity.replaceItemValue(WorkflowService.ACTIVITYID, activityID);
+							processSingleWorkitem(oldEntity);
 							workitemsUpdated++;
 						}
 					}
