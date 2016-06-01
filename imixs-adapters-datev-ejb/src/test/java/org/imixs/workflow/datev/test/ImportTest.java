@@ -94,10 +94,11 @@ public class ImportTest {
 			Assert.assertNotNull(fieldList);
 
 			// read first line
-			ItemCollection entity = datevService.readEntity(br.readLine(), fieldList);
-			Assert.assertNotNull(entity);
+			ItemCollection entity = datevService.readEntity(br.readLine(), fieldList); 
+			Assert.assertNotNull(entity); 
 			Assert.assertEquals("22222", entity.getItemValueString("_datev_konto"));
 			Assert.assertEquals("Muster GmbH 1", entity.getItemValueString("_datev_Name_(Adressattyp_Unternehmen)"));
+			Assert.assertEquals("2", entity.getItemValueString("_datev_Adressattyp"));
 
 			// read second line
 			entity = datevService.readEntity(br.readLine(), fieldList);

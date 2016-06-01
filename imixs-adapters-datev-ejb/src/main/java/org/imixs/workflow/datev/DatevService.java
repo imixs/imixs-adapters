@@ -372,6 +372,9 @@ public class DatevService {
 				field = field.replace('/', '_');
 				field = field.replace('\\', '_');
 				field = field.replace('.', '_');
+				field = field.replace('>', '_');
+				field = field.replace('<', '_');
+				field = field.replace('&', '_');
 				result.add(field);
 			} else {
 				// add dummy entry
@@ -392,11 +395,10 @@ public class DatevService {
 	public ItemCollection readEntity(String data, List<String> fieldnames) {
 		ItemCollection result = new ItemCollection();
 		int iCol = 0;
-		StringTokenizer st = new StringTokenizer(data, ";");
-		while (st.hasMoreTokens()) {
+		String[] valuList = data.split(";",-1);
+		for (String itemValue: valuList) {
 			// test if the token has content
-			String itemValue = st.nextToken();
-			if (!itemValue.isEmpty()) {
+			if (itemValue!=null && !itemValue.isEmpty()) {
 				// create a itemvalue with the corresponding fieldname
 				result.replaceItemValue("_datev_" + fieldnames.get(iCol), itemValue);
 			}
