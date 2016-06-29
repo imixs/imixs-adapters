@@ -54,7 +54,7 @@ public class SimpleTest {
 	/**
 	 * This test reads a sales order
 	 */
-	// @Ignore
+	@Ignore
 	@Test
 	public void testGetOrder() {
 		MagentoHTMLClient restClient = new MagentoHTMLClient(userid, password,loginURI);

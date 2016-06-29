@@ -18,6 +18,7 @@ import org.imixs.workflow.magento.MagentoClient;
 import org.imixs.workflow.magento.MagentoClientFactory;
 import org.imixs.workflow.magento.MagentoException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -80,6 +81,7 @@ public class TestMagentoSoapClient {
 	 * This Test checks the getProducts method...
 	 * 
 	 */
+	@Ignore
 	@Test
 	public void testGetProducts() {
 
@@ -108,6 +110,7 @@ public class TestMagentoSoapClient {
 	 * http://localhost/magento/rest/api/products/1
 	 * 
 	 */
+	@Ignore
 	@Test
 	public void testGetProductBySKU() {
 
@@ -135,6 +138,7 @@ public class TestMagentoSoapClient {
 	 * This Test adds a comment
 	 * 
 	 */
+	@Ignore
 	@Test
 	public void testAddComment() {
 
@@ -156,6 +160,7 @@ public class TestMagentoSoapClient {
 	 * This Test checks the Magento Connection...
 	 * 
 	 */
+	@Ignore
 	@Test
 	public void testGetPendingOrders() {
 

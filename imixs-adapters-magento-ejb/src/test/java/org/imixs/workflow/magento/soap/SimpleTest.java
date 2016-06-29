@@ -7,13 +7,14 @@ import java.rmi.RemoteException;
 
 import javax.xml.rpc.ServiceException;
 
-import junit.framework.Assert;
-
 import org.imixs.workflow.magento.soap.generated.Mage_Api_Model_Server_V2_HandlerPortType;
 import org.imixs.workflow.magento.soap.generated.MagentoService;
 import org.imixs.workflow.magento.soap.generated.MagentoServiceLocator;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+
+import junit.framework.Assert;
 
 /**
  *  
@@ -50,6 +51,7 @@ public class SimpleTest {
 
 	}
 
+	@Ignore
 	@Test
 	public void testAddComment() throws java.lang.Exception {
 
@@ -66,6 +68,7 @@ public class SimpleTest {
 
 	}
 
+	@Ignore
 	@Test
 	public void testSalesOrderList() throws java.lang.Exception {
 

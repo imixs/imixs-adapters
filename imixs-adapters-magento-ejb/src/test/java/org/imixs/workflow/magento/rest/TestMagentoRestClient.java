@@ -131,6 +131,7 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
+	@Ignore
 	public void testGetProducts() {
 
 		List<ItemCollection> result = null;
@@ -157,6 +158,7 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
+	@Ignore
 	public void testGetProductBySKU() {
 
 		ItemCollection result = null;
@@ -196,6 +198,7 @@ public class TestMagentoRestClient {
 	 * 
 	 */
 	@Test
+	@Ignore
 	public void testGetPendingOrders() { 
  
 		List<ItemCollection> result = null;
