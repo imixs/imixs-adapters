@@ -3,25 +3,19 @@
  */
 package org.imixs.workflow.magento.html;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.CookieManager;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.naming.NamingException;
 
-import junit.framework.Assert;
-
 import org.imixs.workflow.exceptions.PluginException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+
+import junit.framework.Assert;
 
 /**
  *  
