@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
@@ -67,8 +68,8 @@ import org.imixs.workflow.jee.util.PropertyService;
  * lucene index.
  * 
  * With the method addWorkitem() a ItemCollection can be added to a lucene
- * search index. The service init method reads the property file 'imixs.properties' from the
- * current classpath to determine the configuration.
+ * search index. The service init method reads the property file
+ * 'imixs.properties' from the current classpath to determine the configuration.
  * 
  * <ul>
  * <li>The property "IndexDir" defines the location of the lucene index
@@ -130,10 +131,10 @@ public class LuceneUpdateService {
 		String sIndexFieldListAnalyse = properties.getProperty("lucence.indexFieldListAnalyze");
 		String sIndexFieldListNoAnalyse = properties.getProperty("lucence.indexFieldListNoAnalyze");
 
-		logger.fine("IndexDir:" + indexDirectoryPath);
-		logger.fine("FulltextFieldList:" + sFulltextFieldList);
-		logger.fine("IndexFieldListAnalyse:" + sIndexFieldListAnalyse);
-		logger.fine("IndexFieldListNoAnalyse:" + sIndexFieldListNoAnalyse);
+		logger.fine("lucene IndexDir=" + indexDirectoryPath);
+		logger.fine("lucene FulltextFieldList=" + sFulltextFieldList);
+		logger.fine("lucene IndexFieldListAnalyse=" + sIndexFieldListAnalyse);
+		logger.fine("lucene IndexFieldListNoAnalyse=" + sIndexFieldListNoAnalyse);
 		// compute search field list
 		StringTokenizer st = new StringTokenizer(sFulltextFieldList, ",");
 		searchFieldList = new ArrayList<String>();
@@ -199,7 +200,7 @@ public class LuceneUpdateService {
 	public boolean updateWorklist(Collection<ItemCollection> worklist) throws PluginException {
 
 		IndexWriter awriter = null;
-
+		long ltime = System.currentTimeMillis();
 		try {
 			awriter = createIndexWriter();
 
@@ -210,40 +211,43 @@ public class LuceneUpdateService {
 				Term term = new Term("$uniqueid", workitem.getItemValueString("$uniqueid"));
 				// test if document should be indexed or not
 				if (matchConditions(workitem)) {
-					logger.fine(
-							"add workitem '" + workitem.getItemValueString(EntityService.UNIQUEID) + "' into index");
+					logger.fine("lucene add/updaten workite '" + workitem.getItemValueString(EntityService.UNIQUEID)
+							+ "' to index...");
 					awriter.updateDocument(term, createDocument(workitem));
 				} else {
-					logger.fine(
-							"remove workitem '" + workitem.getItemValueString(EntityService.UNIQUEID) + "' into index");
+					logger.fine("lucene remove workitem '" + workitem.getItemValueString(EntityService.UNIQUEID)
+							+ "' from index");
 					awriter.deleteDocuments(term);
 				}
 			}
 		} catch (IOException luceneEx) {
 			// close writer!
-			logger.warning(" Lucene Exception : " + luceneEx.getMessage());
+			logger.warning("lucene error: " + luceneEx.getMessage());
 
 			throw new PluginException(LucenePlugin.class.getSimpleName(), INVALID_INDEX,
-					"Unable to update search index", luceneEx);
+					"Unable to update lucene search index", luceneEx);
 
 		} finally {
 
 			if (awriter != null) {
-				logger.fine(" close writer");
+				logger.fine("lucene close writer");
 				try {
 					awriter.close();
 				} catch (CorruptIndexException e) {
 					throw new PluginException(LucenePlugin.class.getSimpleName(), INVALID_INDEX,
-							"Unable to update search index", e);
+							"Unable to update lucene search index", e);
 				} catch (IOException e) {
 					throw new PluginException(LucenePlugin.class.getSimpleName(), INVALID_INDEX,
-							"Unable to update search index", e);
+							"Unable to update lucene search index", e);
 				}
 
 			}
 		}
 
-		logger.fine(" update worklist successfull");
+		if (logger.isLoggable(Level.FINE)) {
+			logger.fine("lucene update worklist in " + (System.currentTimeMillis() - ltime) + " ms (" + worklist.size()
+					+ " worktiems total)");
+		}
 		return true;
 	}
 
@@ -324,8 +328,9 @@ public class LuceneUpdateService {
 		 */
 		Directory indexDir = createIndexDirectory();
 
-		//Analyzer analyzer = new StandardAnalyzer();
-		//IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LATEST, new StandardAnalyzer());
+		// Analyzer analyzer = new StandardAnalyzer();
+		// IndexWriterConfig indexWriterConfig = new
+		// IndexWriterConfig(Version.LATEST, new StandardAnalyzer());
 		IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LATEST, new ClassicAnalyzer());
 
 		// set the WriteLockTimeout to wait for a write lock (in milliseconds)
@@ -346,7 +351,7 @@ public class LuceneUpdateService {
 	 */
 	Directory createIndexDirectory() throws IOException {
 
-		logger.fine("[LucenePlugin] createIndexDirectory...");
+		logger.fine("lucene createIndexDirectory...");
 		/**
 		 * Read configuration
 		 */
@@ -359,22 +364,22 @@ public class LuceneUpdateService {
 		if (luceneLockFactory != null && !"".equals(luceneLockFactory)) {
 			// indexDir.setLockFactory(new SimpleFSLockFactory());
 			// set factory by class name
-			logger.fine("[LuceneUpdateService] set LockFactory=" + luceneLockFactory);
+			logger.fine("lucene set LockFactory=" + luceneLockFactory);
 			try {
 				Class<?> fsFactoryClass;
 				fsFactoryClass = Class.forName(luceneLockFactory);
 				LockFactory factoryInstance = (LockFactory) fsFactoryClass.newInstance();
 				indexDir.setLockFactory(factoryInstance);
 			} catch (ClassNotFoundException e) {
-				logger.severe("[LucenePlugin] unable to create Lucene LockFactory!");
+				logger.severe("lucene error - unable to create Lucene LockFactory!");
 				e.printStackTrace();
 				return null;
 			} catch (InstantiationException e) {
-				logger.severe("[LucenePlugin] unable to create Lucene LockFactory!");
+				logger.severe("lucene error - unable to create Lucene LockFactory!");
 				e.printStackTrace();
 				return null;
 			} catch (IllegalAccessException e) {
-				logger.severe("[LucenePlugin] unable to create Lucene LockFactory!");
+				logger.severe("lucene error - unable to create Lucene LockFactory!");
 				e.printStackTrace();
 				return null;
 			}
@@ -397,7 +402,6 @@ public class LuceneUpdateService {
 	Document createDocument(ItemCollection aworkitem) {
 		String sValue = null;
 		Document doc = new Document();
-
 		// combine all search fields from the search field list into one field
 		// ('content')
 		// for the lucene document
@@ -429,11 +433,11 @@ public class LuceneUpdateService {
 					sValue += o.toString() + ",";
 			}
 			if (sValue != null) {
-				logger.fine("  add SearchField: " + aFieldname + " = " + sValue);
+				logger.finest("lucene add SearchField: " + aFieldname + "=" + sValue);
 				sContent += sValue + ",";
 			}
 		}
-		logger.fine("  content = " + sContent);
+		logger.fine("lucene document content=" + sContent);
 
 		// Migration guide
 		// http://lucene.apache.org/core/4_0_0/MIGRATE.html
@@ -530,7 +534,7 @@ public class LuceneUpdateService {
 				// simple string representation
 				sValue = singleValue.toString();
 
-			logger.fine("  add IndexField (analyse=" + analyzeValue + "): " + aFieldname + " = " + sValue);
+			logger.fine("lucene add IndexField (analyse=" + analyzeValue + "): " + aFieldname + " = " + sValue);
 			if (analyzeValue) {
 				// If you did this before (value can be String or Reader):
 				// new Field("field", value, Field.Store.NO,

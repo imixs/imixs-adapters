@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.security.DeclareRoles;
@@ -151,14 +153,17 @@ public class LuceneSearchService {
 		if (maxResult > MAX_SEARCH_RESULT) {
 			maxResult = MAX_SEARCH_RESULT;
 		}
-		logger.fine("  lucene search term=" + sSearchTerm);
-		logger.fine("  lucene search max_result=" + maxResult);
+		logger.fine("lucene search max_result=" + maxResult);
 
 		ArrayList<ItemCollection> workitems = new ArrayList<ItemCollection>();
 
 		// test if searchtem is provided
 		if (sSearchTerm == null || "".equals(sSearchTerm))
 			return workitems;
+
+		// escape serach term
+		sSearchTerm = escapeSearchTerm(sSearchTerm);
+		logger.fine("lucene search query escaped=" + sSearchTerm);
 
 		long ltime = System.currentTimeMillis();
 		Properties prop = propertyService.getProperties();
@@ -182,7 +187,7 @@ public class LuceneSearchService {
 				sAccessTerm += ") AND ";
 				sSearchTerm = sAccessTerm + sSearchTerm;
 			}
-			logger.fine("  lucene search:" + sSearchTerm);
+			logger.fine("lucene search query final:" + sSearchTerm);
 
 			if (!"".equals(sSearchTerm)) {
 				parser.setAllowLeadingWildcard(true);
@@ -193,14 +198,14 @@ public class LuceneSearchService {
 
 				TopDocs topDocs = null;
 				if (sortOrder != null) {
-					logger.fine(" sortOrder= '" + sortOrder + "' ");
+					logger.fine("lucene sortOrder= '" + sortOrder + "' ");
 
 					topDocs = searcher.search(parser.parse(sSearchTerm), maxResult, sortOrder);
 				} else {
 					topDocs = searcher.search(parser.parse(sSearchTerm), maxResult);
 				}
 
-				logger.fine("  total hits=" + topDocs.totalHits);
+				logger.fine("lucene total hits=" + topDocs.totalHits);
 
 				// Get an array of references to matched documents
 				ScoreDoc[] scoreDosArray = topDocs.scoreDocs;
@@ -209,12 +214,12 @@ public class LuceneSearchService {
 					Document doc = searcher.doc(scoredoc.doc);
 
 					String sID = doc.get("$uniqueid");
-					logger.fine("  lucene lookup $uniqueid=" + sID);
+					logger.fine("lucene lookup $uniqueid=" + sID);
 					ItemCollection itemCol = workflowService.getEntityService().load(sID);
 					if (itemCol != null) {
 						workitems.add(itemCol);
 					} else {
-						logger.warning("[LuceneService] index returned un unreadable workitem : " + sID);
+						logger.warning("lucene index returned un unreadable workitem : " + sID);
 						// this situation happens if the search index returned
 						// documents the current user has no read access.
 						// this should normally avoided with the $readaccess
@@ -227,9 +232,9 @@ public class LuceneSearchService {
 
 			searcher.getIndexReader().close();
 
-			logger.fine(" lucene serach: " + (System.currentTimeMillis() - ltime) + " ms");
+			logger.fine("lucene search result computed in " + (System.currentTimeMillis() - ltime) + " ms");
 		} catch (Exception e) {
-			logger.warning("  lucene error!");
+			logger.warning("ucene search error!");
 			e.printStackTrace();
 		}
 
@@ -247,7 +252,7 @@ public class LuceneSearchService {
 	 */
 	Directory createIndexDirectory(Properties prop) throws IOException {
 
-		logger.fine("[LucenSearchService] createIndexDirectory...");
+		logger.fine("lucene createIndexDirectory...");
 		/**
 		 * Read configuration
 		 */
@@ -262,22 +267,22 @@ public class LuceneSearchService {
 		if (sLuceneLockFactory != null && !"".equals(sLuceneLockFactory)) {
 			// indexDir.setLockFactory(new SimpleFSLockFactory());
 			// set factory by class name
-			logger.fine("[LucenePlugin] set LockFactory=" + sLuceneLockFactory);
+			logger.fine("lucene set LockFactory=" + sLuceneLockFactory);
 			try {
 				Class<?> fsFactoryClass;
 				fsFactoryClass = Class.forName(sLuceneLockFactory);
 				LockFactory factoryInstance = (LockFactory) fsFactoryClass.newInstance();
 				indexDir.setLockFactory(factoryInstance);
 			} catch (ClassNotFoundException e) {
-				logger.severe("[LucenePlugin] unable to create Lucene LockFactory!");
+				logger.severe("lucene error - unable to create Lucene LockFactory!");
 				e.printStackTrace();
 				return null;
 			} catch (InstantiationException e) {
-				logger.severe("[LucenePlugin] unable to create Lucene LockFactory!");
+				logger.severe("lucene error - unable to create Lucene LockFactory!");
 				e.printStackTrace();
 				return null;
 			} catch (IllegalAccessException e) {
-				logger.severe("[LucenePlugin] unable to create Lucene LockFactory!");
+				logger.severe("lucene error - unable to create Lucene LockFactory!");
 				e.printStackTrace();
 				return null;
 			}
@@ -293,7 +298,7 @@ public class LuceneSearchService {
 	 * @throws Exception
 	 */
 	IndexSearcher createIndexSearcher(Properties prop) throws Exception {
-		logger.fine("[LucenePlugin] createIndexSearcher...");
+		logger.fine("lucene createIndexSearcher...");
 
 		Directory indexDir = createIndexDirectory(prop);
 		IndexReader reader = DirectoryReader.open(indexDir);
@@ -320,6 +325,39 @@ public class LuceneSearchService {
 		}
 
 		return parser;
+	}
+
+	/**
+	 * This helper method escapes wildcard tokens found in a search term. The
+	 * method searches for *...* sequences. Other sequences will not be escaped.
+	 *
+	 * 
+	 * @param searchTerm
+	 * @return
+	 */
+	public static String escapeSearchTerm(String searchTerm) {
+		
+		if (searchTerm==null || searchTerm.isEmpty()) {
+			return searchTerm;
+		}
+		
+		// remove '**' sequences
+		searchTerm=searchTerm.replace("**","");
+		
+		List<String> wildcardTokens = new ArrayList<String>();
+
+		Pattern pattern = Pattern.compile("\\*(.*?)\\*");
+		Matcher matcher = pattern.matcher(searchTerm);
+		while (matcher.find()) {
+			wildcardTokens.add(matcher.group(1));
+		}
+
+		// now we escape all wildCard tokens in the querystring
+		for (String wildcardToken : wildcardTokens) {
+			searchTerm = searchTerm.replace(wildcardToken, QueryParser.escape(wildcardToken));
+		}
+
+		return searchTerm;
 	}
 
 }
