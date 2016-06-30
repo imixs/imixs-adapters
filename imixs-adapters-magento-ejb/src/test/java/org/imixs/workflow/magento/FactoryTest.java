@@ -11,6 +11,7 @@ import junit.framework.Assert;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.magento.rest.MagentoApi;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -31,6 +32,7 @@ public class FactoryTest {
 	/**
 	 * Test the MagentoClientFactory for the SOAP Client
 	 */
+	@Ignore
 	@Test
 	public void testSOAPClient() throws java.lang.Exception {
 
@@ -53,6 +55,7 @@ public class FactoryTest {
 	/**
 	 * Test the MagentoClientFactory for the Rest Client
 	 */
+	@Ignore
 	@Test
 	public void testRestClient() throws java.lang.Exception {
 

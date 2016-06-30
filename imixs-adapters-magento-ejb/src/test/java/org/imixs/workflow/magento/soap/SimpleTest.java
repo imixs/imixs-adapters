@@ -43,6 +43,7 @@ public class SimpleTest {
 	/**
 	 * Test the reflection of Product
 	 */
+	@Ignore
 	@Test
 	public void testlogin() throws java.lang.Exception {
 
