@@ -211,7 +211,7 @@ public class LuceneUpdateService {
 				Term term = new Term("$uniqueid", workitem.getItemValueString("$uniqueid"));
 				// test if document should be indexed or not
 				if (matchConditions(workitem)) {
-					logger.fine("lucene add/updaten workite '" + workitem.getItemValueString(EntityService.UNIQUEID)
+					logger.fine("lucene add/update workitem '" + workitem.getItemValueString(EntityService.UNIQUEID)
 							+ "' to index...");
 					awriter.updateDocument(term, createDocument(workitem));
 				} else {
@@ -534,7 +534,7 @@ public class LuceneUpdateService {
 				// simple string representation
 				sValue = singleValue.toString();
 
-			logger.fine("lucene add IndexField (analyse=" + analyzeValue + "): " + aFieldname + " = " + sValue);
+			logger.fine("lucene add IndexField (analyse=" + analyzeValue + "): " + aFieldname + "=" + sValue);
 			if (analyzeValue) {
 				// If you did this before (value can be String or Reader):
 				// new Field("field", value, Field.Store.NO,
