@@ -44,6 +44,7 @@ import javax.ejb.EJB;
 import javax.ejb.Singleton;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.ClassicAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
@@ -325,8 +326,9 @@ public class LuceneUpdateService {
 		 */
 		Directory indexDir = createIndexDirectory();
 
-		Analyzer analyzer = new StandardAnalyzer();
-		IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LATEST, analyzer);
+		//Analyzer analyzer = new StandardAnalyzer();
+		//IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LATEST, new StandardAnalyzer());
+		IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LATEST, new ClassicAnalyzer());
 
 		// set the WriteLockTimeout to wait for a write lock (in milliseconds)
 		// for this instance. 10 seconds!
