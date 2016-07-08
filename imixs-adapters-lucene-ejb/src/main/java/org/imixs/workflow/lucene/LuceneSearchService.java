@@ -336,25 +336,25 @@ public class LuceneSearchService {
 	 * @return
 	 */
 	public static String escapeSearchTerm(String searchTerm) {
-		
-		if (searchTerm==null || searchTerm.isEmpty()) {
+
+		if (searchTerm == null || searchTerm.isEmpty()) {
 			return searchTerm;
 		}
-		
+
 		// remove '**' sequences
-		searchTerm=searchTerm.replace("**","");
-		
-		List<String> wildcardTokens = new ArrayList<String>();
+		searchTerm = searchTerm.replace("**", "");
 
-		Pattern pattern = Pattern.compile("\\*(.*?)\\*");
+		Pattern pattern = Pattern.compile("\\(([^)]+)\\)");
 		Matcher matcher = pattern.matcher(searchTerm);
-		while (matcher.find()) {
-			wildcardTokens.add(matcher.group(1));
-		}
 
-		// now we escape all wildCard tokens in the querystring
-		for (String wildcardToken : wildcardTokens) {
-			searchTerm = searchTerm.replace(wildcardToken, QueryParser.escape(wildcardToken));
+		String lastBlock = null;
+		while (matcher.find()) {
+			lastBlock = matcher.group(1);
+		}
+		if (lastBlock != null && !lastBlock.isEmpty()) {
+			searchTerm = searchTerm.replace(lastBlock, QueryParser.escape(lastBlock));
+			// unescape \*
+			searchTerm = searchTerm.replace("\\*", "*");
 		}
 
 		return searchTerm;

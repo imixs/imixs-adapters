@@ -1,5 +1,7 @@
 package org.imixs.workflow.lucene;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,7 +49,61 @@ public class TestRegex {
 		query=LuceneSearchService.escapeSearchTerm(query);
 		System.out.println("Result String=" + query);
 
-		Assert.assertEquals("(type=workitem) AND (*xx\\/xx* *yyyy* *\\(abc.123\\)*)", query);
+		Assert.assertEquals("(type=workitem) AND (*xx\\/xx* *yyyy* *\\(abc.123)*)", query);
 
 	}
+	
+	
+
+	@Test
+	public void testLuceneEscapeSearchPhraseComplex() throws PluginException {
+
+		// String query = "(type=workitem) AND (*xx/xx*)";
+
+		String searchTerm = "(($modelversion:datev*) AND ($processid:1???)) AND  (*222*)";
+	
+		searchTerm=LuceneSearchService.escapeSearchTerm(searchTerm);
+		System.out.println("Result String=" + searchTerm);
+
+		Assert.assertEquals("(($modelversion:datev*) AND ($processid:1???)) AND  (*222*)", searchTerm);
+
+	}
+	
+	
+	
+	@Test
+	public void debugtestLuceneEscapeSearchPhraseComplex() throws PluginException {
+
+		// String query = "(type=workitem) AND (*xx/xx*)";
+
+		String searchTerm = "(($modelversion:datev*) AND ($processid:1???)) AND  (*222*)";
+		searchTerm = "(type=workitem) AND (*xx/xx* *yyyy* *(abc.123)*)";
+		
+		
+		List<String> wildcardTokens = new ArrayList<String>();
+
+		Pattern pattern = Pattern.compile("\\(([^)]+)\\)");
+		Matcher matcher = pattern.matcher(searchTerm);
+		
+		String lastBlock=null;
+		while (matcher.find()) {
+			lastBlock=matcher.group(0);
+			
+			//System.out.println(matcher.group(1));
+		}
+		System.out.println(lastBlock);
+
+	
+		
+
+//		searchTerm=LuceneSearchService.escapeSearchTerm(searchTerm);
+//		System.out.println("Result String=" + searchTerm);
+//
+//		Assert.assertEquals("(($modelversion:datev*) AND ($processid:1???)) AND  (*222*)", searchTerm);
+
+	}
+
+
+
+
 }
