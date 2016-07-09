@@ -161,10 +161,6 @@ public class LuceneSearchService {
 		if (sSearchTerm == null || "".equals(sSearchTerm))
 			return workitems;
 
-		// escape serach term
-		sSearchTerm = escapeSearchTerm(sSearchTerm);
-		logger.fine("lucene search query escaped=" + sSearchTerm);
-
 		long ltime = System.currentTimeMillis();
 		Properties prop = propertyService.getProperties();
 		if (prop.isEmpty())
@@ -328,9 +324,8 @@ public class LuceneSearchService {
 	}
 
 	/**
-	 * This helper method escapes wildcard tokens found in a search term. The
-	 * method searches for *...* sequences. Other sequences will not be escaped.
-	 *
+	 * This helper method escapes wildcard tokens found in a lucene search term. The
+	 * method can be used by clients to prepare a search phrase.
 	 * 
 	 * @param searchTerm
 	 * @return
@@ -340,24 +335,8 @@ public class LuceneSearchService {
 		if (searchTerm == null || searchTerm.isEmpty()) {
 			return searchTerm;
 		}
-
-		// remove '**' sequences
-		searchTerm = searchTerm.replace("**", "");
-
-		Pattern pattern = Pattern.compile("\\(([^)]+)\\)");
-		Matcher matcher = pattern.matcher(searchTerm);
-
-		String lastBlock = null;
-		while (matcher.find()) {
-			lastBlock = matcher.group(1);
-		}
-		if (lastBlock != null && !lastBlock.isEmpty()) {
-			searchTerm = searchTerm.replace(lastBlock, QueryParser.escape(lastBlock));
-			// unescape \*
-			searchTerm = searchTerm.replace("\\*", "*");
-		}
-
-		return searchTerm;
+		
+		return QueryParser.escape(searchTerm);
 	}
 
 }
