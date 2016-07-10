@@ -33,8 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.security.DeclareRoles;
@@ -69,16 +67,13 @@ import org.imixs.workflow.jee.util.PropertyService;
  * reason the EJB is creating a new IndexSearch per-search.
  * 
  * The service provides a set of public methods which can be used to query
- * workitems or collections of workitems.
- * 
- * Updated to version 4.5.1
- * 
- * The singleton pattern is used to avoid conflicts within multi thread
- * szenarios.
+ * workitems or collections of workitems. A search term can be escaped by
+ * calling the method <code>escpeSearchTerm</code>. This method prepends a
+ * <code>\</code> for those characters that QueryParser expects to be escaped.
  * 
  * @see http://stackoverflow.com/questions/34880347/why-did-lucene-indexwriter-
  *      did-not-update-the-index-when-called-from-a-web-modul
- * @version 1.0
+ * @version 2.0
  * @author rsoika
  */
 @DeclareRoles({ "org.imixs.ACCESSLEVEL.NOACCESS", "org.imixs.ACCESSLEVEL.READERACCESS",
@@ -249,9 +244,7 @@ public class LuceneSearchService {
 	Directory createIndexDirectory(Properties prop) throws IOException {
 
 		logger.fine("lucene createIndexDirectory...");
-		/**
-		 * Read configuration
-		 */
+		// read configuration
 		String sLuceneLockFactory = prop.getProperty("lucence.lockFactory");
 		String sIndexDir = prop.getProperty("lucence.indexDir");
 
@@ -324,18 +317,17 @@ public class LuceneSearchService {
 	}
 
 	/**
-	 * This helper method escapes wildcard tokens found in a lucene search term. The
-	 * method can be used by clients to prepare a search phrase.
+	 * This helper method escapes wildcard tokens found in a lucene search term.
+	 * The method can be used by clients to prepare a search phrase.
 	 * 
 	 * @param searchTerm
 	 * @return
 	 */
 	public static String escapeSearchTerm(String searchTerm) {
-
 		if (searchTerm == null || searchTerm.isEmpty()) {
 			return searchTerm;
 		}
-		
+
 		return QueryParser.escape(searchTerm);
 	}
 

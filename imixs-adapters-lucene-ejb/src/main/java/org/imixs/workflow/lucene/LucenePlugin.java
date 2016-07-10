@@ -47,8 +47,6 @@ import org.imixs.workflow.plugins.AbstractPlugin;
  * 
  * @see LuceneUpdateService 
  * @author rsoika
- * @version 4.5.1 (Lucene)
- * 
  */
 public class LucenePlugin extends AbstractPlugin {
 	public static String LUCENE_UPDATE_SERVICE_NOT_FOUND = "LUCENE_UPDATE_SERVICE_NOT_FOUND";
@@ -92,8 +90,6 @@ public class LucenePlugin extends AbstractPlugin {
 	public int run(ItemCollection documentContext, ItemCollection activity) throws PluginException {
 
 		logger.fine("LucenePlugin: updating '" + documentContext.getUniqueID() + "'");
-		// logger.info("Lucene
-		// ImplementationVersion="+LucenePackage.get().getImplementationVersion());
 		// compute next $processid to be added correctly into the search index
 		int nextProcessID = activity.getItemValueInteger("numnextprocessid");
 		int currentProcessID = documentContext.getItemValueInteger("$processid");

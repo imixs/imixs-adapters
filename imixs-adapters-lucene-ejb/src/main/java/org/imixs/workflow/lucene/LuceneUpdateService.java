@@ -64,12 +64,11 @@ import org.imixs.workflow.jee.ejb.EntityService;
 import org.imixs.workflow.jee.util.PropertyService;
 
 /**
- * The LuceneUpdateService is a singleton EJB providing a service to update the
- * lucene index.
- * 
- * With the method addWorkitem() a ItemCollection can be added to a lucene
- * search index. The service init method reads the property file
- * 'imixs.properties' from the current classpath to determine the configuration.
+ * The LuceneUpdateService provides methods to write Imixs Workitems into a
+ * Lucene search index. With the method <code>addWorkitem()</code> a
+ * ItemCollection can be added to a lucene search index. The service init method
+ * reads the property file 'imixs.properties' from the current classpath to
+ * determine the configuration.
  * 
  * <ul>
  * <li>The property "IndexDir" defines the location of the lucene index
@@ -77,16 +76,17 @@ import org.imixs.workflow.jee.util.PropertyService;
  * searchable after a workitem was updated
  * <li>The property "IndexFieldList" lists all fields which should be indexed as
  * keywords by the lucene search engine
+ * </ul>
  * 
- * If the service is used also by the LucenPlugin
+ * The singleton pattern is used to avoid conflicts within multi-thread
+ * scenarios. The service is used by the LucenPlugin to update the lucene index
+ * during a workflow processing step.
  * 
- * The singleton pattern is used to avoid conflicts within multi thread
- * szenarios.
  * 
  * @see http://stackoverflow.com/questions/34880347/why-did-lucene-indexwriter-
  *      did-not-update-the-index-when-called-from-a-web-modul
  * @see LucenePlugin
- * @version 1.0
+ * @version 1.2
  * @author rsoika
  */
 @Singleton
@@ -116,14 +116,8 @@ public class LuceneUpdateService {
 	@PostConstruct
 	void init() {
 
-		// try loading imixs-search properties
+		// read configuration
 		properties = propertyService.getProperties();
-
-		/**
-		 * Read configuration
-		 */
-		// String sLuceneVersion = prop.getProperty("Version", "LUCENE_45");
-
 		indexDirectoryPath = properties.getProperty("lucence.indexDir");
 		luceneLockFactory = properties.getProperty("lucence.lockFactory");
 
@@ -176,21 +170,16 @@ public class LuceneUpdateService {
 	 */
 	public boolean updateWorkitem(ItemCollection documentContext) throws PluginException {
 		List<ItemCollection> workitems = new ArrayList<ItemCollection>();
-
 		workitems.add(documentContext);
-
 		updateWorklist(workitems);
-
 		return true;
 	}
 
 	/**
-	 * This method updates the search index for a collection of workitems.
-	 * 
-	 * For each workitem the method test if it did match the conditions to be
-	 * added into the search index. If the workitem did not match the conditions
-	 * the workitem will be removed from the index.
-	 * 
+	 * This method updates the search index for a collection of workitems. For
+	 * each workitem the method test if it did match the conditions to be added
+	 * into the search index. If the workitem did not match the conditions the
+	 * workitem will be removed from the index.
 	 * 
 	 * @param worklist
 	 *            of ItemCollections to be indexed
@@ -203,9 +192,7 @@ public class LuceneUpdateService {
 		long ltime = System.currentTimeMillis();
 		try {
 			awriter = createIndexWriter();
-
 			// add workitem to search index....
-
 			for (ItemCollection workitem : worklist) {
 				// create term
 				Term term = new Term("$uniqueid", workitem.getItemValueString("$uniqueid"));
@@ -221,14 +208,11 @@ public class LuceneUpdateService {
 				}
 			}
 		} catch (IOException luceneEx) {
-			// close writer!
 			logger.warning("lucene error: " + luceneEx.getMessage());
-
 			throw new PluginException(LucenePlugin.class.getSimpleName(), INVALID_INDEX,
 					"Unable to update lucene search index", luceneEx);
-
 		} finally {
-
+			// close writer!
 			if (awriter != null) {
 				logger.fine("lucene close writer");
 				try {
@@ -240,7 +224,6 @@ public class LuceneUpdateService {
 					throw new PluginException(LucenePlugin.class.getSimpleName(), INVALID_INDEX,
 							"Unable to update lucene search index", e);
 				}
-
 			}
 		}
 
@@ -287,10 +270,8 @@ public class LuceneUpdateService {
 	 * @return
 	 */
 	public boolean matchConditions(ItemCollection aworktiem) {
-
 		String typePattern = properties.getProperty("lucence.matchingType");
 		String processIDPattern = properties.getProperty("lucence.matchingProcessID");
-
 		String type = aworktiem.getItemValueString("Type");
 		String sPid = aworktiem.getItemValueInteger("$Processid") + "";
 
@@ -303,7 +284,6 @@ public class LuceneUpdateService {
 		// test $processid pattern
 		if (processIDPattern != null && !"".equals(processIDPattern) && !sPid.matches(processIDPattern)) {
 			logger.fine("Lucene $processid '" + sPid + "' did not match pattern '" + processIDPattern + "'");
-
 			return false;
 		}
 		return true;
@@ -322,15 +302,11 @@ public class LuceneUpdateService {
 	 * @throws Exception
 	 */
 	IndexWriter createIndexWriter() throws IOException {
-
-		/**
-		 * Now create a IndexWriter Instance
-		 */
+		// create a IndexWriter Instance
 		Directory indexDir = createIndexDirectory();
 
-		// Analyzer analyzer = new StandardAnalyzer();
-		// IndexWriterConfig indexWriterConfig = new
-		// IndexWriterConfig(Version.LATEST, new StandardAnalyzer());
+		// we switched form StandardAnalyzer() to classicAnalyser
+		// see issue #25
 		IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LATEST, new ClassicAnalyzer());
 
 		// set the WriteLockTimeout to wait for a write lock (in milliseconds)
@@ -403,8 +379,7 @@ public class LuceneUpdateService {
 		String sValue = null;
 		Document doc = new Document();
 		// combine all search fields from the search field list into one field
-		// ('content')
-		// for the lucene document
+		// ('content') for the lucene document
 		String sContent = "";
 		for (String aFieldname : searchFieldList) {
 			sValue = "";
