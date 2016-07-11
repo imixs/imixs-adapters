@@ -44,6 +44,7 @@ import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.ClassicAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
@@ -94,12 +95,14 @@ public class LuceneUpdateService {
 
 	public static final String UNDEFINED_ERROR = "UNDEFINED_ERROR";
 	public static final String INVALID_INDEX = "INVALID_INDEX";
+	protected static final String DEFAULT_ANALYSER = "org.apache.lucene.analysis.standard.ClassicAnalyzer";
 
 	private List<String> searchFieldList = null;
 	private List<String> indexFieldListAnalyse = null;
 	private List<String> indexFieldListNoAnalyse = null;
 	private String indexDirectoryPath = null;
 	private String luceneLockFactory = null;
+	private String analyserClass = null;
 	private Properties properties = null;
 
 	@EJB
@@ -120,6 +123,9 @@ public class LuceneUpdateService {
 		properties = propertyService.getProperties();
 		indexDirectoryPath = properties.getProperty("lucence.indexDir");
 		luceneLockFactory = properties.getProperty("lucence.lockFactory");
+		// get Analyzer Class -
+		// default=org.apache.lucene.analysis.standard.ClassicAnalyzer
+		analyserClass = properties.getProperty("lucence.analyzerClass",DEFAULT_ANALYSER);
 
 		String sFulltextFieldList = properties.getProperty("lucence.fulltextFieldList");
 		String sIndexFieldListAnalyse = properties.getProperty("lucence.indexFieldListAnalyze");
@@ -305,10 +311,20 @@ public class LuceneUpdateService {
 		// create a IndexWriter Instance
 		Directory indexDir = createIndexDirectory();
 
-		// we switched form StandardAnalyzer() to classicAnalyser
-		// see issue #25
-		IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LATEST, new ClassicAnalyzer());
+		//IndexWriterConfig indexWriterConfig = new IndexWriterConfig(Version.LATEST, new ClassicAnalyzer());
+		// we build the analyzer form the configuration - default =
+		// org.apache.lucene.analysis.standard.ClassicAnalyzer
 
+		IndexWriterConfig indexWriterConfig;
+		try {
+			indexWriterConfig = new IndexWriterConfig(Version.LATEST,
+					(Analyzer) Class.forName(analyserClass).newInstance());
+			logger.fine("Analyzer Class: " + analyserClass);
+		} catch (Exception e) {
+			logger.warning("Unable to instanciate Analyzer Class '"+analyserClass+"' - verify imixs.properties");
+			logger.warning("Create default analyzer: " + DEFAULT_ANALYSER);
+			indexWriterConfig = new IndexWriterConfig(Version.LATEST,new ClassicAnalyzer());
+		}
 		// set the WriteLockTimeout to wait for a write lock (in milliseconds)
 		// for this instance. 10 seconds!
 		indexWriterConfig.setWriteLockTimeout(10000);
@@ -521,7 +537,7 @@ public class LuceneUpdateService {
 				// Field.Store.NO,Field.Index.ANALYZED));
 				doc.add(new TextField(aFieldname, sValue, Store.NO));
 			} else {
-				// do not nalyse content of index fields!
+				// do not analyse content of index fields!
 				// doc.add(new Field(aFieldname, sValue,
 				// Field.Store.NO,Field.Index.NOT_ANALYZED));
 				doc.add(new StringField(aFieldname, sValue, Store.NO));

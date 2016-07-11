@@ -42,7 +42,7 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.standard.ClassicAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -303,8 +303,17 @@ public class LuceneSearchService {
 	 * @return
 	 */
 	QueryParser createQueryParser(Properties prop) {
-		// String sLuceneVersion = prop.getProperty("Version", "LUCENE_45");
-		Analyzer analyzer = new KeywordAnalyzer();
+		Analyzer analyzer = null;
+		String analyserClass = prop.getProperty("lucence.analyzerClass", LuceneUpdateService.DEFAULT_ANALYSER);
+		try {
+			analyzer = (Analyzer) Class.forName(analyserClass).newInstance();
+			logger.fine("Analyzer Class: " + analyserClass);
+		} catch (Exception e) {
+			logger.warning("Unable to instanciate Analyzer Class '" + analyserClass + "' - verify imixs.properties");
+			logger.warning("Create default analyzer: " + LuceneUpdateService.DEFAULT_ANALYSER);
+			analyzer = new ClassicAnalyzer();
+		}
+
 		QueryParser parser = new QueryParser("content", analyzer);
 
 		// check the default operator
