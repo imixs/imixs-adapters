@@ -307,7 +307,7 @@ public class LuceneSearchService {
 		String analyserClass = prop.getProperty("lucence.analyzerClass", LuceneUpdateService.DEFAULT_ANALYSER);
 		try {
 			analyzer = (Analyzer) Class.forName(analyserClass).newInstance();
-			logger.fine("Analyzer Class: " + analyserClass);
+			logger.fine("lucene Analyzer: " + analyserClass);
 		} catch (Exception e) {
 			logger.warning("Unable to instanciate Analyzer Class '" + analyserClass + "' - verify imixs.properties");
 			logger.warning("Create default analyzer: " + LuceneUpdateService.DEFAULT_ANALYSER);
@@ -319,7 +319,7 @@ public class LuceneSearchService {
 		// check the default operator
 		String defaultOperator = prop.getProperty("lucene.defaultOperator");
 		if (defaultOperator != null && "AND".equals(defaultOperator.toUpperCase())) {
-			logger.fine("DefaultOperator: AND");
+			logger.fine("lucene DefaultOperator: AND");
 			parser.setDefaultOperator(Operator.AND);
 		}
 
