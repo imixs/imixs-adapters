@@ -319,6 +319,7 @@ public class LuceneSearchService {
 		// check the default operator
 		String defaultOperator = prop.getProperty("lucene.defaultOperator");
 		if (defaultOperator != null && "AND".equals(defaultOperator.toUpperCase())) {
+			logger.fine("DefaultOperator: AND");
 			parser.setDefaultOperator(Operator.AND);
 		}
 
@@ -329,6 +330,9 @@ public class LuceneSearchService {
 	 * This helper method escapes wildcard tokens found in a lucene search term.
 	 * The method can be used by clients to prepare a search phrase.
 	 * 
+	 * The method rewrites the lucene <code>QueryParser.escape</code> method and
+	 * did not! escape '*' char.
+	 * 
 	 * @param searchTerm
 	 * @return
 	 */
@@ -337,7 +341,20 @@ public class LuceneSearchService {
 			return searchTerm;
 		}
 
-		return QueryParser.escape(searchTerm);
+		// this is the code from the QueryParser.escape() method without the '*' char!
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < searchTerm.length(); i++) {
+			char c = searchTerm.charAt(i);
+			// These characters are part of the query syntax and must be escaped
+			if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':' || c == '^'
+					|| c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~' || c == '?'
+					|| c == '|' || c == '&' || c == '/') {
+				sb.append('\\');
+			}
+			sb.append(c);
+		}
+		return sb.toString();
+
 	}
 
 }
