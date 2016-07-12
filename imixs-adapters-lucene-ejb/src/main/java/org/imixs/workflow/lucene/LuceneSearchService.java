@@ -316,9 +316,12 @@ public class LuceneSearchService {
 
 		QueryParser parser = new QueryParser("content", analyzer);
 
-		// check the default operator
+		// set default operator to 'AND' if not defined by property setting
 		String defaultOperator = prop.getProperty("lucene.defaultOperator");
-		if (defaultOperator != null && "AND".equals(defaultOperator.toUpperCase())) {
+		if (defaultOperator != null && "OR".equals(defaultOperator.toUpperCase())) {
+			logger.fine("lucene DefaultOperator: OR");
+			parser.setDefaultOperator(Operator.OR);
+		} else {
 			logger.fine("lucene DefaultOperator: AND");
 			parser.setDefaultOperator(Operator.AND);
 		}
