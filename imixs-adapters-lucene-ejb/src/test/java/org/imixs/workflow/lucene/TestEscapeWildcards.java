@@ -28,16 +28,41 @@ public class TestEscapeWildcards {
 	@Test
 	public void testLuceneEscapeSearchPhraseSimple() throws PluginException {
 
-		 String query = "xx/xx";
+		String query = "xx/xx";
 
-		query=LuceneSearchService.escapeSearchTerm(query);
+		query = LuceneSearchService.escapeSearchTerm(query);
 		System.out.println("Result String=" + query);
 
 		Assert.assertEquals("xx\\/xx", query);
 
 	}
-	
 
+	/**
+	 * Test the imixs normalizer using the Lucence ClassicAnalyzer.
+	 * 
+	 * @throws PluginException
+	 */
+	@Test
+	public void testLuceneNormalizeSearchPhrasey() throws PluginException {
 
+		String searchTerm = "Aldi/Sued";
+		searchTerm = LuceneSearchService.normalizeSearchTerm(searchTerm);
+		Assert.assertEquals("aldi sued", searchTerm);
+
+		// test article number
+		searchTerm = "gb/82550/201602";
+		searchTerm = LuceneSearchService.normalizeSearchTerm(searchTerm);
+		Assert.assertEquals("gb\\/82550\\/201602", searchTerm);
+
+		searchTerm = "r555/333";
+		searchTerm = LuceneSearchService.normalizeSearchTerm(searchTerm);
+		Assert.assertEquals("r555\\/333", searchTerm);
+
+		// test combination word and article number
+		searchTerm = "europe/berlin gb/82550/201602"; 
+		searchTerm = LuceneSearchService.normalizeSearchTerm(searchTerm);
+		Assert.assertEquals("(europe berlin) gb\\/82550\\/201602", searchTerm);
+
+	}
 
 }

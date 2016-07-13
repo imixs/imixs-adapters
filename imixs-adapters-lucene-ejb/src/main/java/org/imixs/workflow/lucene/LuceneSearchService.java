@@ -41,14 +41,16 @@ import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 
-import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.standard.ClassicAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser.Operator;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
@@ -173,7 +175,7 @@ public class LuceneSearchService {
 				String sAccessTerm = "($readaccess:ANONYMOUS";
 				for (String aRole : userNameList) {
 					if (!"".equals(aRole))
-						sAccessTerm += " $readaccess:\"" + aRole + "\"";
+						sAccessTerm += " OR $readaccess:\"" + aRole + "\"";
 				}
 				sAccessTerm += ") AND ";
 				sSearchTerm = sAccessTerm + sSearchTerm;
@@ -297,25 +299,17 @@ public class LuceneSearchService {
 	}
 
 	/**
-	 * Returns in instance of a QueyParser based on a KeywordAnalyser
+	 * Returns in instance of a QueyParser based on a KeywordAnalyser. The
+	 * method set the lucene DefaultOperator to 'OR' if not specified otherwise
+	 * in the imixs.properties.
 	 * 
+	 * @see issue #28 - normalizeSearchTerm
 	 * @param prop
 	 * @return
 	 */
 	QueryParser createQueryParser(Properties prop) {
-		Analyzer analyzer = null;
-		String analyserClass = prop.getProperty("lucence.analyzerClass", LuceneUpdateService.DEFAULT_ANALYSER);
-		try {
-			analyzer = (Analyzer) Class.forName(analyserClass).newInstance();
-			logger.fine("lucene Analyzer: " + analyserClass);
-		} catch (Exception e) {
-			logger.warning("Unable to instanciate Analyzer Class '" + analyserClass + "' - verify imixs.properties");
-			logger.warning("Create default analyzer: " + LuceneUpdateService.DEFAULT_ANALYSER);
-			analyzer = new ClassicAnalyzer();
-		}
-
-		QueryParser parser = new QueryParser("content", analyzer);
-
+		// use the keywordAnalyzer for searching a search term.
+		QueryParser parser = new QueryParser("content", new KeywordAnalyzer());
 		// set default operator to 'AND' if not defined by property setting
 		String defaultOperator = prop.getProperty("lucene.defaultOperator");
 		if (defaultOperator != null && "OR".equals(defaultOperator.toUpperCase())) {
@@ -336,28 +330,69 @@ public class LuceneSearchService {
 	 * The method rewrites the lucene <code>QueryParser.escape</code> method and
 	 * did not! escape '*' char.
 	 * 
+	 * Clients should use the method normalizeSearchTerm() instead of escapeSearchTerm() to prepare a user input for a lucene search.
+	 * 
+	 *  
+	 * @see normalizeSearchTerm
 	 * @param searchTerm
-	 * @return
+	 * @param ignoreBracket - if true brackes will not be escaped. 
+	 * @return escaped search term
 	 */
-	public static String escapeSearchTerm(String searchTerm) {
+	public static String escapeSearchTerm(String searchTerm, boolean ignoreBracket) {
 		if (searchTerm == null || searchTerm.isEmpty()) {
 			return searchTerm;
 		}
 
-		// this is the code from the QueryParser.escape() method without the '*' char!
+		// this is the code from the QueryParser.escape() method without the '*'
+		// char!
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < searchTerm.length(); i++) {
 			char c = searchTerm.charAt(i);
-			// These characters are part of the query syntax and must be escaped
-			if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':' || c == '^'
-					|| c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~' || c == '?'
-					|| c == '|' || c == '&' || c == '/') {
+			// These characters are part of the query syntax and must be escaped (ignore brackets!)
+			if (c == '\\' || c == '+' || c == '-' || c == '!' || c == ':' || c == '^'
+					|| c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~' || c == '?' || c == '|'
+					|| c == '&' || c == '/') {
 				sb.append('\\');
 			}
+			
+			// escape bracket?
+			if (!ignoreBracket && ( c == '(' || c == ')' ))  {
+				sb.append('\\');
+			}
+			
 			sb.append(c);
 		}
 		return sb.toString();
 
 	}
+	public static String escapeSearchTerm(String searchTerm) {
+		return escapeSearchTerm(searchTerm,false);
+	}
 
+	/**
+	 * This method normalizes a search term using the Lucene ClassicTokenzier.
+	 * The method can be used by clients to prepare a search phrase.
+	 * 
+	 * The method also escapes the result search term.
+	 * 
+	 * e.g. 'europe/berlin' will be normalized to 'europe berlin'
+	 * e.g. 'r555/333' will be unmodified 'r555/333' 
+	 * 
+	 * @param searchTerm
+	 * @return normalzed search term
+	 */
+	public static String normalizeSearchTerm(String searchTerm) {
+		ClassicAnalyzer analyzer = new ClassicAnalyzer();
+
+		QueryParser parser = new QueryParser("content", analyzer);
+		try {
+			Query result = parser.parse(escapeSearchTerm(searchTerm,false));
+			searchTerm = result.toString("content");
+		} catch (ParseException e) {
+			logger.warning("Unable to normalze serchTerm '" + searchTerm + "'  -> " + e.getMessage());
+		}
+
+		return escapeSearchTerm(searchTerm,true);
+
+	}
 }
