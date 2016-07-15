@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.imixs.workflow</groupId>
 	<artifactId>imixs-adapters</artifactId>
-	<version>1.4.4-SNAPSHOT</version>
+	<version>1.4.4</version>
 	<packaging>pom</packaging>
 	<modules>
 		<module>imixs-adapters-magento-ejb</module>
