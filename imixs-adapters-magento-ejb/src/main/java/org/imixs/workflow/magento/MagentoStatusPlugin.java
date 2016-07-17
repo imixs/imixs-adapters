@@ -76,8 +76,7 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 
 	private MagentoService magentoService = null;
 
-	private static Logger logger = Logger.getLogger(MagentoStatusPlugin.class
-			.getName());
+	private static Logger logger = Logger.getLogger(MagentoStatusPlugin.class.getName());
 
 	/**
 	 * 
@@ -92,9 +91,8 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 			String jndiName = "ejb/MagentoService";
 			magentoService = (MagentoService) ctx.lookup(jndiName);
 		} catch (NamingException e) {
-			throw new PluginException(
-					MagentoStatusPlugin.class.getSimpleName(),
-					MAGENTOSERVICE_NOT_BOUND, "MagentoService not bound", e);
+			throw new PluginException(MagentoStatusPlugin.class.getSimpleName(), MAGENTOSERVICE_NOT_BOUND,
+					"MagentoService not bound", e);
 		}
 
 	}
@@ -105,37 +103,29 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 	 * <code>
 	     <itemValue name="txtMagentoStatus">pending</itemValue>
 		 <itemValue name="txtMagentoComment">some comment</itemValue>
-       </code>
+	   </code>
 	 */
 	@Override
-	public int run(ItemCollection workitem, ItemCollection documentActivity)
-			throws PluginException {
+	public int run(ItemCollection workitem, ItemCollection documentActivity) throws PluginException {
 
 		// evaluate activity....
-		String sResult = documentActivity
-				.getItemValueString("txtActivityResult");
-		ItemCollection evalItemCollection = new ItemCollection();
-		ResultPlugin.evaluate(sResult, evalItemCollection);
-		String sMagentoorderIncrementId = workitem
-				.getItemValueString("txtMagentoOrderID");
-		String sNewMagentoStatus = evalItemCollection
-				.getItemValueString(MAGENTO_STATUS_PROPERTY);
-		String sNewMagentoComment = evalItemCollection
-				.getItemValueString(MAGENTO_COMMENT_PROPERTY);
+		ItemCollection evalItemCollection = ResultPlugin.evaluateWorkflowResult(documentActivity, workitem);
 
-		boolean notify = evalItemCollection
-				.getItemValueBoolean(MAGENTO_NOTIFY_PROPERTY);
+		if (evalItemCollection != null) {
+			String sMagentoorderIncrementId = workitem.getItemValueString("txtMagentoOrderID");
+			String sNewMagentoStatus = evalItemCollection.getItemValueString(MAGENTO_STATUS_PROPERTY);
+			String sNewMagentoComment = evalItemCollection.getItemValueString(MAGENTO_COMMENT_PROPERTY);
+			boolean notify = evalItemCollection.getItemValueBoolean(MAGENTO_NOTIFY_PROPERTY);
 
-		// try to send the new status
-		// if it breaks we throw a plugin exception
-		if (!sMagentoorderIncrementId.isEmpty() && !sNewMagentoStatus.isEmpty()) {
-			logger.fine("[MagentoStatusPlugin] add new comment: "
-					+ sMagentoorderIncrementId + "=" + sNewMagentoStatus + " ("
-					+ sNewMagentoComment + ")");
-			MagentoClient magentoClient = magentoService.getSOAPClient(workitem
-					.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID));
-			magentoClient.addOrderComment(sMagentoorderIncrementId,
-					sNewMagentoStatus, sNewMagentoComment, notify);
+			// try to send the new status
+			// if it breaks we throw a plugin exception
+			if (!sMagentoorderIncrementId.isEmpty() && !sNewMagentoStatus.isEmpty()) {
+				logger.fine("[MagentoStatusPlugin] add new comment: " + sMagentoorderIncrementId + "="
+						+ sNewMagentoStatus + " (" + sNewMagentoComment + ")");
+				MagentoClient magentoClient = magentoService
+						.getSOAPClient(workitem.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID));
+				magentoClient.addOrderComment(sMagentoorderIncrementId, sNewMagentoStatus, sNewMagentoComment, notify);
+			}
 		}
 		return Plugin.PLUGIN_OK;
 	}
