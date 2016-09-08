@@ -11,9 +11,8 @@ import javax.naming.NamingException;
 import junit.framework.Assert;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.engine.PropertyService;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.jee.ejb.EntityService;
-import org.imixs.workflow.jee.util.PropertyService;
 import org.imixs.workflow.magento.MagentoClient;
 import org.imixs.workflow.magento.MagentoClientFactory;
 import org.imixs.workflow.magento.MagentoException;
@@ -49,7 +48,6 @@ import org.junit.Test;
  */
 public class TestMagentoSoapClient {
 	MagentoClient magentoClient = null;
-	EntityService entityService = null;
 	PropertyService propertyService = null;
 	Properties properties = null;
 

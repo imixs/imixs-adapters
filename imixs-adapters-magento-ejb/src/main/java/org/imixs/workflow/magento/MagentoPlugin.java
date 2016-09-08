@@ -38,8 +38,8 @@ import javax.naming.NamingException;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Plugin;
 import org.imixs.workflow.WorkflowContext;
+import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.plugins.jee.AbstractPlugin;
 
 /**
  * This plugin provides methods to interact with a magento instance through the

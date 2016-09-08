@@ -41,7 +41,7 @@ import javax.ejb.EJB;
 import javax.ejb.Singleton;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.jee.util.PropertyService;
+import org.imixs.workflow.engine.PropertyService;
 
 /**
  * The MagentoCache is a sigelton EJB providing an application wide cache

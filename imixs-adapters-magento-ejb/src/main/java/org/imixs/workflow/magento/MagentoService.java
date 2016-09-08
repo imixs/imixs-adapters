@@ -28,6 +28,7 @@
 package org.imixs.workflow.magento;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,9 +44,10 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.ItemCollectionComparator;
+import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.jee.util.PropertyService;
+import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.magento.html.MagentoHTMLClient;
 import org.imixs.workflow.magento.rest.MagentoRestClient;
 import org.imixs.workflow.magento.soap.MagentoSOAPClient;
@@ -61,7 +63,6 @@ import org.imixs.workflow.magento.soap.MagentoSOAPClient;
  * 
  * @author rsoika
  */
-
 @DeclareRoles({ "org.imixs.ACCESSLEVEL.MANAGERACCESS" })
 @Stateless
 @RunAs("org.imixs.ACCESSLEVEL.MANAGERACCESS")
@@ -71,9 +72,6 @@ public class MagentoService {
 	public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
 
 	final static public String TYPE = "magento";
-
-	@EJB
-	PropertyService propertyService = null;
 
 	@EJB
 	WorkflowService workflowService = null;
@@ -88,8 +86,7 @@ public class MagentoService {
 	private Map<String, MagentoSOAPClient> soapClients = null;
 	private Map<String, MagentoRestClient> restClients = null;
 	private Map<String, MagentoHTMLClient> htmlClients = null;
-	private static Logger logger = Logger.getLogger(MagentoService.class
-			.getName());
+	private static Logger logger = Logger.getLogger(MagentoService.class.getName());
 
 	/**
 	 * initial setup the magento client implementation
@@ -112,16 +109,14 @@ public class MagentoService {
 
 		// disconnect Soap clients
 		if (soapClients != null) {
-			for (Map.Entry<String, MagentoSOAPClient> entry : soapClients
-					.entrySet()) {
+			for (Map.Entry<String, MagentoSOAPClient> entry : soapClients.entrySet()) {
 				entry.getValue().disconnect();
 			}
 		}
 
 		// disconnect Rest clients
 		if (restClients != null) {
-			for (Map.Entry<String, MagentoRestClient> entry : restClients
-					.entrySet()) {
+			for (Map.Entry<String, MagentoRestClient> entry : restClients.entrySet()) {
 				entry.getValue().disconnect();
 			}
 		}
@@ -140,13 +135,18 @@ public class MagentoService {
 	 */
 	public List<ItemCollection> findAllConfigurations() {
 		// load all configurations...
-		String sQuery = "SELECT config FROM Entity AS config "
-				+ " JOIN config.textItems t1" + " WHERE config.type = '"
-				+ MagentoService.TYPE + "'" + " AND t1.itemName='txtname'"
-				+ " ORDER BY t1.itemValue";
-		List<ItemCollection> col = workflowService.getEntityService()
-				.findAllEntities(sQuery, 0, -1);
-		return col;
+		// String sQuery = "SELECT config FROM Entity AS config "
+		// + " JOIN config.textItems t1" + " WHERE config.type = '"
+		// + MagentoService.TYPE + "'" + " AND t1.itemName='txtname'"
+		// + " ORDER BY t1.itemValue";
+
+		List<ItemCollection> col = workflowService.getDocumentService().getDocumentsByType(MagentoService.TYPE);
+		if (col != null) {
+			// sort by name
+			Collections.sort(col, new ItemCollectionComparator("txtname", true));
+			return col;
+		}
+		return null;
 	}
 
 	/**
@@ -168,8 +168,7 @@ public class MagentoService {
 				client.connect(loadConfiguration(configID));
 				soapClients.put(configID, client);
 			} catch (MagentoException e) {
-				logger.severe("[MagentoService] unable to connect SOAP Client ! "
-						+ e.getMessage());
+				logger.severe("[MagentoService] unable to connect SOAP Client ! " + e.getMessage());
 				e.printStackTrace();
 				client = null;
 			}
@@ -217,23 +216,16 @@ public class MagentoService {
 			ItemCollection configuration = loadConfiguration(configID);
 			// read data from config entity....
 			if (configuration != null) {
-				String magentoBasisURL = configuration
-						.getItemValueString("txtMagentoHTMLUriBasis");
+				String magentoBasisURL = configuration.getItemValueString("txtMagentoHTMLUriBasis");
 
-				String magentoAccessKey = configuration
-						.getItemValueString("txtMagentoHTMLAccessKey");
-				String magentoAccessSecret = configuration
-						.getItemValueString("txtMagentoHTMLAccessSecret");
+				String magentoAccessKey = configuration.getItemValueString("txtMagentoHTMLAccessKey");
+				String magentoAccessSecret = configuration.getItemValueString("txtMagentoHTMLAccessSecret");
 
-				logger.fine("[MagentoService] magentoHTMLBasisURL='"
-						+ magentoBasisURL + "'");
-				logger.fine("[MagentoService] magentoHTMLAccessKey='"
-						+ magentoAccessKey + "'");
-				logger.fine("[MagentoService] magentoBasisURL='"
-						+ magentoBasisURL + "'");
+				logger.fine("[MagentoService] magentoHTMLBasisURL='" + magentoBasisURL + "'");
+				logger.fine("[MagentoService] magentoHTMLAccessKey='" + magentoAccessKey + "'");
+				logger.fine("[MagentoService] magentoBasisURL='" + magentoBasisURL + "'");
 
-				client = new MagentoHTMLClient(magentoAccessKey,
-						magentoAccessSecret, magentoBasisURL);
+				client = new MagentoHTMLClient(magentoAccessKey, magentoAccessSecret, magentoBasisURL);
 				htmlClients.put(configID, client);
 			}
 
@@ -254,30 +246,29 @@ public class MagentoService {
 	public ItemCollection loadConfiguration(String id) {
 
 		if (id == null || id.isEmpty()) {
-			logger.warning("[MagentoService] invalid shop configuration id="
-					+ id);
+			logger.warning("[MagentoService] invalid shop configuration id=" + id);
 		}
 		ItemCollection configItemCollection = configurations.get(id);
 		if (configItemCollection == null) {
 			// try to load....
-			String sQuery = "SELECT config FROM Entity AS config "
-					+ " JOIN config.textItems AS t2" + " WHERE config.type = '"
-					+ TYPE + "'" + " AND t2.itemName = 'txtname'"
-					+ " AND t2.itemValue = '" + id + "'"
-					+ " ORDER BY t2.itemValue asc";
-			Collection<ItemCollection> col = workflowService.getEntityService()
-					.findAllEntities(sQuery, 0, 1);
+			// String sQuery = "SELECT config FROM Entity AS config "
+			// + " JOIN config.textItems AS t2" + " WHERE config.type = '"
+			// + TYPE + "'" + " AND t2.itemName = 'txtname'"
+			// + " AND t2.itemValue = '" + id + "'"
+			// + " ORDER BY t2.itemValue asc";
 
-			if (col.size() > 0) {
+			List<ItemCollection> col = workflowService.getDocumentService().getDocumentsByType(TYPE);
+
+			if (col != null && col.size() > 0) {
+				// sort by name
+				Collections.sort(col, new ItemCollectionComparator("txtname", true));
 				configItemCollection = col.iterator().next();
-				logger.fine("[MagentoService] shop configuration id=" + id
-						+ " loaded");
+				logger.fine("[MagentoService] shop configuration id=" + id + " loaded");
 				// put new configuration into cache
 				configurations.put(id, configItemCollection);
 
 			} else {
-				logger.warning("[MagentoService] shop configuration id=" + id
-						+ " not defined!");
+				logger.warning("[MagentoService] shop configuration id=" + id + " not defined!");
 
 			}
 
@@ -300,12 +291,20 @@ public class MagentoService {
 	public ItemCollection findWorkitemByOrder(ItemCollection order) {
 
 		String sKey = getOrderID(order);
-		String sQuery = "SELECT wi FROM Entity as wi";
-		sQuery += " JOIN wi.textItems as t ";
-		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
-		sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
-		Collection<ItemCollection> col = workflowService.getEntityService()
-				.findAllEntities(sQuery, 0, 1);
+		// String sQuery = "SELECT wi FROM Entity as wi";
+		// sQuery += " JOIN wi.textItems as t ";
+		// sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
+		// sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
+
+		String searchTerm = "( (type:\"workitem\" OR type:\"workitemarchive\") AND txtname:\"" + sKey + "\")";
+
+		Collection<ItemCollection> col;
+		try {
+			col = workflowService.getDocumentService().find(searchTerm, 1, 0);
+		} catch (QueryException e) {
+			logger.warning(e.getMessage());
+			return null;
+		}
 		if (col.size() > 0) {
 			return col.iterator().next();
 		}
@@ -326,24 +325,20 @@ public class MagentoService {
 	 * @return order or null if no order exits
 	 * @throws MagentoException
 	 */
-	public ItemCollection findOrderByWorkitem(ItemCollection workitem)
-			throws MagentoException {
+	public ItemCollection findOrderByWorkitem(ItemCollection workitem) throws MagentoException {
 
 		String sKey = workitem.getItemValueString("txtName");
 		if (sKey.isEmpty() || !sKey.startsWith("magento:order:")) {
-			logger.warning("[MagentoService] findOrderByWorkitem - wrong format of order id txtname='"
-					+ sKey + "' !");
+			logger.warning("[MagentoService] findOrderByWorkitem - wrong format of order id txtname='" + sKey + "' !");
 			return null;
 		}
 
 		sKey = sKey.substring(14);
 
 		// test configuration....
-		String sConfigurationID = workitem
-				.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID);
+		String sConfigurationID = workitem.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID);
 
-		ItemCollection order = this.getRestClient(sConfigurationID)
-				.getOrderById(sKey);
+		ItemCollection order = this.getRestClient(sConfigurationID).getOrderById(sKey);
 		return order;
 
 	}
@@ -352,11 +347,10 @@ public class MagentoService {
 	 * this method creates the Magento oder ID to be stored in the property
 	 * 'txtName'. This property value need to be unique. The key is computed by
 	 * the shopconfig id and the entity_id of the sales order
-	 * **/
+	 **/
 	public String getOrderID(ItemCollection order) {
-		String sKey = "magento:order:"
-				+ order.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID)
-				+ ":" + order.getItemValueString("entity_id");
+		String sKey = "magento:order:" + order.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID) + ":"
+				+ order.getItemValueString("entity_id");
 		return sKey;
 	}
 
@@ -371,16 +365,14 @@ public class MagentoService {
 	 * @throws MagentoException
 	 * @throws PluginException
 	 */
-	public ItemCollection getCustomerById(String id, String configID)
-			throws MagentoException {
+	public ItemCollection getCustomerById(String id, String configID) throws MagentoException {
 		if (id == null || id.isEmpty())
 			return null;
 
 		ItemCollection customer = magentoCache.getCustomer(id);
 		if (customer == null) {
 
-			customer = this.getRestClient(configID).getCustomerById(
-					new Integer(id));
+			customer = this.getRestClient(configID).getCustomerById(new Integer(id));
 			// cache product;
 			if (customer != null) {
 				magentoCache.cacheCustomer(id, customer);
@@ -403,8 +395,7 @@ public class MagentoService {
 	 * @throws MagentoException
 	 * @throws PluginException
 	 */
-	public ItemCollection getProductBySKU(String sku, String configID)
-			throws MagentoException {
+	public ItemCollection getProductBySKU(String sku, String configID) throws MagentoException {
 		if (sku == null || sku.isEmpty())
 			return null;
 
@@ -449,15 +440,13 @@ public class MagentoService {
 	 *            - holds the properties to be added into the workItem
 	 */
 	@SuppressWarnings("unchecked")
-	public ItemCollection addMagentoEntity(ItemCollection workitem,
-			ItemCollection magentoEntity) {
+	public ItemCollection addMagentoEntity(ItemCollection workitem, ItemCollection magentoEntity) {
 
 		// add magento properties
 		Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
 		while (keys.hasNext()) {
 			String sName = keys.next();
-			workitem.replaceItemValue("m_" + sName,
-					magentoEntity.getItemValue(sName));
+			workitem.replaceItemValue("m_" + sName, magentoEntity.getItemValue(sName));
 		}
 
 		// now we need to verify if the workitem has more magento properties as
@@ -492,8 +481,7 @@ public class MagentoService {
 	 *         magentoEntity
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public boolean isWorkitemEqualsToMagentoEntity(ItemCollection workitem,
-			ItemCollection magentoEntity) {
+	public boolean isWorkitemEqualsToMagentoEntity(ItemCollection workitem, ItemCollection magentoEntity) {
 
 		if (workitem == null && magentoEntity == null)
 			return true;
@@ -503,8 +491,7 @@ public class MagentoService {
 
 		try {
 			// first check the data of all magento proeprties.....
-			Iterator<String> keys = magentoEntity.getAllItems().keySet()
-					.iterator();
+			Iterator<String> keys = magentoEntity.getAllItems().keySet().iterator();
 
 			while (keys.hasNext()) {
 				String sName = keys.next();
@@ -513,12 +500,11 @@ public class MagentoService {
 				List<?> valueWorkitem = workitem.getItemValue("m_" + sName);
 
 				// if value is embedded Map we need to compare the details
-				if (valueMagento.size() > 0
-						&& valueMagento.get(0) instanceof Map) {
-					if (valueWorkitem.size() == 0
-							|| !(valueWorkitem.get(0) instanceof Map)) {
+				if (valueMagento.size() > 0 && valueMagento.get(0) instanceof Map) {
+					if (valueWorkitem.size() == 0 || !(valueWorkitem.get(0) instanceof Map)) {
 
-						logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - embedded Map not found in existing workitem!");
+						logger.fine(
+								"[MagentoService] isWorkitemEqualsToMagentoEntity not equal - embedded Map not found in existing workitem!");
 						return false;
 					}
 					for (int j = 0; j < valueMagento.size(); j++) {
@@ -528,14 +514,13 @@ public class MagentoService {
 						// interate over the values from the embedded magento
 						// map
 						// and compare it to the workitem map values...
-						Iterator<String> keysEmbedded = embeddedMagentoMap
-								.keySet().iterator();
+						Iterator<String> keysEmbedded = embeddedMagentoMap.keySet().iterator();
 						while (keysEmbedded.hasNext()) {
 							String sEmbeddedName = keysEmbedded.next();
-							if (!embeddedMagentoMap.get(sEmbeddedName).equals(
-									embeddedWorkitemMap.get(sEmbeddedName))) {
-								logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - embedded Map Field='"
-										+ sName + ">" + sEmbeddedName);
+							if (!embeddedMagentoMap.get(sEmbeddedName).equals(embeddedWorkitemMap.get(sEmbeddedName))) {
+								logger.fine(
+										"[MagentoService] isWorkitemEqualsToMagentoEntity not equal - embedded Map Field='"
+												+ sName + ">" + sEmbeddedName);
 
 								return false;
 							}
@@ -545,12 +530,8 @@ public class MagentoService {
 				} else {
 					// direct compare...
 					if (!valueMagento.equals(valueWorkitem)) {
-						logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - Field='"
-								+ sName
-								+ " values: "
-								+ valueMagento
-								+ "!="
-								+ valueWorkitem);
+						logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - Field='" + sName
+								+ " values: " + valueMagento + "!=" + valueWorkitem);
 
 						return false;
 					}
@@ -564,15 +545,15 @@ public class MagentoService {
 				String sName = keys.next();
 				// did magento property exist in workitem?
 				if (!workitem.hasItem("m_" + sName)) {
-					logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - Field='"
-							+ sName + " did not exist in current workitem");
+					logger.fine("[MagentoService] isWorkitemEqualsToMagentoEntity not equal - Field='" + sName
+							+ " did not exist in current workitem");
 
 					return false;
 				}
 			}
 		} catch (Exception e) {
-			logger.warning("[MagentoService] isWorkitemEqualsToMagentoEntity unable to compare workitem: "
-					+ e.getMessage());
+			logger.warning(
+					"[MagentoService] isWorkitemEqualsToMagentoEntity unable to compare workitem: " + e.getMessage());
 			return false;
 		}
 		return true;

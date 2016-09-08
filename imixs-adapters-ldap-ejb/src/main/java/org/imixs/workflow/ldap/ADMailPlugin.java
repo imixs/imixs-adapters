@@ -39,7 +39,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
-import org.imixs.workflow.plugins.jee.MailPlugin;
+import org.imixs.workflow.engine.plugins.MailPlugin;
 
 /**
  * This Plugin extends the standard JEE MailPlugin to lookup smtp mail addresses
