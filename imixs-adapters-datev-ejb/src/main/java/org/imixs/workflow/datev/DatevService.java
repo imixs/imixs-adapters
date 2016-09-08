@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -51,13 +52,14 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.ItemCollectionComparator;
+import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.InvalidAccessException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
+import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.exceptions.WorkflowException;
-import org.imixs.workflow.jee.ejb.WorkflowService;
-import org.imixs.workflow.jee.util.PropertyService;
 
 /**
  * This EJB provides methods to interact with a magento instance through the
@@ -86,9 +88,7 @@ public class DatevService {
 
 	final static public String TYPE = "datev";
 
-	@EJB
-	PropertyService propertyService = null;
-
+	
 	@EJB
 	WorkflowService workflowService = null;
 	private static Logger logger = Logger.getLogger(DatevService.class.getName());
@@ -108,9 +108,14 @@ public class DatevService {
 	 */
 	public List<ItemCollection> findAllConfigurations() {
 		// load all configurations...
-		String sQuery = "SELECT config FROM Entity AS config " + " JOIN config.textItems t1" + " WHERE config.type = '"
-				+ DatevService.TYPE + "'" + " AND t1.itemName='txtname'" + " ORDER BY t1.itemValue";
-		List<ItemCollection> col = workflowService.getEntityService().findAllEntities(sQuery, 0, -1);
+//		String sQuery = "SELECT config FROM Entity AS config " + " JOIN config.textItems t1" + " WHERE config.type = '"
+//				+ DatevService.TYPE + "'" + " AND t1.itemName='txtname'" + " ORDER BY t1.itemValue";
+//		List<ItemCollection> col = workflowService.getEntityService().findAllEntities(sQuery, 0, -1);
+		
+		List<ItemCollection> col = workflowService.getDocumentService().getDocumentsByType(DatevService.TYPE);
+		// sort by name
+		Collections.sort(col, new ItemCollectionComparator("txtname", true));
+		
 		return col;
 	}
 
@@ -130,20 +135,31 @@ public class DatevService {
 		}
 		ItemCollection configItemCollection = null;
 		// try to load....
-		String sQuery = "SELECT config FROM Entity AS config " + " JOIN config.textItems AS t2"
-				+ " WHERE config.type = '" + TYPE + "'" + " AND t2.itemName = 'txtname'" + " AND t2.itemValue = '" + id
-				+ "'" + " ORDER BY t2.itemValue asc";
-		Collection<ItemCollection> col = workflowService.getEntityService().findAllEntities(sQuery, 0, 1);
+		// String sQuery = "SELECT config FROM Entity AS config " + " JOIN
+		// config.textItems AS t2"
+		// + " WHERE config.type = '" + TYPE + "'" + " AND t2.itemName =
+		// 'txtname'" + " AND t2.itemValue = '" + id
+		// + "'" + " ORDER BY t2.itemValue asc";
+		
+		String searchTerm = "( (type:\"" + TYPE+ "\" ) AND txtname:\"" + id + "\")";
 
-		if (col.size() > 0) {
-			configItemCollection = col.iterator().next();
-			logger.fine("datev configuration id=" + id + " loaded");
+		Collection<ItemCollection> col;
+		try {
+			col = workflowService.getDocumentService().find(searchTerm,1, 0);
+			if (col.size() > 0) {
+				configItemCollection = col.iterator().next();
+				logger.fine("datev configuration id=" + id + " loaded");
 
-		} else {
-			logger.warning("datev configuration id=" + id + " not defined!");
+			} else {
+				logger.warning("datev configuration id=" + id + " not defined!");
 
+			}
+
+		} catch (QueryException e) {
+			logger.warning(e.getMessage());
 		}
 
+		
 		return configItemCollection;
 	}
 
@@ -154,14 +170,23 @@ public class DatevService {
 	 */
 	public ItemCollection findWorkitemByName(String sKey) {
 
-		String sQuery = "SELECT wi FROM Entity as wi";
-		sQuery += " JOIN wi.textItems as t ";
-		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
-		sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
-		Collection<ItemCollection> col = workflowService.getEntityService().findAllEntities(sQuery, 0, 1);
-		if (col.size() > 0) {
-			return col.iterator().next();
+//		String sQuery = "SELECT wi FROM Entity as wi";
+//		sQuery += " JOIN wi.textItems as t ";
+//		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
+//		sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
+		
+		String searchTerm = "( (type:\"workitem\" OR type:\"workitemarchive\") AND txtname:\"" + sKey + "\")";
+		
+		Collection<ItemCollection> col;
+		try {
+			col = workflowService.getDocumentService().find(searchTerm, 1, 0);
+			if (col.size() > 0) {
+				return col.iterator().next();
+			}
+		} catch (QueryException e) {
+			logger.warning(e.getMessage());
 		}
+		
 		// no order found
 		return null;
 

@@ -41,7 +41,7 @@ import javax.inject.Named;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.datev.DatevSchedulerService;
 import org.imixs.workflow.datev.DatevService;
-import org.imixs.workflow.jee.ejb.EntityService;
+import org.imixs.workflow.engine.DocumentService;
 
 /**
  * 
@@ -68,7 +68,7 @@ public class DatevController implements Serializable {
 	@EJB
 	DatevService datevService;
 	@EJB
-	EntityService entityService;
+	DocumentService documentService;
 
 	private static Logger logger = Logger.getLogger(DatevController.class.getName());
 
@@ -152,7 +152,7 @@ public class DatevController implements Serializable {
 	 * @throws Exception
 	 */
 	public void loadConfiguration(String uniqueid) {
-		configItemCollection = entityService.load(uniqueid);
+		configItemCollection = documentService.load(uniqueid);
 	}
 
 	/**
@@ -161,7 +161,7 @@ public class DatevController implements Serializable {
 	 * @return
 	 */
 	public void deleteConfiguration(String uniqueid) {
-		configItemCollection = entityService.load(uniqueid);
+		configItemCollection = documentService.load(uniqueid);
 		if (configItemCollection != null) {
 			try {
 				datevSchedulerService.stop(configItemCollection);
@@ -169,7 +169,7 @@ public class DatevController implements Serializable {
 				e.printStackTrace();
 			}
 		}
-		entityService.remove(configItemCollection);
+		documentService.remove(configItemCollection);
 		reset();
 	}
 

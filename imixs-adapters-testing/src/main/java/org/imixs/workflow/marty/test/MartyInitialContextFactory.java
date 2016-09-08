@@ -10,7 +10,6 @@ import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 
-import org.imixs.workflow.jee.util.PropertyService;
 import org.mockito.Mockito;
 
 /**
@@ -30,7 +29,7 @@ public class MartyInitialContextFactory implements InitialContextFactory {
 	public Context getInitialContext(Hashtable<?, ?> arg0)
 			throws NamingException {
 
-		PropertyService propertyService = Mockito.mock(PropertyService.class);
+		//PropertyService propertyService = Mockito.mock(PropertyService.class);
 		Context context = Mockito.mock(Context.class);
 
 		// mok property servcie
@@ -43,11 +42,11 @@ public class MartyInitialContextFactory implements InitialContextFactory {
 			e.printStackTrace();
 		}
 		
-		when(propertyService.getProperties()).thenReturn(properties);
+		//when(propertyService.getProperties()).thenReturn(properties);
 
 		Mockito.when(context.lookup("java:comp/env")).thenReturn(context);
-		Mockito.when(context.lookup("ejb/PropertyService")).thenReturn(
-				propertyService);
+//		Mockito.when(context.lookup("ejb/PropertyService")).thenReturn(
+//				propertyService);
 		return context;
 	}
 

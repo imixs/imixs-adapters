@@ -14,9 +14,8 @@ import javax.naming.NamingException;
 import junit.framework.Assert;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.engine.PropertyService;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.jee.ejb.EntityService;
-import org.imixs.workflow.jee.util.PropertyService;
 import org.imixs.workflow.magento.MagentoClientFactory;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -52,7 +51,6 @@ import org.scribe.model.Token;
 public class TestMagentoRestClient {
 	MagentoApi magentoApi = null;
 	MagentoRestClient magentoClient = null;
-	EntityService entityService = null;
 	PropertyService propertyService = null;
 	Properties properties = null;
 

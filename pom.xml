@@ -7,7 +7,6 @@
 	<modules>
 		<module>imixs-adapters-magento-ejb</module>
 		<module>imixs-adapters-testing</module>
-		<module>imixs-adapters-lucene-ejb</module>
 		<module>imixs-adapters-ldap-ejb</module>
 		<module>imixs-adapters-datev-ejb</module>
 		<module>imixs-adapters-datev-web</module>
@@ -66,9 +65,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>3.9.0</org.imixs.workflow.version>
-		<lucene.version>4.10.4</lucene.version>
-
+		<org.imixs.workflow.version>4.0.0-SNAPSHOT</org.imixs.workflow.version>
 		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
 		<github.global.server>imixs-github-repo</github.global.server>
 	</properties>

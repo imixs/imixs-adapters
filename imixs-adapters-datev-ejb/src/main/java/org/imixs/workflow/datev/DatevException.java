@@ -5,7 +5,7 @@ import org.imixs.workflow.exceptions.PluginException;
 
 public class DatevException extends PluginException{
 
-	
+	 
 	private static final long serialVersionUID = 1L;
 
 	public DatevException(String aErrorContext, String aErrorCode,
