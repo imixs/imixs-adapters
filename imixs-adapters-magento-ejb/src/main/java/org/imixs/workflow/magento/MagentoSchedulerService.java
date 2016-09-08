@@ -47,6 +47,7 @@ import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.AccessDeniedException;
+import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.jee.ejb.EntityService;
@@ -622,17 +623,16 @@ public class MagentoSchedulerService {
 	 * 
 	 * @param orders
 	 *            - list of orders
+	 * @throws ModelException 
 	 */
 	private void processOrderList(List<ItemCollection> orders,
-			String orderModelVersion, int iProcessID, String shopConfigID) {
+			String orderModelVersion, int iProcessID, String shopConfigID) throws ModelException {
 
 		/*
 		 * check if an activity 800 in the current model exits
 		 */
-		ItemCollection activityEntity = workflowService.getModelService()
-				.getActivityEntity(iProcessID,
-						MagentoPlugin.ACTIVITY_MAGENTO_UPDATE,
-						orderModelVersion);
+		ItemCollection activityEntity = workflowService.getModelManager().getModel(orderModelVersion).getEvent(iProcessID,
+						MagentoPlugin.ACTIVITY_MAGENTO_UPDATE);
 		if (activityEntity == null) {
 			logger.warning("[MagentoScheduler] - Activity " + iProcessID + "."
 					+ MagentoPlugin.ACTIVITY_MAGENTO_UPDATE + " not defined!");
