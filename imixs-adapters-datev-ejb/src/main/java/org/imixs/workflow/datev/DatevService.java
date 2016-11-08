@@ -33,6 +33,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -83,6 +85,9 @@ public class DatevService {
 	public final static String CONFIG_ERROR = "CONFIG_ERROR";
 	public final static String IO_ERROR = "IO_ERROR";
 	public final static String FILE_NOT_FOUND = "FILE_NOT_FOUND";
+
+	public final static String ISO8601_FORMAT_DATETIME = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+	public final static String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
 
 	final static public String TYPE = "datev";
 
@@ -204,7 +209,7 @@ public class DatevService {
 		int workitemsTotal = 0;
 
 		String sDatevID = configuration.getItemValueString("txtName");
-		String sDatevPrimaryKey= configuration.getItemValueString("_datev_primarykey");
+		String sDatevPrimaryKey = configuration.getItemValueString("_datev_primarykey");
 		filename = configuration.getItemValueString("_datev_path");
 		logger.info("DATEV import id= " + sDatevID + " : " + filename);
 
@@ -270,10 +275,10 @@ public class DatevService {
 					line++;
 					workitemsTotal++;
 					ItemCollection entity = readEntity(datevLine, fields);
-					
+
 					// replace txtName by the DATEV key field
-					entity.replaceItemValue("txtname", entity.getItemValue("_datev_"+sDatevPrimaryKey));
-					
+					entity.replaceItemValue("txtname", entity.getItemValue("_datev_" + sDatevPrimaryKey));
+
 					// test if workitem already exits....
 					ItemCollection oldEntity = findWorkitemByName(entity.getItemValueString("txtName"));
 					if (oldEntity == null) {
@@ -287,8 +292,9 @@ public class DatevService {
 						// test if modified....
 						if (!isEqualEntity(oldEntity, entity)) {
 							logger.fine("update exsting DATV entity: " + oldEntity.getUniqueID());
-							
-							// copy all datev entries from the import into the existing entity
+
+							// copy all datev entries from the import into the
+							// existing entity
 							oldEntity.replaceAllItems(entity.getAllItems());
 							oldEntity.replaceItemValue(WorkflowService.ACTIVITYID, activityID);
 							processSingleWorkitem(oldEntity);
@@ -296,7 +302,7 @@ public class DatevService {
 						}
 					}
 				}
-				
+
 				configuration.replaceItemValue("_datev_lLastImport", modifiedTime);
 				configuration.replaceItemValue("_datev_datLastImport", new Date(modifiedTime));
 			} catch (IOException ioex) {
@@ -395,16 +401,65 @@ public class DatevService {
 	public ItemCollection readEntity(String data, List<String> fieldnames) {
 		ItemCollection result = new ItemCollection();
 		int iCol = 0;
-		String[] valuList = data.split(";",-1);
-		for (String itemValue: valuList) {
+		String[] valuList = data.split(";", -1);
+		for (String itemValue : valuList) {
 			// test if the token has content
-			if (itemValue!=null && !itemValue.isEmpty()) {
+			if (itemValue != null && !itemValue.isEmpty()) {
 				// create a itemvalue with the corresponding fieldname
-				result.replaceItemValue("_datev_" + fieldnames.get(iCol), itemValue);
+
+				// test if value is an ISO date format
+				Date dateValue = parseISODate(itemValue);
+				if (dateValue != null) {
+					result.replaceItemValue("_datev_" + fieldnames.get(iCol), dateValue);
+				} else {
+					result.replaceItemValue("_datev_" + fieldnames.get(iCol), itemValue);
+				}
 			}
 			iCol++;
 		}
 		return result;
+	}
+
+	/**
+	 * This method parses a string value for an ISO Date/Time format. If the
+	 * value is parseable the method returns a Date object. In other case the
+	 * method returns null.
+	 * 
+	 * Supported formats:
+	 * 
+	 * yyyy-MM-dd'T'HH:mm:ss.SSS
+	 * 
+	 * yyyy-MM-dd
+	 * 
+	 * @param itemValue
+	 * @return
+	 */
+	private Date parseISODate(String itemValue) {
+
+		// try to parse datetime
+		try {
+			DateFormat format = new SimpleDateFormat(ISO8601_FORMAT_DATETIME);
+			Date date = format.parse(itemValue);
+			if (date != null) {
+				return date;
+			}
+		} catch (Exception e) {
+			// unable to parse date
+		}
+
+		// try to parse date
+		try {
+			DateFormat format = new SimpleDateFormat(ISO8601_FORMAT_DATE);
+			Date date = format.parse(itemValue);
+			if (date != null) {
+				return date;
+			}
+		} catch (Exception e) {
+			// unable to parse date
+		}
+
+		// string was not parseable
+		return null;
 	}
 
 	/**
