@@ -33,6 +33,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -86,9 +88,11 @@ public class DatevService {
 	public final static String IO_ERROR = "IO_ERROR";
 	public final static String FILE_NOT_FOUND = "FILE_NOT_FOUND";
 
+	public final static String ISO8601_FORMAT_DATETIME = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+	public final static String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
+
 	final static public String TYPE = "datev";
 
-	
 	@EJB
 	WorkflowService workflowService = null;
 	private static Logger logger = Logger.getLogger(DatevService.class.getName());
@@ -108,14 +112,17 @@ public class DatevService {
 	 */
 	public List<ItemCollection> findAllConfigurations() {
 		// load all configurations...
-//		String sQuery = "SELECT config FROM Entity AS config " + " JOIN config.textItems t1" + " WHERE config.type = '"
-//				+ DatevService.TYPE + "'" + " AND t1.itemName='txtname'" + " ORDER BY t1.itemValue";
-//		List<ItemCollection> col = workflowService.getEntityService().findAllEntities(sQuery, 0, -1);
-		
+		// String sQuery = "SELECT config FROM Entity AS config " + " JOIN
+		// config.textItems t1" + " WHERE config.type = '"
+		// + DatevService.TYPE + "'" + " AND t1.itemName='txtname'" + " ORDER BY
+		// t1.itemValue";
+		// List<ItemCollection> col =
+		// workflowService.getEntityService().findAllEntities(sQuery, 0, -1);
+
 		List<ItemCollection> col = workflowService.getDocumentService().getDocumentsByType(DatevService.TYPE);
 		// sort by name
 		Collections.sort(col, new ItemCollectionComparator("txtname", true));
-		
+
 		return col;
 	}
 
@@ -140,12 +147,12 @@ public class DatevService {
 		// + " WHERE config.type = '" + TYPE + "'" + " AND t2.itemName =
 		// 'txtname'" + " AND t2.itemValue = '" + id
 		// + "'" + " ORDER BY t2.itemValue asc";
-		
-		String searchTerm = "( (type:\"" + TYPE+ "\" ) AND txtname:\"" + id + "\")";
+
+		String searchTerm = "( (type:\"" + TYPE + "\" ) AND txtname:\"" + id + "\")";
 
 		Collection<ItemCollection> col;
 		try {
-			col = workflowService.getDocumentService().find(searchTerm,1, 0);
+			col = workflowService.getDocumentService().find(searchTerm, 1, 0);
 			if (col.size() > 0) {
 				configItemCollection = col.iterator().next();
 				logger.fine("datev configuration id=" + id + " loaded");
@@ -159,7 +166,6 @@ public class DatevService {
 			logger.warning(e.getMessage());
 		}
 
-		
 		return configItemCollection;
 	}
 
@@ -170,13 +176,13 @@ public class DatevService {
 	 */
 	public ItemCollection findWorkitemByName(String sKey) {
 
-//		String sQuery = "SELECT wi FROM Entity as wi";
-//		sQuery += " JOIN wi.textItems as t ";
-//		sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
-//		sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
-		
+		// String sQuery = "SELECT wi FROM Entity as wi";
+		// sQuery += " JOIN wi.textItems as t ";
+		// sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
+		// sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
+
 		String searchTerm = "( (type:\"workitem\" OR type:\"workitemarchive\") AND txtname:\"" + sKey + "\")";
-		
+
 		Collection<ItemCollection> col;
 		try {
 			col = workflowService.getDocumentService().find(searchTerm, 1, 0);
@@ -186,7 +192,7 @@ public class DatevService {
 		} catch (QueryException e) {
 			logger.warning(e.getMessage());
 		}
-		
+
 		// no order found
 		return null;
 
@@ -229,7 +235,7 @@ public class DatevService {
 		int workitemsTotal = 0;
 
 		String sDatevID = configuration.getItemValueString("txtName");
-		String sDatevPrimaryKey= configuration.getItemValueString("_datev_primarykey");
+		String sDatevPrimaryKey = configuration.getItemValueString("_datev_primarykey");
 		filename = configuration.getItemValueString("_datev_path");
 		logger.info("DATEV import id= " + sDatevID + " : " + filename);
 
@@ -295,10 +301,10 @@ public class DatevService {
 					line++;
 					workitemsTotal++;
 					ItemCollection entity = readEntity(datevLine, fields);
-					
+
 					// replace txtName by the DATEV key field
-					entity.replaceItemValue("txtname", entity.getItemValue("_datev_"+sDatevPrimaryKey));
-					
+					entity.replaceItemValue("txtname", entity.getItemValue("_datev_" + sDatevPrimaryKey));
+
 					// test if workitem already exits....
 					ItemCollection oldEntity = findWorkitemByName(entity.getItemValueString("txtName"));
 					if (oldEntity == null) {
@@ -312,8 +318,9 @@ public class DatevService {
 						// test if modified....
 						if (!isEqualEntity(oldEntity, entity)) {
 							logger.fine("update exsting DATV entity: " + oldEntity.getUniqueID());
-							
-							// copy all datev entries from the import into the existing entity
+
+							// copy all datev entries from the import into the
+							// existing entity
 							oldEntity.replaceAllItems(entity.getAllItems());
 							oldEntity.replaceItemValue(WorkflowService.ACTIVITYID, activityID);
 							processSingleWorkitem(oldEntity);
@@ -321,7 +328,7 @@ public class DatevService {
 						}
 					}
 				}
-				
+
 				configuration.replaceItemValue("_datev_lLastImport", modifiedTime);
 				configuration.replaceItemValue("_datev_datLastImport", new Date(modifiedTime));
 			} catch (IOException ioex) {
@@ -420,16 +427,65 @@ public class DatevService {
 	public ItemCollection readEntity(String data, List<String> fieldnames) {
 		ItemCollection result = new ItemCollection();
 		int iCol = 0;
-		String[] valuList = data.split(";",-1);
-		for (String itemValue: valuList) {
+		String[] valuList = data.split(";", -1);
+		for (String itemValue : valuList) {
 			// test if the token has content
-			if (itemValue!=null && !itemValue.isEmpty()) {
+			if (itemValue != null && !itemValue.isEmpty()) {
 				// create a itemvalue with the corresponding fieldname
-				result.replaceItemValue("_datev_" + fieldnames.get(iCol), itemValue);
+
+				// test if value is an ISO date format
+				Date dateValue = parseISODate(itemValue);
+				if (dateValue != null) {
+					result.replaceItemValue("_datev_" + fieldnames.get(iCol), dateValue);
+				} else {
+					result.replaceItemValue("_datev_" + fieldnames.get(iCol), itemValue);
+				}
 			}
 			iCol++;
 		}
 		return result;
+	}
+
+	/**
+	 * This method parses a string value for an ISO Date/Time format. If the
+	 * value is parseable the method returns a Date object. In other case the
+	 * method returns null.
+	 * 
+	 * Supported formats:
+	 * 
+	 * yyyy-MM-dd'T'HH:mm:ss.SSS
+	 * 
+	 * yyyy-MM-dd
+	 * 
+	 * @param itemValue
+	 * @return
+	 */
+	private Date parseISODate(String itemValue) {
+
+		// try to parse datetime
+		try {
+			DateFormat format = new SimpleDateFormat(ISO8601_FORMAT_DATETIME);
+			Date date = format.parse(itemValue);
+			if (date != null) {
+				return date;
+			}
+		} catch (Exception e) {
+			// unable to parse date
+		}
+
+		// try to parse date
+		try {
+			DateFormat format = new SimpleDateFormat(ISO8601_FORMAT_DATE);
+			Date date = format.parse(itemValue);
+			if (date != null) {
+				return date;
+			}
+		} catch (Exception e) {
+			// unable to parse date
+		}
+
+		// string was not parseable
+		return null;
 	}
 
 	/**
