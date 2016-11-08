@@ -6,6 +6,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import org.imixs.workflow.ItemCollection;
@@ -94,17 +97,31 @@ public class ImportTest {
 			Assert.assertNotNull(fieldList);
 
 			// read first line
-			ItemCollection entity = datevService.readEntity(br.readLine(), fieldList); 
-			Assert.assertNotNull(entity); 
+			ItemCollection entity = datevService.readEntity(br.readLine(), fieldList);
+			Assert.assertNotNull(entity);
 			Assert.assertEquals("22222", entity.getItemValueString("_datev_konto"));
 			Assert.assertEquals("Muster GmbH 1", entity.getItemValueString("_datev_Name_(Adressattyp_Unternehmen)"));
 			Assert.assertEquals("2", entity.getItemValueString("_datev_Adressattyp"));
+
+			// test date field
+			Date date = entity.getItemValueDate("_datev_datum");
+			Assert.assertNotNull(date);
+			DateFormat df = new SimpleDateFormat(DatevService.ISO8601_FORMAT_DATETIME);
+			String isoDateString = df.format(date);
+			Assert.assertTrue(isoDateString.startsWith("2016-10-24T08:39:49.288"));
 
 			// read second line
 			entity = datevService.readEntity(br.readLine(), fieldList);
 			Assert.assertNotNull(entity);
 			Assert.assertEquals("33333", entity.getItemValueString("_datev_konto"));
 			Assert.assertEquals("Muster GmbH 2", entity.getItemValueString("_datev_Name_(Adressattyp_Unternehmen)"));
+
+			// test date field
+			date = entity.getItemValueDate("_datev_datum");
+			Assert.assertNotNull(date);
+			df = new SimpleDateFormat(DatevService.ISO8601_FORMAT_DATE);
+			isoDateString = df.format(date);
+			Assert.assertEquals("2016-10-24", isoDateString);
 
 			br.close();
 		} catch (Exception e) {
