@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>org.imixs.workflow</groupId>
 		<artifactId>imixs-adapters</artifactId>
-		<version>1.4.8-SNAPSHOT</version>
+		<version>1.4.8</version>
 	</parent>
 	<artifactId>imixs-adapters-lucene-ejb</artifactId>
 
