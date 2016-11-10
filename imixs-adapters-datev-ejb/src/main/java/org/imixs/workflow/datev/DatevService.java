@@ -414,6 +414,9 @@ public class DatevService {
 				} else {
 					result.replaceItemValue("_datev_" + fieldnames.get(iCol), itemValue);
 				}
+			} else {
+				// empty value
+				result.replaceItemValue("_datev_" + fieldnames.get(iCol),"");
 			}
 			iCol++;
 		}
