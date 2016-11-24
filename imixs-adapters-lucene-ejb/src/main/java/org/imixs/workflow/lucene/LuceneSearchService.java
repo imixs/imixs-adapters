@@ -330,12 +330,14 @@ public class LuceneSearchService {
 	 * The method rewrites the lucene <code>QueryParser.escape</code> method and
 	 * did not! escape '*' char.
 	 * 
-	 * Clients should use the method normalizeSearchTerm() instead of escapeSearchTerm() to prepare a user input for a lucene search.
+	 * Clients should use the method normalizeSearchTerm() instead of
+	 * escapeSearchTerm() to prepare a user input for a lucene search.
 	 * 
-	 *  
+	 * 
 	 * @see normalizeSearchTerm
 	 * @param searchTerm
-	 * @param ignoreBracket - if true brackes will not be escaped. 
+	 * @param ignoreBracket
+	 *            - if true brackes will not be escaped.
 	 * @return escaped search term
 	 */
 	public static String escapeSearchTerm(String searchTerm, boolean ignoreBracket) {
@@ -348,25 +350,26 @@ public class LuceneSearchService {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < searchTerm.length(); i++) {
 			char c = searchTerm.charAt(i);
-			// These characters are part of the query syntax and must be escaped (ignore brackets!)
-			if (c == '\\' || c == '+' || c == '-' || c == '!' || c == ':' || c == '^'
-					|| c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~' || c == '?' || c == '|'
-					|| c == '&' || c == '/') {
+			// These characters are part of the query syntax and must be escaped
+			// (ignore brackets!)
+			if (c == '\\' || c == '+' || c == '-' || c == '!' || c == ':' || c == '^' || c == '[' || c == ']'
+					|| c == '\"' || c == '{' || c == '}' || c == '~' || c == '?' || c == '|' || c == '&' || c == '/') {
 				sb.append('\\');
 			}
-			
+
 			// escape bracket?
-			if (!ignoreBracket && ( c == '(' || c == ')' ))  {
+			if (!ignoreBracket && (c == '(' || c == ')')) {
 				sb.append('\\');
 			}
-			
+
 			sb.append(c);
 		}
 		return sb.toString();
 
 	}
+
 	public static String escapeSearchTerm(String searchTerm) {
-		return escapeSearchTerm(searchTerm,false);
+		return escapeSearchTerm(searchTerm, false);
 	}
 
 	/**
@@ -375,24 +378,32 @@ public class LuceneSearchService {
 	 * 
 	 * The method also escapes the result search term.
 	 * 
-	 * e.g. 'europe/berlin' will be normalized to 'europe berlin'
-	 * e.g. 'r555/333' will be unmodified 'r555/333' 
+	 * e.g. 'europe/berlin' will be normalized to 'europe berlin' e.g.
+	 * 'r555/333' will be unmodified 'r555/333'
 	 * 
 	 * @param searchTerm
 	 * @return normalzed search term
 	 */
 	public static String normalizeSearchTerm(String searchTerm) {
+
+		if (searchTerm == null) {
+			return "";
+		}
+		if (searchTerm.trim().isEmpty()) {
+			return "";
+		}
+
 		ClassicAnalyzer analyzer = new ClassicAnalyzer();
 
 		QueryParser parser = new QueryParser("content", analyzer);
 		try {
-			Query result = parser.parse(escapeSearchTerm(searchTerm,false));
+			Query result = parser.parse(escapeSearchTerm(searchTerm, false));
 			searchTerm = result.toString("content");
 		} catch (ParseException e) {
 			logger.warning("Unable to normalze serchTerm '" + searchTerm + "'  -> " + e.getMessage());
 		}
 
-		return escapeSearchTerm(searchTerm,true);
+		return escapeSearchTerm(searchTerm, true);
 
 	}
 }
