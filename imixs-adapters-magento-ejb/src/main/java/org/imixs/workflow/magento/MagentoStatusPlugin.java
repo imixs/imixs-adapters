@@ -34,7 +34,6 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.Plugin;
 import org.imixs.workflow.WorkflowContext;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.engine.plugins.ResultPlugin;
@@ -106,13 +105,12 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 	   </code>
 	 */
 	@Override
-	public int run(ItemCollection workitem, ItemCollection documentActivity) throws PluginException {
-
+	public ItemCollection run(ItemCollection documentContext, ItemCollection documentActivity) throws PluginException {
 		// evaluate activity....
-		ItemCollection evalItemCollection = ResultPlugin.evaluateWorkflowResult(documentActivity, workitem);
+		ItemCollection evalItemCollection = ResultPlugin.evaluateWorkflowResult(documentActivity, documentContext);
 
 		if (evalItemCollection != null) {
-			String sMagentoorderIncrementId = workitem.getItemValueString("txtMagentoOrderID");
+			String sMagentoorderIncrementId = documentContext.getItemValueString("txtMagentoOrderID");
 			String sNewMagentoStatus = evalItemCollection.getItemValueString(MAGENTO_STATUS_PROPERTY);
 			String sNewMagentoComment = evalItemCollection.getItemValueString(MAGENTO_COMMENT_PROPERTY);
 			boolean notify = evalItemCollection.getItemValueBoolean(MAGENTO_NOTIFY_PROPERTY);
@@ -123,18 +121,13 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 				logger.fine("[MagentoStatusPlugin] add new comment: " + sMagentoorderIncrementId + "="
 						+ sNewMagentoStatus + " (" + sNewMagentoComment + ")");
 				MagentoClient magentoClient = magentoService
-						.getSOAPClient(workitem.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID));
+						.getSOAPClient(documentContext.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID));
 				magentoClient.addOrderComment(sMagentoorderIncrementId, sNewMagentoStatus, sNewMagentoComment, notify);
 			}
 		}
-		return Plugin.PLUGIN_OK;
+		return documentContext;
 	}
 
-	@Override
-	public void close(int arg0) throws PluginException {
-
-		// no op
-
-	}
+	
 
 }

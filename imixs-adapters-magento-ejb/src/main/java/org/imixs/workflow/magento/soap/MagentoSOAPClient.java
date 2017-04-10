@@ -65,7 +65,7 @@ public class MagentoSOAPClient implements MagentoClient {
 		
 		if (sessionId!=null) {
 			// already connected
-			return;
+			return; 
 		}
 		magentoAccessKey = magentoConfiguration
 				.getItemValueString("txtMagentoSOAPAccessKey");

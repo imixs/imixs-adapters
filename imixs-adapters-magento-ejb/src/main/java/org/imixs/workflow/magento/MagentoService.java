@@ -439,7 +439,6 @@ public class MagentoService {
 	 * @param magentoEntity
 	 *            - holds the properties to be added into the workItem
 	 */
-	@SuppressWarnings("unchecked")
 	public ItemCollection addMagentoEntity(ItemCollection workitem, ItemCollection magentoEntity) {
 
 		// add magento properties

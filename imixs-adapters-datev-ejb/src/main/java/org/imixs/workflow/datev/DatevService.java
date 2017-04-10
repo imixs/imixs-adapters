@@ -58,6 +58,7 @@ import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.InvalidAccessException;
+import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
@@ -499,10 +500,11 @@ public class DatevService {
 	 * @throws PluginException
 	 * @throws ProcessingErrorException
 	 * @throws AccessDeniedException
+	 * @throws ModelException 
 	 */
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 	public void processSingleWorkitem(ItemCollection aWorkitem)
-			throws AccessDeniedException, ProcessingErrorException, PluginException {
+			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
 		workflowService.processWorkItem(aWorkitem);
 	}
 

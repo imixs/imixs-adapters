@@ -36,7 +36,6 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.Plugin;
 import org.imixs.workflow.WorkflowContext;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.exceptions.PluginException;
@@ -98,18 +97,17 @@ public class MagentoPlugin extends AbstractPlugin {
 		txtMagentoCustomerPhone = Telephone
        </code>
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public int run(ItemCollection workitem, ItemCollection documentActivity)
-			throws PluginException {
+	public ItemCollection run(ItemCollection documentContext, ItemCollection documentActivity) throws PluginException {
 
-		String sKey = workitem.getItemValueString("txtName");
+		String sKey = documentContext.getItemValueString("txtName");
 		if (sKey.startsWith("magento:order:")) {
 
 			// create custom magento fields
-			workitem.replaceItemValue("txtMagentoOrderID",
-					workitem.getItemValueString("m_increment_id"));
-			List<Map> addresses = workitem
+			documentContext.replaceItemValue("txtMagentoOrderID",
+					documentContext.getItemValueString("m_increment_id"));
+			List<Map> addresses = documentContext
 					.getItemValue("m_addresses");
 
 			// copy address data into Imixs Fields
@@ -117,33 +115,33 @@ public class MagentoPlugin extends AbstractPlugin {
 			for (Map addressMap : addresses) {
 				ItemCollection address=new ItemCollection(addressMap);
 				// address_type = billing / shipping
-				logger.fine("[MagentoPlugin] update magentoCustomer data...");
-				workitem.replaceItemValue(
+				logger.fine("update magentoCustomer data...");
+				documentContext.replaceItemValue(
 						"txtMagentoCustomer",
 						address.getItemValueString("firstname") + " "
 								+ address.getItemValueString("lastname"));
-				workitem.replaceItemValue("txtMagentoCustomerEmail",
+				documentContext.replaceItemValue("txtMagentoCustomerEmail",
 						address.getItemValueString("email"));
-				workitem.replaceItemValue("txtMagentoCustomerPhone",
+				documentContext.replaceItemValue("txtMagentoCustomerPhone",
 						address.getItemValueString("telephone"));
 
 				// copy all standard fileds
 				// prafix field names with type (txtSilling/txtShipping
-				copyAddressData(workitem,address);
+				copyAddressData(documentContext,address);
 				
 			}
 
 			// if email not defined we need to lookup the customer id...
-			if (workitem.getItemValueString("txtMagentoCustomerEmail")
+			if (documentContext.getItemValueString("txtMagentoCustomerEmail")
 					.isEmpty()) {
 				logger.fine("[MagentoPlugin] update magentoCustomer E-Mail...");
-				String customerID = workitem
+				String customerID = documentContext
 						.getItemValueString("m_customer_id");
 				if (!customerID.isEmpty()) {
-					ItemCollection customer = magentoService.getRestClient(workitem.getItemValueString(MAGENTO_CONFIGURATION_ID))
+					ItemCollection customer = magentoService.getRestClient(documentContext.getItemValueString(MAGENTO_CONFIGURATION_ID))
 							.getCustomerById(new Integer(customerID));
 					if (customer != null) {
-						workitem.replaceItemValue("txtMagentoCustomerEmail",
+						documentContext.replaceItemValue("txtMagentoCustomerEmail",
 								customer.getItemValueString("email"));
 
 						// check phonnumber from addresses
@@ -152,13 +150,13 @@ public class MagentoPlugin extends AbstractPlugin {
 							// address_type = billing / shipping
 							ItemCollection address=new ItemCollection(addressMap);
 							
-							workitem.replaceItemValue(
+							documentContext.replaceItemValue(
 									"txtMagentoCustomerPhone",
 									address.getItemValueString("telephone"));
 							
 							// copy all standard fileds
 							// prafix field names with type (txtSilling/txtShipping
-							copyAddressData(workitem,address);
+							copyAddressData(documentContext,address);
 
 						}
 					}
@@ -167,15 +165,10 @@ public class MagentoPlugin extends AbstractPlugin {
 
 		}
 
-		return Plugin.PLUGIN_OK;
+		return documentContext;
 	}
 
-	@Override
-	public void close(int arg0) throws PluginException {
-
-		// no op
-
-	}
+	
 
 	/**
 	 * This method copies the address data fields from a magento address into a
