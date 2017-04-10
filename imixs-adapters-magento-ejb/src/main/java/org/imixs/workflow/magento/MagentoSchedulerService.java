@@ -731,11 +731,12 @@ public class MagentoSchedulerService {
 	 * @throws PluginException
 	 * @throws ProcessingErrorException
 	 * @throws AccessDeniedException
+	 * @throws ModelException 
 	 */
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 	public void processSingleWorkitem(ItemCollection aWorkitem)
 			throws AccessDeniedException, ProcessingErrorException,
-			PluginException {
+			PluginException, ModelException {
 		workflowService.processWorkItem(aWorkitem);
 	}
 
