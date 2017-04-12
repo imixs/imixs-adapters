@@ -118,12 +118,15 @@ public class LDAPLookupService {
 				String aAttr = userAttributeList[i].trim();
 				int sPos = aAttr.indexOf('|');
 				if (sPos > 0) {
-					userAttributesLDAP[i] = aAttr.substring(0, sPos - 1).trim();
+					userAttributesLDAP[i] = aAttr.substring(0, sPos ).trim();
 					userAttributesImixs[i] = aAttr.substring(sPos + 1).trim();
 				} else {
 					userAttributesLDAP[i] = aAttr;
 					userAttributesImixs[i] = aAttr;
 				}
+				// debug info about the resolved attribute and item names
+				logger.finest("attributesLDAP-" + i+"=" +userAttributesLDAP[i] );
+				logger.finest("attributesImixs-" + i+"=" +userAttributesImixs[i] );
 			}
 
 			// test if ldap is enabled...
@@ -289,6 +292,8 @@ public class LDAPLookupService {
 				for (int i = 0; i < userAttributesLDAP.length; i++) {
 
 					Attribute atr = attributes.get(userAttributesLDAP[i]);
+					
+					logger.fine("...fetch attribute: '" +userAttributesLDAP[i] +"' = "+ atr);	
 					if (atr != null) {
 						NamingEnumeration<?> values = atr.getAll();
 
@@ -299,9 +304,7 @@ public class LDAPLookupService {
 						if (valueList.size() > 0)
 							user.replaceItemValue(userAttributesImixs[i], valueList);
 					}
-				}
-
-				user.replaceItemValue("dn", sDN);
+				}				
 			}
 
 			if (sDN == null) {
