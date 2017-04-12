@@ -22,6 +22,11 @@ The configuration is done in the imixs.properties files with the following examp
     ldap.group-search-filter=(member=%d)
 
 
+### User Attributes
+The property ldap.user-attrbutes can hold a list of ldap attributes to be stored in the corresponding User Profile document. The attributes are comma separated. Optional a target-fieldname can be defined by | followed by the document item:
+
+    ldap.user-attributes=uid,SN,CN,mail|txtEmail
+
 ## LDAP User Interceptor 
 
 The interceptor class 
@@ -69,7 +74,7 @@ Additional parameters can be set by defining property keys starting with 'java.n
 	java.naming.security.credentials=password
 
 
-### Microsoft Activte Direcotry
+### Microsoft Active Directory
 To connect to a Microsoft Active Directory the follwoing additonal addributes can be set optional:
 
 
@@ -78,7 +83,7 @@ To connect to a Microsoft Active Directory the follwoing additonal addributes ca
 
 A userid lookup is typically made against the AD attribute 'samAccountName' using the following search phrase:
 
-	(samAccountName=?)
+	(samAccountName=%u)
 
 
 
