@@ -1,52 +1,30 @@
-imixs-adapters
-==============
+# imixs-adapters
 
-Connect Imixs-Workflow with services and software platforms 
+Connect Imixs-Workflow with services and software platforms!
 
-The 'imixs-adapers' project contains different technolgies to adapt services and software platforms into the imixs-workflow. The project is split into severals modules. Each modul provides differnt connectors and technolgies. The common-adapers provide some general technologies to be used for defelopment. 
+The 'imixs-adapers' project contains different technologies to adapt services and software platforms into the imixs-workflow. The project is split into severals modules. Each module provides different connectors and technologies. 
 
-
-See wiki for more information: https://github.com/imixs/imixs-adapters/wiki
+Take a look into the separated sub projects or see the wiki pages for more information: https://github.com/imixs/imixs-adapters/wiki
 
 
 
-imixs-adapters-magento-ejb
-==============
 
-The moduel imixs-adapters-magento-ejb contains a client API to connect 
- to the Ecommerce Softwareplattform Magento. 
-  
-For testing the Magento Adapter you can take a look on the JUnit Tests provided
-together with the imixs-adapters-magento-ejb module. 
-To run the test create the property file "src/test/resources/imixs.properties" 
-with the following minimal setup:
+## imixs-adapters-ldap
 
+The [LDAP adapters](imixs-adapters-ldap-ejb) provide a set of services (EJB) to connect to an external LDAP server and extend the Imixs ProfileService with ldap attributes. The LDAP adapter can be configured as an incerceptor to extend the capabilities of imixs-marty. 
 
-```
-##############################
-# Imixs Properties
-##############################
+* [imixs-adapters-ldap-ejb](imixs-adapters-ldap-ejb)
 
-##############################
-# Magento REST Service Configuration 
-##############################
-# basi urls
-magento.rest.uri-basis=http://localhost:8080/magento/index.php/
-magento.rest.uri-api=http://localhost:8080/magento/api/rest
-# api token 
-magento.oauth.consumer-key=e2dv81c4t......mpw63mc77zk
-magento.oauth.consumer-secret=w2y4........wtb8ldfz1cekb
-# access token... (use testRequestNewToken to generate a new one)
-magento.access-key=bst0xf3knba73.......li8wm4a
-magento.access-secret=mhoifjombt.........aeurr04l
+## imixs-adapters-magento-ejb
 
-##############################
-# Magento SOAP Service Configuration (replaces the rest api configuration)
-##############################
-#magento.soap.uri-api=http://localhost:8080/magento/index.php/api/index/index/
-# access token...
-#magento.access-key=your-useraccount
-#magento.access-secret=your-password
+The [Magento adapte](imixs-adapters-magento-ejb) provides a client API to connect  to the Ecommerce Softwareplattform Magento. 
+
+* [imixs-adapters-magento-ejb](imixs-adapters-magento-ejb)
 
 
-```
+## imixs-adapters-datev
+
+The DATEV adapter project is split into a back-end (EJB) and a front-end (JSF) component. The project supports services to import and export data with the DATEV system (DATEV is a finance software in Germany). 
+
+* [imixs-adapters-datev-ejb](imixs-adapters-datev-ejb)
+* [imixs-adapters-datev-web](imixs-adapters-datev-web)
