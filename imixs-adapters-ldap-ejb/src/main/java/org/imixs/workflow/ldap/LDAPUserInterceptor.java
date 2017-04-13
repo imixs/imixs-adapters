@@ -9,7 +9,11 @@ import javax.ejb.SessionContext;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 
+import org.imixs.marty.ejb.ProfileService;
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.engine.DocumentService;
+import org.imixs.workflow.exceptions.ModelException;
+import org.imixs.workflow.exceptions.PluginException;
 
 /**
  * This Intercepter class provides a mechanism to lookup the LDAP attributes of
@@ -61,7 +65,13 @@ import org.imixs.workflow.ItemCollection;
 public class LDAPUserInterceptor {
 
 	@EJB
-	LDAPLookupService lookupService;
+	LDAPLookupService ldapLokupService;
+
+	@EJB
+	ProfileService profileService;
+
+	@EJB
+	DocumentService documentService;
 
 	@Resource
 	SessionContext ejbCtx;
@@ -82,9 +92,10 @@ public class LDAPUserInterceptor {
 	public Object intercept(InvocationContext ctx) throws Exception {
 
 		// test if ldap lookup service is available
-		if (lookupService.isEnabled()) {
+		if (ldapLokupService.isEnabled()) {
 			// test method name
 			String sMethod = ctx.getMethod().getName();
+			
 			if ("lookupProfileById".equals(sMethod)) {
 				logger.fine("intercept method=" + sMethod);
 
@@ -94,30 +105,52 @@ public class LDAPUserInterceptor {
 				String sUserID = (String) params[0];
 				logger.fine("userid=" + sUserID);
 
-			
-				ItemCollection ldapUser=lookupService.findUser(sUserID);
-				
-				if (ldapUser!=null) {
-					logger.fine("updating profile with ldap attributes...");
-					
-					// print all
-					Map<String, Object> items = (Map<String, Object>) ldapUser.getItemList();
-					
-					for (Map.Entry<String, Object> entry : items.entrySet()) {
-					    String key = entry.getKey();
-					    Object value = entry.getValue();
-					    logger.fine(" ...... " + key +"=" + value);
+				ItemCollection profile = (ItemCollection) ctx.proceed();
+				if (profile == null) {
+					// create profile
+					try {
+						profile = profileService.createProfile(sUserID, "");
+					} catch (RuntimeException | PluginException | ModelException e) {
+						logger.severe("unable to create profile for userid '" + sUserID + "': " + e.getMessage());
 					}
-					
-				} else {
-					logger.warning("userid " + sUserID + " not found!");
 				}
-				
-				
-				
+
+				// update profile?
+				if (profile != null) {
+					// compare attributes....
+					ItemCollection ldapUser = ldapLokupService.findUser(sUserID);
+					boolean bUpdate = false;
+					if (ldapUser != null) {
+						logger.fine("updating profile with ldap attributes...");
+
+						// print all
+						Map<String, Object> items = (Map<String, Object>) ldapUser.getItemList();
+
+						for (Map.Entry<String, Object> entry : items.entrySet()) {
+							String key = entry.getKey();
+							Object value = entry.getValue();
+							logger.fine(" ...... " + key + "=" + value);
+
+							if (!profile.getItemValue(key).equals(ldapUser.getItemValue(key))) {
+								profile.replaceItemValue(key, ldapUser.getItemValue(key));
+								bUpdate = true;
+							}
+						}
+						// save profile?
+						if (bUpdate) {
+							logger.info("Update LDAP attributes for profile '" + sUserID + "'");
+							profile = documentService.save(profile);
+						}
+					} else {
+						logger.warning("userid " + sUserID + " not found!");
+					}
+				}
+
+				return profile;
 			}
 		}
 
+		// default behavior
 		return ctx.proceed();
 	}
 

@@ -64,9 +64,6 @@ public class LDAPLookupService {
 	@EJB
 	LDAPCache ldapCache;
 
-	// Disabled!!
-	// @EJB
-	// PropertyService xpropertyService;
 
 	private static Logger logger = Logger.getLogger(LDAPLookupService.class.getName());
 
@@ -90,7 +87,7 @@ public class LDAPLookupService {
 			// skip if no configuration
 			if (configurationProperties == null)
 				return;
-
+			
 			// initialize ldap configuration....
 			logger.fine("read LDAP configuration...");
 			searchContext = configurationProperties.getProperty("ldap.search-context", "");

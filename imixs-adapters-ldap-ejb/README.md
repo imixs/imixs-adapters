@@ -20,12 +20,27 @@ The configuration is done in the imixs.properties files with the following examp
     ldap.user-attributes=uid,SN,CN,mail
     # Group lookup
     ldap.group-search-filter=(member=%d)
+    # Cache (1h)
+    ldap.cache-expires=3600000
+    ldap.cache-size=100
 
 
 ### User Attributes
 The property ldap.user-attrbutes can hold a list of ldap attributes to be stored in the corresponding User Profile document. The attributes are comma separated. Optional a target-fieldname can be defined by | followed by the document item:
 
     ldap.user-attributes=uid,SN,CN,mail|txtEmail
+
+
+## Caching
+
+The LDAP Lookup service is using an internal cache. The cache size and cache duration is defined by the imixs.properties
+
+    ldap.cache-expires=3600000
+    ldap.cache-size=100
+
+Note: A system-check form the web-front-end did discard the ProfileService cache, but not the ldapLookupService cache. This means to discard the ldap cache you can either wait for the ldap.cach-expires period or you can restart the application.
+ 
+
 
 ## LDAP User Interceptor 
 
