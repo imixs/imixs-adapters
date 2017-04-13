@@ -97,7 +97,7 @@ public class LDAPUserInterceptor {
 			String sMethod = ctx.getMethod().getName();
 			
 			if ("lookupProfileById".equals(sMethod)) {
-				logger.fine("intercept method=" + sMethod);
+				logger.finest("intercept method=" + sMethod);
 
 				// get id....
 				Object[] params = ctx.getParameters();
@@ -121,7 +121,7 @@ public class LDAPUserInterceptor {
 					ItemCollection ldapUser = ldapLokupService.findUser(sUserID);
 					boolean bUpdate = false;
 					if (ldapUser != null) {
-						logger.fine("updating profile with ldap attributes...");
+						logger.fine("ldap entry found, verifing attributes...");
 
 						// print all
 						Map<String, Object> items = (Map<String, Object>) ldapUser.getItemList();
@@ -129,7 +129,7 @@ public class LDAPUserInterceptor {
 						for (Map.Entry<String, Object> entry : items.entrySet()) {
 							String key = entry.getKey();
 							Object value = entry.getValue();
-							logger.fine(" ...... " + key + "=" + value);
+							logger.finest(" ...... " + key + "=" + value);
 
 							if (!profile.getItemValue(key).equals(ldapUser.getItemValue(key))) {
 								profile.replaceItemValue(key, ldapUser.getItemValue(key));
@@ -138,7 +138,7 @@ public class LDAPUserInterceptor {
 						}
 						// save profile?
 						if (bUpdate) {
-							logger.info("Update LDAP attributes for profile '" + sUserID + "'");
+							logger.info("Update user profile '" + sUserID + "' with new ldap attributes....");
 							profile = documentService.save(profile);
 						}
 					} else {
