@@ -11,18 +11,22 @@ The jndi name to connect to an LDAP server is:
 The configuration, to directly connect the services with a ldap server, is done via the imixs.properties file. See the following example:
 
 
-    ldap.search-context=
-    ldap.disable-jndi=
-    ldap.jndi-name=
+	ldap.jndi-name=
+	ldap.disable-jndi=true
+	ldap.search-context=DC=.....
     # User lookup
-    ldap.dn-search-filter=(uid=%u)
+	ldap.dn-search-filter=(uid=%u)
     # User attributes
-    ldap.user-attributes=uid,SN,CN,mail
+	ldap.user-attributes=mail|txtemail,name|txtUserName
     # Group lookup
-    ldap.group-search-filter=(member=%d)
-    # Cache (1h)
-    ldap.cache-expires=3600000
-    ldap.cache-size=100
+	ldap.group-search-filter=(member=%d)
+	# Cache (1h, max 100 entries)
+	ldap.cache-expires=3600000
+	ldap.cache-size=100
+	# host and credentials     
+	java.naming.provider.url=ldap://134.96.3.19:389
+	java.naming.security.principal=CN=bind_user,CN=users,DC=intern,DC=inm-gmbh,DC=de
+	java.naming.security.credentials=9C5HrLC8aD
 
 
 ### User Attributes
