@@ -40,10 +40,6 @@ public class LDAPCache {
 	private Properties configurationProperties = null;
 	private Cache cache = null; // cache holds userdata
 
-	// Disable because of dead-lock
-	//@EJB
-	//PropertyService propertyService;
-
 	private static Logger logger = Logger.getLogger(LDAPCache.class
 			.getName());
 
@@ -77,7 +73,7 @@ public class LDAPCache {
 	 */
 	public void resetCache() {
 		// determine the cache size....
-		logger.fine("LDAPCache resetCache - initalizing settings....");
+		logger.fine("resetCache - initalizing settings....");
 		int iCacheSize = DEFAULT_CACHE_SIZE;
 		try {
 			iCacheSize = Integer.valueOf(configurationProperties
