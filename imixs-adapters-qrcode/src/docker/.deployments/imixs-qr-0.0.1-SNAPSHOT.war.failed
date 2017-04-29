@@ -1,0 +1,7 @@
+{
+    "WFLYCTL0080: Failed services" => {"jboss.deployment.unit.\"imixs-qr-0.0.1-SNAPSHOT.war\".STRUCTURE" => "org.jboss.msc.service.StartException in service jboss.deployment.unit.\"imixs-qr-0.0.1-SNAPSHOT.war\".STRUCTURE: WFLYSRV0153: Failed to process phase STRUCTURE of deployment \"imixs-qr-0.0.1-SNAPSHOT.war\"
+    Caused by: org.jboss.as.server.deployment.DeploymentUnitProcessingException: WFLYSRV0160: Failed to mount deployment content
+    Caused by: java.util.zip.ZipException: zip file is empty"},
+    "WFLYCTL0412: Required services that are not installed:" => ["jboss.deployment.unit.\"imixs-qr-0.0.1-SNAPSHOT.war\".STRUCTURE"],
+    "WFLYCTL0180: Services with missing/unavailable dependencies" => undefined
+}
