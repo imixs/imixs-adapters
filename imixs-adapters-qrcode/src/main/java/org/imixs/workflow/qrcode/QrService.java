@@ -10,7 +10,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
@@ -19,8 +19,8 @@ import com.google.zxing.WriterException;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 /**
- * The ImageService is a jax-rs web service to generate QR Codes. The code is based on
- * the library from [zxing QR-Library](https://github.com/zxing/zxing).
+ * The ImageService is a jax-rs web service to generate QR Codes. The code is
+ * based on the library from [zxing QR-Library](https://github.com/zxing/zxing).
  * 
  * 
  * 
@@ -30,32 +30,49 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 @Path("/qr-code")
 public class QrService {
 
-	@Inject 
+	@Inject
 	QrCache cache;
+	final static int DEFAULT_SIZE = 200;
 
 	private static Logger logger = Logger.getLogger(QrService.class.getName());
 
+	/**
+	 * Returns the QR-Code image. The key is a url encoded query param.
+	 * 
+	 * The query param size is optional and defines the image size
+	 * 
+	 * @param key
+	 *            - string with the qr-code
+	 * @param size
+	 *            - integer, size in pixel
+	 * @return
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@GET
-	@Path("/code/{key}")
-	public Response getQR(@PathParam("key") String key) {
+	@Path("/")
+	public Response getQR(@QueryParam("key") String key, @QueryParam("size") int size) {
 		byte[] content = null;
 
+		if (size <= 0) {
+			size = DEFAULT_SIZE;
+		}
 		// try to get conent form cache
-		content = cache.getQrCode(key); 
+		content = cache.getQrCode(key);
 		if (content == null) {
 			try {
 				String charset = "UTF-8"; // or "ISO-8859-1"
 				Map hintMap = new HashMap();
 				hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+
+				hintMap.put(EncodeHintType.MARGIN, 0);
+
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				QrGenerator.writeQRCodeToStream(key, charset, hintMap, 200, 200, out);
+				QrGenerator.writeQRCodeToStream(key, charset, hintMap, size, size, out);
 				content = out.toByteArray();
 				// cache content
 				cache.putQrCode(key, content);
 			} catch (WriterException | IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.severe("getQR failed: " + e.getMessage());
 			}
 
 		} else {
