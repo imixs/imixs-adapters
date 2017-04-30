@@ -52,7 +52,7 @@ public class QRTest {
 		hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Generator.writeQRCodeToStream(qrCodeData, charset, hintMap, 200, 200, out);
+		QrGenerator.writeQRCodeToStream(qrCodeData, charset, hintMap, 200, 200, out);
 		File file = new File(filePath);
 		FileOutputStream fop = new FileOutputStream(file);
 		
@@ -66,7 +66,7 @@ public class QRTest {
 		// .writeQRCodeToFile(qrCodeData, filePath, charset, hintMap, 200, 200);
 		System.out.println("QR Code image created successfully!");
 
-		String verfiedCode= Generator.readQRCode(filePath, charset, hintMap);
+		String verfiedCode= QrGenerator.readQRCode(filePath, charset, hintMap);
 		Assert.assertNotNull(verfiedCode);
 		Assert.assertEquals("Imixs-Workflow", verfiedCode);
 		System.out.println("Data read from QR Code: " +verfiedCode);

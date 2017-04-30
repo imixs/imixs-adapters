@@ -31,7 +31,7 @@ import com.google.zxing.common.HybridBinarizer;
  * @author rsoika
  *
  */
-public class Generator {
+public class QrGenerator {
 	
 	public static String IMAGE_FORMAT="PNG";
 

@@ -28,12 +28,12 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
  */
 @RequestScoped
 @Path("/qr-code")
-public class ImageService {
+public class QrService {
 
 	@Inject 
-	ImageCache cache;
+	QrCache cache;
 
-	private static Logger logger = Logger.getLogger(ImageService.class.getName());
+	private static Logger logger = Logger.getLogger(QrService.class.getName());
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@GET
@@ -49,7 +49,7 @@ public class ImageService {
 				Map hintMap = new HashMap();
 				hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				Generator.writeQRCodeToStream(key, charset, hintMap, 200, 200, out);
+				QrGenerator.writeQRCodeToStream(key, charset, hintMap, 200, 200, out);
 				content = out.toByteArray();
 				// cache content
 				cache.putQrCode(key, content);
