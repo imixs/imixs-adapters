@@ -6,48 +6,26 @@ The goal of this project is to provide a visual representation of a corporate bu
 
 <img src="qr.png" />
 
-## Installation
-Imixs-QR is a Maven based JAX-RS rest service and can be build by the maven command:
+## Rest API
+Imixs-QR library contains a jax-rs rest service:
 
-    mvn clean install
-
-The artifact file can be deployed into any Java EE Application server.
-
-To request a qr-code for a key or url, the following GET request can be called:
-
-http://localhost:8080/imixs-qr/code/[KEY]
+    org.imixs.workflow.qrcode.QrService
 
 
-<br /><br /><img src="small_h-trans.png" />
+This service provides one Rest API resource with a query parameter containing the qr-code :
 
 
-The Imixs-QR  provides a Docker Image to be used to run the service in a Docker container. 
-The docker image is based on the docker image [imixs/wildfly](https://hub.docker.com/r/imixs/wildfly/).
+	/qr-code?[QR-CODE]
 
 
-## Run Imixs-Admin in a Docker Container
-You can start the Imixs-Admin docker container with the command:
+The qr-code have to be URL encoded.
 
-	docker run --name="imixs-qr" -d \
-	 -p 8080:8080 \
-	 imixs/imixs-qr
-	 
-Test the Service from your web browser
-
-http://localhost:8080/imixs-qr/code/Imixs-Workflow
-    
-
-## Build Imixs-QR from sources
-
-Alternatively you can build the imixs-admin client manually by sources
-
-Imixs-QR is based on maven. To build the Java EE artifact run:
-
-	mvn clean install
-
-To build the docker image run
-
-	docker build --tag=imixs/imixs-qr .
+| Method        | URL                 | Description  |
+| ------------- |---------------------| -----|
+| /qr-code?key  | /qr-code?key=sample | Generates the QR-Code image for the key 'sample' |
 
 
 
+## JUnit Tests
+
+The library contains a JUnit test class to show the general behavior of the QrGenerator class. For further information see also the [zxing QR-Library](https://github.com/zxing/zxing).

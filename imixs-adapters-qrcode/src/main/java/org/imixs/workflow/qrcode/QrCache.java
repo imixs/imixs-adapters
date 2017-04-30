@@ -15,13 +15,13 @@ import javax.enterprise.context.ApplicationScoped;
  * 
  */
 @ApplicationScoped
-public class ImageCache {
+public class QrCache {
 	final int DEFAULT_CACHE_SIZE = 100;
 
 	final int MAX_SEARCH_COUNT = 1;
 	private Cache cache;
 
-	private static Logger logger = Logger.getLogger(ImageCache.class.getName());
+	private static Logger logger = Logger.getLogger(QrCache.class.getName());
 
 	/**
 	 * PostContruct event - inizalize cache
