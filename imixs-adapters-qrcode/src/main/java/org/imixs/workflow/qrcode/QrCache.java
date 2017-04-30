@@ -16,7 +16,7 @@ import javax.enterprise.context.ApplicationScoped;
  */
 @ApplicationScoped
 public class QrCache {
-	final int DEFAULT_CACHE_SIZE = 100;
+	final int DEFAULT_CACHE_SIZE = 255;
 
 	final int MAX_SEARCH_COUNT = 1;
 	private Cache cache;
