@@ -68,7 +68,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.imixs.workflow.version>4.1.2</org.imixs.workflow.version>
-		<org.imixs.marty.version>3.0.4-SNAPSHOT</org.imixs.marty.version>
+		<org.imixs.marty.version>3.0.4</org.imixs.marty.version>
 		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
 		<github.global.server>imixs-github-repo</github.global.server>
 	</properties>
