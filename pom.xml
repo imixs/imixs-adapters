@@ -64,6 +64,19 @@
 	</distributionManagement>
 
 
+
+	<!-- Imixs Repo -->
+	<repositories>
+		<repository>
+	        <id>imixs-mvn-repo</id>
+	        <url>https://raw.githubusercontent.com/imixs/imixs-mvn-repo/master/</url>
+	        <snapshots>
+	            <enabled>false</enabled>
+	            <updatePolicy>always</updatePolicy>
+	        </snapshots>
+	    </repository>
+	</repositories>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.imixs.workflow.version>4.1.2</org.imixs.workflow.version>
