@@ -11,6 +11,7 @@
 		<module>imixs-adapters-datev-ejb</module>
 		<module>imixs-adapters-datev-web</module>
 		<module>imixs-adapters-qrcode</module>
+		<module>imixs-adapters-archive</module>
 	</modules>
 
 	<url>https://github.com/imixs/imixs-adapters</url>
