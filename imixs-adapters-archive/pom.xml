@@ -8,6 +8,11 @@
 	<artifactId>imixs-adapters-archive</artifactId>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-workflow-core</artifactId>
+		</dependency>
+		
 		<!-- Java EE dependencies -->
 		<dependency>
 			<groupId>javax</groupId>

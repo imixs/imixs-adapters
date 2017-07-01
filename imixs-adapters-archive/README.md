@@ -1,12 +1,17 @@
 # Imixs-Archive
 
-The Imixs-Archive provides a API to store workitems into a Hadoop Cluster.
+The Imixs-Archive provides a API to store workitems into a Hadoop Cluster. Imixs-Archive uses the [WebHDFS Rest API](https://hadoop.apache.org/docs/r2.8.0/hadoop-project-dist/hadoop-hdfs/WebHDFS.html) to connect to a hadoop cluster.
 
-
-## Hadoop
-
-The libray can be tested with a single node hadoop cluster. See the [Imixs-Docker hadoop project](https://github.com/imixs/imixs-docker/tree/master/hadoop).
 
 ## JUnit Tests
 
-The library contains a JUnit test class to show the general behavior of the ArchivePlugin class. 
+The libray can be tested with a single node hadoop cluster. 
+For all integration tests just start the Docker hadoop container with the following command:
+
+	docker run --name="hadoop" -d -h my-hadoop-cluster.local -p 50070:50070 -p 50075:50075  imixs/hadoop
+
+Make sure that the hostname 'my-hadoop-cluster.local' is listed in your local test environment
+
+See the [Imixs-Docker hadoop project](https://github.com/imixs/imixs-docker/tree/master/hadoop) for mor details.
+
+
