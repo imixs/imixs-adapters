@@ -2,6 +2,9 @@
 
 The Imixs-Archive provides a API to store workitems into a Hadoop Cluster. Imixs-Archive uses the [WebHDFS Rest API](https://hadoop.apache.org/docs/r2.8.0/hadoop-project-dist/hadoop-hdfs/WebHDFS.html) to connect to a hadoop cluster.
 
+## HDFSWebClient
+
+The HDFSWebClient code is based on the workf of [zxs/webhdfs-java-client](https://github.com/zxs/webhdfs-java-client]. 
 
 ## JUnit Tests
 

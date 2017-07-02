@@ -1,7 +1,10 @@
 package org.imixs.workflow.archive.hadoop;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,23 +97,16 @@ public class HadoopTest {
 		
 		
 		
-		HDFSClient hdfsClient=new HDFSClient();
+		HDFSClient hdfsClient=new HDFSClient("root");
 		
-		String uri="http://my-hadoop-cluster.local:50070/webhdfs/v1/2017/06/test?op=CREATE&overwrite=true";
+		//String uri="http://my-hadoop-cluster.local:50070/webhdfs/v1/2017/06/test?op=CREATE&overwrite=true";
 		
 		try {
 			boolean redirect=false;
-			int status=hdfsClient.postCollection(uri, XMLItemCollectionAdapter.putCollection(col));
+			String status=hdfsClient.putData("/2017/06/test.txt", XMLItemCollectionAdapter.putCollection(col));
 			
 			
-			// normally, 3xx is redirect
-			if (status != HttpURLConnection.HTTP_OK) {
-				if (status == HttpURLConnection.HTTP_MOVED_TEMP
-					|| status == HttpURLConnection.HTTP_MOVED_PERM
-						|| status == HttpURLConnection.HTTP_SEE_OTHER)
-				redirect = true;
-			}
-			Assert.assertTrue(redirect);
+			Assert.assertNotNull(status);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -118,6 +114,10 @@ public class HadoopTest {
 		}
 		
 	}
+	
+	
+	
+	
 	
 	
 }
