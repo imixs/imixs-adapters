@@ -48,9 +48,8 @@ public class LDAPGroupInterceptor {
 	private static Logger logger = Logger.getLogger(LDAPGroupInterceptor.class.getName());
 
 	/**
-	 * The interceptor method injects the LDAP groups into the contextData map.
-	 * The method only runs for the method calls 'findAllEntities', 'save' and
-	 * 'load'
+	 * The interceptor method injects the LDAP groups into the contextData map. The
+	 * method only runs for the method calls 'findAllEntities', 'save' and 'load'
 	 * 
 	 * @param ctx
 	 * @return
@@ -59,20 +58,33 @@ public class LDAPGroupInterceptor {
 	@AroundInvoke
 	public Object intercept(InvocationContext ctx) throws Exception {
 
+		// To test the method name 'getUserNameList' is not working here, because in one
+		// EJB context, the DocumentService can be called several times. But the
+		// intercept method is only called once (the fist time). For that reason we fill
+		// the Context in any case with the result of the findGroups() call and store
+		// the result with the key DocumentService.USER_GROUP_LIST into the EJB
+		// context. 
+		//
+		// So in all other cases we just need to check if the key already exists in the
+		// current EJB context
+		// See: issue #marty/178
+
 		// test if ldap lookup service is available
 		if (lookupService.isEnabled()) {
-			// test method name
 			String sMethod = ctx.getMethod().getName();
-			if ("getUserNameList".equals(sMethod)) {
-
+			String sUserID = ejbCtx.getCallerPrincipal().getName();
+			// we can ignore anonymous here!!
+			if ( sUserID == null || "anonymous".equals(sUserID)
+					|| sUserID.isEmpty()) {
+				return ctx.proceed();
+			}
+			
+			// if we have not yet build a USER_GROUP_LIST lets start...
+			if (!ctx.getContextData().containsKey(DocumentService.USER_GROUP_LIST)) {
 				logger.finest("LDAPGroupInterceptor Method=" + sMethod);
-
-				String sUserID = ejbCtx.getCallerPrincipal().getName();
-
+				sUserID = ejbCtx.getCallerPrincipal().getName();
 				String[] sGroups = lookupService.findGroups(sUserID);
-
 				ctx.getContextData().put(DocumentService.USER_GROUP_LIST, sGroups);
-
 				if (logger.isLoggable(java.util.logging.Level.FINEST)) {
 					String groupListe = "";
 					for (String aGroup : sGroups)
