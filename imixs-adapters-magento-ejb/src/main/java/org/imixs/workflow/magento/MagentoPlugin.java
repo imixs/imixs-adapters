@@ -186,7 +186,7 @@ public class MagentoPlugin extends AbstractPlugin {
 	 */
 	private void copyAddressData(ItemCollection workitem, ItemCollection address) {
 		// copy all standard fileds
-		// prafix field names with type (txtSilling/txtShipping
+		// prafix field names with type (txtBilling/txtShipping
 		String aType = "txtMagento"
 				+ address.getItemValueString("address_type");
 
@@ -208,5 +208,10 @@ public class MagentoPlugin extends AbstractPlugin {
 				address.getItemValueString("postcode"));
 		workitem.replaceItemValue(aType + "city",
 				address.getItemValueString("city"));
+		
+		// 19.9.2017 - addedcountry code....
+		workitem.replaceItemValue(aType + "country_id",
+				address.getItemValueString("country_id"));
+		
 	}
 }
