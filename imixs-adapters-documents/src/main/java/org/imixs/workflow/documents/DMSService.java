@@ -59,8 +59,9 @@ public class DMSService {
 	/**
 	 * This method runs on the CDI event ProcessingEvent.BEFORE_PROCESS. The method
 	 * updates the DMS item of workitems before the processing life-cycle starts.
+	 * @throws PluginException 
 	 */
-	public void onProcess(@Observes ProcessingEvent processingEvent) {
+	public void onProcess(@Observes ProcessingEvent processingEvent) throws PluginException {
 
 		if (processingEvent.getEventType() == ProcessingEvent.BEFORE_PROCESS) {
 			// update the dms meta data

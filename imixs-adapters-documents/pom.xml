@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.imixs.workflow</groupId>
 		<artifactId>imixs-adapters</artifactId>
-		<version>1.5.1-SNAPSHOT</version>
+		<version>1.5.2-SNAPSHOT</version>
 	</parent>
 	<artifactId>imixs-adapters-documents</artifactId>
 
@@ -24,7 +24,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Imixs-Workflow -->
 		<dependency>
 			<groupId>org.imixs.workflow</groupId>
 			<artifactId>imixs-workflow-core</artifactId>
