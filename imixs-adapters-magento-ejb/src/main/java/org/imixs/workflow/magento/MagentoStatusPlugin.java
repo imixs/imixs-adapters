@@ -36,7 +36,6 @@ import javax.naming.NamingException;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.WorkflowContext;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
-import org.imixs.workflow.engine.plugins.ResultPlugin;
 import org.imixs.workflow.exceptions.PluginException;
 
 /**
@@ -107,7 +106,7 @@ public class MagentoStatusPlugin extends AbstractPlugin {
 	@Override
 	public ItemCollection run(ItemCollection documentContext, ItemCollection documentActivity) throws PluginException {
 		// evaluate activity....
-		ItemCollection evalItemCollection = ResultPlugin.evaluateWorkflowResult(documentActivity, documentContext);
+		ItemCollection evalItemCollection = this.getWorkflowService().evalWorkflowResult(documentActivity, documentContext);
 
 		if (evalItemCollection != null) {
 			String sMagentoorderIncrementId = documentContext.getItemValueString("txtMagentoOrderID");
