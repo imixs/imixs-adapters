@@ -28,7 +28,8 @@ import org.xml.sax.SAXException;
 public class DocumentTikaParserPlugin extends AbstractPlugin {
 
 	public static final String PARSING_EXCEPTION = "PARSING_EXCEPTION";
-	
+	public static final String PLUGIN_ERROR = "PLUGIN_ERROR";
+
 	private static Logger logger = Logger.getLogger(DocumentTikaParserPlugin.class.getName());
 
 	/**
@@ -54,7 +55,7 @@ public class DocumentTikaParserPlugin extends AbstractPlugin {
 	 * 
 	 * @param aWorkitem
 	 * @return true if the dms item was changed
-	 * @throws PluginException 
+	 * @throws PluginException
 	 */
 	private void updateDMSMetaData(ItemCollection aWorkitem) throws PluginException {
 		boolean updateBlob = false;
@@ -83,10 +84,13 @@ public class DocumentTikaParserPlugin extends AbstractPlugin {
 						} catch (IOException | SAXException | TikaException e) {
 							logger.warning("Unable to parse attached document " + fileName + " : " + e.getMessage());
 							throw new PluginException(DocumentTikaParserPlugin.class.getSimpleName(), PARSING_EXCEPTION,
-									"Unable to parse attached document '" + fileName +  "'", e);
-							
+									"Unable to parse attached document '" + fileName + "'", e);
+
 						}
 					}
+				} else {
+					throw new PluginException(DocumentCoreParserPlugin.class.getSimpleName(), PLUGIN_ERROR,
+							"No DMS data found. DMSPlugin must be executed before - please verify model.");
 				}
 
 			}
