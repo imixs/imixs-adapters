@@ -11,6 +11,7 @@
 		<module>imixs-adapters-datev-ejb</module>
 		<module>imixs-adapters-datev-web</module>
 		<module>imixs-adapters-qrcode</module>
+		<module>imixs-adapters-documents</module>
 	</modules>
 
 	<url>https://github.com/imixs/imixs-adapters</url>
@@ -79,8 +80,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>4.1.2</org.imixs.workflow.version>
-		<org.imixs.marty.version>3.0.4</org.imixs.marty.version>
+		<org.imixs.workflow.version>4.2.2</org.imixs.workflow.version>
+		<org.imixs.marty.version>3.1.0</org.imixs.marty.version>
 		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
 		<github.global.server>imixs-github-repo</github.global.server>
 	</properties>
