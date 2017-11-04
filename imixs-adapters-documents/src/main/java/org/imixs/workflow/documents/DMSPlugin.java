@@ -1,6 +1,5 @@
 package org.imixs.workflow.documents;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -25,9 +24,9 @@ import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.exceptions.PluginException;
 
 /**
- * The DMSPlugin handles the item 'dms' which is holding meta
- * information about file attachments.
-
+ * The DMSPlugin handles the item 'dms' which is holding meta information about
+ * file attachments.
+ * 
  * @version 1.0
  * @author rsoika
  */
@@ -138,7 +137,7 @@ public class DMSPlugin extends AbstractPlugin {
 	 * @return
 	 */
 	public static ItemCollection findDMSEntry(String aFilename, List<ItemCollection> dmsList) {
-	
+
 		for (ItemCollection dmsEntry : dmsList) {
 			// test if filename matches...
 			String sName = dmsEntry.getItemValueString("txtname");
@@ -197,8 +196,6 @@ public class DMSPlugin extends AbstractPlugin {
 		// now we test for each file entry if a dms meta data entry
 		// exists. If not we create a new one...
 		if (files != null) {
-			boolean bParseContent = Boolean
-					.parseBoolean(propertyService.getProperties().getProperty("dms.parse", "true"));
 			for (Entry<String, List<Object>> entry : files.entrySet()) {
 				String fileName = entry.getKey();
 				List<?> fileData = entry.getValue();
@@ -218,18 +215,6 @@ public class DMSPlugin extends AbstractPlugin {
 					byte[] fileContent = (byte[]) fileData.get(1);
 					dmsEntry.replaceItemValue("md5Checksum", generateMD5(fileContent));
 
-					// parse content...
-					if (bParseContent) {
-						String searchContent;
-						try {
-							searchContent = DocumentParser.parse(fileName, fileData);
-							dmsEntry.replaceItemValue("content", searchContent);
-						} catch (IOException e) {
-							logger.warning("Unable to parse attached document " + fileName + " : " + e.getMessage());
-							e.printStackTrace();
-						}
-					}
-
 					currentDmsList.add(dmsEntry);
 				} else {
 					// dms entry exists. We update if new file content was added
@@ -238,17 +223,7 @@ public class DMSPlugin extends AbstractPlugin {
 						dmsEntry.replaceItemValue("md5Checksum", generateMD5(fileContent));
 						dmsEntry.replaceItemValue("$modified", new Date());
 						dmsEntry.replaceItemValue("$editor", username);
-						if (bParseContent) {
-							// parse content...
-							try {
-								String searchContent = DocumentParser.parse(fileName, fileData);
-								dmsEntry.replaceItemValue("content", searchContent);
-							} catch (IOException e) {
-								logger.warning(
-										"Unable to parse attached document " + fileName + " : " + e.getMessage());
-								e.printStackTrace();
-							}
-						}
+
 					}
 
 				}

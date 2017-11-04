@@ -1,4 +1,4 @@
-package org.imixs.workflow.documents;
+package org.imixs.workflow.documents.parser;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,9 +32,9 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
  * @author rsoika
  */
 @Stateless
-public class DocumentParser {
+public class DocumentCoreParser {
 
-	private static Logger logger = Logger.getLogger(DocumentParser.class.getName());
+	private static Logger logger = Logger.getLogger(DocumentCoreParser.class.getName());
 
 	/**
 	 * If the content is a .pdf, .doc, .xls, .ppt or .docx the content will be

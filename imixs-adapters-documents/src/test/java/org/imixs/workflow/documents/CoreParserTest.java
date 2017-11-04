@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.documents.parser.DocumentCoreParser;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,8 +18,8 @@ import org.junit.Test;
  * @author rsoika
  * 
  */
-public class DocumentParserTest {
-	private static Logger logger = Logger.getLogger(DocumentParserTest.class.getName());
+public class CoreParserTest {
+	private static Logger logger = Logger.getLogger(CoreParserTest.class.getName());
 
 	@Before
 	public void setup() {
@@ -35,7 +36,7 @@ public class DocumentParserTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void parserTest() throws Exception {
+	public void parserTestPdf() throws Exception {
 
 		String fileName = "imixs-workflow.pdf";
 
@@ -46,7 +47,32 @@ public class DocumentParserTest {
 		ItemCollection testCol = new ItemCollection();
 		testCol.addFile(fileData, fileName, "");
 
-		String content = DocumentParser.parse(fileName, testCol.getFile(fileName));
+		String content = DocumentCoreParser.parse(fileName, testCol.getFile(fileName));
+
+		Assert.assertNotNull(content);
+
+		Assert.assertTrue(content.contains("multi-level security concept"));
+		logger.info(content);
+	}
+	
+	/**
+	 * Test parsing a MS doc file....
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void parserTestDoc() throws Exception {
+
+		String fileName = "imixs-workflow.doc";
+
+		InputStream inputStream = getClass().getResourceAsStream("/" + fileName);
+
+		byte[] fileData = streamToByteArray(inputStream);
+
+		ItemCollection testCol = new ItemCollection();
+		testCol.addFile(fileData, fileName, "");
+
+		String content = DocumentCoreParser.parse(fileName, testCol.getFile(fileName));
 
 		Assert.assertNotNull(content);
 

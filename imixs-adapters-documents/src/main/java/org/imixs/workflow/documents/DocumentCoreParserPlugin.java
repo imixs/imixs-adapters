@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import javax.ejb.Stateless;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.documents.parser.DocumentCoreParser;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.exceptions.PluginException;
 
@@ -22,9 +23,11 @@ import org.imixs.workflow.exceptions.PluginException;
  * @author rsoika
  */
 @Stateless
-public class DocumentParserPlugin extends AbstractPlugin {
+public class DocumentCoreParserPlugin extends AbstractPlugin {
 
-	private static Logger logger = Logger.getLogger(DocumentParserPlugin.class.getName());
+	public static final String PARSING_EXCEPTION = "PARSING_EXCEPTION";
+
+	private static Logger logger = Logger.getLogger(DocumentCoreParserPlugin.class.getName());
 
 	/**
 	 * This method parses the content of new attached office documents (.pdf, .doc,
@@ -49,8 +52,9 @@ public class DocumentParserPlugin extends AbstractPlugin {
 	 * 
 	 * @param aWorkitem
 	 * @return true if the dms item was changed
+	 * @throws PluginException
 	 */
-	private void updateDMSMetaData(ItemCollection aWorkitem) {
+	private void updateDMSMetaData(ItemCollection aWorkitem) throws PluginException {
 		boolean updateBlob = false;
 
 		List<ItemCollection> currentDmsList = DMSPlugin.getDmsList(aWorkitem);
@@ -71,12 +75,13 @@ public class DocumentParserPlugin extends AbstractPlugin {
 					if (fileContent != null && fileContent.length > 1) {
 						// parse content...
 						try {
-							String searchContent = DocumentParser.parse(fileName, fileData);
+							String searchContent = DocumentCoreParser.parse(fileName, fileData);
 							dmsEntry.replaceItemValue("content", searchContent);
 							updateBlob = true;
 						} catch (IOException e) {
 							logger.warning("Unable to parse attached document " + fileName + " : " + e.getMessage());
-							e.printStackTrace();
+							throw new PluginException(DocumentTikaParserPlugin.class.getSimpleName(), PARSING_EXCEPTION,
+									"Unable to parse attached document '" + fileName + "'", e);
 						}
 					}
 				}
