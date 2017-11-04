@@ -1,7 +1,8 @@
 # Imixs-Documents
 
-The Imixs-Documents is a adapter project for office documents like PDF or MS-Office files. 
-The adapter project provides plugins to parse the content of those documents. 
+The Imixs-Documents is a adapter project for collecting textual information from attached documents during the processing phase.
+This extracted text information is added into the item '_dms_' wich can be part of the lucene full-text-index. The DMS meta data is handled by the DMSPlugin.
+
 
 ## Parsers
  
