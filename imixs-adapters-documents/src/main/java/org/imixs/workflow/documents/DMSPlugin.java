@@ -16,32 +16,23 @@ import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
-import javax.enterprise.event.Observes;
 import javax.xml.bind.DatatypeConverter;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
-import org.imixs.workflow.engine.ProcessingEvent;
 import org.imixs.workflow.engine.PropertyService;
+import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.exceptions.PluginException;
 
 /**
- * The DMSService component handles the item 'dms' which is holding meta
+ * The DMSPlugin handles the item 'dms' which is holding meta
  * information about file attachments.
- * 
- * <p>
- * The service runs on the CDI event ProcessingEvent.BEFORE_PROCESS.
- * 
- * <p>
- * The service parses the content of .pdf and ms-doc documents and store the
- * information into the item 'content' of the dms field. This information can be
- * used by plugins to analyze the textual information of a document.
- * 
+
  * @version 1.0
  * @author rsoika
  */
 @Stateless
-public class DMSService {
+public class DMSPlugin extends AbstractPlugin {
 
 	public final static String DMS_ITEM = "dms";
 	public final static String DMS_FILE_NAMES = "dms_names"; // list of files
@@ -54,28 +45,29 @@ public class DMSService {
 	@EJB
 	PropertyService propertyService;
 
-	private static Logger logger = Logger.getLogger(DMSService.class.getName());
+	private static Logger logger = Logger.getLogger(DMSPlugin.class.getName());
 
 	/**
-	 * This method runs on the CDI event ProcessingEvent.BEFORE_PROCESS. The method
-	 * updates the DMS item of workitems before the processing life-cycle starts.
-	 * @throws PluginException 
+	 * This method parses the content of new attached office documents (.pdf, .doc,
+	 * ...) and updates the DMS item of workitems before the processing life-cycle
+	 * starts.
+	 * 
+	 * @throws PluginException
 	 */
-	public void onProcess(@Observes ProcessingEvent processingEvent) throws PluginException {
+	@Override
+	public ItemCollection run(ItemCollection document, ItemCollection event) throws PluginException {
 
-		if (processingEvent.getEventType() == ProcessingEvent.BEFORE_PROCESS) {
-			// update the dms meta data
-			try {
-				updateDMSMetaData(processingEvent.getDocument());
-			} catch (NoSuchAlgorithmException e) {
-				logger.severe("failed to compute MD5 checksum: " + processingEvent.getDocument().getUniqueID() + " - "
-						+ e.getMessage());
-				throw new PluginException(DMSService.class.getSimpleName(), CHECKSUM_ERROR,
-						"failed to compute MD5 checksum: " + processingEvent.getDocument().getUniqueID() + "("
-								+ e.getMessage() + ")",
-						e);
-			}
+		// update the dms meta data
+		try {
+			updateDMSMetaData(document);
+		} catch (NoSuchAlgorithmException e) {
+			logger.severe("failed to compute MD5 checksum: " + document.getUniqueID() + " - " + e.getMessage());
+			throw new PluginException(DMSPlugin.class.getSimpleName(), CHECKSUM_ERROR,
+					"failed to compute MD5 checksum: " + document.getUniqueID() + "(" + e.getMessage() + ")", e);
+
 		}
+
+		return document;
 
 	}
 
@@ -141,6 +133,23 @@ public class DMSService {
 	}
 
 	/**
+	 * This method returns the meta data of a specific file in the exiting filelist.
+	 * 
+	 * @return
+	 */
+	public static ItemCollection findDMSEntry(String aFilename, List<ItemCollection> dmsList) {
+	
+		for (ItemCollection dmsEntry : dmsList) {
+			// test if filename matches...
+			String sName = dmsEntry.getItemValueString("txtname");
+			if (sName.equals(aFilename))
+				return dmsEntry;
+		}
+		// no matching meta data found!
+		return null;
+	}
+
+	/**
 	 * This method updates the property 'dms' of the current workitem with the meta
 	 * data of attached files or links.
 	 * 
@@ -173,9 +182,6 @@ public class DMSService {
 
 		// first we remove all DMS entries which did not have a matching
 		// $File-Entry and are not from type link
-		if (fileNames == null) {
-			fileNames = new ArrayList<String>();
-		}
 		for (Iterator<ItemCollection> iterator = currentDmsList.iterator(); iterator.hasNext();) {
 			ItemCollection dmsEntry = iterator.next();
 			String sName = dmsEntry.getItemValueString("txtName");
@@ -259,23 +265,6 @@ public class DMSService {
 		aWorkitem.replaceItemValue(DMS_FILE_NAMES, aWorkitem.getFileNames());
 
 		return updateBlob;
-	}
-
-	/**
-	 * This method returns the meta data of a specific file in the exiting filelist.
-	 * 
-	 * @return
-	 */
-	private static ItemCollection findDMSEntry(String aFilename, List<ItemCollection> dmsList) {
-
-		for (ItemCollection dmsEntry : dmsList) {
-			// test if filename matches...
-			String sName = dmsEntry.getItemValueString("txtname");
-			if (sName.equals(aFilename))
-				return dmsEntry;
-		}
-		// no matching meta data found!
-		return null;
 	}
 
 	/**
