@@ -31,7 +31,6 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
  * @version 1.0
  * @author rsoika
  */
-@Stateless
 public class DocumentCoreParser {
 
 	private static Logger logger = Logger.getLogger(DocumentCoreParser.class.getName());

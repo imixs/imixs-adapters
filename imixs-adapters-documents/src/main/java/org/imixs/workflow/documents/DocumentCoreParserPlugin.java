@@ -22,7 +22,6 @@ import org.imixs.workflow.exceptions.PluginException;
  * @version 1.0
  * @author rsoika
  */
-@Stateless
 public class DocumentCoreParserPlugin extends AbstractPlugin {
 
 	public static final String PARSING_EXCEPTION = "PARSING_EXCEPTION";

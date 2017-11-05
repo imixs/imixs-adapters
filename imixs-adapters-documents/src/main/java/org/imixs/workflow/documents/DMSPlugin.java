@@ -30,7 +30,6 @@ import org.imixs.workflow.exceptions.PluginException;
  * @version 1.0
  * @author rsoika
  */
-@Stateless
 public class DMSPlugin extends AbstractPlugin {
 
 	public final static String DMS_ITEM = "dms";
