@@ -22,7 +22,6 @@ import org.xml.sax.SAXException;
  * @version 1.0
  * @author rsoika
  */
-@Stateless
 public class DocumentTikaParser {
 
 	private static Logger logger = Logger.getLogger(DocumentTikaParser.class.getName());

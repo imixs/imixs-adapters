@@ -24,7 +24,6 @@ import org.xml.sax.SAXException;
  * @version 1.0
  * @author rsoika
  */
-@Stateless
 public class DocumentTikaParserPlugin extends AbstractPlugin {
 
 	public static final String PARSING_EXCEPTION = "PARSING_EXCEPTION";
