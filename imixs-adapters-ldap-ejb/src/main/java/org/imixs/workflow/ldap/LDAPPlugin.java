@@ -27,6 +27,7 @@
 
 package org.imixs.workflow.ldap;
 
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.naming.Context;
@@ -35,7 +36,6 @@ import javax.naming.NamingException;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.WorkflowContext;
-import org.imixs.workflow.engine.PropertyService;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.exceptions.PluginException;
 
@@ -54,9 +54,7 @@ public class LDAPPlugin extends AbstractPlugin {
 	public final static String LDAPSERVICE_NOT_BOUND = "LDAPSERVICE_NOT_BOUND";
 	public final static String PROPERTYSERVICE_NOT_BOUND = "PROPERTYSERVICE_NOT_BOUND";
 
-	private ItemCollection documentContext;
-	private LDAPLookupService lookupService = null;
-	private PropertyService propertyService = null;
+	private LDAPLookupService ldapLokupService = null;
 
 	private static Logger logger = Logger.getLogger(LDAPPlugin.class.getName());
 
@@ -71,96 +69,56 @@ public class LDAPPlugin extends AbstractPlugin {
 			InitialContext ictx = new InitialContext();
 			Context ctx = (Context) ictx.lookup("java:comp/env");
 			jndiName = "ejb/LDAPLookupService";
-			lookupService = (LDAPLookupService) ctx.lookup(jndiName);
+			ldapLokupService = (LDAPLookupService) ctx.lookup(jndiName);
 		} catch (NamingException e) {
 			throw new PluginException(LDAPPlugin.class.getSimpleName(),
 					LDAPSERVICE_NOT_BOUND,
-					"Unable to lookup LDAPLooupService EJB", e);
-		}
-
-		try {
-			// lookup PropertyService
-			InitialContext ictx = new InitialContext();
-			Context ctx = (Context) ictx.lookup("java:comp/env");
-			jndiName = "ejb/PropertyService";
-			propertyService = (PropertyService) ctx.lookup(jndiName);
-		} catch (NamingException e) {
-			throw new PluginException(LDAPPlugin.class.getSimpleName(),
-					PROPERTYSERVICE_NOT_BOUND, "PropertyService not bound", e);
+					"Unable to lookup LDAPLookupService EJB", e);
 		}
 
 	}
 
 	/**
 	 * Run only on Profile Entities
+	 * 
+	 * The method load the user object form the LDAP Service and compares
+	 * the attributes (defined in the imixs.properties 'ldap.user-attributes') with the current values.
+	 * If necessary the atributes will be automatically updated. 
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public ItemCollection run(ItemCollection adocumentContext,
 			ItemCollection documentActivity) throws PluginException {
-		documentContext = adocumentContext;
+		ItemCollection profile = adocumentContext;
 		// validate profile..
-		if ("profile".equals(documentContext.getItemValueString("type"))) {
-			updateLDAPAttributes();
+		if ("profile".equals(profile.getItemValueString("type"))) {
+			
+			String sUserID=profile.getItemValueString("txtname");
+			
+			// compare attributes....
+			ItemCollection ldapUser = ldapLokupService.findUser(sUserID);
+			if (ldapUser != null) {
+				logger.fine("ldap entry found, verifing attributes...");
+				// print all
+				Map<String, Object> items = (Map<String, Object>) ldapUser.getItemList();
+
+				for (Map.Entry<String, Object> entry : items.entrySet()) {
+					String key = entry.getKey();
+					Object value = entry.getValue();
+					logger.finest(" ...... " + key + "=" + value);
+
+					if (!profile.getItemValue(key).equals(ldapUser.getItemValue(key))) {
+						profile.replaceItemValue(key, ldapUser.getItemValue(key));
+					}
+				}
+			} else {
+				logger.warning("userid " + sUserID + " not found!");
+			}
+		
 		}
 
-		return documentContext;
+		return profile;
 	}
 
 	
-	/**
-	 * Updates txtUserName, txtEmail if ldap entry found
-	 * 
-	 * 
-	 * The ldap property attribute-names are read from the imixs.propries file
-	 * 
-	 * 
-	 */
-	private void updateLDAPAttributes() {
-		if (lookupService != null) {
-			String sUid = documentContext.getItemValueString("txtName");
-
-			if (!sUid.isEmpty()) {
-				ItemCollection ldapItemCollection = lookupService
-						.findUser(sUid);
-				if (ldapItemCollection != null) {
-
-					String sUserNameAttribute = (String) propertyService
-							.getProperties().getProperty(
-									"ldap.username-attribute", "displayName");
-					String sEmailAttribute = (String) propertyService
-							.getProperties().getProperty(
-									"ldap.email-attribute", "mail");
-
-					String sUserName = ldapItemCollection
-							.getItemValueString(sUserNameAttribute);
-					String sEmail = ldapItemCollection
-							.getItemValueString(sEmailAttribute);
-
-					if (!sUserName.isEmpty()) {
-						documentContext.replaceItemValue("txtUserName",
-								sUserName);
-						logger.fine("[LDAPPlugin] updateLDAPAttribute : "
-								+ sUserNameAttribute
-								+ "='"
-								+ ldapItemCollection
-										.getItemValue(sUserNameAttribute)
-								+ "' ");
-					}
-					if (!sEmail.isEmpty()) {
-
-						documentContext.replaceItemValue("txtEmail", sEmail);
-						logger.fine("[LDAPPlugin] updateLDAPAttributes : "
-								+ sUserNameAttribute
-								+ sEmailAttribute
-								+ "='"
-								+ ldapItemCollection
-										.getItemValue(sEmailAttribute) + "'");
-					}
-
-				}
-			}
-
-		}
-	}
-
 }
