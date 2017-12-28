@@ -1,13 +1,13 @@
 package org.imixs.workflow.documents;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
-import javax.ejb.Stateless;
-
+import org.imixs.archive.core.DMSHandler;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.documents.parser.DocumentCoreParser;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
@@ -26,9 +26,9 @@ public class DocumentCoreParserPlugin extends AbstractPlugin {
 
 	public static final String PARSING_EXCEPTION = "PARSING_EXCEPTION";
 	public static final String PLUGIN_ERROR = "PLUGIN_ERROR";
-
 	private static Logger logger = Logger.getLogger(DocumentCoreParserPlugin.class.getName());
 
+	
 	/**
 	 * This method parses the content of new attached office documents (.pdf, .doc,
 	 * ...) and updates the DMS item of workitems before the processing life-cycle
@@ -53,31 +53,49 @@ public class DocumentCoreParserPlugin extends AbstractPlugin {
 	 * @param aWorkitem
 	 * @return true if the dms item was changed
 	 * @throws PluginException
+	 * @throws NoSuchAlgorithmException 
 	 */
-	private void updateDMSMetaData(ItemCollection aWorkitem) throws PluginException {
-		boolean updateBlob = false;
+	private void updateDMSMetaData(ItemCollection workitem) throws  PluginException {
+		//boolean updateDmsItem = false;
 
-		List<ItemCollection> currentDmsList = DMSPlugin.getDmsList(aWorkitem);
-		Map<String, List<Object>> files = aWorkitem.getFiles();
+		
+		try {
+			DMSHandler.updateDMSMetaData(workitem, this.getWorkflowService().getUserName());
+		} catch (NoSuchAlgorithmException e) {
+			logger.warning("Unable to update dms meta data: " + e.getMessage());
+			throw new PluginException(DocumentCoreParserPlugin.class.getSimpleName(), PARSING_EXCEPTION,
+					"Unable to update dms meta data", e);
+		}
+		//List<ItemCollection> currentDmsList = DMSHandler.getDmsList(workitem);
+		Map<String, List<Object>> files = workitem.getFiles();
+		
+		//List<Map> vDMS = workitem.getItemValue(DMSHandler.DMS_ITEM);
 
 		// now we test for each file entry if a content exits. In this case we parse the
 		// content and update the dms entry...
 		if (files != null) {
-
+ 
 			for (Entry<String, List<Object>> entry : files.entrySet()) {
 				String fileName = entry.getKey();
 				List<?> fileData = entry.getValue();
 
-				ItemCollection dmsEntry = DMSPlugin.findDMSEntry(fileName, currentDmsList);
+				ItemCollection dmsEntry = DMSHandler.getDMSEntry(fileName,workitem);
+				if (dmsEntry==null) {
+					// create a new dmsEntry object
+					logger.warning("Invalid DMS List, missing entry '" + fileName + "'");
+				}
+				
 				if (dmsEntry != null) {
 					// dms entry exists. We parse the file content if a new file content was added
 					byte[] fileContent = (byte[]) fileData.get(1);
 					if (fileContent != null && fileContent.length > 1) {
 						// parse content...
-						try {
+						try { 
 							String searchContent = DocumentCoreParser.parse(fileName, fileData);
 							dmsEntry.replaceItemValue("content", searchContent);
-							updateBlob = true;
+							
+							DMSHandler.putDMSEntry(dmsEntry, workitem);
+							
 						} catch (IOException e) {
 							logger.warning("Unable to parse attached document " + fileName + " : " + e.getMessage());
 							throw new PluginException(DocumentCoreParserPlugin.class.getSimpleName(), PARSING_EXCEPTION,
@@ -93,9 +111,9 @@ public class DocumentCoreParserPlugin extends AbstractPlugin {
 		}
 
 		// finally update the modified dms list....
-		if (updateBlob) {
-			DMSPlugin.putDmsList(aWorkitem, currentDmsList);
-		}
+//		if (updateDmsItem) {
+//			DMSHandler.putDmsList(aWorkitem, currentDmsList);
+//		}
 
 	}
 

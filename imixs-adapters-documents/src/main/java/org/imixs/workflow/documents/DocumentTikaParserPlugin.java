@@ -1,14 +1,14 @@
 package org.imixs.workflow.documents;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
-import javax.ejb.Stateless;
-
 import org.apache.tika.exception.TikaException;
+import org.imixs.archive.core.DMSHandler;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.documents.parser.DocumentTikaParser;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
@@ -56,35 +56,51 @@ public class DocumentTikaParserPlugin extends AbstractPlugin {
 	 * @return true if the dms item was changed
 	 * @throws PluginException
 	 */
-	private void updateDMSMetaData(ItemCollection aWorkitem) throws PluginException {
-		boolean updateBlob = false;
+	private void updateDMSMetaData(ItemCollection workitem) throws  PluginException {
+		//boolean updateDmsItem = false;
 
-		List<ItemCollection> currentDmsList = DMSPlugin.getDmsList(aWorkitem);
-		Map<String, List<Object>> files = aWorkitem.getFiles();
+		
+		try {
+			DMSHandler.updateDMSMetaData(workitem, this.getWorkflowService().getUserName());
+		} catch (NoSuchAlgorithmException e) {
+			logger.warning("Unable to update dms meta data: " + e.getMessage());
+			throw new PluginException(DocumentCoreParserPlugin.class.getSimpleName(), PARSING_EXCEPTION,
+					"Unable to update dms meta data", e);
+		}
+		//List<ItemCollection> currentDmsList = DMSHandler.getDmsList(workitem);
+		Map<String, List<Object>> files = workitem.getFiles();
+		
+		//List<Map> vDMS = workitem.getItemValue(DMSHandler.DMS_ITEM);
 
 		// now we test for each file entry if a content exits. In this case we parse the
 		// content and update the dms entry...
 		if (files != null) {
-
+ 
 			for (Entry<String, List<Object>> entry : files.entrySet()) {
 				String fileName = entry.getKey();
 				List<?> fileData = entry.getValue();
 
-				ItemCollection dmsEntry = DMSPlugin.findDMSEntry(fileName, currentDmsList);
+				ItemCollection dmsEntry = DMSHandler.getDMSEntry(fileName,workitem);
+				if (dmsEntry==null) {
+					// create a new dmsEntry object
+					logger.warning("Invalid DMS List, missing entry '" + fileName + "'");
+				}
+				
 				if (dmsEntry != null) {
 					// dms entry exists. We parse the file content if a new file content was added
 					byte[] fileContent = (byte[]) fileData.get(1);
 					if (fileContent != null && fileContent.length > 1) {
 						// parse content...
-						try {
+						try { 
 							String searchContent = DocumentTikaParser.parse(fileName, fileData);
 							dmsEntry.replaceItemValue("content", searchContent);
-							updateBlob = true;
+							
+							DMSHandler.putDMSEntry(dmsEntry, workitem);
+							
 						} catch (IOException | SAXException | TikaException e) {
 							logger.warning("Unable to parse attached document " + fileName + " : " + e.getMessage());
-							throw new PluginException(DocumentTikaParserPlugin.class.getSimpleName(), PARSING_EXCEPTION,
+							throw new PluginException(DocumentCoreParserPlugin.class.getSimpleName(), PARSING_EXCEPTION,
 									"Unable to parse attached document '" + fileName + "'", e);
-
 						}
 					}
 				} else {
@@ -96,10 +112,12 @@ public class DocumentTikaParserPlugin extends AbstractPlugin {
 		}
 
 		// finally update the modified dms list....
-		if (updateBlob) {
-			DMSPlugin.putDmsList(aWorkitem, currentDmsList);
-		}
+//		if (updateDmsItem) {
+//			DMSHandler.putDmsList(aWorkitem, currentDmsList);
+//		}
 
 	}
+	
+	
 
 }

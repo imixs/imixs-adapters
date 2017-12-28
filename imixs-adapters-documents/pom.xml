@@ -10,6 +10,7 @@
 
 
 	<properties>
+		<org.imixs.archive.version>0.0.2-SNAPSHOT</org.imixs.archive.version>
 		<apache.poi.version>3.17</apache.poi.version>
 		<apache.pdfbox.version>2.0.7</apache.pdfbox.version>
 		<apache.tika.version>1.16</apache.tika.version>
@@ -77,6 +78,15 @@
 			<groupId>org.apache.tika</groupId>
 			<artifactId>tika-parsers</artifactId>
 			<version>${apache.tika.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		
+		<!-- Imixs-Archive -->
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-archive-api</artifactId>
+			<version>${org.imixs.archive.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
