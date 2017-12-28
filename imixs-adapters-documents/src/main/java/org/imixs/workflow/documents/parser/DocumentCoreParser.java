@@ -6,8 +6,6 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.ejb.Stateless;
-
 import org.apache.pdfbox.io.RandomAccessBuffer;
 import org.apache.pdfbox.io.RandomAccessRead;
 import org.apache.pdfbox.pdfparser.PDFParser;
