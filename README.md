@@ -13,6 +13,14 @@ The [LDAP adapters](imixs-adapters-ldap-ejb) provide a set of services (EJB) to 
 
 * [imixs-adapters-ldap-ejb](imixs-adapters-ldap-ejb)
 
+
+## imixs-adapters-documents
+
+The [Imixs-Documents](imixs-adapters-documents) is a adapter project for collecting textual information from attached documents during the processing phase.
+This extracted text information is added into the item '_dms_' which can be part of the lucene full-text-index. The DMS meta data is handled by the [Imixs-Archive project](https://github.com/imixs/imixs-archive).
+ 
+* [imixs-adapters-documents](imixs-adapters-documents)
+
 ## imixs-adapters-magento-ejb
 
 The [Magento adapter](imixs-adapters-magento-ejb) provides a client API to connect Imixs-Workflow to the Ecommerce Softwareplattform Magento. 
