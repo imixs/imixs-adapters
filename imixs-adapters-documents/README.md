@@ -20,6 +20,14 @@ To activate the parsing process one of the following plugins can be configured i
 
 See details about the different parsers below. 
 
+## Searching Documents
+
+Imixs-Documents provide the feature to search also for the content of parsed documents. To activate this feature, the item 'dms' must be included into the lucene fulltext index. You can add the attribute to the lucene configuration in the imixs.properties file:
+
+	lucence.fulltextFieldList=.....,dms
+	
+
+# How to Install
 
 To include the imixs-adapters-documents plugins the following jar file must be part of the EJB module:
 
