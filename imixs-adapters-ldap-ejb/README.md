@@ -62,7 +62,7 @@ is used to provide the ProfileService with optional attributes form an external 
 
 	...
 	<assembly-descriptor>
-		<!-- LDAPGroupInterceptor -->
+		<!-- LDAPUserInterceptor -->
 		<interceptor-binding> 
 		    <description>Intercepter to add ldap attributes into the profile context</description> 
 		    <ejb-name>ProfileService</ejb-name> 
@@ -72,6 +72,31 @@ is used to provide the ProfileService with optional attributes form an external 
 	...
 
 The configuration to lookup a user is done by the imixs.properties.
+
+
+## The LDAP Group Interceptor 
+
+The interceptor class 
+
+	org.imixs.workflow.ldap.LDAPGroupInterceptor
+
+is used to provide the user access management with user groups provided by an external ldap directory. The interceptor class can be configured in the ejb-jar.xml deployment descriptor:
+
+
+	...
+	<assembly-descriptor>
+		<!-- LDAPGroupInterceptor -->
+		<interceptor-binding> 
+		    <description>Intercepter to add ldap attributes into the profile context</description> 
+		    <ejb-name>ProfileService</ejb-name> 
+			<interceptor-class>org.imixs.workflow.ldap.LDAPGroupInterceptor</interceptor-class> 
+		</interceptor-binding>
+	</assembly-descriptor>
+	...
+
+The configuration to lookup a user is done by the imixs.properties.
+
+
 
 ## Lookup LDAP Context
 The ldap context can either be injected by a JNDI name or constructed manually based on a given configuration:
