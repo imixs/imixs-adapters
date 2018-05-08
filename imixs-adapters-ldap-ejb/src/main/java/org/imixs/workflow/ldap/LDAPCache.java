@@ -73,7 +73,7 @@ public class LDAPCache {
 	 */
 	public void resetCache() {
 		// determine the cache size....
-		logger.fine("resetCache - initalizing settings....");
+		logger.finest("......resetCache - initalizing settings....");
 		int iCacheSize = DEFAULT_CACHE_SIZE;
 		try {
 			iCacheSize = Integer.valueOf(configurationProperties
@@ -108,7 +108,7 @@ public class LDAPCache {
 		if (expiresTime > 0) {
 			Long now = System.currentTimeMillis();
 			if ((now - lastReset) > expiresTime) {
-				logger.fine("LDAPCache Cache expired!");
+				logger.finest("......LDAPCache Cache expired!");
 				resetCache();
 			}
 		}

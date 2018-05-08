@@ -1,7 +1,9 @@
 package org.imixs.workflow.ldap;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Logger;
@@ -51,10 +53,20 @@ import org.imixs.workflow.ItemCollection;
 @LocalBean
 public class LDAPLookupService {
 
+	public static final int MAX_RESULT = 20;
+	public static final int TIME_LIMIT = 20000;
+	public static final String LDAP_SEARCH_CONTEXT = "ldap.search.context";
+	public static final String LDAP_SEARCH_FILTER_DN = "ldap.dn-search-filter";
+	public static final String LDAP_SEARCH_FILTER_GROUP = "ldap.group-search-filter";
+
+	public static final String LDAP_SEARCH_FILTER_PHRASE = "ldap.search.filter.phrase";
+	public static final String LDAP_USER_ATTRIBUTES = "ldap.user-attributes";
+
 	private boolean enabled = false;
 	private Properties configurationProperties = null;
 
 	private String dnSearchFilter = null;
+	private String searchFilterPhrase = null;
 	private String groupSearchFilter = null;
 	private String searchContext = null;
 	private String[] userAttributesLDAP = null; // ldap attribute names
@@ -64,13 +76,12 @@ public class LDAPLookupService {
 	@EJB
 	LDAPCache ldapCache;
 
-
 	private static Logger logger = Logger.getLogger(LDAPLookupService.class.getName());
 
 	@PostConstruct
 	void init() {
 		try {
-			logger.finest("init lookup service");
+			logger.finest("......init lookup service");
 			// load confiugration entity
 
 			// Disabled because of confglict with LDAPGroupInterceptor
@@ -83,24 +94,29 @@ public class LDAPLookupService {
 				logger.warning("LDAPLookupService unable to find imixs.properties in current classpath");
 				e.printStackTrace();
 			}
-
 			// skip if no configuration
-			if (configurationProperties == null)
+			if (configurationProperties == null) {
+				logger.severe("Missing imixs.properties!");
 				return;
-			
+			}
+
 			// initialize ldap configuration....
-			logger.fine("read LDAP configuration...");
-			searchContext = configurationProperties.getProperty("ldap.search-context", "");
-			logger.fine("ldap.search-context=" +searchContext );
-			dnSearchFilter = configurationProperties.getProperty("ldap.dn-search-filter", "(uid=%u)");
-			logger.fine("ldap.dn-search-filter=" +dnSearchFilter );
-			groupSearchFilter = configurationProperties.getProperty("ldap.group-search-filter", "(member=%d)");
-			logger.fine("ldap.group-search-filter=" +groupSearchFilter );
+			logger.finest("......read LDAP configuration...");
+			searchContext = configurationProperties.getProperty(LDAP_SEARCH_CONTEXT, "");
+			logger.finest("......"
+					+LDAP_SEARCH_CONTEXT + "=" + searchContext);
+			dnSearchFilter = configurationProperties.getProperty(LDAP_SEARCH_FILTER_DN, "(uid=%u)");
+			logger.finest("......"+LDAP_SEARCH_FILTER_DN + "=" + dnSearchFilter);
+
+			searchFilterPhrase = configurationProperties.getProperty(LDAP_SEARCH_FILTER_PHRASE);
+			logger.finest("......" + LDAP_SEARCH_FILTER_PHRASE + "=" + searchFilterPhrase);
+
+			groupSearchFilter = configurationProperties.getProperty(LDAP_SEARCH_FILTER_GROUP, "(member=%d)");
+			logger.finest("......"+LDAP_SEARCH_FILTER_GROUP + "=" + groupSearchFilter);
 			// read user attributes
-			String sAttributes = configurationProperties.getProperty("ldap.user-attributes", "uid,SN,CN,mail");
-			logger.fine("ldap.user-attributes=" +sAttributes );
-			
-			
+			String sAttributes = configurationProperties.getProperty(LDAP_USER_ATTRIBUTES, "uid,SN,CN,mail");
+			logger.finest("......"+LDAP_USER_ATTRIBUTES + "=" + sAttributes);
+
 			String[] userAttributeList = sAttributes.split(",");
 
 			// now we split up the ldap attribute name form the imixs name if a
@@ -115,19 +131,19 @@ public class LDAPLookupService {
 				String aAttr = userAttributeList[i].trim();
 				int sPos = aAttr.indexOf('|');
 				if (sPos > 0) {
-					userAttributesLDAP[i] = aAttr.substring(0, sPos ).trim();
+					userAttributesLDAP[i] = aAttr.substring(0, sPos).trim();
 					userAttributesImixs[i] = aAttr.substring(sPos + 1).trim();
 				} else {
 					userAttributesLDAP[i] = aAttr;
 					userAttributesImixs[i] = aAttr;
 				}
 				// debug info about the resolved attribute and item names
-				logger.finest("attributesLDAP-" + i+"=" +userAttributesLDAP[i] );
-				logger.finest("attributesImixs-" + i+"=" +userAttributesImixs[i] );
+				logger.finest("......attributesLDAP-" + i + "=" + userAttributesLDAP[i]);
+				logger.finest("......attributesImixs-" + i + "=" + userAttributesImixs[i]);
 			}
 
-			// test if ldap is enabled...
-			logger.fine("Verifing LDAP connection...");
+			// test if ldap is enabled (needed for interceptors)...
+			logger.finest("......verifing LDAP connection...");
 			enabled = false;
 			LdapContext ldapCtx = null;
 			try {
@@ -161,8 +177,8 @@ public class LDAPLookupService {
 	}
 
 	/**
-	 * Returns the ldap attributes for a given user. If no user was found in
-	 * LDAP the method returns null.
+	 * Returns the ldap attributes for a given user. If no user was found in LDAP
+	 * the method returns null.
 	 * 
 	 * @param aUID
 	 *            - user id
@@ -172,20 +188,54 @@ public class LDAPLookupService {
 	public ItemCollection findUser(String aUID) {
 
 		// also null objects can be returned here (if no ldap attributes exist)
-		if (ldapCache.contains(aUID))
+		if (ldapCache.contains(aUID)) {
+			logger.finest("......fetched user: " + aUID + " from cache.");
 			return (ItemCollection) ldapCache.get(aUID);
-
+		}
+		long l = System.currentTimeMillis();
 		// start lookup
 		LdapContext ldapCtx = null;
 		try {
-			logger.fine("find user: " + aUID);
+			logger.finest("......find user: " + aUID);
 			ldapCtx = getDirContext();
 			ItemCollection user = fetchUser(aUID, ldapCtx);
 			// cache user attributes (also null will be set if no entry was
 			// found!)
+			logger.finest("......put user: " + aUID + " into cache.");
 			ldapCache.put(aUID, user);
+
+			logger.fine("... lookup user " + aUID + " successfull in " + (System.currentTimeMillis() - l) + "ms");
 			return user;
 
+		} finally {
+			if (ldapCtx != null)
+				try {
+					ldapCtx.close();
+					ldapCtx = null;
+				} catch (NamingException e) {
+					e.printStackTrace();
+				}
+
+		}
+
+	}
+
+	/**
+	 * Returns a list of user entries form the ldap based on a search phrase
+	 * 
+	 * @param searchPhrase
+	 *            - search Phrase
+	 * @return ItemCollection containing the user attributes or null if no
+	 *         attributes where found.
+	 */
+	public List<ItemCollection> searchUserList(String searchPhrase) {
+
+		// start lookup
+		LdapContext ldapCtx = null;
+		try {
+			logger.finest("......serachUserList: " + searchPhrase);
+			ldapCtx = getDirContext();
+			return fetchUserList(searchPhrase, ldapCtx);
 		} finally {
 			if (ldapCtx != null)
 				try {
@@ -248,14 +298,13 @@ public class LDAPLookupService {
 	}
 
 	/**
-	 * returns the default attributes for a given user in an ItemCollection. If
-	 * ldap service is disabled or the user was not found then the method
-	 * returns null.
+	 * returns the default attributes for a given user in an ItemCollection. If ldap
+	 * service is disabled or the user was not found then the method returns null.
 	 * 
 	 * @param aUID
 	 *            - user id
-	 * @return ItemCollection - containing the user attributes or null if no
-	 *         entry was found
+	 * @return ItemCollection - containing the user attributes or null if no entry
+	 *         was found
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private ItemCollection fetchUser(String aUID, LdapContext ldapCtx) {
@@ -264,36 +313,36 @@ public class LDAPLookupService {
 		if (!enabled) {
 			return null;
 		}
-
+	
 		NamingEnumeration<SearchResult> answer = null;
 		try {
 			user = new ItemCollection();
 			SearchControls ctls = new SearchControls();
 			ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 			ctls.setReturningAttributes(userAttributesLDAP);
-
+	
 			String searchFilter = dnSearchFilter.replace("%u", aUID);
-			logger.fine("fetchUser: searchContext=" + searchContext);
-			logger.fine("fetchUser: searchFilter=" + searchFilter);
+			logger.finest("......fetchUser: searchContext=" + searchContext);
+			logger.finest("......fetchUser: searchFilter=" + searchFilter);
 			answer = ldapCtx.search(searchContext, searchFilter, ctls);
 			if (answer == null)
 				return null;
-
+	
 			if (answer.hasMore()) {
 				SearchResult entry = (SearchResult) answer.next();
 				sDN = entry.getName();
-				logger.finest("DN= " + sDN);
-
+				logger.finest("......DN= " + sDN);
+	
 				Attributes attributes = entry.getAttributes();
 				// fetch all attributes
 				for (int i = 0; i < userAttributesLDAP.length; i++) {
-
+	
 					Attribute atr = attributes.get(userAttributesLDAP[i]);
-					
-					logger.fine("...fetch attribute: '" +userAttributesLDAP[i] +"' = "+ atr);	
+	
+					logger.finest("......fetch attribute: '" + userAttributesLDAP[i] + "' = " + atr);
 					if (atr != null) {
 						NamingEnumeration<?> values = atr.getAll();
-
+	
 						Vector valueList = new Vector();
 						while (values.hasMore()) {
 							valueList.add(values.next());
@@ -301,15 +350,15 @@ public class LDAPLookupService {
 						if (valueList.size() > 0)
 							user.replaceItemValue(userAttributesImixs[i], valueList);
 					}
-				}				
+				}
 			}
-
+	
 			if (sDN == null) {
 				// empty user entry
 				sDN = aUID;
 				user.replaceItemValue("dn", sDN);
 			}
-
+	
 		} catch (NamingException e) {
 			// return null
 			user = null;
@@ -317,7 +366,7 @@ public class LDAPLookupService {
 			logger.warning(e.getMessage());
 			if (logger.isLoggable(java.util.logging.Level.FINEST))
 				e.printStackTrace();
-
+	
 		} finally {
 			if (answer != null)
 				try {
@@ -328,6 +377,95 @@ public class LDAPLookupService {
 				}
 		}
 		return user;
+	}
+
+	/**
+	 * This method searches a list of user objects by a given search phrase.
+	 * 
+	 * @param searchPhrase
+	 * @param ldapCtx
+	 * @return - list of itemCollection objects.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private List<ItemCollection> fetchUserList(String searchPhrase, LdapContext ldapCtx) {
+		NamingEnumeration<SearchResult> answer = null;
+		ArrayList<ItemCollection> result = new ArrayList<ItemCollection>();
+
+		if (searchPhrase == null || searchPhrase.isEmpty()) {
+			return result;
+		}
+
+		long l = System.currentTimeMillis();
+		try {
+
+			SearchControls ctls = new SearchControls();
+			ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+			ctls.setReturningAttributes(userAttributesLDAP);
+			ctls.setCountLimit(MAX_RESULT);
+			ctls.setTimeLimit(TIME_LIMIT);
+			String searchFilter = searchFilterPhrase.replace("?", searchPhrase);
+			logger.finest("......fetchUser: searchFilter = " + searchFilter);
+			answer = ldapCtx.search(searchContext, searchFilter, ctls);
+			if (answer == null) {
+				logger.finest("......search returend null");
+				return result;
+			}
+
+			logger.finest("......computing result list...");
+			while (answer.hasMore()) {
+				SearchResult entry = (SearchResult) answer.next();
+				ItemCollection itemColUser = new ItemCollection();
+				String sDN = entry.getName();
+				logger.finest("......DN = " + sDN);
+
+				Attributes attributes = entry.getAttributes();
+				// fetch all attributes
+				for (int i = 0; i < userAttributesLDAP.length; i++) {
+
+					Attribute atr = attributes.get(userAttributesLDAP[i]);
+
+					// logger.finest("......fetch attribute: '" + userAttributesLDAP[i] + "' = " +
+					// atr);
+					if (atr != null) {
+						NamingEnumeration<?> values = atr.getAll();
+
+						Vector valueList = new Vector();
+						while (values.hasMore()) {
+							valueList.add(values.next());
+						}
+						if (valueList.size() > 0) {
+							itemColUser.replaceItemValue(userAttributesImixs[i], valueList);
+						}
+					}
+				}
+				// add object to list
+				result.add(itemColUser);
+				if (result.size() >= MAX_RESULT) {
+					break;
+					// to avoid exception
+				}
+			}
+
+		} catch (NamingException e) {
+
+			logger.warning("ldap search error: " + e.getMessage());
+			if (logger.isLoggable(java.util.logging.Level.FINEST)) {
+				e.printStackTrace();
+			}
+		} finally {
+			if (answer != null)
+				try {
+					answer.close();
+					answer = null;
+				} catch (NamingException e) {
+					e.printStackTrace();
+				}
+		}
+
+		logger.fine(
+				"......search returend " + result.size() + " entries in " + (System.currentTimeMillis() - l) + "ms");
+		return result;
+
 	}
 
 	/**
@@ -360,7 +498,7 @@ public class LDAPLookupService {
 
 			sDN = user.getItemValueString("dn");
 
-			logger.fine("fetchGroups for: " + sDN);
+			logger.finest("......fetchGroups for: " + sDN);
 
 			String returnedAtts[] = { "cn" };
 
@@ -369,7 +507,7 @@ public class LDAPLookupService {
 			ctls.setReturningAttributes(returnedAtts);
 
 			String searchFilter = groupSearchFilter.replace("%d", sDN);
-			logger.finest("search:" + searchFilter);
+			logger.finest("......groupSearchFilter:" + searchFilter);
 
 			answer = ldapCtx.search(searchContext, searchFilter, ctls);
 			if (answer == null)
@@ -384,9 +522,8 @@ public class LDAPLookupService {
 				// domino
 				// problem so we take the name....
 				/*
-				 * Attributes attrs = entry.getAttributes(); Attribute attr =
-				 * attrs.get("cn"); if (attr != null) sGroupName = (String)
-				 * attr.get(0);
+				 * Attributes attrs = entry.getAttributes(); Attribute attr = attrs.get("cn");
+				 * if (attr != null) sGroupName = (String) attr.get(0);
 				 */
 				sGroupName = sGroupName.substring(3);
 				if (sGroupName.indexOf(',') > -1)
@@ -397,16 +534,16 @@ public class LDAPLookupService {
 						&& !sGroupName.startsWith(groupNamePraefix))
 					continue;
 
-				logger.finest("found Group= " + sGroupName);
+				logger.finest("......found Group= " + sGroupName);
 				vGroupList.add(sGroupName);
 			}
 
-			logger.finest("found " + vGroupList.size() + " groups");
+			logger.finest("......found " + vGroupList.size() + " groups");
 
 			groupArrayList = new String[vGroupList.size()];
 			vGroupList.toArray(groupArrayList);
 
-			logger.finest("put groups into cache for '" + aUID + "'");
+			logger.finest("......put groups into cache for '" + aUID + "'");
 
 		} catch (NamingException e) {
 			groupArrayList = null;
@@ -427,8 +564,8 @@ public class LDAPLookupService {
 	}
 
 	/**
-	 * This method lookups the ldap context either from a Jndi name
-	 * 'LdapJndiName' (DisableJndi=false) or manually if DisableJndi=true.
+	 * This method lookups the ldap context either from a Jndi name 'LdapJndiName'
+	 * (DisableJndi=false) or manually if DisableJndi=true.
 	 * 
 	 * @see http://java.net/projects/imixs-workflow-marty/pages/Useldapgroups
 	 * 
@@ -439,6 +576,7 @@ public class LDAPLookupService {
 	private LdapContext getDirContext() {
 		String ldapJndiName = null;
 		LdapContext ldapCtx = null;
+		long l=System.currentTimeMillis();
 
 		// test if configuration is available
 		if (configurationProperties == null) {
@@ -454,10 +592,10 @@ public class LDAPLookupService {
 			// test if manually ldap context should be build
 			String sDisabled = configurationProperties.getProperty("ldap.disable-jndi");
 
-			logger.fine("ldap.disable-jndi=" + sDisabled);
+			logger.finest("......ldap.disable-jndi=" + sDisabled);
 
 			if (sDisabled != null && "true".equals(sDisabled.toLowerCase())) {
-				logger.fine("lookup LDAP Ctx manually.....");
+				logger.finest("......jndi lookup LdapContext.....");
 				Hashtable env = new Hashtable();
 
 				// scann all properties starting with 'java.naming'
@@ -466,7 +604,7 @@ public class LDAPLookupService {
 					String sKey = keys.nextElement().toString();
 					if (sKey.startsWith("java.naming")) {
 						env.put(sKey, configurationProperties.getProperty(sKey));
-						logger.fine("Set key: " + sKey + "=" + configurationProperties.getProperty(sKey));
+						logger.finest("......Set env key: " + sKey + "=" + configurationProperties.getProperty(sKey));
 					}
 
 				}
@@ -479,19 +617,19 @@ public class LDAPLookupService {
 						configurationProperties.getProperty("java.naming.security.authentication", "simple"));
 
 				ldapCtx = new InitialLdapContext(env, null);
-				logger.finest("Get DirContext Manually successful! ");
+				logger.finest("......jndi lookup LdapContext successful! ");
 
 			} else {
 				// read GlassFish ldap_jndiName from configuration
 				ldapJndiName = configurationProperties.getProperty("ldap.jndi-name");
 				if ("".equals(ldapJndiName))
 					ldapJndiName = "org.imixs.office.ldap";
-				logger.fine("lookup LDAP Ctx from pool '" + ldapJndiName + "' .....");
+				logger.finest("......lookup LDAP Ctx from pool '" + ldapJndiName + "' .....");
 				ldapCtx = (LdapContext) initCtx.lookup(ldapJndiName);
 
 			}
 
-			logger.fine("Context initialized");
+			logger.fine("......LdapContext initialized in "+(System.currentTimeMillis()-l) + " ms");
 
 		} catch (NamingException e) {
 			logger.severe("Failed to open ldap conntext: " + e.getMessage());
