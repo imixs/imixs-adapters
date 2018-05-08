@@ -30,6 +30,7 @@ package org.imixs.workflow.ldap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import javax.ejb.EJB;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -54,47 +55,52 @@ public class LDAPPlugin extends AbstractPlugin {
 	public final static String LDAPSERVICE_NOT_BOUND = "LDAPSERVICE_NOT_BOUND";
 	public final static String PROPERTYSERVICE_NOT_BOUND = "PROPERTYSERVICE_NOT_BOUND";
 
+	@EJB
 	private LDAPLookupService ldapLokupService = null;
 
 	private static Logger logger = Logger.getLogger(LDAPPlugin.class.getName());
 
+	/**
+	 * This method tries to lookup hte LDAPLookupSerivice EJB only in case that the
+	 * bean is not yet injected by CDI which is the expected behavior,
+	 */
 	@Override
 	public void init(WorkflowContext actx) throws PluginException {
 		super.init(actx);
+		if (ldapLokupService == null) {
+			logger.finest("......LDAPLookupService not injected by CDI, trying JNDI lookup.....");
+			// get ldapService EJB
+			String jndiName = "";
 
-		// get ldapService EJB
-		String jndiName = "";
-
-		try {
-			InitialContext ictx = new InitialContext();
-			Context ctx = (Context) ictx.lookup("java:comp/env");
-			jndiName = "ejb/LDAPLookupService";
-			ldapLokupService = (LDAPLookupService) ctx.lookup(jndiName);
-		} catch (NamingException e) {
-			throw new PluginException(LDAPPlugin.class.getSimpleName(),
-					LDAPSERVICE_NOT_BOUND,
-					"Unable to lookup LDAPLookupService EJB", e);
+			try {
+				InitialContext ictx = new InitialContext();
+				Context ctx = (Context) ictx.lookup("java:comp/env");
+				jndiName = "ejb/LDAPLookupService";
+				ldapLokupService = (LDAPLookupService) ctx.lookup(jndiName);
+				logger.finest("......LDAPLookupService JNDI lookup successfull.");
+			} catch (NamingException e) {
+				throw new PluginException(LDAPPlugin.class.getSimpleName(), LDAPSERVICE_NOT_BOUND,
+						"Unable to lookup LDAPLookupService EJB", e);
+			}
 		}
-
 	}
 
 	/**
 	 * Run only on Profile Entities
 	 * 
-	 * The method load the user object form the LDAP Service and compares
-	 * the attributes (defined in the imixs.properties 'ldap.user-attributes') with the current values.
-	 * If necessary the atributes will be automatically updated. 
+	 * The method load the user object form the LDAP Service and compares the
+	 * attributes (defined in the imixs.properties 'ldap.user-attributes') with the
+	 * current values. If necessary the atributes will be automatically updated.
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public ItemCollection run(ItemCollection adocumentContext,
-			ItemCollection documentActivity) throws PluginException {
+	public ItemCollection run(ItemCollection adocumentContext, ItemCollection documentActivity) throws PluginException {
 		ItemCollection profile = adocumentContext;
 		// validate profile..
 		if ("profile".equals(profile.getItemValueString("type"))) {
-			
-			String sUserID=profile.getItemValueString("txtname");
-			
+
+			String sUserID = profile.getItemValueString("txtname");
+
 			// compare attributes....
 			ItemCollection ldapUser = ldapLokupService.findUser(sUserID);
 			if (ldapUser != null) {
@@ -114,11 +120,10 @@ public class LDAPPlugin extends AbstractPlugin {
 			} else {
 				logger.warning("userid " + sUserID + " not found!");
 			}
-		
+
 		}
 
 		return profile;
 	}
 
-	
 }
