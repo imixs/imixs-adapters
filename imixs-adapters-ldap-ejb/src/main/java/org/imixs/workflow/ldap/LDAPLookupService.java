@@ -187,24 +187,28 @@ public class LDAPLookupService {
 	 */
 	public ItemCollection findUser(String aUID) {
 
+		if (aUID==null || aUID.isEmpty()) {
+			return null;
+		}
+		
 		// also null objects can be returned here (if no ldap attributes exist)
 		if (ldapCache.contains(aUID)) {
-			logger.finest("......fetched user: " + aUID + " from cache.");
+			logger.finest("......fetched user: '" + aUID + "' from cache.");
 			return (ItemCollection) ldapCache.get(aUID);
 		}
 		long l = System.currentTimeMillis();
 		// start lookup
 		LdapContext ldapCtx = null;
 		try {
-			logger.finest("......find user: " + aUID);
+			logger.finest("......find user: '" + aUID + "'");
 			ldapCtx = getDirContext();
 			ItemCollection user = fetchUser(aUID, ldapCtx);
 			// cache user attributes (also null will be set if no entry was
 			// found!)
-			logger.finest("......put user: " + aUID + " into cache.");
+			logger.finest("......put user: '" + aUID + "' into cache.");
 			ldapCache.put(aUID, user);
 
-			logger.fine("... lookup user " + aUID + " successfull in " + (System.currentTimeMillis() - l) + "ms");
+			logger.fine("... lookup user '" + aUID + "' successfull in " + (System.currentTimeMillis() - l) + "ms");
 			return user;
 
 		} finally {
@@ -310,7 +314,7 @@ public class LDAPLookupService {
 	private ItemCollection fetchUser(String aUID, LdapContext ldapCtx) {
 		ItemCollection user = null;
 		String sDN = null;
-		if (!enabled) {
+		if (!enabled || aUID==null || aUID.isEmpty()) {
 			return null;
 		}
 	
@@ -481,8 +485,9 @@ public class LDAPLookupService {
 		Vector<String> vGroupList = null;
 		String[] groupArrayList = null;
 
-		if (!enabled)
+		if (!enabled || aUID==null || aUID.isEmpty()) {
 			return null;
+		}
 
 		NamingEnumeration<SearchResult> answer = null;
 		try {
