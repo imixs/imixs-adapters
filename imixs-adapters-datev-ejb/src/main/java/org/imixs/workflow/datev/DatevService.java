@@ -428,7 +428,8 @@ public class DatevService {
 	public ItemCollection readEntity(String data, List<String> fieldnames) {
 		ItemCollection result = new ItemCollection();
 		int iCol = 0;
-		String[] valuList = data.split(";", -1);
+		//String[] valuList = data.split(";", -1);
+		String[] valuList = data.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
 		for (String itemValue : valuList) {
 			// test if the token has content
 			if (itemValue != null && !itemValue.isEmpty()) {
