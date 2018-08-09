@@ -177,20 +177,36 @@ public class LDAPLookupService {
 
 	/**
 	 * Returns the ldap attributes for a given user. If no user was found in LDAP
-	 * the method returns null.
+	 * the method returns null. The method uses an internal cache.
 	 * 
 	 * @param aUID - user id
 	 * @return ItemCollection containing the user attributes or null if no
 	 *         attributes where found.
 	 */
 	public ItemCollection findUser(String aUID) {
+		return findUser(aUID, false);
+	}
+
+	/**
+	 * Returns the ldap attributes for a given user. If no user was found in LDAP
+	 * the method returns null.
+	 * <p>
+	 * If the boolean 'refresh' is true the method lookup the user in any case with
+	 * a search query and updates the cache.
+	 * 
+	 * @param aUID - user id
+	 * @param refresh - if true, cache will be refreshed. 
+	 * @return ItemCollection containing the user attributes or null if no
+	 *         attributes where found.
+	 */
+	public ItemCollection findUser(String aUID, boolean refresh) {
 
 		if (aUID == null || aUID.isEmpty()) {
 			return null;
 		}
 
 		// also null objects can be returned here (if no ldap attributes exist)
-		if (ldapCache.contains(aUID)) {
+		if (!refresh && ldapCache.contains(aUID)) {
 			logger.finest("......fetched user: '" + aUID + "' from cache.");
 			return (ItemCollection) ldapCache.get(aUID);
 		}
