@@ -98,6 +98,9 @@ The configuration to lookup a user is done by the imixs.properties.
 
 
 
+
+
+
 ## Lookup LDAP Context
 The ldap context can either be injected by a JNDI name or constructed manually based on a given configuration:
 
@@ -135,6 +138,24 @@ To connect to a Microsoft Active Directory the follwoing additonal addributes ca
 A userid lookup is typically made against the AD attribute 'samAccountName' using the following search phrase:
 
 	(samAccountName=%u)
+
+
+## Adapt LDAP Profile
+
+The LdapLookupService sends a CDI Event (org.imixs.workflow.ldap.LDAPProfileEvent). This event can be observed by CDI classes to adapt the content of a fetched ldap user profile. 
+
+See the following example:
+
+	@Stateless
+	public class CustomLDAPProfileAdapter {
+		public void onEvent(@Observes LDAPProfileEvent event) {
+			ItemCollection profile = event.getProfile();
+			// set a custom profile attribute ....
+			.....
+			profile.replaceItemValue("txtusernameCustom", special_username);
+			event.setProfile(profile);
+		}
+	}
 
 
 
