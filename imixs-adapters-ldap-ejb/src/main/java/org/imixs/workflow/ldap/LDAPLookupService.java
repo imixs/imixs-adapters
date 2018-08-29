@@ -12,6 +12,8 @@ import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingEnumeration;
@@ -73,6 +75,13 @@ public class LDAPLookupService {
 	private String[] userAttributesImixs = null; // imixs attributes names if |
 													// defined
 
+	
+	
+	
+	@Inject
+	protected Event<LDAPProfileEvent> ldapProfileEvents;
+
+	
 	@EJB
 	LDAPCache ldapCache;
 
@@ -407,6 +416,20 @@ public class LDAPLookupService {
 					e.printStackTrace();
 				}
 		}
+		
+		
+
+		// adapt userprofile
+		// fire event
+		if (ldapProfileEvents != null) {
+			LDAPProfileEvent event = new LDAPProfileEvent(user);
+			ldapProfileEvents.fire(event);
+			user = event.getProfile(); 
+		} else {
+			logger.warning("CDI Support is missing - LDAPProfileEvent wil not be fired");
+		}
+		
+		
 		return user;
 	}
 
@@ -469,6 +492,19 @@ public class LDAPLookupService {
 						}
 					}
 				}
+				
+				// adapt userprofile
+				// fire event
+				if (ldapProfileEvents != null) {
+					LDAPProfileEvent event = new LDAPProfileEvent(itemColUser);
+					ldapProfileEvents.fire(event);
+					itemColUser = event.getProfile(); 
+				} else {
+					logger.warning("CDI Support is missing - LDAPProfileEvent wil not be fired");
+				}
+				
+				
+				
 				// add object to list
 				result.add(itemColUser);
 				if (result.size() >= MAX_RESULT) {
