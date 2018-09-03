@@ -325,7 +325,7 @@ public class DatevImportService {
 	 * @param fieldnames
 	 * @return
 	 */
-	protected ItemCollection readEntity(String data, List<String> fieldnames) {
+	public ItemCollection readEntity(String data, List<String> fieldnames) {
 		ItemCollection result = new ItemCollection();
 		int iCol = 0;
 		// @see
