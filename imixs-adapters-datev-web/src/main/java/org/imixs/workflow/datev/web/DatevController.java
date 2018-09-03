@@ -40,7 +40,7 @@ import javax.inject.Named;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.datev.DatevSchedulerService;
-import org.imixs.workflow.datev.DatevService;
+import org.imixs.workflow.datev.DatevWorkflowService;
 import org.imixs.workflow.engine.DocumentService;
 
 /**
@@ -66,7 +66,7 @@ public class DatevController implements Serializable {
 
 	
 	@EJB
-	DatevService datevService;
+	DatevWorkflowService datevService;
 	@EJB
 	DocumentService documentService;
 
@@ -82,7 +82,7 @@ public class DatevController implements Serializable {
 		}
 	}
 
-	public DatevService getDatevService() {
+	public DatevWorkflowService getDatevService() {
 		return datevService;
 	}
 
@@ -115,7 +115,7 @@ public class DatevController implements Serializable {
 	 */
 	public ItemCollection createConfiguration() {
 		configItemCollection = new ItemCollection();
-		configItemCollection.replaceItemValue("type", DatevService.TYPE);
+		configItemCollection.replaceItemValue("type", DatevWorkflowService.TYPE);
 
 		return configItemCollection;
 

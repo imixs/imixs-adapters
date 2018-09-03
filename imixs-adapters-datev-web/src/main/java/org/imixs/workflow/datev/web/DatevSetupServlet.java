@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServlet;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.datev.DatevSchedulerService;
-import org.imixs.workflow.datev.DatevService;
+import org.imixs.workflow.datev.DatevWorkflowService;
 
 /**
  * This servlet checks scheduler for the Datev import service on startup. The
@@ -39,7 +39,7 @@ public class DatevSetupServlet extends HttpServlet {
 	private DatevSchedulerService datevSchedulerService;
 	
 	@EJB
-	private DatevService datevService;
+	private DatevWorkflowService datevService;
 	
 	@Override
 	public void init() throws ServletException {

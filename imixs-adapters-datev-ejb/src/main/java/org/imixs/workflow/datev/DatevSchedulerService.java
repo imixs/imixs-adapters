@@ -111,7 +111,7 @@ public class DatevSchedulerService {
 	WorkflowService workflowService;
 
 	@EJB
-	DatevService datevService;
+	DatevWorkflowService datevService;
 
 	@Resource
 	javax.ejb.TimerService timerService;
@@ -135,7 +135,7 @@ public class DatevSchedulerService {
 	 */
 	public ItemCollection saveConfiguration(ItemCollection configItemCollection) throws AccessDeniedException {
 		// update write and read access
-		configItemCollection.replaceItemValue("type", DatevService.TYPE);
+		configItemCollection.replaceItemValue("type", DatevWorkflowService.TYPE);
 		// configItemCollection.replaceItemValue("txtName", NAME);
 		configItemCollection.replaceItemValue("$writeAccess", "org.imixs.ACCESSLEVEL.MANAGERACCESS");
 		configItemCollection.replaceItemValue("$readAccess", "org.imixs.ACCESSLEVEL.MANAGERACCESS");

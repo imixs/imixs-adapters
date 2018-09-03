@@ -65,13 +65,17 @@ import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.exceptions.WorkflowException;
 
 /**
- * This EJB provides methods to interact with a magento instance through the
- * MagentoClient. This service EJB is also used by the MagentoPlugin class.
+ * This EJB provides methods to import data from a DATEV file and convert the
+ * objects into a workitem managed by the Imixs-Worklfow Engine.
+ * <p>
+ * The import file must contain 2 header rows. The 1st row contains the object
+ * type, the 2nd row contains the filed names. *
+ * <p>
+ * The EJB reads a configuration entity with information how to assign a new
+ * object to a workflow model
  * 
- * The service initialize a Client Implementation based on a configuration.
- * 
- * The Service EJB provides to both client types the MagentoSOAPClient and the
- * MagnetoRestClient. The clients are lazy loaded in the getter methods.
+ * @see DatevImportService to import datev data without assigne the data to a
+ *      workflow model.
  * 
  * @author rsoika
  */
@@ -80,9 +84,8 @@ import org.imixs.workflow.exceptions.WorkflowException;
 @Stateless
 @RunAs("org.imixs.ACCESSLEVEL.MANAGERACCESS")
 @LocalBean
-public class DatevService {
+public class DatevWorkflowService {
 
-	// public final static String ERROR_MESSAGE = "ERROR_MESSAGE";
 	public final static String MODEL_ERROR = "MODEL_ERROR";
 	public final static String PROCESSING_ERROR = "PROCESSING_ERROR";
 	public final static String CONFIG_ERROR = "CONFIG_ERROR";
@@ -96,7 +99,7 @@ public class DatevService {
 
 	@EJB
 	WorkflowService workflowService = null;
-	private static Logger logger = Logger.getLogger(DatevService.class.getName());
+	private static Logger logger = Logger.getLogger(DatevWorkflowService.class.getName());
 
 	/**
 	 * initial setup the magento client implementation
@@ -107,23 +110,14 @@ public class DatevService {
 	}
 
 	/***
-	 * retruns a list of all existing Magento Shop Configurations
+	 * returns a list of all existing datev Configurations
 	 * 
 	 * @return
 	 */
 	public List<ItemCollection> findAllConfigurations() {
-		// load all configurations...
-		// String sQuery = "SELECT config FROM Entity AS config " + " JOIN
-		// config.textItems t1" + " WHERE config.type = '"
-		// + DatevService.TYPE + "'" + " AND t1.itemName='txtname'" + " ORDER BY
-		// t1.itemValue";
-		// List<ItemCollection> col =
-		// workflowService.getEntityService().findAllEntities(sQuery, 0, -1);
-
-		List<ItemCollection> col = workflowService.getDocumentService().getDocumentsByType(DatevService.TYPE);
+		List<ItemCollection> col = workflowService.getDocumentService().getDocumentsByType(DatevWorkflowService.TYPE);
 		// sort by name
 		Collections.sort(col, new ItemCollectionComparator("txtname", true));
-
 		return col;
 	}
 
@@ -142,13 +136,6 @@ public class DatevService {
 			logger.warning("invalid shop configuration id=" + id);
 		}
 		ItemCollection configItemCollection = null;
-		// try to load....
-		// String sQuery = "SELECT config FROM Entity AS config " + " JOIN
-		// config.textItems AS t2"
-		// + " WHERE config.type = '" + TYPE + "'" + " AND t2.itemName =
-		// 'txtname'" + " AND t2.itemValue = '" + id
-		// + "'" + " ORDER BY t2.itemValue asc";
-
 		String searchTerm = "( (type:\"" + TYPE + "\" ) AND txtname:\"" + id + "\")";
 
 		Collection<ItemCollection> col;
@@ -177,11 +164,6 @@ public class DatevService {
 	 */
 	public ItemCollection findWorkitemByName(String sKey) {
 
-		// String sQuery = "SELECT wi FROM Entity as wi";
-		// sQuery += " JOIN wi.textItems as t ";
-		// sQuery += " WHERE wi.type IN ('workitem','workitemarchive')";
-		// sQuery += " AND t.itemName='txtname' AND t.itemValue='" + sKey + "'";
-
 		String searchTerm = "( (type:\"workitem\" OR type:\"workitemarchive\") AND txtname:\"" + sKey + "\")";
 
 		Collection<ItemCollection> col;
@@ -202,20 +184,16 @@ public class DatevService {
 	/**
 	 * This method imports all entities from a csv file.
 	 * 
-	 * The method runs in a new transaction so processing exceptions can be
-	 * caught and stored in the DATEV configuration entity
+	 * The method runs in a new transaction so processing exceptions can be caught
+	 * and stored in the DATEV configuration entity
 	 * 
-	 * The parameter start and count can be used to import only a part of the
-	 * file.
+	 * The parameter start and count can be used to import only a part of the file.
 	 * 
 	 * 
-	 * @param configuration
-	 *            - the configuration entity for the DATEV import
+	 * @param configuration - the configuration entity for the DATEV import
 	 * 
-	 * @param start
-	 *            - optional start position
-	 * @param count
-	 *            - optional count (default =-1)
+	 * @param start         - optional start position
+	 * @param count         - optional count (default =-1)
 	 * @throws PluginException
 	 */
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
@@ -333,23 +311,23 @@ public class DatevService {
 				configuration.replaceItemValue("_datev_lLastImport", modifiedTime);
 				configuration.replaceItemValue("_datev_datLastImport", new Date(modifiedTime));
 			} catch (IOException ioex) {
-				throw new DatevException(DatevService.class.getName(), IO_ERROR, "" + ioex, ioex);
+				throw new DatevException(DatevWorkflowService.class.getName(), IO_ERROR, "" + ioex, ioex);
 			} catch (Exception e) {
 				// Catch Workflow Exceptions
 				workitemsFailed++;
 
 				logger.severe("DATEV import error at line " + line + ": " + datevLine);
 				if (e.getCause() instanceof InvalidAccessException) {
-					throw new DatevException(DatevService.class.getName(),
+					throw new DatevException(DatevWorkflowService.class.getName(),
 							((InvalidAccessException) e.getCause()).getErrorCode(),
 							((InvalidAccessException) e.getCause()).getMessage(), e);
 				}
 				if (e.getCause() instanceof WorkflowException) {
-					throw new DatevException(DatevService.class.getName(),
+					throw new DatevException(DatevWorkflowService.class.getName(),
 							((WorkflowException) e.getCause()).getErrorCode(),
 							((WorkflowException) e.getCause()).getMessage(), e);
 				}
-				throw new DatevException(DatevService.class.getName(), PROCESSING_ERROR, "" + e, e);
+				throw new DatevException(DatevWorkflowService.class.getName(), PROCESSING_ERROR, "" + e, e);
 			}
 
 			finally {
@@ -428,7 +406,7 @@ public class DatevService {
 	public ItemCollection readEntity(String data, List<String> fieldnames) {
 		ItemCollection result = new ItemCollection();
 		int iCol = 0;
-		//String[] valuList = data.split(";", -1);
+		// String[] valuList = data.split(";", -1);
 		String[] valuList = data.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
 		for (String itemValue : valuList) {
 			// test if the token has content
@@ -444,7 +422,7 @@ public class DatevService {
 				}
 			} else {
 				// empty value
-				result.replaceItemValue("_datev_" + fieldnames.get(iCol),"");
+				result.replaceItemValue("_datev_" + fieldnames.get(iCol), "");
 			}
 			iCol++;
 		}
@@ -452,9 +430,9 @@ public class DatevService {
 	}
 
 	/**
-	 * This method parses a string value for an ISO Date/Time format. If the
-	 * value is parseable the method returns a Date object. In other case the
-	 * method returns null.
+	 * This method parses a string value for an ISO Date/Time format. If the value
+	 * is parseable the method returns a Date object. In other case the method
+	 * returns null.
 	 * 
 	 * Supported formats:
 	 * 
@@ -501,7 +479,7 @@ public class DatevService {
 	 * @throws PluginException
 	 * @throws ProcessingErrorException
 	 * @throws AccessDeniedException
-	 * @throws ModelException 
+	 * @throws ModelException
 	 */
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 	public void processSingleWorkitem(ItemCollection aWorkitem)
