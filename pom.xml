@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.imixs.workflow</groupId>
 	<artifactId>imixs-adapters</artifactId>
@@ -9,6 +11,7 @@
 		<module>imixs-adapters-testing</module>
 		<module>imixs-adapters-ldap-ejb</module>
 		<module>imixs-adapters-datev</module>
+		<module>imixs-adapters-sepa</module>
 		<module>imixs-adapters-qrcode</module>
 		<module>imixs-adapters-documents</module>
 	</modules>
@@ -68,18 +71,18 @@
 	<!-- Imixs Repo -->
 	<repositories>
 		<repository>
-	        <id>imixs-mvn-repo</id>
-	        <url>https://raw.githubusercontent.com/imixs/imixs-mvn-repo/master/</url>
-	        <snapshots>
-	            <enabled>false</enabled>
-	            <updatePolicy>always</updatePolicy>
-	        </snapshots>
-	    </repository>
+			<id>imixs-mvn-repo</id>
+			<url>https://raw.githubusercontent.com/imixs/imixs-mvn-repo/master/</url>
+			<snapshots>
+				<enabled>false</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
 	</repositories>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>4.2.2</org.imixs.workflow.version>
+		<org.imixs.workflow.version>4.3.7</org.imixs.workflow.version>
 		<org.imixs.marty.version>3.1.0</org.imixs.marty.version>
 		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
 		<github.global.server>imixs-github-repo</github.global.server>
@@ -96,7 +99,7 @@
 				</configuration>
 			</plugin>
 
-			
+
 
 
 
@@ -179,6 +182,12 @@
 				<scope>provided</scope>
 			</dependency>
 
+			<dependency>
+				<groupId>org.imixs.marty</groupId>
+				<artifactId>imixs-marty-util</artifactId>
+				<version>${org.imixs.marty.version}</version>
+				<scope>provided</scope>
+			</dependency>
 
 		</dependencies>
 	</dependencyManagement>
