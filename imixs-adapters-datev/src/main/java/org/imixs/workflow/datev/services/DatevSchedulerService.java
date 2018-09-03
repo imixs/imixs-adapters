@@ -46,8 +46,8 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.WorkflowKernel;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
-import org.imixs.workflow.xml.XMLItemCollection;
-import org.imixs.workflow.xml.XMLItemCollectionAdapter;
+import org.imixs.workflow.xml.XMLDocument;
+import org.imixs.workflow.xml.XMLDocumentAdapter;
 
 /**
  * Datev - Scheduler
@@ -279,9 +279,9 @@ public class DatevSchedulerService {
 		for (Object obj : timerService.getTimers()) {
 			Timer timer = (javax.ejb.Timer) obj;
 
-			if (timer.getInfo() instanceof XMLItemCollection) {
-				XMLItemCollection xmlItemCollection = (XMLItemCollection) timer.getInfo();
-				ItemCollection adescription = XMLItemCollectionAdapter.getItemCollection(xmlItemCollection);
+			if (timer.getInfo() instanceof XMLDocument) {
+				XMLDocument xmlItemCollection = (XMLDocument) timer.getInfo();
+				ItemCollection adescription = XMLDocumentAdapter.putDocument(xmlItemCollection);
 				if (id.equals(adescription.getItemValueString("$uniqueid"))) {
 					return timer;
 				}
@@ -347,8 +347,8 @@ public class DatevSchedulerService {
 		logger.info("processing DATEV import....");
 
 		// load configuration...
-		XMLItemCollection xmlItemCollection = (XMLItemCollection) timer.getInfo();
-		ItemCollection configuration = XMLItemCollectionAdapter.getItemCollection(xmlItemCollection);
+		XMLDocument xmlItemCollection = (XMLDocument) timer.getInfo();
+		ItemCollection configuration = XMLDocumentAdapter.putDocument(xmlItemCollection);
 		sTimerID = configuration.getItemValueString(WorkflowKernel.UNIQUEID);
 		configuration = workflowService.getDocumentService().load(sTimerID);
 		try {
@@ -410,9 +410,9 @@ public class DatevSchedulerService {
 			endDate = startDate;
 		}
 
-		XMLItemCollection xmlConfigItem = null;
+		XMLDocument xmlConfigItem = null;
 		try {
-			xmlConfigItem = XMLItemCollectionAdapter.putItemCollection(configItemCollection);
+			xmlConfigItem = XMLDocumentAdapter.getDocument(configItemCollection);
 		} catch (Exception e) {
 			logger.severe("Unable to serialize confitItemCollection into a XML object");
 			e.printStackTrace();
@@ -447,9 +447,9 @@ public class DatevSchedulerService {
 
 		TimerConfig timerConfig = new TimerConfig();
 
-		XMLItemCollection xmlConfigItem = null;
+		XMLDocument xmlConfigItem = null;
 		try {
-			xmlConfigItem = XMLItemCollectionAdapter.putItemCollection(configItemCollection);
+			xmlConfigItem = XMLDocumentAdapter.getDocument(configItemCollection);
 		} catch (Exception e) {
 			logger.severe("Unable to serialize confitItemCollection into a XML object");
 			e.printStackTrace();

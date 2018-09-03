@@ -55,6 +55,7 @@ import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
+import org.imixs.workflow.WorkflowKernel;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.InvalidAccessException;
@@ -288,9 +289,9 @@ public class DatevWorkflowService {
 					ItemCollection oldEntity = findWorkitemByName(entity.getItemValueString("txtName"));
 					if (oldEntity == null) {
 						// create new workitem
-						entity.replaceItemValue(WorkflowService.MODELVERSION, modelversion);
-						entity.replaceItemValue(WorkflowService.PROCESSID, processID);
-						entity.replaceItemValue(WorkflowService.ACTIVITYID, activityID);
+						entity.setModelVersion(modelversion);
+						entity.setTaskID(processID);
+						entity.setEventID(activityID);
 						processSingleWorkitem(entity);
 						workitemsImported++;
 					} else {
@@ -301,7 +302,7 @@ public class DatevWorkflowService {
 							// copy all datev entries from the import into the
 							// existing entity
 							oldEntity.replaceAllItems(entity.getAllItems());
-							oldEntity.replaceItemValue(WorkflowService.ACTIVITYID, activityID);
+							oldEntity.setEventID(activityID);
 							processSingleWorkitem(oldEntity);
 							workitemsUpdated++;
 						}
