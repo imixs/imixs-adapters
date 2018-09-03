@@ -186,7 +186,7 @@ public class DatevImportService {
 			line++;
 			List<String> fields = parseFieldList(fieldnames);
 			// the first field is the keyfield
-			String keyField = "_" + fields.get(0).trim();
+			String keyField = fields.get(0).trim();
 
 			// read content....
 			while ((dataLine = in.readLine()) != null) {
@@ -286,7 +286,7 @@ public class DatevImportService {
 				field = field.replace('>', '_');
 				field = field.replace('<', '_');
 				field = field.replace('&', '_');
-				result.add(field.trim());
+				result.add("_"+field.trim());
 			} else {
 				// add dummy entry
 				result.add(null);
@@ -338,11 +338,11 @@ public class DatevImportService {
 			if (itemValue != null && !itemValue.isEmpty()) {
 				// create a itemvalue with the corresponding fieldname
 
-				result.replaceItemValue("_" + fieldnames.get(iCol), itemValue);
+				result.replaceItemValue(fieldnames.get(iCol), itemValue);
 				// searchstring += itemValue + " ";
 			} else {
 				// empty value
-				result.replaceItemValue("_" + fieldnames.get(iCol), "");
+				result.replaceItemValue(fieldnames.get(iCol), "");
 			}
 			iCol++;
 			if (iCol >= fieldnames.size()) {
