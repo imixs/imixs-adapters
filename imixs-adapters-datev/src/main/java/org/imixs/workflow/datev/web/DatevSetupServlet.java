@@ -10,8 +10,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.datev.DatevSchedulerService;
-import org.imixs.workflow.datev.DatevWorkflowService;
+import org.imixs.workflow.datev.services.DatevSchedulerService;
+import org.imixs.workflow.datev.services.DatevWorkflowService;
 
 /**
  * This servlet checks scheduler for the Datev import service on startup. The

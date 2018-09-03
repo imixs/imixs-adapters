@@ -39,8 +39,8 @@ import javax.faces.event.ActionEvent;
 import javax.inject.Named;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.datev.DatevSchedulerService;
-import org.imixs.workflow.datev.DatevWorkflowService;
+import org.imixs.workflow.datev.services.DatevSchedulerService;
+import org.imixs.workflow.datev.services.DatevWorkflowService;
 import org.imixs.workflow.engine.DocumentService;
 
 /**

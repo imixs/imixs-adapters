@@ -1,4 +1,4 @@
-package org.imixs.workflow.datev;
+package org.imixs.workflow.datev.services;
 /*******************************************************************************
  *  Imixs IX Workflow Technology
  *  Copyright (C) 2001, 2008 Imixs Software Solutions GmbH,  

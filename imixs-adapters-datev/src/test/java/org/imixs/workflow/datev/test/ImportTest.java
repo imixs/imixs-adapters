@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.datev.DatevWorkflowService;
+import org.imixs.workflow.datev.services.DatevWorkflowService;
 import org.imixs.workflow.exceptions.PluginException;
 import org.junit.Assert;
 import org.junit.Before;
