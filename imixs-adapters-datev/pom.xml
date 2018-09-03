@@ -1,14 +1,17 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.imixs.workflow</groupId>
-    <artifactId>imixs-adapters</artifactId>
-    <version>1.5.3-SNAPSHOT</version>
-  </parent>
-  <artifactId>imixs-adapters-datev-web</artifactId>
-  
-  
-  <dependencies>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.imixs.workflow</groupId>
+		<artifactId>imixs-adapters</artifactId>
+		<version>1.5.3-SNAPSHOT</version>
+	</parent>
+	<artifactId>imixs-adapters-datev</artifactId>
+	<name>Imixs DATEV Adapter</name>
+
+
+	<dependencies>
 		<dependency>
 			<groupId>org.imixs.workflow</groupId>
 			<artifactId>imixs-workflow-core</artifactId>
@@ -34,7 +37,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	
-	
-  <name>DATEV Import WEB</name>
+
+
 </project>

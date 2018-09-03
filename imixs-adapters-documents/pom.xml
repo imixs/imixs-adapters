@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.imixs.workflow</groupId>
@@ -6,7 +8,7 @@
 		<version>1.5.3-SNAPSHOT</version>
 	</parent>
 	<artifactId>imixs-adapters-documents</artifactId>
-
+	<name>Imixs Documents</name>
 
 	<properties>
 		<org.imixs.archive.version>1.0.0</org.imixs.archive.version>
@@ -79,8 +81,8 @@
 			<version>${apache.tika.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		
-		
+
+
 		<!-- Imixs-Archive -->
 		<dependency>
 			<groupId>org.imixs.workflow</groupId>
@@ -97,4 +99,5 @@
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
+
 </project>

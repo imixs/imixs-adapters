@@ -21,4 +21,5 @@
 			<artifactId>imixs-marty-ejb</artifactId>
 		</dependency>
 	</dependencies>
+	<name>Imixs LDAP Adapter</name>
 </project>
