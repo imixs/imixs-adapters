@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.imixs.workflow</groupId>
 	<artifactId>imixs-adapters</artifactId>
-	<version>1.5.4-SNAPSHOT</version>
+	<version>1.5.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<modules>
 		<module>imixs-adapters-magento-ejb</module>
@@ -82,7 +82,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.imixs.workflow.version>4.3.7</org.imixs.workflow.version>
-		<org.imixs.marty.version>3.1.0</org.imixs.marty.version>
+		<org.imixs.marty.version>3.3.2</org.imixs.marty.version>
 		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
 		<github.global.server>imixs-github-repo</github.global.server>
 	</properties>
@@ -99,10 +99,73 @@
 			</plugin>
 
 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.5.1</version>
+				<configuration>
+					<locales>en</locales>
+					<reportPlugins>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-project-info-reports-plugin</artifactId>
+							<version>2.9</version>
+							<reports>
+								<report>index</report>
+								<report>project-team</report>
+								<report>license</report>
+								<report>mailing-list</report>
+								<report>dependencies</report>
+								<report>dependency-convergence</report>
+								<report>plugin-management</report>
+								<report>cim</report>
+								<report>issue-tracking</report>
+								<report>scm</report>
+								<report>summary</report>
+							</reports>
+						</plugin>
+
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<version>2.10.4</version>
+						</plugin>
+
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-jxr-plugin</artifactId>
+							<version>2.1</version>
+						</plugin>
+						<!-- Findbugs -->
+						<plugin>
+							<groupId>org.codehaus.mojo</groupId>
+							<artifactId>findbugs-maven-plugin</artifactId>
+							<version>3.0.4</version>
+							<configuration>
+								<effort>Default</effort><!-- Min, Default, Max -->
+								<threshold>Default</threshold><!-- High, Default, Low, Ignore -->
+							</configuration>
+						</plugin>
+					</reportPlugins>
+				</configuration>
+			</plugin>
+
+			<!-- release management -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.3</version>
+				<configuration>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<useReleaseProfile>false</useReleaseProfile>
+					<releaseProfiles>release</releaseProfiles>
+					<goals>deploy</goals>
+				</configuration>
+			</plugin>
 
 
 
-			<!-- Maven Deployment -->
+			<!-- Maven Deployment to Github -->
 			<plugin>
 				<artifactId>maven-deploy-plugin</artifactId>
 				<version>2.8.1</version>
@@ -145,6 +208,8 @@
 				</executions>
 			</plugin>
 
+
+		
 		</plugins>
 	</build>
 
