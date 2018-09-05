@@ -52,8 +52,8 @@ import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
-import org.imixs.workflow.xml.XMLItemCollection;
-import org.imixs.workflow.xml.XMLItemCollectionAdapter;
+import org.imixs.workflow.xml.XMLDocument;
+import org.imixs.workflow.xml.XMLDocumentAdapter;
 
 /**
  * Magento - Scheduler
@@ -163,8 +163,7 @@ public class MagentoSchedulerService {
 	@Resource
 	javax.ejb.TimerService timerService;
 
-	private static Logger logger = Logger
-			.getLogger(MagentoSchedulerService.class.getName());
+	private static Logger logger = Logger.getLogger(MagentoSchedulerService.class.getName());
 
 	/***
 	 * retruns a list of all existing Magento Shop Configurations
@@ -191,23 +190,19 @@ public class MagentoSchedulerService {
 	 * @return
 	 * @throws AccessDeniedException
 	 */
-	public ItemCollection saveConfiguration(ItemCollection configItemCollection)
-			throws AccessDeniedException {
+	public ItemCollection saveConfiguration(ItemCollection configItemCollection) throws AccessDeniedException {
 		// update write and read access
 		configItemCollection.replaceItemValue("type", MagentoService.TYPE);
 		// configItemCollection.replaceItemValue("txtName", NAME);
-		configItemCollection.replaceItemValue("$writeAccess",
-				"org.imixs.ACCESSLEVEL.MANAGERACCESS");
-		configItemCollection.replaceItemValue("$readAccess",
-				"org.imixs.ACCESSLEVEL.MANAGERACCESS");
+		configItemCollection.replaceItemValue("$writeAccess", "org.imixs.ACCESSLEVEL.MANAGERACCESS");
+		configItemCollection.replaceItemValue("$readAccess", "org.imixs.ACCESSLEVEL.MANAGERACCESS");
 
 		// configItemCollection.replaceItemValue("$writeAccess", "");
 		// configItemCollection.replaceItemValue("$readAccess", "");
 
 		configItemCollection = updateTimerDetails(configItemCollection, false);
 		// save entity
-		configItemCollection = workflowService.getDocumentService().save(
-				configItemCollection);
+		configItemCollection = workflowService.getDocumentService().save(configItemCollection);
 
 		return configItemCollection;
 	}
@@ -215,9 +210,9 @@ public class MagentoSchedulerService {
 	/**
 	 * This Method starts the TimerService.
 	 * 
-	 * The Timer can be started based on a Calendar setting stored in the
-	 * property txtConfiguration, or by interval based on the properties
-	 * datStart, datStop, numIntervall.
+	 * The Timer can be started based on a Calendar setting stored in the property
+	 * txtConfiguration, or by interval based on the properties datStart, datStop,
+	 * numIntervall.
 	 * 
 	 * 
 	 * The method loads the configuration entity and evaluates the timer
@@ -235,8 +230,8 @@ public class MagentoSchedulerService {
 	 * numInterval - Integer Object (interval in seconds)
 	 * 
 	 * 
-	 * The method throws an exception if the configuration entity contains
-	 * invalid attributes or values.
+	 * The method throws an exception if the configuration entity contains invalid
+	 * attributes or values.
 	 * 
 	 * After the timer was started the configuration is updated with the latest
 	 * statusmessage
@@ -246,8 +241,7 @@ public class MagentoSchedulerService {
 	 * @throws AccessDeniedException
 	 * @throws ParseException
 	 */
-	public ItemCollection start(ItemCollection configItemCollection)
-			throws AccessDeniedException, ParseException {
+	public ItemCollection start(ItemCollection configItemCollection) throws AccessDeniedException, ParseException {
 		Timer timer = null;
 		if (configItemCollection == null)
 			return null;
@@ -259,8 +253,7 @@ public class MagentoSchedulerService {
 			this.findTimer(id).cancel();
 		}
 
-		String sConfiguation = configItemCollection
-				.getItemValueString("txtConfiguration");
+		String sConfiguation = configItemCollection.getItemValueString("txtConfiguration");
 
 		if (!sConfiguation.isEmpty()) {
 			// New timer will be started on calendar confiugration
@@ -270,8 +263,7 @@ public class MagentoSchedulerService {
 			int hours = configItemCollection.getItemValueInteger("hours");
 			int minutes = configItemCollection.getItemValueInteger("minutes");
 			long interval = (hours * 60 + minutes) * 60 * 1000;
-			configItemCollection.replaceItemValue("numInterval", new Long(
-					interval));
+			configItemCollection.replaceItemValue("numInterval", new Long(interval));
 
 			timer = createTimerOnInterval(configItemCollection);
 		}
@@ -280,22 +272,19 @@ public class MagentoSchedulerService {
 		if (timer != null) {
 
 			Calendar calNow = Calendar.getInstance();
-			SimpleDateFormat dateFormatDE = new SimpleDateFormat(
-					"dd.MM.yy hh:mm:ss");
-			String msg = "started at " + dateFormatDE.format(calNow.getTime())
-					+ " by " + ctx.getCallerPrincipal().getName();
+			SimpleDateFormat dateFormatDE = new SimpleDateFormat("dd.MM.yy hh:mm:ss");
+			String msg = "started at " + dateFormatDE.format(calNow.getTime()) + " by "
+					+ ctx.getCallerPrincipal().getName();
 			configItemCollection.replaceItemValue("statusmessage", msg);
 
 			if (timer.isCalendarTimer()) {
-				configItemCollection.replaceItemValue("Schedule", timer
-						.getSchedule().toString());
+				configItemCollection.replaceItemValue("Schedule", timer.getSchedule().toString());
 			} else {
 				configItemCollection.replaceItemValue("Schedule", "");
 
 			}
-			logger.info("[MagentoSchedulerService] "
-					+ configItemCollection.getItemValueString("txtName")
-					+ " started: " + id);
+			logger.info("[MagentoSchedulerService] " + configItemCollection.getItemValueString("txtName") + " started: "
+					+ id);
 		}
 		configItemCollection.replaceItemValue("errormessage", "");
 		configItemCollection = saveConfiguration(configItemCollection);
@@ -321,16 +310,13 @@ public class MagentoSchedulerService {
 		if (found) {
 			ItemCollection configuration = workflowService.getWorkItem(id);
 			Calendar calNow = Calendar.getInstance();
-			SimpleDateFormat dateFormatDE = new SimpleDateFormat(
-					"dd.MM.yy hh:mm:ss");
+			SimpleDateFormat dateFormatDE = new SimpleDateFormat("dd.MM.yy hh:mm:ss");
 
-			String msg = "stopped at " + dateFormatDE.format(calNow.getTime())
-					+ " by " + ctx.getCallerPrincipal().getName();
+			String msg = "stopped at " + dateFormatDE.format(calNow.getTime()) + " by "
+					+ ctx.getCallerPrincipal().getName();
 			configuration.replaceItemValue("statusmessage", msg);
 
-			logger.info("[MagentoSchedulerService] "
-					+ configuration.getItemValueString("txtName")
-					+ " stopped: " + id);
+			logger.info("[MagentoSchedulerService] " + configuration.getItemValueString("txtName") + " stopped: " + id);
 
 			configuration.removeItem("nextTimeout");
 			configuration.removeItem("timeRemaining");
@@ -352,10 +338,10 @@ public class MagentoSchedulerService {
 	private Timer findTimer(String id) {
 		for (Object obj : timerService.getTimers()) {
 			Timer timer = (javax.ejb.Timer) obj;
-			
-			if (timer.getInfo() instanceof XMLItemCollection) {
-				XMLItemCollection xmlItemCollection = (XMLItemCollection) timer.getInfo();
-				ItemCollection adescription = XMLItemCollectionAdapter.getItemCollection(xmlItemCollection);
+
+			if (timer.getInfo() instanceof XMLDocument) {
+				XMLDocument xmlItemCollection = (XMLDocument) timer.getInfo();
+				ItemCollection adescription = XMLDocumentAdapter.putDocument(xmlItemCollection);
 				if (id.equals(adescription.getItemValueString("$uniqueid"))) {
 					return timer;
 				}
@@ -365,16 +351,15 @@ public class MagentoSchedulerService {
 	}
 
 	/**
-	 * Update the timer details of a running timer service. The method updates
-	 * the properties netxtTimeout and timeRemaining and store them into the
-	 * timer configuration.
+	 * Update the timer details of a running timer service. The method updates the
+	 * properties netxtTimeout and timeRemaining and store them into the timer
+	 * configuration.
 	 * 
 	 * @param configuration
-	 * @param reload
-	 *            - if true the confiugration will be reloaded from the database
+	 * @param reload        - if true the confiugration will be reloaded from the
+	 *                      database
 	 */
-	public ItemCollection updateTimerDetails(ItemCollection configuration,
-			boolean reload) {
+	public ItemCollection updateTimerDetails(ItemCollection configuration, boolean reload) {
 		if (configuration == null)
 			return configuration;
 		String id = configuration.getItemValueString("$uniqueid");
@@ -390,18 +375,15 @@ public class MagentoSchedulerService {
 
 			if (timer != null) {
 				// load current timer details
-				configuration.replaceItemValue("nextTimeout",
-						timer.getNextTimeout());
-				configuration.replaceItemValue("timeRemaining",
-						timer.getTimeRemaining());
+				configuration.replaceItemValue("nextTimeout", timer.getNextTimeout());
+				configuration.replaceItemValue("timeRemaining", timer.getTimeRemaining());
 			} else {
 				configuration.removeItem("nextTimeout");
 				configuration.removeItem("timeRemaining");
 
 			}
 		} catch (Exception e) {
-			logger.warning("[MagentoSchedulerService] unable to updateTimerDetails: "
-					+ e.getMessage());
+			logger.warning("[MagentoSchedulerService] unable to updateTimerDetails: " + e.getMessage());
 			configuration.removeItem("nextTimeout");
 			configuration.removeItem("timeRemaining");
 
@@ -410,8 +392,8 @@ public class MagentoSchedulerService {
 	}
 
 	/**
-	 * This is the method which processes the timeout event depending on the
-	 * running timer settings.
+	 * This is the method which processes the timeout event depending on the running
+	 * timer settings.
 	 * 
 	 * For each defined Shop Configuration the method imports all orders.
 	 * 
@@ -440,9 +422,9 @@ public class MagentoSchedulerService {
 		magentoCache.clearCache();
 
 		// load configuration...
-		
-		XMLItemCollection xmlItemCollection = (XMLItemCollection) timer.getInfo();
-		ItemCollection configuration = XMLItemCollectionAdapter.getItemCollection(xmlItemCollection);
+
+		XMLDocument xmlItemCollection = (XMLDocument) timer.getInfo();
+		ItemCollection configuration = XMLDocumentAdapter.putDocument(xmlItemCollection);
 		sTimerID = configuration.getItemValueString(WorkflowKernel.UNIQUEID);
 		configuration = workflowService.getDocumentService().load(sTimerID);
 		try {
@@ -450,23 +432,19 @@ public class MagentoSchedulerService {
 
 			configuration.replaceItemValue("errormessage", "");
 			configuration.replaceItemValue("datLastRun", new Date());
-			configuration.replaceItemValue("numWorkItemsImported",
-					workitemsImported);
-			configuration.replaceItemValue("numWorkItemsUpdated",
-					workitemsUpdated);
-			configuration.replaceItemValue("numWorkItemsFailed",
-					workitemsFailed);
+			configuration.replaceItemValue("numWorkItemsImported", workitemsImported);
+			configuration.replaceItemValue("numWorkItemsUpdated", workitemsUpdated);
+			configuration.replaceItemValue("numWorkItemsFailed", workitemsFailed);
 
-			configuration
-					.replaceItemValue("numOrdersTotal", magentoOrdersTotal);
+			configuration.replaceItemValue("numOrdersTotal", magentoOrdersTotal);
 
 		} catch (MagentoException e) {
 			// in case of an exception we did not cancel the Timer service
 			if (logger.isLoggable(Level.FINE)) {
 				e.printStackTrace();
 			}
-			logger.severe("[MagentoSchedulerService] importOrders failed for: "
-					+ sTimerID + " Error=" + e.getMessage());
+			logger.severe(
+					"[MagentoSchedulerService] importOrders failed for: " + sTimerID + " Error=" + e.getMessage());
 			configuration.replaceItemValue("errormessage", e.getMessage());
 			magentoService.reset();
 		}
@@ -482,12 +460,9 @@ public class MagentoSchedulerService {
 		logger.info("[MagentoSchedulerService] import finished successfull: "
 				+ ((System.currentTimeMillis()) - lProfiler) + " ms");
 
-		logger.info("[MagentoSchedulerService] " + magentoOrdersTotal
-				+ " magento orders verified");
-		logger.info("[MagentoSchedulerService] " + workitemsImported
-				+ " workitems created");
-		logger.info("[MagentoSchedulerService] " + workitemsUpdated
-				+ " workitems updated");
+		logger.info("[MagentoSchedulerService] " + magentoOrdersTotal + " magento orders verified");
+		logger.info("[MagentoSchedulerService] " + workitemsImported + " workitems created");
+		logger.info("[MagentoSchedulerService] " + workitemsUpdated + " workitems updated");
 		logger.info("[MagentoSchedulerService] " + workitemsFailed + " errors");
 
 		// reset clients
@@ -503,9 +478,7 @@ public class MagentoSchedulerService {
 
 			if (calNow.getTime().after(endDate)) {
 				timer.cancel();
-				System.out
-						.println("[MagentoSchedulerService] Timeout sevice stopped: "
-								+ sTimerID);
+				System.out.println("[MagentoSchedulerService] Timeout sevice stopped: " + sTimerID);
 			}
 		}
 	}
@@ -532,37 +505,31 @@ public class MagentoSchedulerService {
 	 * imports orders for all states defined in the configuration property
 	 * 'txtOrderStatusMapping'
 	 * 
-	 * If no workitem exits the method will create a new one with the
-	 * $ModelVersion defined by the configruation property 'txtModelVersion'.
-	 * The new Workitem will be process with the ActivityID 800. The method also
-	 * stores the property txtMagentoConfiguration with the id of the
-	 * configuration entity
+	 * If no workitem exits the method will create a new one with the $ModelVersion
+	 * defined by the configruation property 'txtModelVersion'. The new Workitem
+	 * will be process with the ActivityID 800. The method also stores the property
+	 * txtMagentoConfiguration with the id of the configuration entity
 	 * 
-	 * If the workitem still exits but the state did not match the $ProcessID of
-	 * the workitem will be changed and th workitem will be processed withe
-	 * ActivityID 801.
+	 * If the workitem still exits but the state did not match the $ProcessID of the
+	 * workitem will be changed and th workitem will be processed withe ActivityID
+	 * 801.
 	 * 
 	 * 
-	 * The method implements a paging mechanism because magento returns maximum
-	 * 100 order per request.
+	 * The method implements a paging mechanism because magento returns maximum 100
+	 * order per request.
 	 * 
-	 * @param configuration
-	 *            - the configuration entity for the magento shop system
+	 * @param configuration - the configuration entity for the magento shop system
 	 * @throws PluginException
 	 */
 	@SuppressWarnings("unchecked")
-	public void importOrders(ItemCollection configuration)
-			throws MagentoException {
+	public void importOrders(ItemCollection configuration) throws MagentoException {
 		int iProcessID = -1;
 		String sMagentoStatus = null;
 		String sShopID = configuration.getItemValueString("txtName");
-		logger.info("[MagentoSchedulerSerivce] importOrders for magento shop id= "
-				+ sShopID);
+		logger.info("[MagentoSchedulerSerivce] importOrders for magento shop id= " + sShopID);
 
-		List<String> orderStatusMapping = configuration
-				.getItemValue("txtOrderStatusMapping");
-		String orderModelVersion = configuration
-				.getItemValueString("txtModelVersion");
+		List<String> orderStatusMapping = configuration.getItemValue("txtOrderStatusMapping");
+		String orderModelVersion = configuration.getItemValueString("txtModelVersion");
 
 		// find processid....
 		// format: pending=1000
@@ -574,39 +541,33 @@ public class MagentoSchedulerService {
 				String sProcessid = mapping.substring(pos + 1);
 				iProcessID = new Integer(sProcessid);
 			} catch (Exception e) {
-				logger.warning("[MagentoSchedulerService] wrong order status mapping in '"
-						+ mapping + "' - check configuration");
+				logger.warning("[MagentoSchedulerService] wrong order status mapping in '" + mapping
+						+ "' - check configuration");
 				continue;
 			}
 
 			// for some reasons it is not allowd to ask a state with space
 			// characters!
 			// so we check this now!
-			if (sMagentoStatus == null || sMagentoStatus.isEmpty()
-					|| sMagentoStatus.contains(" ")) {
-				logger.warning("[MagentoSchedulerService] wrong order status mapping in '"
-						+ mapping + "' - check configuration");
+			if (sMagentoStatus == null || sMagentoStatus.isEmpty() || sMagentoStatus.contains(" ")) {
+				logger.warning("[MagentoSchedulerService] wrong order status mapping in '" + mapping
+						+ "' - check configuration");
 				continue;
 			}
 
 			try {
-				logger.info("[MagentoSchedulerSerivce] read orders "
-						+ " orderstatus=" + sMagentoStatus);
+				logger.info("[MagentoSchedulerSerivce] read orders " + " orderstatus=" + sMagentoStatus);
 
-				List<ItemCollection> orders = magentoService.getRestClient(
-						sShopID).getOrders(sMagentoStatus);
+				List<ItemCollection> orders = magentoService.getRestClient(sShopID).getOrders(sMagentoStatus);
 
-				logger.info("[MagentoSchedulerSerivce] " + orders.size()
-						+ " orders found, start processing....");
+				logger.info("[MagentoSchedulerSerivce] " + orders.size() + " orders found, start processing....");
 
 				// process order list
 				processOrderList(orders, orderModelVersion, iProcessID, sShopID);
 			} catch (Exception e) {
-				String errorMessage = "unable to read orders "
-						+ " orderstatus=" + sMagentoStatus + " error message="
+				String errorMessage = "unable to read orders " + " orderstatus=" + sMagentoStatus + " error message="
 						+ e.getMessage();
-				throw new MagentoException(IMPORT_ERROR, IMPORT_ERROR,
-						errorMessage, e);
+				throw new MagentoException(IMPORT_ERROR, IMPORT_ERROR, errorMessage, e);
 			}
 
 		}
@@ -614,28 +575,27 @@ public class MagentoSchedulerService {
 	}
 
 	/**
-	 * This method processes the orders read form magento. A new or changed
-	 * workitem will be process by the activity ID 800.
+	 * This method processes the orders read form magento. A new or changed workitem
+	 * will be process by the activity ID 800.
 	 * 
-	 * The method also stores the property txtMagentoConfiguration with the id
-	 * of the configuration entity
+	 * The method also stores the property txtMagentoConfiguration with the id of
+	 * the configuration entity
 	 * 
 	 * 
-	 * @param orders
-	 *            - list of orders
-	 * @throws ModelException 
+	 * @param orders - list of orders
+	 * @throws ModelException
 	 */
-	private void processOrderList(List<ItemCollection> orders,
-			String orderModelVersion, int iProcessID, String shopConfigID) throws ModelException {
+	private void processOrderList(List<ItemCollection> orders, String orderModelVersion, int iProcessID,
+			String shopConfigID) throws ModelException {
 
 		/*
 		 * check if an activity 800 in the current model exits
 		 */
-		ItemCollection activityEntity = workflowService.getModelManager().getModel(orderModelVersion).getEvent(iProcessID,
-						MagentoPlugin.ACTIVITY_MAGENTO_UPDATE);
+		ItemCollection activityEntity = workflowService.getModelManager().getModel(orderModelVersion)
+				.getEvent(iProcessID, MagentoPlugin.ACTIVITY_MAGENTO_UPDATE);
 		if (activityEntity == null) {
-			logger.warning("[MagentoScheduler] - Activity " + iProcessID + "."
-					+ MagentoPlugin.ACTIVITY_MAGENTO_UPDATE + " not defined!");
+			logger.warning("[MagentoScheduler] - Activity " + iProcessID + "." + MagentoPlugin.ACTIVITY_MAGENTO_UPDATE
+					+ " not defined!");
 			return;
 		}
 
@@ -644,38 +604,28 @@ public class MagentoSchedulerService {
 
 			try {
 				// store shopID
-				if (!shopConfigID
-						.equals(order
-								.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID))) {
-					order.replaceItemValue(
-							MagentoPlugin.MAGENTO_CONFIGURATION_ID,
-							shopConfigID);
+				if (!shopConfigID.equals(order.getItemValueString(MagentoPlugin.MAGENTO_CONFIGURATION_ID))) {
+					order.replaceItemValue(MagentoPlugin.MAGENTO_CONFIGURATION_ID, shopConfigID);
 				}
 
 				boolean bUpdate = false;
 				String sMagentoKey = magentoService.getOrderID(order);
 
 				// check if workitem exits....
-				ItemCollection workitem = magentoService
-						.findWorkitemByOrder(order);
+				ItemCollection workitem = magentoService.findWorkitemByOrder(order);
 
 				if (workitem == null) {
 					// create new order !
-					logger.fine("[MagentoSchedulerService] create new workitem: '"
-							+ sMagentoKey + "'");
+					logger.fine("[MagentoSchedulerService] create new workitem: '" + sMagentoKey + "'");
 					workitem = new ItemCollection();
 					workitem.replaceItemValue("type", "workitem");
 					workitem.replaceItemValue("txtName", sMagentoKey);
-					workitem.replaceItemValue(WorkflowService.MODELVERSION,
-							orderModelVersion);
-					workitem.replaceItemValue("$ProcessID", new Integer(
-							iProcessID));
+					workitem.replaceItemValue(WorkflowKernel.MODELVERSION, orderModelVersion);
+					workitem.replaceItemValue("$ProcessID", new Integer(iProcessID));
 					workitem.replaceItemValue("txtMagentoError", "");
 
 					// store magento Shop id
-					workitem.replaceItemValue(
-							MagentoPlugin.MAGENTO_CONFIGURATION_ID,
-							shopConfigID);
+					workitem.replaceItemValue(MagentoPlugin.MAGENTO_CONFIGURATION_ID, shopConfigID);
 
 					// transfer order items
 					magentoService.addMagentoEntity(workitem, order);
@@ -684,15 +634,10 @@ public class MagentoSchedulerService {
 
 				} else {
 
-					logger.fine("[MagentoSchedulerService] Workitem for order '"
-							+ sMagentoKey
-							+ "' already exists ("
-							+ workitem
-									.getItemValueString(WorkflowService.UNIQUEID)
-							+ ")");
+					logger.fine("[MagentoSchedulerService] Workitem for order '" + sMagentoKey + "' already exists ("
+							+ workitem.getItemValueString(WorkflowKernel.UNIQUEID) + ")");
 					// check if order details have changed
-					if (!magentoService.isWorkitemEqualsToMagentoEntity(
-							workitem, order)) {
+					if (!magentoService.isWorkitemEqualsToMagentoEntity(workitem, order)) {
 						logger.fine("[MagentoSchedulerService] Workitem not equal! Update needed...");
 						magentoService.addMagentoEntity(workitem, order);
 
@@ -708,17 +653,14 @@ public class MagentoSchedulerService {
 
 				if (bUpdate) {
 					// process activityId = 800
-					workitem.replaceItemValue("$ActivityID", new Integer(
-							MagentoPlugin.ACTIVITY_MAGENTO_UPDATE));
-					ctx.getBusinessObject(MagentoSchedulerService.class)
-							.processSingleWorkitem(workitem);
+					workitem.replaceItemValue("$ActivityID", new Integer(MagentoPlugin.ACTIVITY_MAGENTO_UPDATE));
+					ctx.getBusinessObject(MagentoSchedulerService.class).processSingleWorkitem(workitem);
 
 				}
 
 			} catch (PluginException e) {
 				workitemsFailed++;
-				logger.warning("[MagentoSchedulerService] failed to import order: "
-						+ e.getMessage());
+				logger.warning("[MagentoSchedulerService] failed to import order: " + e.getMessage());
 			}
 		}
 	}
@@ -731,19 +673,17 @@ public class MagentoSchedulerService {
 	 * @throws PluginException
 	 * @throws ProcessingErrorException
 	 * @throws AccessDeniedException
-	 * @throws ModelException 
+	 * @throws ModelException
 	 */
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 	public void processSingleWorkitem(ItemCollection aWorkitem)
-			throws AccessDeniedException, ProcessingErrorException,
-			PluginException, ModelException {
+			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
 		workflowService.processWorkItem(aWorkitem);
 	}
 
 	/**
-	 * Create an interval timer whose first expiration occurs at a given point
-	 * in time and whose subsequent expirations occur after a specified
-	 * interval.
+	 * Create an interval timer whose first expiration occurs at a given point in
+	 * time and whose subsequent expirations occur after a specified interval.
 	 **/
 	Timer createTimerOnInterval(ItemCollection configItemCollection) {
 
@@ -758,25 +698,22 @@ public class MagentoSchedulerService {
 		if (endDate != null)
 			calEnd.setTime(endDate);
 		if (calNow.after(calEnd)) {
-			logger.warning("[MagentoSchedulerService] "
-					+ configItemCollection.getItemValueString("txtName")
+			logger.warning("[MagentoSchedulerService] " + configItemCollection.getItemValueString("txtName")
 					+ " stop-date is in the past");
 
 			endDate = startDate;
 		}
-		
-		XMLItemCollection xmlConfigItem = null;
+
+		XMLDocument xmlConfigItem = null;
 		try {
-			xmlConfigItem = XMLItemCollectionAdapter
-					.putItemCollection(configItemCollection);
+			xmlConfigItem = XMLDocumentAdapter.getDocument(configItemCollection);
 		} catch (Exception e) {
 			logger.severe("Unable to serialize confitItemCollection into a XML object");
 			e.printStackTrace();
 			return null;
 		}
-		
-		Timer timer = timerService.createTimer(startDate, interval,
-				xmlConfigItem);
+
+		Timer timer = timerService.createTimer(startDate, interval, xmlConfigItem);
 
 		return timer;
 
@@ -800,84 +737,69 @@ public class MagentoSchedulerService {
 	 * @return
 	 * @throws ParseException
 	 */
-	Timer createTimerOnCalendar(ItemCollection configItemCollection)
-			throws ParseException {
+	Timer createTimerOnCalendar(ItemCollection configItemCollection) throws ParseException {
 
 		TimerConfig timerConfig = new TimerConfig();
-		
-		XMLItemCollection xmlConfigItem = null;
+
+		XMLDocument xmlConfigItem = null;
 		try {
-			xmlConfigItem = XMLItemCollectionAdapter
-					.putItemCollection(configItemCollection);
+			xmlConfigItem = XMLDocumentAdapter.getDocument(configItemCollection);
 		} catch (Exception e) {
 			logger.severe("Unable to serialize confitItemCollection into a XML object");
 			e.printStackTrace();
 			return null;
 		}
-		
+
 		timerConfig.setInfo(xmlConfigItem);
 		ScheduleExpression scheduerExpression = new ScheduleExpression();
 
 		@SuppressWarnings("unchecked")
-		List<String> calendarConfiguation = configItemCollection
-				.getItemValue("txtConfiguration");
+		List<String> calendarConfiguation = configItemCollection.getItemValue("txtConfiguration");
 		// try to parse the configuration list....
 		for (String confgEntry : calendarConfiguation) {
 
 			if (confgEntry.startsWith("second=")) {
-				scheduerExpression.second(confgEntry.substring(confgEntry
-						.indexOf('=') + 1));
+				scheduerExpression.second(confgEntry.substring(confgEntry.indexOf('=') + 1));
 			}
 			if (confgEntry.startsWith("minute=")) {
-				scheduerExpression.minute(confgEntry.substring(confgEntry
-						.indexOf('=') + 1));
+				scheduerExpression.minute(confgEntry.substring(confgEntry.indexOf('=') + 1));
 			}
 			if (confgEntry.startsWith("hour=")) {
-				scheduerExpression.hour(confgEntry.substring(confgEntry
-						.indexOf('=') + 1));
+				scheduerExpression.hour(confgEntry.substring(confgEntry.indexOf('=') + 1));
 			}
 			if (confgEntry.startsWith("dayOfWeek=")) {
-				scheduerExpression.dayOfWeek(confgEntry.substring(confgEntry
-						.indexOf('=') + 1));
+				scheduerExpression.dayOfWeek(confgEntry.substring(confgEntry.indexOf('=') + 1));
 			}
 			if (confgEntry.startsWith("dayOfMonth=")) {
-				scheduerExpression.dayOfMonth(confgEntry.substring(confgEntry
-						.indexOf('=') + 1));
+				scheduerExpression.dayOfMonth(confgEntry.substring(confgEntry.indexOf('=') + 1));
 			}
 			if (confgEntry.startsWith("month=")) {
-				scheduerExpression.month(confgEntry.substring(confgEntry
-						.indexOf('=') + 1));
+				scheduerExpression.month(confgEntry.substring(confgEntry.indexOf('=') + 1));
 			}
 			if (confgEntry.startsWith("year=")) {
-				scheduerExpression.year(confgEntry.substring(confgEntry
-						.indexOf('=') + 1));
+				scheduerExpression.year(confgEntry.substring(confgEntry.indexOf('=') + 1));
 			}
 			if (confgEntry.startsWith("timezone=")) {
-				scheduerExpression.timezone(confgEntry.substring(confgEntry
-						.indexOf('=') + 1));
+				scheduerExpression.timezone(confgEntry.substring(confgEntry.indexOf('=') + 1));
 			}
 
 			/* Start date */
 			if (confgEntry.startsWith("start=")) {
 				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
-				Date convertedDate = dateFormat.parse(confgEntry
-						.substring(confgEntry.indexOf('=') + 1));
+				Date convertedDate = dateFormat.parse(confgEntry.substring(confgEntry.indexOf('=') + 1));
 				scheduerExpression.start(convertedDate);
 			}
 
 			/* End date */
 			if (confgEntry.startsWith("end=")) {
 				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
-				Date convertedDate = dateFormat.parse(confgEntry
-						.substring(confgEntry.indexOf('=') + 1));
+				Date convertedDate = dateFormat.parse(confgEntry.substring(confgEntry.indexOf('=') + 1));
 				scheduerExpression.end(convertedDate);
 			}
 
 		}
 
-		
-		Timer timer = timerService.createCalendarTimer(scheduerExpression,
-				timerConfig);
+		Timer timer = timerService.createCalendarTimer(scheduerExpression, timerConfig);
 
 		return timer;
 
