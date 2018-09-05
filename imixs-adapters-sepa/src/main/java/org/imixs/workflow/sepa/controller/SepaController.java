@@ -60,7 +60,7 @@ import org.imixs.workflow.sepa.services.SepaScheduler;
  
 @Named
 @RequestScoped
-public class SepaConfigController extends SchedulerController {
+public class SepaController extends SchedulerController {
 
 	public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
 
@@ -72,13 +72,25 @@ public class SepaConfigController extends SchedulerController {
 	@EJB
 	SchedulerService schedulerService;
 
-	private static Logger logger = Logger.getLogger(SepaConfigController.class.getName());
+	private static Logger logger = Logger.getLogger(SepaController.class.getName());
 
 	
 	@Override
 	public String getName() {
 		return SEPA_CONFIGURATION;
 	}
+	
+	
+
+	/**
+	 * Returns the sepa scheduler class name
+	 */
+	@Override
+	public String getSchedulerClass() {
+		return SepaScheduler.class.getName();
+	}
+
+
 
 	@Valid
 	@Pattern(regexp = BIC_PATTERN)
@@ -103,10 +115,6 @@ public class SepaConfigController extends SchedulerController {
 	}
 	
 	
-	
-	public void refresh() throws Exception {
-		getSchedulerService().updateTimerDetails(getConfiguration());
-	}
 	
 	
 }

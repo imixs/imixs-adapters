@@ -22,17 +22,12 @@
  *******************************************************************************/
 package org.imixs.workflow.sepa.services;
 
-import javax.annotation.security.DeclareRoles;
-import javax.annotation.security.RunAs;
 import javax.ejb.EJB;
-import javax.ejb.LocalBean;
-import javax.ejb.Stateless;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
-import org.imixs.workflow.engine.adminp.JobHandler;
-import org.imixs.workflow.engine.scheduler.SchedulerService;
+import org.imixs.workflow.engine.scheduler.Scheduler;
 import org.imixs.workflow.exceptions.QueryException;
 
 /**
@@ -41,7 +36,7 @@ import org.imixs.workflow.exceptions.QueryException;
  * @author rsoika
  * 
  */
-public class SepaScheduler implements JobHandler {
+public class SepaScheduler implements Scheduler {
 
 	@EJB
 	DocumentService documentService;
