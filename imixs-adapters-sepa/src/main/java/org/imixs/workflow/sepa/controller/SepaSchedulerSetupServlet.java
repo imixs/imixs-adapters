@@ -8,7 +8,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.sepa.services.SepaSchedulerService;
 
 /**
@@ -38,27 +37,20 @@ public class SepaSchedulerSetupServlet extends HttpServlet {
 		super.init();
 		logger.info("setup SEPA Scheduler Service...");
 
-		ItemCollection config = null;
-		try {
-			config = sepaSchedulerService.loadConfiguration();
-		} catch (QueryException e1) {
-			e1.printStackTrace();
-		}
-
-		if (config != null) {
+		ItemCollection config = sepaSchedulerService.loadConfiguration();
+		// is timmer running?
+		if (config != null && config.getItemValueBoolean("_enabled")
+				&& sepaSchedulerService.findTimer(config.getUniqueID()) == null) {
 			try {
-
-				if (config.getItemValueBoolean("_enabled")) {
-					logger.info("SEPA Scheduler Service will be started...");
-					sepaSchedulerService.start(config);
-				} else {
-					logger.info("...SEPA Scheduler Service will NOT be started. Setup Configuration manually.");
-				}
+				sepaSchedulerService.start(config);
+				logger.info("SEPA Scheduler Service will be started...");
 
 			} catch (Exception e) {
 				logger.severe("...start of SEPA Scheduler Service failed! - " + e.getMessage());
 				e.printStackTrace();
 			}
+		} else {
+			logger.info("...SEPA Scheduler Service will NOT be started. Setup Configuration manually.");
 		}
 
 	}

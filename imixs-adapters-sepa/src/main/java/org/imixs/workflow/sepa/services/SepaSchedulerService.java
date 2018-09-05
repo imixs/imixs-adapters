@@ -106,12 +106,11 @@ public class SepaSchedulerService {
 	public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
 
 	private ItemCollection configuration = null;
-	private Date endDate;
-
+	
 	public static String SNAPSHOTID = "$snapshotid";
 	public final static String EXPORT_ERROR = "EXPORT_ERROR";
 	public final static String TYPE = "ConfigKPMGExport";
-	
+
 	public final static char SEPARATOR = '\t';
 
 	@Resource
@@ -129,30 +128,23 @@ public class SepaSchedulerService {
 	private static Logger logger = Logger.getLogger(SepaSchedulerService.class.getName());
 
 	/**
-	 * This method loads the configuration from an entity with type=ENTITY_TYPE
+	 * Helper method loads the config entity.
 	 * 
-	 * @throws QueryException
+	 * @return
 	 */
-	public ItemCollection loadConfiguration() throws QueryException {
-		String sQuery = "(type:\"configuration\" AND txtname:\"" + SEPA_CONFIGURATION + "\")";
-		Collection<ItemCollection> col = documentService.find(sQuery, 1, 0);
+	public ItemCollection loadConfiguration() {
+		try {
+			// check if we have a configuration
+			String sQuery = "(type:\"configuration\" AND txtname:\"" + SepaSchedulerService.SEPA_CONFIGURATION + "\")";
+			Collection<ItemCollection> col = documentService.find(sQuery, 1, 0);
 
-		if (col.size() > 0) {
-			configuration = col.iterator().next();
-		} else {
-			try {
-				// create an empty entity with type and with start and stop
-				// default values
-				configuration = new ItemCollection();
-				configuration.replaceItemValue("type", TYPE);
-			} catch (Exception e) {
-				e.printStackTrace();
+			if (col.size() > 0) {
+				return col.iterator().next();
 			}
+		} catch (QueryException e1) {
+			e1.printStackTrace();
 		}
-
-		updateTimerDetails(configuration);
-
-		return configuration;
+		return null;
 	}
 
 	/**
@@ -173,15 +165,15 @@ public class SepaSchedulerService {
 	public ItemCollection saveConfiguration(ItemCollection configItemCollection) throws AccessDeniedException {
 		// update write and read access
 		configItemCollection.replaceItemValue("type", "configuration");
-		 configItemCollection.replaceItemValue("txtName", SEPA_CONFIGURATION);
+		configItemCollection.replaceItemValue("txtName", SEPA_CONFIGURATION);
 		configItemCollection.replaceItemValue("$writeAccess", "org.imixs.ACCESSLEVEL.MANAGERACCESS");
 		configItemCollection.replaceItemValue("$readAccess", "org.imixs.ACCESSLEVEL.MANAGERACCESS");
 
-		//configItemCollection = 
+		// configItemCollection =
 		updateTimerDetails(configItemCollection);
 		// save entity in new transaction
 		configItemCollection = workflowService.getDocumentService().save(configItemCollection);
-		
+
 		return configItemCollection;
 	}
 
@@ -224,7 +216,7 @@ public class SepaSchedulerService {
 		if (configItemCollection == null)
 			return null;
 
-		String id = configItemCollection.getItemValueString("$uniqueid");
+		String id = configItemCollection.getUniqueID();
 
 		// try to cancel an existing timer for this workflowinstance
 		while (this.findTimer(id) != null) {
@@ -236,16 +228,7 @@ public class SepaSchedulerService {
 		if (!sConfiguation.isEmpty()) {
 			// New timer will be started on calendar confiugration
 			timer = createTimerOnCalendar(configItemCollection);
-		} else {
-			// update the interval based on hour/minute configuration
-			int hours = configItemCollection.getItemValueInteger("hours");
-			int minutes = configItemCollection.getItemValueInteger("minutes");
-			long interval = (hours * 60 + minutes) * 60 * 1000;
-			configItemCollection.replaceItemValue("numInterval", new Long(interval));
-
-			timer = createTimerOnInterval(configItemCollection);
 		}
-
 		// start and set statusmessage
 		if (timer != null) {
 
@@ -309,16 +292,11 @@ public class SepaSchedulerService {
 	 * @return Timer
 	 * @throws Exception
 	 */
-	private Timer findTimer(String id) {
+	public Timer findTimer(String id) {
 		for (Object obj : timerService.getTimers()) {
 			Timer timer = (javax.ejb.Timer) obj;
-
-			if (timer.getInfo() instanceof XMLDocument) {
-				XMLDocument xmlItemCollection = (XMLDocument) timer.getInfo();
-				ItemCollection adescription = XMLDocumentAdapter.putDocument(xmlItemCollection);
-				if (id.equals(adescription.getItemValueString("$uniqueid"))) {
-					return timer;
-				}
+			if (id.equals(timer.getInfo())) {
+				return timer;
 			}
 		}
 		return null;
@@ -330,8 +308,8 @@ public class SepaSchedulerService {
 	 * configuration.
 	 * 
 	 * @param configuration
-	 * @param reload
-	 *            - if true the confiugration will be reloaded from the database
+	 * @param reload        - if true the confiugration will be reloaded from the
+	 *                      database
 	 */
 	public void updateTimerDetails(ItemCollection configuration) {
 		if (configuration == null)
@@ -362,7 +340,7 @@ public class SepaSchedulerService {
 			configuration.removeItem("timeRemaining");
 
 		}
-		//return configuration;
+		// return configuration;
 	}
 
 	/**
@@ -382,7 +360,14 @@ public class SepaSchedulerService {
 		long lProfiler = System.currentTimeMillis();
 
 		logger.info("processing import....");
-		configuration = loadConfiguration();
+		configuration = documentService.load(timer.getInfo().toString());
+
+		if (configuration == null) {
+			logger.severe("...failed to load sepa configuration for current timer. Timer will be stopped...");
+			timer.cancel();
+			return;
+		}
+
 		int maxCount = configuration.getItemValueInteger("_maxcount");
 		if (maxCount == 0) {
 			maxCount = -1;
@@ -397,7 +382,13 @@ public class SepaSchedulerService {
 
 			ItemCollection workitem = null;
 
-			// 1. run 
+			// 1. run
+			
+			
+			// ...........................
+			
+			// reload configuration
+			configuration = documentService.load(timer.getInfo().toString());
 			// update configuration
 			configuration.replaceItemValue("errormessage", "");
 			configuration.replaceItemValue("datLastRun", new Date());
@@ -431,57 +422,9 @@ public class SepaSchedulerService {
 			logger.info("" + configuration.getItemValueInteger("numWorkItemsExported") + " workitems exported");
 			logger.info("" + configuration.getItemValueInteger("numWorkItemsFailed") + " errors");
 
-			/*
-			 * Check if Timer should be canceled now?
-			 */
-			if (endDate != null) {
-				Calendar calNow = Calendar.getInstance();
-				if (calNow.getTime().after(endDate)) {
-					timer.cancel();
-					logger.info("Timeout - service stopped ");
-				}
-			}
+			
 
 		}
-	}
-
-	
-
-	/**
-	 * Create an interval timer whose first expiration occurs at a given point in
-	 * time and whose subsequent expirations occur after a specified interval.
-	 **/
-	Timer createTimerOnInterval(ItemCollection configItemCollection) {
-
-		// Create an interval timer
-		Date startDate = configItemCollection.getItemValueDate("datstart");
-		Date endDate = configItemCollection.getItemValueDate("datstop");
-		long interval = configItemCollection.getItemValueInteger("numInterval");
-		// if endDate is in the past we do not start the timer!
-		Calendar calNow = Calendar.getInstance();
-		Calendar calEnd = Calendar.getInstance();
-
-		if (endDate != null)
-			calEnd.setTime(endDate);
-		if (calNow.after(calEnd)) {
-			logger.warning("" + configItemCollection.getItemValueString("txtName") + " stop-date is in the past");
-
-			endDate = startDate;
-		}
-
-		XMLDocument xmlConfigItem = null;
-		try {
-			xmlConfigItem = XMLDocumentAdapter.getDocument(configItemCollection);
-		} catch (Exception e) {
-			logger.severe("Unable to serialize confitItemCollection into a XML object");
-			e.printStackTrace();
-			return null;
-		}
-
-		Timer timer = timerService.createTimer(startDate, interval, xmlConfigItem);
-
-		return timer;
-
 	}
 
 	/**
@@ -505,17 +448,8 @@ public class SepaSchedulerService {
 	Timer createTimerOnCalendar(ItemCollection configItemCollection) throws ParseException {
 
 		TimerConfig timerConfig = new TimerConfig();
+		timerConfig.setInfo(configItemCollection.getUniqueID());
 
-		XMLDocument xmlConfigItem = null;
-		try {
-			xmlConfigItem = XMLDocumentAdapter.getDocument(configItemCollection);
-		} catch (Exception e) {
-			logger.severe("Unable to serialize confitItemCollection into a XML object");
-			e.printStackTrace();
-			return null;
-		}
-
-		timerConfig.setInfo(xmlConfigItem);
 		ScheduleExpression scheduerExpression = new ScheduleExpression();
 
 		@SuppressWarnings("unchecked")
