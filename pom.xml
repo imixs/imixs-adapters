@@ -46,8 +46,8 @@
 		<connection>scm:git:https://github.com/imixs/imixs-adapters.git</connection>
 		<developerConnection>scm:git:https://github.com/imixs/imixs-adapters.git</developerConnection>
 		<url>https://github.com/imixs/imixs-adapters/</url>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 	<licenses>
 		<license>
 			<name>GNU General Public License</name>
@@ -56,16 +56,6 @@
 			<comments>All the results of the imixs workflow project are subject to the GPL licensing model. </comments>
 		</license>
 	</licenses>
-
-	<distributionManagement>
-		<repository>
-			<id>internal.repo</id>
-			<name>Temporary Staging Repository</name>
-			<url>file://${project.build.directory}/mvn-repo</url>
-		</repository>
-	</distributionManagement>
-
-
 
 	<!-- Imixs Repo -->
 	<repositories>
