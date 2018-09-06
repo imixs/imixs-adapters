@@ -93,7 +93,7 @@ public class SepaController extends SchedulerController {
 
 
 	@Valid
-	@Pattern(regexp = BIC_PATTERN)
+	@Pattern(regexp  = BIC_PATTERN)
 	public String getBic() {
 		return this.getConfiguration().getItemValueString("_bic");
 	}
