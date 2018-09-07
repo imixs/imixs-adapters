@@ -15,9 +15,16 @@
 			<script type="text/javascript">
 				/*<![CDATA[*/
 
+				function updateStatustPanel(data) {
+					//initUserInput($('#userselector_id'));
+					if (data.status === 'success') {
+						// select with wildcard operator
+						$('[id$=status_panel]').imixsLayout();
+					}
+				}
+
 				/*]]>*/
 			</script>
-
 
 
 			<h:form id="import_form_id">
@@ -30,7 +37,6 @@
 				<div class="imixs-form">
 					<div class="imixs-header">
 						<h1>SEPA</h1>
-						<h2>Configuration</h2>
 					</div>
 
 
@@ -39,35 +45,111 @@
 						<!-- **** General info ***** -->
 
 						<div class="imixs-form-panel">
+							<h1>Configuration</h1>
 							<div class="imixs-form-section-2">
 								<dl>
-									<dt>IBAN: <span class="imixs-required">* <h:message for="iban" /></span></dt>
+									<dt>
+										IBAN: <span class="imixs-required">* <h:message
+												for="iban" /></span>
+									</dt>
 									<dd>
-										<h:inputText id="iban" required="false" validatorMessage="#{app.IBAN_INVALID}"
-											value="#{sepaConfigController.iban}">
+										<h:inputText id="iban" required="false"
+											validatorMessage="#{app.IBAN_INVALID}"
+											value="#{sepaController.iban}">
 										</h:inputText>
-
 									</dd>
+								</dl>
+								<dl>
+									<dt>
+										BIC: <span class="imixs-required">* <h:message
+												for="bic" /></span>
+									</dt>
+									<dd>
+										<h:inputText id="bic" required="false"
+											validatorMessage="#{app.BIC_INVALID}"
+											value="#{sepaController.bic}">
+										</h:inputText>
+									</dd>
+								</dl>
+							</div>
 
+
+							<div class="imixs-form-section-2">
+								<dl>
+									<dt>
+										Invoice Selector: <span class="imixs-required">*</span>
+									</dt>
+									<dd>
+										<h:inputTextarea required="true"
+											value="#{sepaController.configuration.item['_query']}">
+										</h:inputTextarea>
+									</dd>
+								</dl>
+								<dl>
+									<dt>
+										<span class="typcn typcn-lightbulb"></span>
+									</dt>
+									<dd>
+										Define a search query to select invoices to be exported. <br />
+										e.g. (type:"workitem" AND $modelversion:"invoice-1.0.0")
+									</dd>
+								</dl>
+							</div>
+
+
+							<div class="imixs-form-section-2">
+								<dl>
+									<dt>Group By:</dt>
+									<dd>
+										<h:inputText required="false"
+											value="#{sepaController.configuration.item['_groupby']}">
+										</h:inputText>
+									</dd>
+								</dl>
+								<dl>
+									<dt>
+										<span class="typcn typcn-lightbulb"></span>
+									</dt>
+									<dd>
+										Optional list of items to group invoices for the SEPA export.
+										<br /> e.g. _BIC,_IBAN,$workflowgroup
+									</dd>
+								</dl>
+							</div>
+
+
+							<div class="imixs-form-section-2">
+								<dl>
+									<dt>SEPA Model Version</dt>
+									<dd>
+										<h:inputText required="false"
+											value="#{sepaController.configuration.item['_model_version']}">
+										</h:inputText>
+									</dd>
 								</dl>
 
 
 								<dl>
-									<dt>BIC: <span class="imixs-required">* <h:message for="bic" /></span></dt>
+									<dt>SEPA Initial Task</dt>
 									<dd>
-										<h:inputText id="bic" required="false"  validatorMessage="#{app.BIC_INVALID}"
-											value="#{sepaConfigController.bic}">
+										<h:inputText required="false"
+											value="#{sepaController.configuration.item['_initial_task']}">
 										</h:inputText>
-
 									</dd>
-
 								</dl>
-
-
-
 
 							</div>
 						</div>
+
+
+
+
+						<!-- include timer control -->
+
+						<ui:include src="sub_scheduler_control.xhtml"></ui:include>
+						
+
+
 
 					</div>
 
@@ -75,11 +157,9 @@
 
 
 					<div class="imixs-footer">
-
-
 						<h:outputLabel value="#{message.modified}: " />
 						<h:outputText
-							value="#{sepaConfigController.workitem.item['$modified']}">
+							value="#{sepaController.configuration.item['$modified']}">
 							<f:convertDateTime timeZone="#{message.timeZone}" type="both"
 								pattern="#{message.dateTimePattern}" />
 						</h:outputText>
@@ -87,17 +167,12 @@
 
 						<br />
 
-						<h:commandButton actionListener="#{sepaConfigController.save}"
+						<h:commandButton
+							actionListener="#{sepaController.saveConfiguration()}"
 							value="#{message.save}">
 						</h:commandButton>
 
-
-
-
 						<h:commandButton value="#{message.close}" action="notes" />
-
-
-
 
 					</div>
 

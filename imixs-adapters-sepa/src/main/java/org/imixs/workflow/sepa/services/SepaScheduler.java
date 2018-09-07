@@ -22,13 +22,25 @@
  *******************************************************************************/
 package org.imixs.workflow.sepa.services;
 
+import java.util.List;
+import java.util.logging.Logger;
+
 import javax.ejb.EJB;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
+import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.engine.scheduler.Scheduler;
+import org.imixs.workflow.engine.scheduler.SchedulerException;
+import org.imixs.workflow.exceptions.AccessDeniedException;
+import org.imixs.workflow.exceptions.ModelException;
+import org.imixs.workflow.exceptions.PluginException;
+import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
+import org.imixs.workflow.exceptions.WorkflowException;
 
 /**
  * SEPA Scheduler implementation.
@@ -38,12 +50,26 @@ import org.imixs.workflow.exceptions.QueryException;
  */
 public class SepaScheduler implements Scheduler {
 
+	public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
+	public static final int EVENT_SUCCESS = 100;
+	public static final int EVENT_FAILED = 200;
+
+	public static final String ITEM_MODEL_VERSION = "_model_version";
+	public static final String ITEM_INITIAL_TASK = "_initial_task";
+	public static final String ITEM_QUERY = "_query";
+
+	public static final int MAX_COUNT = 999;
+
 	@EJB
 	DocumentService documentService;
 
 	@EJB
+	WorkflowService workflowService;
+
+	@EJB
 	ModelService modelService;
-	public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
+
+	private static Logger logger = Logger.getLogger(SepaScheduler.class.getName());
 
 	/**
 	 * This is the method which processes the timeout event depending on the running
@@ -52,16 +78,39 @@ public class SepaScheduler implements Scheduler {
 	 * 
 	 * 
 	 * @param timer
-	 * @throws Exception
-	 * @throws QueryException
+	 * @throws QueryException 
 	 */
-	public ItemCollection run(ItemCollection configuration) {
+	public ItemCollection run(ItemCollection configuration) throws SchedulerException {
 
+		ItemCollection sepaExport;
 		int maxCount = configuration.getItemValueInteger("_maxcount");
 		if (maxCount == 0) {
 			maxCount = -1;
 		}
 
+		// load the model
+	try {
+
+			String modelVersion = configuration.getItemValueString(ITEM_MODEL_VERSION);
+			int taskID = configuration.getItemValueInteger(ITEM_INITIAL_TASK);
+			String query = configuration.getItemValueString(ITEM_QUERY);
+
+			sepaExport = new ItemCollection().model(modelVersion).task(taskID);
+
+			// find invoices....
+			List<ItemCollection> invoices = workflowService.getDocumentService().find(query, MAX_COUNT, 0);
+
+			logger.info("...found " + invoices.size() + " invoices...");
+
+			if (invoices.size() > 0) {
+				sepaExport.event(EVENT_SUCCESS);
+				workflowService.processWorkItem(sepaExport);
+			}
+
+	} catch (WorkflowException e) {
+		logger.warning("...processing error: " + e.getMessage());
+		throw new SchedulerException(e.getErrorContext(),e.getErrorCode(),e.getMessage(), e);
+	}
 		// create 3 new Export workitems for DirectDebit, KPMG and Online
 		// Banking
 		int errors = 0;
@@ -72,8 +121,9 @@ public class SepaScheduler implements Scheduler {
 
 		// 1. run
 
-		
 		return configuration;
 	}
 
+	
+	
 }

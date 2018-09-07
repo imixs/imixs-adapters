@@ -92,22 +92,22 @@ public class SepaController extends SchedulerController {
 
 
 
-	@Valid
+	@Valid 
 	@Pattern(regexp  = BIC_PATTERN)
 	public String getBic() {
-		return this.getConfiguration().getItemValueString("_bic");
+		return getConfiguration().getItemValueString("_bic");
 	}
 
 	public void setBic(String bic) {
 		logger.finest("......validate bic...");
-		this.getConfiguration().setItemValue("_bic", bic);
+		getConfiguration().setItemValue("_bic", bic);
 	}
 
 	@Valid
 	@Pattern(regexp = IBAN_PATTERN)
 	public String getIban() {
 		logger.finest("......validate iban...");
-		return this.getConfiguration().getItemValueString("_iban");
+		return getConfiguration().getItemValueString("_iban");
 	}
 
 	public void setIban(String iban) {
