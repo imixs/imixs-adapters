@@ -23,14 +23,10 @@
  *******************************************************************************/
 package org.imixs.workflow.sepa.controller;
 
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
-import javax.faces.application.FacesMessage;
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 import javax.inject.Named;
 import javax.validation.Valid;
 import javax.validation.constraints.Pattern;

@@ -22,226 +22,106 @@
 	</script>
 
 
-	<h:form id="import_form_id">
-		<!-- ########## Error ########## -->
-		<ui:include src="/pages/error_message.xhtml" />
+	<!-- **** General info ***** -->
+	<div class="imixs-form-panel">
+		<h1>Timer Settings</h1>
+		<h:inputTextarea required="false"
+			converter="org.imixs.VectorConverter"
+			style="height: 8em; width: 100%;"
+			value="#{sepaController.configuration.itemList['_scheduler_definition']}">
+		</h:inputTextarea>
 
 
+	</div>
 
+	<!-- **** Timer Status ***** -->
+	<div class="imixs-form-panel">
+		<h:panelGroup layout="block" id="timer_details"
+			class="imixs-form-section">
 
-		<div class="imixs-form">
-			<div class="imixs-header">
-				<h1>SEPA</h1>
-			</div>
+			<h1>
+				<h:outputText id="timer_status"
+					value="Timer Status ⇢ #{sepaController.configuration.item['statusMessage']}" />
 
-
-
-			<div class="imixs-body">
-				<!-- **** General info ***** -->
-
-				<div class="imixs-form-panel">
-					<h1>Configuration</h1>
-					<div class="imixs-form-section-2">
-						<dl>
-							<dt>
-								IBAN: <span class="imixs-required">* <h:message
-										for="iban" /></span>
-							</dt>
-							<dd>
-								<h:inputText id="iban" required="false"
-									validatorMessage="#{app.IBAN_INVALID}"
-									value="#{sepaController.iban}">
-								</h:inputText>
-							</dd>
-						</dl>
-						<dl>
-							<dt>
-								BIC: <span class="imixs-required">* <h:message for="bic" /></span>
-							</dt>
-							<dd>
-								<h:inputText id="bic" required="false"
-									validatorMessage="#{app.BIC_INVALID}"
-									value="#{sepaController.bic}">
-								</h:inputText>
-							</dd>
-						</dl>
-					</div>
-
-
-					<div class="imixs-form-section-2">
-						<dl>
-							<dt>
-								Invoice Selector: <span class="imixs-required">*</span>
-							</dt>
-							<dd>
-								<h:inputTextarea required="true"
-									value="#{sepaController.configuration.item['_query']}">
-								</h:inputTextarea>
-							</dd>
-						</dl>
-						<dl>
-							<dt>
-								<span class="typcn typcn-lightbulb"></span>
-							</dt>
-							<dd>
-								Define a search query to select invoices to be exported. <br />
-								e.g. (type:"workitem" AND $modelversion:"invoice-1.0.0")
-							</dd>
-						</dl>
-					</div>
-
-
-					<div class="imixs-form-section-2">
-						<dl>
-							<dt>Group By:</dt>
-							<dd>
-								<h:inputText required="false"
-									value="#{sepaController.configuration.item['_groupby']}">
-								</h:inputText>
-							</dd>
-						</dl>
-						<dl>
-							<dt>
-								<span class="typcn typcn-lightbulb"></span>
-							</dt>
-							<dd>
-								Optional list of items to group invoices for the SEPA export. <br />
-								e.g. _BIC,_IBAN,$workflowgroup
-							</dd>
-						</dl>
-					</div>
-
-
-					<div class="imixs-form-section-2">
-						<dl>
-							<dt>SEPA Model Version</dt>
-							<dd>
-								<h:inputText required="false"
-									value="#{sepaController.configuration.item['_model_version']}">
-								</h:inputText>
-							</dd>
-						</dl>
-
-
-						<dl>
-							<dt>SEPA Initial Task</dt>
-							<dd>
-								<h:inputText required="false"
-									value="#{sepaController.configuration.item['_initial_task']}">
-								</h:inputText>
-							</dd>
-						</dl>
-
-					</div>
-				</div>
-
-
-
-
-
-
-				<!-- **** General info ***** -->
-				<div class="imixs-form-panel">
-					<h1>Timer Settings</h1>
-					<h:inputTextarea required="false"
-						converter="org.imixs.VectorConverter"
-						style="height: 8em; width: 100%;"
-						value="#{sepaController.configuration.itemList['_scheduler_definition']}">
-					</h:inputTextarea>
-
-
-				</div>
-
-				<!-- **** Timer Status ***** -->
-				<div class="imixs-form-panel">
-					<h1>
-						<h:outputText id="timer_status"
-							value="Timer Status ⇢ #{sepaController.configuration.item['statusMessage']}" />
-
-						<h:panelGroup
-							rendered="#{! empty sepaController.configuration.item['errormessage']}"
-							class="small" style="color:red">
-							<br />Error: #{sepaController.configuration.item['errormessage']}"
+				<h:panelGroup
+					rendered="#{! empty sepaController.configuration.item['errormessage']}"
+					class="small" style="color:red">
+					<br />Error: #{sepaController.configuration.item['errormessage']}"
 								</h:panelGroup>
-					</h1>
+			</h1>
 
-					<h:panelGrid columns="2" id="timer_details">
+			<h:panelGrid columns="2">
 
-						<h:panelGroup layout="block" style="width:100px;">
-							<h:outputLabel value="ID: " />
-						</h:panelGroup>
-						<h:panelGroup>
-							<h:outputText
-								value="#{sepaController.configuration.item['$UniqueID']}" />
-						</h:panelGroup>
-
-
-						<h:outputLabel value="Schedule: " />
-						<h:outputText
-							value="#{sepaController.configuration.item['Schedule']}" />
+				<h:panelGroup layout="block" style="width:100px;">
+					<h:outputLabel value="ID: " />
+				</h:panelGroup>
+				<h:panelGroup>
+					<h:outputText
+						value="#{sepaController.configuration.item['$UniqueID']}" />
+				</h:panelGroup>
 
 
-
-						<h:outputLabel value="Next Timeout: " />
-						<h:panelGroup>
-							<h:outputText
-								value="#{sepaController.configuration.item['nextTimeout']}"
-								rendered="#{! empty sepaController.configuration.item['nextTimeout']}">
-								<f:convertDateTime timeZone="#{message.timeZone}" type="both"
-									pattern="#{message.dateTimePattern}" />
+				<h:outputLabel value="Schedule: " />
+				<h:outputText
+					value="#{sepaController.configuration.item['Schedule']}" />
 
 
-							</h:outputText>
-							<h:outputText value=" " />
-						</h:panelGroup>
 
-						<h:outputLabel value="TimeRemaining: " />
-						<h:outputText
-							value="#{sepaController.millisToShortDHMS(sepaController.configuration.item['timeRemaining'])}" />
+				<h:outputLabel value="Next Timeout: " />
+				<h:panelGroup>
+					<h:outputText
+						value="#{sepaController.configuration.item['nextTimeout']}"
+						rendered="#{! empty sepaController.configuration.item['nextTimeout']}">
+						<f:convertDateTime timeZone="#{message.timeZone}" type="both"
+							pattern="#{message.dateTimePattern}" />
 
-						<h:outputLabel value="Last run: " />
-						<h:outputText
-							value="#{sepaController.configuration.item['datLastRun']}">
-							<f:convertDateTime timeZone="#{message.timeZone}" type="both"
-								pattern="#{message.dateTimePatternShort}" />
-						</h:outputText>
 
-						<h:outputLabel value="Log: " />
-						<h:panelGroup>
-							<pre>
+					</h:outputText>
+					<h:outputText value=" " />
+				</h:panelGroup>
+
+				<h:outputLabel value="TimeRemaining: " />
+				<h:outputText
+					value="#{sepaController.millisToShortDHMS(sepaController.configuration.item['timeRemaining'])}" />
+
+				<h:outputLabel value="Last run: " />
+				<h:outputText
+					value="#{sepaController.configuration.item['datLastRun']}">
+					<f:convertDateTime timeZone="#{message.timeZone}" type="both"
+						pattern="#{message.dateTimePatternShort}" />
+				</h:outputText>
+
+				<h:outputLabel value="Log: " />
+				<h:panelGroup>
+					<pre>
 									<h:outputText
-									value="#{sepaController.configuration.item['_scheduler_log']}" />
+							value="#{sepaController.configuration.item['_scheduler_log']}" />
 								</pre>
-						</h:panelGroup>
+				</h:panelGroup>
 
-					</h:panelGrid>
-				</div>
+			</h:panelGrid>
 
-				<!-- Timer Actions -->
-				<div class="imixs-form-panel">
-					<h:commandButton value="#{message.refresh}"
-						actionListener="#{sepaController.refresh}">
-						<f:ajax render="timer_details timer_status" />
-					</h:commandButton>
+		</h:panelGroup>
 
-
-					<h:commandButton actionListener="#{sepaController.startScheduler}"
-						value="start">
-					</h:commandButton>
-					<h:commandButton actionListener="#{sepaController.stopScheduler}"
-						value="stop">
-					</h:commandButton>
-					<h:commandButton
-						actionListener="#{sepaController.restartScheduler}"
-						value="restart">
-					</h:commandButton>
+		<hr />
+		<!-- Timer Actions -->
+		<h:commandButton value="#{message.refresh}"
+			actionListener="#{sepaController.refresh}">
+			<f:ajax render="timer_details timer_status" />
+		</h:commandButton>
 
 
-				</div>
+		<h:commandButton actionListener="#{sepaController.startScheduler}"
+			value="start">
+		</h:commandButton>
+		<h:commandButton actionListener="#{sepaController.stopScheduler}"
+			value="stop">
+		</h:commandButton>
+		<h:commandButton actionListener="#{sepaController.restartScheduler}"
+			value="restart">
+		</h:commandButton>
+		<hr />
 
 
-
-			</div>
-		</div>
-	</h:form>
+	</div>
 </ui:composition>
