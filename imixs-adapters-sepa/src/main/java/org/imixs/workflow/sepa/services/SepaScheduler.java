@@ -22,16 +22,24 @@
  *******************************************************************************/
 package org.imixs.workflow.sepa.services;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ejb.EJB;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
+import javax.ws.rs.core.MediaType;
+import javax.xml.bind.JAXBException;
+import javax.xml.transform.TransformerException;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.Model;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
+import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.engine.scheduler.Scheduler;
 import org.imixs.workflow.engine.scheduler.SchedulerException;
@@ -40,7 +48,7 @@ import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
-import org.imixs.workflow.exceptions.WorkflowException;
+import org.imixs.workflow.xml.XSLHandler;
 
 /**
  * SEPA Scheduler implementation.
@@ -58,6 +66,8 @@ public class SepaScheduler implements Scheduler {
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
 	public static final String ITEM_QUERY = "_query";
 
+	public static final String REPORT_ERROR = "REPORT_ERROR";
+
 	public static final int MAX_COUNT = 999;
 
 	@EJB
@@ -69,6 +79,9 @@ public class SepaScheduler implements Scheduler {
 	@EJB
 	ModelService modelService;
 
+	@EJB
+	ReportService reportService;
+
 	private static Logger logger = Logger.getLogger(SepaScheduler.class.getName());
 
 	/**
@@ -78,18 +91,17 @@ public class SepaScheduler implements Scheduler {
 	 * 
 	 * 
 	 * @param timer
-	 * @throws QueryException 
+	 * @throws QueryException
 	 */
 	public ItemCollection run(ItemCollection configuration) throws SchedulerException {
-
-		ItemCollection sepaExport;
+		ByteArrayOutputStream outputStream = null;
+		String reportName = "";
+		ItemCollection sepaExport = null;
 		int maxCount = configuration.getItemValueInteger("_maxcount");
 		if (maxCount == 0) {
 			maxCount = -1;
 		}
-
-		// load the model
-	try {
+		try {
 
 			String modelVersion = configuration.getItemValueString(ITEM_MODEL_VERSION);
 			int taskID = configuration.getItemValueInteger(ITEM_INITIAL_TASK);
@@ -97,33 +109,84 @@ public class SepaScheduler implements Scheduler {
 
 			sepaExport = new ItemCollection().model(modelVersion).task(taskID);
 
-			// find invoices....
+			Model model;
+
+			model = modelService.getModel(modelVersion);
+
+			ItemCollection event = model.getEvent(taskID, EVENT_SUCCESS);
+			// load the report
+			reportName = event.getItemValueString("txtReportName");
+			ItemCollection report = reportService.getReport(reportName);
+
+			if (report == null) {
+				throw new SchedulerException(REPORT_ERROR,
+						"unable to load report '" + reportName + "'. Please check model configuration!");
+			}
+
+			// now find the invoices....
 			List<ItemCollection> invoices = workflowService.getDocumentService().find(query, MAX_COUNT, 0);
 
 			logger.info("...found " + invoices.size() + " invoices...");
 
 			if (invoices.size() > 0) {
+				String xslTemplate = report.getItemValueString("xsl").trim();
+				// execute the transformation based on the report defintion....
+				String sContentType = report.getItemValueString("contenttype");
+				if ("".equals(sContentType)) {
+					sContentType = MediaType.TEXT_XML;
+				}
+				String encoding = report.getItemValueString("encoding");
+				if ("".equals(encoding)) { 
+					// no encoding defined so we default to UTF-8
+					encoding = "UTF-8";
+				}
+
+				// create a ByteArray Output Stream
+				//outputStream = new ByteArrayOutputStream();
+				byte[] _bytes=XSLHandler.transform(invoices, xslTemplate, encoding, outputStream);
+				// write to workitem
+				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
+				String sepaFileName = "sepa_" + df.format(new Date()) + ".xml";
+				//byte[] _bytes=outputStream.toByteArray();
+				sepaExport.addFile(_bytes, sepaFileName, sContentType);
+
 				sepaExport.event(EVENT_SUCCESS);
 				workflowService.processWorkItem(sepaExport);
+
+			} else {
+				// no invoices found - so we terminate
+				logger.finest("......no invoices found.");
+				return configuration;
 			}
 
-	} catch (WorkflowException e) {
-		logger.warning("...processing error: " + e.getMessage());
-		throw new SchedulerException(e.getErrorContext(),e.getErrorCode(),e.getMessage(), e);
-	}
-		// create 3 new Export workitems for DirectDebit, KPMG and Online
-		// Banking
-		int errors = 0;
-		int checked = 0;
-		int exports = 0;
+		} catch (ModelException | JAXBException | TransformerException | IOException | AccessDeniedException
+				| ProcessingErrorException | PluginException | QueryException e) {
+			try {
+				if (sepaExport != null) {
+					// execute sepa workflow with EVENT_FAILED
+					sepaExport.event(EVENT_FAILED);
+					workflowService.processWorkItem(sepaExport);
+				}
+			} catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
+				throw new SchedulerException(REPORT_ERROR,
+						"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+			}
 
-		ItemCollection workitem = null;
+			throw new SchedulerException(REPORT_ERROR,
+					"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+		} finally {
+			if (outputStream != null) {
+				try {
+					outputStream.close();
+				} catch (IOException e) {
+					throw new SchedulerException(REPORT_ERROR,
+							"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
 
-		// 1. run
+				}
+			}
+		}
 
 		return configuration;
 	}
 
-	
-	
 }
