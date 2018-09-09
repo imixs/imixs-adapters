@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.ejb.EJB;
 import javax.ws.rs.core.MediaType;
@@ -41,6 +42,7 @@ import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
 import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.engine.WorkflowService;
+
 import org.imixs.workflow.engine.scheduler.Scheduler;
 import org.imixs.workflow.engine.scheduler.SchedulerException;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -48,6 +50,7 @@ import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
+import org.imixs.workflow.util.XMLParser;
 import org.imixs.workflow.xml.XSLHandler;
 
 /**
@@ -61,6 +64,8 @@ public class SepaScheduler implements Scheduler {
 	public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
 	public static final int EVENT_SUCCESS = 100;
 	public static final int EVENT_FAILED = 200;
+	public static final String INVOICE_UPDATE = "invoice_update";
+	public static final String LINK_PROPERTY = "txtworkitemref";
 
 	public static final String ITEM_MODEL_VERSION = "_model_version";
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
@@ -136,20 +141,34 @@ public class SepaScheduler implements Scheduler {
 					sContentType = MediaType.TEXT_XML;
 				}
 				String encoding = report.getItemValueString("encoding");
-				if ("".equals(encoding)) { 
+				if ("".equals(encoding)) {
 					// no encoding defined so we default to UTF-8
 					encoding = "UTF-8";
 				}
 
 				// create a ByteArray Output Stream
-				//outputStream = new ByteArrayOutputStream();
-				byte[] _bytes=XSLHandler.transform(invoices, xslTemplate, encoding, outputStream);
+				// outputStream = new ByteArrayOutputStream();
+				byte[] _bytes = XSLHandler.transform(invoices, xslTemplate, encoding, outputStream);
 				// write to workitem
 				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
 				String sepaFileName = "sepa_" + df.format(new Date()) + ".xml";
-				//byte[] _bytes=outputStream.toByteArray();
+				// byte[] _bytes=outputStream.toByteArray();
 				sepaExport.addFile(_bytes, sepaFileName, sContentType);
 
+				// update invoices if a subprocess_update is defined.
+				updateInvoices(sepaExport, invoices, event);
+				
+				// link the invoices with the sepa workitem
+				for (ItemCollection invoice: invoices) {
+					sepaExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
+					// write log
+					sepaExport.appendItemValue("_scheduler_log", "Invoice: " + invoice.getUniqueID() + " added. ");
+				}
+
+				
+				// write log
+				sepaExport.appendItemValue("_scheduler_log", "Sepa export finished.");
+				
 				sepaExport.event(EVENT_SUCCESS);
 				workflowService.processWorkItem(sepaExport);
 
@@ -187,6 +206,89 @@ public class SepaScheduler implements Scheduler {
 		}
 
 		return configuration;
+	}
+
+	/**
+	 * This method expects a list of Subprocess definitions and updates each
+	 * matching existing invoice.
+	 * 
+	 * The definition is expected in the following format (were regular expressions
+	 * are allowed)
+	 * 
+	 * <pre>
+	 * {@code
+	 * <item name="subprocess_update">
+	 *    <modelversion>1.0.0</modelversion>
+	 *    <processid>100</processid>
+	 *    <activityid>20</activityid>
+	 * </item>
+	 * }
+	 * </pre>
+	 * 
+	 * @see org.imixs.workflow.engine.plugins.SplitAndJoinPlugin.java
+	 * 
+	 * @param subProcessDefinitions
+	 * @param sepaWorkitem
+	 * @throws AccessDeniedException
+	 * @throws ProcessingErrorException
+	 * @throws PluginException
+	 * @throws ModelException
+	 */
+	@SuppressWarnings("unchecked")
+	protected void updateInvoices(ItemCollection sepaExport, List<ItemCollection> invoices, final ItemCollection event)
+			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
+
+		List<String> subProcessDefinitions = null;
+		// test for items with name subprocess_update definition.
+		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, sepaExport, false);
+
+		subProcessDefinitions = evalItemCollection.getItemValue(INVOICE_UPDATE);
+
+		if (subProcessDefinitions == null || subProcessDefinitions.size() == 0) {
+			// no definition found
+			return;
+		}
+		// we iterate over each declaration of a SUBPROCESS_CREATE item....
+		for (String processValue : subProcessDefinitions) {
+
+			if (processValue.trim().isEmpty()) {
+				// no definition
+				continue;
+			}
+			// evaluate the item content (XML format expected here!)
+			ItemCollection processData = XMLParser.parseItemStructure(processValue);
+
+			if (processData != null) {
+				// we need to lookup all subprocess instances which are matching
+				// the process definition
+
+				String model_pattern = processData.getItemValueString("modelversion");
+				String process_pattern = processData.getItemValueString("processid");
+
+				// process all subprcess matching...
+				for (ItemCollection invoice : invoices) {
+
+					// test if process matches
+					String subModelVersion = invoice.getModelVersion();
+					String subProcessID = "" + invoice.getTaskID();
+
+					if (Pattern.compile(model_pattern).matcher(subModelVersion).find()
+							&& Pattern.compile(process_pattern).matcher(subProcessID).find()) {
+
+						logger.finest("...... subprocess matches criteria.");
+						// test for field list...
+						if (processData.hasItem("items")) {
+							logger.warning("subprocess itemList is not supported by the SepaScheduler!");
+						}
+						invoice.setEventID(Integer.valueOf(processData.getItemValueString("activityid")));
+						// process the exisitng subprocess...
+						invoice = workflowService.processWorkItem(invoice);
+						logger.finest("...... successful updated subprocess.");
+					}
+				}
+			}
+
+		}
 	}
 
 }

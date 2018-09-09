@@ -40,3 +40,17 @@ Example:
 This example configuration will select all invoices form the Model _invoice-1.0.0_. The selected invoices will than be grouped by the applied invoice item _mandator_. For each group a separate SEPA Export Workflow will be started.   
 The item _groupBy can be used in various ways. For example if an invoice provide a mandator IBAN, than the invoices can be grouped by tis IBAN attribute. This allows the export of separate SEPA files for differnet mandators. 
 
+
+
+## Updating Invoices
+
+In the sepa model the success and failed events can be combined with an "invoice_update" definition:
+
+	<item name="invoice_update">
+		<modelversion>1.0.0</modelversion>
+		<processid>5800</processid>
+		<activityid>100</activityid>
+	</item>
+
+The SepaScheduler automatically link the invoices with the sepa export Workitem.
+This definition is equals to the SplitAndJoin "subprocess_update" except with the item tag which is not supported for SEPA. 	

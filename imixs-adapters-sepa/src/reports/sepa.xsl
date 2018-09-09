@@ -9,7 +9,7 @@
 	<xsl:template match="/">
 	
 	        
-           Status:<xsl:value-of select="data/document/item[@name='_amount']/value" />
+           Betrag:<xsl:value-of select="data/document/item[@name='_amount_brutto']/value" />
            IBAN:<xsl:value-of select="data/document/item[@name='_IBAN']/value" />
    </xsl:template>
 </xsl:stylesheet>
