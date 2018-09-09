@@ -11,12 +11,14 @@
 		<h1>Log</h1>
 		<div class="ui-state-highlight ui-corner-all imixs-instruction">
 			<pre>
-				<h:outputText escape="false" value="#{workitem.item['_sepa_log']}">
-			</h:outputText>
+				<ui:repeat var="logentry"
+					value="#{workitem.itemList['_scheduler_log']}">
+				<h:outputText escape="false" value="#{logentry}" /><br />
+				</ui:repeat>
 			</pre>
-		</div>  
+		</div>
 	</div>
-	
+
 
 
 
