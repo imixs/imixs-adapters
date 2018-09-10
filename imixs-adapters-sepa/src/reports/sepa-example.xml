@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Document
+	xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03 pain.001.003.03.xsd">
+	<CstmrCdtTrfInitn>
+		<GrpHdr>
+			<MsgId>153435539</MsgId>
+			<CreDtTm>2018-08-20T17:34:47</CreDtTm>
+			<NbOfTxs>3</NbOfTxs>
+			<CtrlSum>890.81</CtrlSum>
+			<InitgPty>
+				<Nm>MyCompany</Nm>
+			</InitgPty>
+		</GrpHdr>
+		<PmtInf>
+			<PmtInfId>1534534587539</PmtInfId>
+			<PmtMtd>TRF</PmtMtd>
+			<NbOfTxs>3</NbOfTxs>
+			<CtrlSum>890.81</CtrlSum>
+			<PmtTpInf>
+				<SvcLvl>
+					<Cd>SEPA</Cd>
+				</SvcLvl>
+			</PmtTpInf>
+			<ReqdExctnDt>1999-01-01</ReqdExctnDt>
+			<Dbtr>
+				<Nm>MyCompany</Nm>
+			</Dbtr>
+			<DbtrAcct>
+				<Id>
+					<IBAN>XX111133335555</IBAN>
+				</Id>
+			</DbtrAcct>
+			<DbtrAgt>
+				<FinInstnId>
+					<BIC>AABBCCDD</BIC>
+				</FinInstnId>
+			</DbtrAgt>
+			<ChrgBr>SLEV</ChrgBr>
+			<CdtTrfTxInf>
+				<PmtId>
+					<EndToEndId>NOTPROVIDED</EndToEndId>
+				</PmtId>
+				<Amt>
+					<InstdAmt Ccy="EUR">714.00</InstdAmt>
+				</Amt>
+				<CdtrAgt>
+					<FinInstnId>
+						<BIC>XXZZWWUU</BIC>
+					</FinInstnId>
+				</CdtrAgt>
+				<Cdtr>
+					<Nm>Supplier 1</Nm>
+				</Cdtr>
+				<CdtrAcct>
+					<Id>
+						<IBAN>BB33554433445533</IBAN>
+					</Id>
+				</CdtrAcct>
+				<RmtInf>
+					<Ustrd>...</Ustrd>
+				</RmtInf>
+			</CdtTrfTxInf>
+			<CdtTrfTxInf>
+				<PmtId>
+					<EndToEndId>NOTPROVIDED</EndToEndId>
+				</PmtId>
+				<Amt>
+					<InstdAmt Ccy="EUR">58.01</InstdAmt>
+				</Amt>
+				<CdtrAgt>
+					<FinInstnId>
+						<BIC>UUXXAABBZZ</BIC>
+					</FinInstnId>
+				</CdtrAgt>
+				<Cdtr>
+					<Nm>Supplier 2</Nm>
+				</Cdtr>
+				<CdtrAcct>
+					<Id>
+						<IBAN>BB4466993445533</IBAN>
+					</Id>
+				</CdtrAcct>
+				<RmtInf>
+					<Ustrd>.....12345</Ustrd>
+				</RmtInf>
+			</CdtTrfTxInf>
+			<CdtTrfTxInf>
+				<PmtId>
+					<EndToEndId>NOTPROVIDED</EndToEndId>
+				</PmtId>
+				<Amt>
+					<InstdAmt Ccy="EUR">118.80</InstdAmt>
+				</Amt>
+				<CdtrAgt>
+					<FinInstnId>
+						<BIC>IIOOHHFFWW</BIC>
+					</FinInstnId>
+				</CdtrAgt>
+				<Cdtr>
+					<Nm>Supplier 3</Nm>
+				</Cdtr>
+				<CdtrAcct>
+					<Id>
+						<IBAN>OO33445533</IBAN>
+					</Id>
+				</CdtrAcct>
+				<RmtInf>
+					<Ustrd>....11223344 </Ustrd>
+				</RmtInf>
+			</CdtTrfTxInf>
+		</PmtInf>
+	</CstmrCdtTrfInitn>
+</Document>
