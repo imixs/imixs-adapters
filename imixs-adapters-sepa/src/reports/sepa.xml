@@ -174,7 +174,7 @@
 				added. </value>
 		</item>
 		<item name="_subject">
-			<value xsi:type="xs:string">Imixs GmbH</value>
+			<value xsi:type="xs:string">Muster GmbH</value>
 		</item>
 		<item name="txtworkitemref">
 			<value xsi:type="xs:string">6b3aedd7-209c-4b4a-b771-37783257db78</value>
