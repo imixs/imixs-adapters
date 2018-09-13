@@ -73,7 +73,7 @@
 						<Id>
 							<IBAN>
 								<xsl:value-of
-									select="$exportWorkitem/item[@name='_iban']/value" />
+									select="$exportWorkitem/item[@name='_dbtr_iban']/value" />
 							</IBAN>
 						</Id>
 					</DbtrAcct>
@@ -81,7 +81,7 @@
 						<FinInstnId>
 							<BIC>
 								<xsl:value-of
-									select="$exportWorkitem/item[@name='_bic']/value" />
+									select="$exportWorkitem/item[@name='_dbtr_bic']/value" />
 							</BIC>
 						</FinInstnId>
 					</DbtrAgt>
@@ -132,7 +132,7 @@
 			<CdtrAgt>
 				<FinInstnId>
 					<BIC>
-						<xsl:value-of select="item[@name='_bic']/value" />
+						<xsl:value-of select="item[@name='_cdtr_bic']/value" />
 					</BIC>
 				</FinInstnId>
 			</CdtrAgt>
@@ -144,7 +144,7 @@
 			<CdtrAcct>
 				<Id>
 					<IBAN>
-						<xsl:value-of select="item[@name='_iban']/value" />
+						<xsl:value-of select="item[@name='_cdtr_iban']/value" />
 					</IBAN>
 				</Id>
 			</CdtrAcct>

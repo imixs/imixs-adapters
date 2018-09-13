@@ -319,8 +319,8 @@ Please check the process:
           <imixs:value><![CDATA[<item name="process">Invoices</item>
 <item name="invoice_update">
 	<modelversion>1.0.0</modelversion>
-	<processid>5800</processid>
-	<activityid>100</activityid>
+	<task>5800</task>
+	<event>100</event>
 </item>]]></imixs:value>
         </imixs:item>
       </bpmn2:extensionElements>

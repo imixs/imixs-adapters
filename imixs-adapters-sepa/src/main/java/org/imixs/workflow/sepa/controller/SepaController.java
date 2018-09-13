@@ -86,29 +86,60 @@ public class SepaController extends SchedulerController {
 		return SepaScheduler.class.getName();
 	}
 
+	
 
-
-	@Valid 
-	@Pattern(regexp  = BIC_PATTERN)
-	public String getBic() {
-		return getConfiguration().getItemValueString("_bic");
+	/** Kreditor **/
+	
+	@Valid
+	@Pattern(regexp = SepaController.BIC_PATTERN)
+	public String getCdtrBic() {
+		return getConfiguration().getItemValueString("_cdtr_bic");
 	}
 
-	public void setBic(String bic) {
-		logger.finest("......validate bic...");
-		getConfiguration().setItemValue("_bic", bic);
+	public void setCdtrBic(String bic) {
+		logger.finest("......validate _cdtr_bic...");
+		getConfiguration().setItemValue("_cdtr_bic", bic);
 	}
 
 	@Valid
-	@Pattern(regexp = IBAN_PATTERN)
-	public String getIban() {
-		logger.finest("......validate iban...");
-		return getConfiguration().getItemValueString("_iban");
+	@Pattern(regexp = SepaController.IBAN_PATTERN)
+	public String getCdtrIban() {
+		logger.finest("......validate _cdtr_iban...");
+		return getConfiguration().getItemValueString("_cdtr_iban");
 	}
 
-	public void setIban(String iban) {
-		this.getConfiguration().setItemValue("_iban", iban);
+	public void setCdtrIban(String iban) {
+		getConfiguration().setItemValue("_cdtr_iban", iban);
 	}
+	
+	
+	
+	/**  Debtor **/
+	
+	@Valid
+	@Pattern(regexp = SepaController.BIC_PATTERN)
+	public String getDbtrBic() {
+		return getConfiguration().getItemValueString("_dbtr_bic");
+	}
+
+	public void setDbtrBic(String bic) {
+		logger.finest("......validate _dbtr_bic...");
+		getConfiguration().setItemValue("_dbtr_bic", bic);
+	}
+
+	@Valid
+	@Pattern(regexp = SepaController.IBAN_PATTERN)
+	public String getDbtrIban() {
+		logger.finest("......validate _dbtr_iban...");
+		return getConfiguration().getItemValueString("_dbtr_iban");
+	}
+
+	public void setDbtrIban(String iban) {
+		getConfiguration().setItemValue("_dbtr_iban", iban);
+	}
+
+	
+	
 	
 	
 	

@@ -63,28 +63,29 @@
 
 								<dl>
 									<dt>
-										SEPA IBAN: <span class="imixs-required">* <h:message
+										IBAN <span class="imixs-required">* <h:message
 												for="iban" /></span>
 									</dt>
 									<dd>
-										<h:inputText id="iban" required="false"
-											validatorMessage="#{app.IBAN_INVALID}"
-											value="#{sepaController.iban}">
-										</h:inputText>
+										<h:inputText value="#{sepaController.dbtrIban}"
+											id="iban" required="false"
+											validatorMessage="#{app.IBAN_INVALID}" />
 									</dd>
+
 								</dl>
+
+
 								<dl>
 									<dt>
-										SEPA BIC: <span class="imixs-required">* <h:message
-												for="bic" /></span>
+										BIC <span class="imixs-required">* <h:message for="bic" /></span>
 									</dt>
 									<dd>
-										<h:inputText id="bic" required="false"
-											validatorMessage="#{app.BIC_INVALID}"
-											value="#{sepaController.bic}">
-										</h:inputText>
+										<h:inputText value="#{sepaController.dbtrBic}" id="bic"
+											required="false" validatorMessage="#{app.BIC_INVALID}" />
 									</dd>
+
 								</dl>
+
 							</div>
 
 
