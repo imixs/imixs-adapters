@@ -94,9 +94,12 @@
 				<h:outputLabel value="Log: " />
 				<h:panelGroup>
 					<pre>
-									<h:outputText
-							value="#{sepaController.configuration.item['_scheduler_log']}" />
-								</pre>
+					<ui:repeat var="logentry"
+							value="#{workitem.itemList['_scheduler_log']}">
+						<h:outputText escape="false" value="#{logentry}" />
+							<br />
+					</ui:repeat>
+				</pre>
 				</h:panelGroup>
 
 			</h:panelGrid>

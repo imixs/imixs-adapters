@@ -49,7 +49,21 @@
 							<div class="imixs-form-section-2">
 								<dl>
 									<dt>
-										IBAN: <span class="imixs-required">* <h:message
+										Company: <span class="imixs-required">* </span>
+									</dt>
+									<dd>
+										<h:inputText required="true"
+											value="#{sepaController.configuration.item['_subject']}">
+										</h:inputText>
+									</dd>
+								</dl>
+
+								<dl>
+								</dl>
+
+								<dl>
+									<dt>
+										SEPA IBAN: <span class="imixs-required">* <h:message
 												for="iban" /></span>
 									</dt>
 									<dd>
@@ -61,7 +75,7 @@
 								</dl>
 								<dl>
 									<dt>
-										BIC: <span class="imixs-required">* <h:message
+										SEPA BIC: <span class="imixs-required">* <h:message
 												for="bic" /></span>
 									</dt>
 									<dd>
@@ -74,48 +88,9 @@
 							</div>
 
 
-							<div class="imixs-form-section-2">
-								<dl>
-									<dt>
-										Invoice Selector: <span class="imixs-required">*</span>
-									</dt>
-									<dd>
-										<h:inputTextarea required="true"
-											value="#{sepaController.configuration.item['_query']}">
-										</h:inputTextarea>
-									</dd>
-								</dl>
-								<dl>
-									<dt>
-										<span class="typcn typcn-lightbulb"></span>
-									</dt>
-									<dd>
-										Define a search query to select invoices to be exported. <br />
-										e.g. (type:"workitem" AND $modelversion:"invoice-1.0.0")
-									</dd>
-								</dl>
-							</div>
 
 
-							<div class="imixs-form-section-2">
-								<dl>
-									<dt>Group By:</dt>
-									<dd>
-										<h:inputText required="false"
-											value="#{sepaController.configuration.item['_groupby']}">
-										</h:inputText>
-									</dd>
-								</dl>
-								<dl>
-									<dt>
-										<span class="typcn typcn-lightbulb"></span>
-									</dt>
-									<dd>
-										Optional list of items to group invoices for the SEPA export.
-										<br /> e.g. _BIC,_IBAN,$workflowgroup
-									</dd>
-								</dl>
-							</div>
+
 
 
 							<div class="imixs-form-section-2">
@@ -139,6 +114,22 @@
 								</dl>
 
 							</div>
+
+
+							<div class="imixs-form-section">
+								<p>
+									<span class="typcn typcn-lightbulb"></span> The initial task
+									must define a report containing the query and style sheet
+									information. Invoices will be automatically grouped by the
+									attribute "_sepa_iban". If this attribute is not set, the
+									default sepa_iban will be assigned to the invoice before
+									processed. The SEPA workflow may optional include a
+									"invoice_update" item definition.
+								</p>
+							</div>
+
+
+
 						</div>
 
 
@@ -147,7 +138,7 @@
 						<!-- include timer control -->
 
 						<ui:include src="sub_scheduler_control.xhtml"></ui:include>
-						
+
 
 
 

@@ -117,7 +117,7 @@ public class SepaScheduler implements Scheduler {
 			Model model = modelService.getModel(modelVersion);
 			ItemCollection event = model.getEvent(taskID, EVENT_START);
 			ItemCollection task = model.getTask(taskID);
-			
+
 			sepaExport = new ItemCollection().model(modelVersion).task(taskID);
 			// set unqiueid, needed for xslt
 			sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
@@ -125,10 +125,7 @@ public class SepaScheduler implements Scheduler {
 			sepaExport.setItemValue("_iban", configuration.getItemValue("_iban"));
 			sepaExport.setItemValue("_bic", configuration.getItemValue("_bic"));
 			sepaExport.setItemValue("_subject", configuration.getItemValue("_subject"));
-			sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP,task.getItemValue("txtworkflowgroup"));
-			
-				
-			
+			sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
 			// load the report
 			reportName = event.getItemValueString("txtReportName");
@@ -141,15 +138,15 @@ public class SepaScheduler implements Scheduler {
 
 			// now find the invoices....
 			List<ItemCollection> data = reportService.executeReport(reportName, MAX_COUNT, 0, "$created", false, null);
-
-			logger.info("...found " + data.size() + " invoices...");
+			logMessage("Sepa export started....", configuration,null);
+			logMessage("...found " + data.size() + " invoices...", configuration,null);
 
 			if (data.size() > 0) {
 
 				// update the invoices with the _sepa_iban if not provided
 				// link the invoices with the sepa workitem. Count invoices and controll sum
-				int count=0;
-				float amount=0;
+				int count = 0;
+				float amount = 0;
 				for (ItemCollection invoice : data) {
 					// test if invoice has a _sepa_iban and _sepa_bic
 
@@ -165,16 +162,12 @@ public class SepaScheduler implements Scheduler {
 					sepaExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
 
 					// write log
-					sepaExport.appendItemValue("_scheduler_log", "Invoice: " + invoice.getUniqueID() + " added. ");
+					logMessage( "Invoice: " + invoice.getUniqueID() + " added. ", configuration,sepaExport);
 
 				}
-				
-				
+
 				// add sepa data....
 //				sepaExport.setItemValue("NbOfTxs",
-			
-				
-				
 
 				String xslTemplate = report.getItemValueString("xsl").trim();
 				// execute the transformation based on the report defintion....
@@ -200,16 +193,14 @@ public class SepaScheduler implements Scheduler {
 				// byte[] _bytes=outputStream.toByteArray();
 				sepaExport.addFile(_bytes, sepaFileName, sContentType);
 
-				// update invoices if a subprocess_update is defined.
-				updateInvoices(sepaExport, data, event);
+				// update and process invoices...
+				processInvoices(sepaExport, data, event);
 
 				// write log
-				sepaExport.appendItemValue("_scheduler_log", "Sepa export finished.");
-
+				logMessage("Sepa export finished.",configuration,sepaExport);
+				logMessage( data.size() + " invoices exported. ",configuration,sepaExport);
+				// finish sepa export
 				sepaExport.event(EVENT_START).event(EVENT_SUCCESS);
-
-				// start even ???
-
 				workflowService.processWorkItem(sepaExport);
 
 			} else {
@@ -223,6 +214,7 @@ public class SepaScheduler implements Scheduler {
 			try {
 				if (sepaExport != null) {
 					// execute sepa workflow with EVENT_FAILED
+					logMessage("Failed: " + e.getMessage(),configuration,sepaExport);
 					sepaExport.event(EVENT_FAILED);
 					workflowService.processWorkItem(sepaExport);
 				}
@@ -249,33 +241,54 @@ public class SepaScheduler implements Scheduler {
 	}
 
 	/**
-	 * This method expects a list of Subprocess definitions and updates each
-	 * matching existing invoice.
+	 * Creates a new log entry stored in the item _scheduler_log.
+	 * The log can be writen optional to the configuraiton and the workitem
 	 * 
+	 * @param message
+	 * @param configuration
+	 */
+	private void logMessage(String message, ItemCollection configuration, ItemCollection workitem) {
+		if (configuration != null) {
+			configuration.appendItemValue("_scheduler_log", message);
+		}
+		if (workitem != null) {
+			workitem.appendItemValue("_scheduler_log", message);
+		}
+
+		logger.info(message);
+
+	}
+
+	/**
+	 * This method expects a list of Subprocess definitions. The method updates and
+	 * processes each existing invoice.
+	 * <p>
 	 * The definition is expected in the following format (were regular expressions
 	 * are allowed)
 	 * 
 	 * <pre>
 	 * {@code
-	 * <item name="subprocess_update">
+	 * <item name="invoice_update">
 	 *    <modelversion>1.0.0</modelversion>
-	 *    <processid>100</processid>
-	 *    <activityid>20</activityid>
+	 *    <task>100</task>
+	 *    <event>20</event>
 	 * </item>
 	 * }
 	 * </pre>
 	 * 
 	 * @see org.imixs.workflow.engine.plugins.SplitAndJoinPlugin.java
 	 * 
-	 * @param subProcessDefinitions
-	 * @param sepaWorkitem
+	 * @param sepaExport - sepa export workitem
+	 * @param invoices   - list of invoices
+	 * @param event      - current sepa export event containing the invoice_update
+	 *                   definition.
 	 * @throws AccessDeniedException
 	 * @throws ProcessingErrorException
 	 * @throws PluginException
 	 * @throws ModelException
 	 */
 	@SuppressWarnings("unchecked")
-	protected void updateInvoices(ItemCollection sepaExport, List<ItemCollection> invoices, final ItemCollection event)
+	protected void processInvoices(ItemCollection sepaExport, List<ItemCollection> invoices, final ItemCollection event)
 			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
 
 		List<String> subProcessDefinitions = null;
@@ -303,7 +316,7 @@ public class SepaScheduler implements Scheduler {
 				// the process definition
 
 				String model_pattern = processData.getItemValueString("modelversion");
-				String process_pattern = processData.getItemValueString("processid");
+				String process_pattern = processData.getItemValueString("task");
 
 				// process all subprcess matching...
 				for (ItemCollection invoice : invoices) {
@@ -320,7 +333,7 @@ public class SepaScheduler implements Scheduler {
 						if (processData.hasItem("items")) {
 							logger.warning("subprocess itemList is not supported by the SepaScheduler!");
 						}
-						invoice.setEventID(Integer.valueOf(processData.getItemValueString("activityid")));
+						invoice.setEventID(Integer.valueOf(processData.getItemValueString("event")));
 						// process the exisitng subprocess...
 						invoice = workflowService.processWorkItem(invoice);
 						logger.finest("...... successful updated subprocess.");
