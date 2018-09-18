@@ -26,7 +26,7 @@ import org.mockito.Spy;
  * @author rsoika
  * 
  */
-public class ImportTest {
+public class TestDatevWorkflowService {
 
 	@Spy
 	private DatevWorkflowService datevService;
@@ -37,6 +37,10 @@ public class ImportTest {
 		MockitoAnnotations.initMocks(this);
 	}
 
+	
+	
+	
+	
 	/**
 	 * test the fieldlist of the first line of the file
 	 */

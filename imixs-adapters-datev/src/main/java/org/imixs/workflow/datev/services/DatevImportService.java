@@ -34,7 +34,18 @@ import org.imixs.workflow.exceptions.QueryException;
  * <p>
  * The import file must contain 2 header rows. The 1st row contains the object
  * type, the 2nd row contains the filed names.
+ * <p>
+ * Example 1st line:
  * 
+ * <pre>
+ * "DTVF";700;20;"Kontenbeschriftungen";2;20180917165240335;;"RE";"Farida.Weikard";"";217386;21010;20180101;6;;;"";"";;0;;"";;"";;141987;"04";;;"";""
+ * </pre>
+ * 
+ * Example 2nd line:
+ * 
+ * <pre>
+ * Konto;Kontobeschriftung;SprachId
+ * </pre>
  * 
  * @see DatevWorkflowService to import datev data and assign the data to a
  *      workflow model.
@@ -88,8 +99,8 @@ public class DatevImportService {
 	/**
 	 * This method returns a list of ItemCollections matching the search phrase and
 	 * type.
-	 * 
-	 * The type can either be 'kreditor' or 'projekt'
+	 * <p>
+	 * The type depends on the datev import file
 	 * 
 	 * @param phrase - search phrase
 	 * @return - list of matching profiles
@@ -168,13 +179,17 @@ public class DatevImportService {
 			BufferedReader in = new BufferedReader(new InputStreamReader(imputStream, encoding));
 
 			// read first line containing the object type
-			type = in.readLine();
-			if (type != null && (type.endsWith(";") || type.endsWith(","))) {
-				type = type.substring(0, type.length() - 1);
-			}
-			if (type == null || type.isEmpty() || type.contains(";") || type.contains(",")) {
+			String header1 = in.readLine();
+			String[] header1List = header1.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
+			header1List=normalizeValueList(header1List);
+			if (header1List == null || header1List.length < 4) {
 				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
-						"File Format not supported, 1st line must contain the object type.");
+						"File Format not supported, 1st line must contain the fromatname in column 4 (type).");
+			}
+			type=header1List[3];
+			if (type == null || type.isEmpty() ) {
+				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
+						"File Format not supported, 1st line must contain the fromatname (type).");
 
 			}
 			type = type.trim().toLowerCase();
@@ -266,6 +281,28 @@ public class DatevImportService {
 		logger.info(log);
 		return log;
 	}
+	
+	
+	
+	/**
+	 * This method removes the " from  a value list
+	 * 
+	 * 
+	 * @param data
+	 * @return
+	 */
+	public String[] normalizeValueList(String[] data) {
+		
+		for (int i=0;i<data.length ;i++) {
+			String value=data[i];
+			if (value.startsWith("\"") && value.endsWith("\"")) {
+				value=value.substring(1,value.length()-1);
+				data[i]=value;
+			}
+		
+		}
+		return data;
+	}
 
 	/**
 	 * This method parses a DATEV field description (first line of the csv file)
@@ -286,7 +323,7 @@ public class DatevImportService {
 				field = field.replace('>', '_');
 				field = field.replace('<', '_');
 				field = field.replace('&', '_');
-				result.add("_"+field.trim());
+				result.add("_" + field.trim());
 			} else {
 				// add dummy entry
 				result.add(null);
@@ -331,7 +368,7 @@ public class DatevImportService {
 		// @see
 		// http://stackoverflow.com/questions/2241758/regarding-java-split-command-parsing-csv-file
 		String[] valuList = data.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
-
+		valuList=normalizeValueList(valuList);
 		for (String itemValue : valuList) {
 			// test if the token has content
 			itemValue = itemValue.trim();
