@@ -27,6 +27,13 @@ Imixs-Documents provide the feature to search also for the content of parsed doc
 	lucence.fulltextFieldList=.....,dms
 	
 
+# ZUGFeRD Adapter
+
+The adapter project includes additional support for ZUGFeRD PDF files. We use the io.konik lib to extract the invoice data.
+This feature is still under development. 
+
+
+
 # How to Install
 
 To include the imixs-adapters-documents plugins the following jar file must be part of the EJB module:
