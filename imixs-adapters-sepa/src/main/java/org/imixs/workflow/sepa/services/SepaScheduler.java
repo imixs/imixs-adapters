@@ -32,10 +32,10 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import javax.ejb.EJB;
-import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 
+import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Model;
 import org.imixs.workflow.WorkflowKernel;
@@ -43,7 +43,6 @@ import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
 import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.engine.WorkflowService;
-
 import org.imixs.workflow.engine.scheduler.Scheduler;
 import org.imixs.workflow.engine.scheduler.SchedulerException;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -52,7 +51,6 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.util.XMLParser;
-import org.imixs.workflow.xml.XSLHandler;
 
 /**
  * SEPA Scheduler implementation.
@@ -118,77 +116,63 @@ public class SepaScheduler implements Scheduler {
 			ItemCollection event = model.getEvent(taskID, EVENT_START);
 			ItemCollection task = model.getTask(taskID);
 
+			// load the report
+			ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
+			if (report == null) {
+				throw new SchedulerException(REPORT_ERROR,
+						"unable to load report '" + reportName + "'. Please check  model configuration");
+			}
+
+			// build the sepa export workitem....
 			sepaExport = new ItemCollection().model(modelVersion).task(taskID);
 			// set unqiueid, needed for xslt
 			sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
 			// copy iban/bic
-			sepaExport.setItemValue("_iban", configuration.getItemValue("_iban"));
-			sepaExport.setItemValue("_bic", configuration.getItemValue("_bic"));
+			sepaExport.setItemValue("_dbtr_iban", configuration.getItemValue("_dbtr_iban"));
+			sepaExport.setItemValue("_dbtr_bic", configuration.getItemValue("_dbtr_bic"));
 			sepaExport.setItemValue("_subject", configuration.getItemValue("_subject"));
 			sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
-			// load the report
-			reportName = event.getItemValueString("txtReportName");
-			ItemCollection report = reportService.getReport(reportName);
+			// get the data source based on the report definition....
+			List<ItemCollection> data = reportService.getDataSource(report, MAX_COUNT, 0,
+					"$created", false, null);
 
-			if (report == null) {
-				throw new SchedulerException(REPORT_ERROR, "unable to load report '" + reportName
-						+ "'. Please check  model configuration '" + modelVersion + "'");
-			}
-
-			// now find the invoices....
-			List<ItemCollection> data = reportService.executeReport(reportName, MAX_COUNT, 0, "$created", false, null);
 			logMessage("Sepa export started....", configuration, null);
 			logMessage("...found " + data.size() + " invoices...", configuration, null);
 
+			// update the invoices with the _sepa_iban if not provided
+			// link the invoices with the sepa workitem. Count invoices and controll sum
 			if (data.size() > 0) {
-
-				// update the invoices with the _sepa_iban if not provided
-				// link the invoices with the sepa workitem. Count invoices and controll sum
 				int count = data.size();
-				float amount = 0;
 				for (ItemCollection invoice : data) {
-					// test if invoice has a _sepa_iban and _sepa_bic
+					// test if invoice has a _dbtr_iban and _dbtr_bic
 
-					if (invoice.getItemValueString("_sepa_iban").isEmpty()) {
-						// overtake iban from sepa export
-						invoice.setItemValue("_sepa_iban", sepaExport.getItemValue("_iban"));
+					if (invoice.getItemValueString("_dbtr_iban").isEmpty()) {
+						// overtake _dbtr_iban from sepa export
+						invoice.setItemValue("_dbtr_iban", sepaExport.getItemValue("_dbtr_iban"));
 					}
-					if (invoice.getItemValueString("_sepa_bic").isEmpty()) {
-						// overtake iban from sepa export
-						invoice.setItemValue("_sepa_bic", sepaExport.getItemValue("_bic"));
+					if (invoice.getItemValueString("_dbtr_bic").isEmpty()) {
+						// overtake _dbtr_bic from sepa export
+						invoice.setItemValue("_dbtr_bic", sepaExport.getItemValue("_dbtr_bic"));
 					}
-
 					sepaExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
-
 					// write log
 					logMessage("Invoice: " + invoice.getUniqueID() + " added. ", configuration, sepaExport);
 
 				}
 
-				String xslTemplate = report.getItemValueString("xsl").trim();
-				// execute the transformation based on the report defintion....
-				String sContentType = report.getItemValueString("contenttype");
-				if ("".equals(sContentType)) {
-					sContentType = MediaType.TEXT_XML;
-				}
-				String encoding = report.getItemValueString("encoding");
-				if ("".equals(encoding)) {
-					// no encoding defined so we default to UTF-8
-					encoding = "UTF-8";
-				}
-
-				// now add the sepa export document to the data collection
+				// finally we add the sepa export document to the data collection
 				data.add(sepaExport);
 
-				// create a ByteArray Output Stream
-				// outputStream = new ByteArrayOutputStream();
-				byte[] _bytes = XSLHandler.transform(data, xslTemplate, encoding, outputStream);
-				// write to workitem
+				// create the attachment based on the report definition
+				// write a file to workitem
 				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
 				String sepaFileName = "sepa_" + df.format(new Date()) + ".xml";
-				// byte[] _bytes=outputStream.toByteArray();
-				sepaExport.addFile(_bytes, sepaFileName, sContentType);
+				
+				FileData filedata = reportService.transformDataSource(report, data,sepaFileName);
+
+				// attach the file
+				sepaExport.addFileData(filedata);
 
 				// update and process invoices...
 				processInvoices(sepaExport, data, event, configuration);
@@ -196,7 +180,8 @@ public class SepaScheduler implements Scheduler {
 				// write log
 				logMessage("Sepa export finished.", configuration, sepaExport);
 				logMessage(count + " invoices exported. ", configuration, sepaExport);
-				// finish sepa export
+
+				// finish by proessing the sepa export workitem....
 				sepaExport.event(EVENT_START).event(EVENT_SUCCESS);
 				workflowService.processWorkItem(sepaExport);
 
@@ -237,6 +222,9 @@ public class SepaScheduler implements Scheduler {
 		return configuration;
 	}
 
+
+
+	
 	/**
 	 * Creates a new log entry stored in the item _scheduler_log. The log can be
 	 * writen optional to the configuraiton and the workitem
@@ -347,8 +335,7 @@ public class SepaScheduler implements Scheduler {
 							}
 							// process the exisitng subprocess...
 							invoice = workflowService.processWorkItem(invoice);
-							logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration,
-									null);
+							logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration, null);
 						}
 					} else {
 						logMessage("...invoice " + _invoice.getUniqueID() + " could not be loaded!", configuration,
