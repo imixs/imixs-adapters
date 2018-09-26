@@ -146,12 +146,12 @@ public class DatevScheduler implements Scheduler {
 			logMessage("DATEV export started....", configuration, null);
 			logMessage("...found " + data.size() + " invoices...", configuration, null);
 
-			// update the invoices with optional datev date  if not provided
+			// update the invoices with optional datev date if not provided
 			// link the invoices with the datev workitem.
 			if (data.size() > 0) {
 				int count = data.size();
 				for (ItemCollection invoice : data) {
-					
+
 					datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
 					// write log
 					logMessage("Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
@@ -258,17 +258,17 @@ public class DatevScheduler implements Scheduler {
 	 * @see org.imixs.workflow.engine.plugins.SplitAndJoinPlugin.java
 	 * 
 	 * @param datevExport - datev export workitem
-	 * @param invoices   - list of invoices
-	 * @param event      - current datev export event containing the invoice_update
-	 *                   definition.
+	 * @param invoices    - list of invoices
+	 * @param event       - current datev export event containing the invoice_update
+	 *                    definition.
 	 * @throws AccessDeniedException
 	 * @throws ProcessingErrorException
 	 * @throws PluginException
 	 * @throws ModelException
 	 */
 	@SuppressWarnings("unchecked")
-	protected void processInvoices(ItemCollection datevExport, List<ItemCollection> invoices, final ItemCollection event,
-			ItemCollection configuration)
+	protected void processInvoices(ItemCollection datevExport, List<ItemCollection> invoices,
+			final ItemCollection event, ItemCollection configuration)
 			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
 
 		List<String> subProcessDefinitions = null;

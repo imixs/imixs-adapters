@@ -4,294 +4,180 @@
 	xmlns:ui="http://java.sun.com/jsf/facelets"
 	xmlns:i="http://java.sun.com/jsf/composite/imixs"
 	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:marty="http://java.sun.com/jsf/composite/marty"
 	template="/layout/template.xhtml">
 
 	<ui:define name="content">
 		<f:view>
-			<h:form id="scheduler_form">
+
+
+
+			<script type="text/javascript">
+				/*<![CDATA[*/
+
+				function updateStatustPanel(data) {
+					//initUserInput($('#userselector_id'));
+					if (data.status === 'success') {
+						// select with wildcard operator
+						$('[id$=status_panel]').imixsLayout();
+					}
+				}
+
+				/*]]>*/
+			</script>
+
+
+			<h:form id="import_form_id">
+				<!-- ########## Error ########## -->
+				<ui:include src="/pages/error_message.xhtml" />
+
+
+
 
 				<div class="imixs-form">
-
 					<div class="imixs-header">
-						<h1>
-							<h:outputText value="DATEV Import" />
-						</h1>
+						<h1>DATEV</h1>
 					</div>
 
+
+
 					<div class="imixs-body">
-						<!-- ########## Error ########## -->
-						<ui:include src="/pages/error_message.xhtml" />
-						<!-- ID -->
-						<div class="imixs-form-panel">
-							<div class="imixs-form-section">
-								<dl>
-									<dt>
-										ID<span class="imixs-required">*</span>
-									</dt>
-									<dd>
-										<h:inputText required="true"
-											value="#{datevController.configuration.item['txtName']}" />
-									</dd>
-								</dl>
 
 
-								<dl>
-									<dt>
-										Import<span class="imixs-required">*</span>
-									</dt>
-									<dd>
-										<h:inputText required="true"
-											value="#{datevController.configuration.item['_datev_path']}" />
-									</dd>
-								</dl>
+						<div class="imixs-tabs">
+							<ul>
+								<li><a href="#tab-1">Import</a></li>
+								<li><a href="#tab-2">Export</a></li>
+							</ul>
 
-								<dl>
-									<dt>Encoding</dt>
-									<dd>
-										<h:inputText required="false"
-											value="#{datevController.configuration.item['_datev_encoding']}" />
-									</dd>
-								</dl>
+							<div id="tab-1">
+								<!-- **** DATEV import ***** -->
+								<div class="imixs-form-section">
+									<div class="ui-state-highlight ui-corner-all"
+										style="margin-bottom: 10px; padding: .5em;">
+										<h3>Import DATEV Stammdaten</h3>
+										<ul>
+											<li>Fügen Sie hier die zu importierende DATEV Datei an.</li>
+											<li>Die Datei muss im CSV Format vorliegen.</li>
 
-								<dl>
-									<dt>
-										<h:outputLabel value="Model Version" /><span class="imixs-required">*</span>
-									</dt>
-									<dd>
-										<h:inputText required="true"
-											value="#{datevController.configuration.item['_datev_modelversion']}">
-										</h:inputText>
-									</dd>
+											<li>Die Datei muss zwei Header Zeilen enthalten:
+												<ol>
+													<li>Zeile: Datenart - z.B. "Kontobeschriftungen"</li>
+													<li>Zeile: Feldbezeichnungen - z.B. "Konto,
+														Kontobezeichnung"</li>
+												</ol>
+											</li>
+											<li>Fügen Sie immer nur eine Datei für den Import an!</li>
+											<li>Der Import kann einige Minuten in Anspruch nehmen.</li>
+											<li>Brechen Sie den Vorgang nicht ab und warten Sie bis
+												der Import vollständig abgeschlossen ist.</li>
+										</ul>
+									</div>
 
-								</dl>
+									<dl>
+										<dt>Importdatei wählen:</dt>
+										<dd>
+											<i:imixsFileUpload id="file_upload_id"
+												workitem="#{kriegerImportController.importData}"
+												context_url="#{facesContext.externalContext.requestContextPath}/rest-service/workflow/workitem/#{workflowController.workitem.item['$uniqueid']}"
+												hideatachments="true" />
+											<h:panelGroup layout="block"
+												styleClass="ui-state-highlight ui-corner-all"
+												style="margin-bottom: 10px; padding: .5em;"
+												rendered="#{! empty kriegerImportController.importData.item['log']}">
+												<pre>#{kriegerImportController.importData.item['log']}</pre>
+
+											</h:panelGroup>
+										</dd>
+									</dl>
+
+									<h:commandButton
+										actionListener="#{kriegerImportController.startImport}"
+										value="Start Import">
+									</h:commandButton>
+
+								</div>
+
+							</div>
+							<div id="tab-2">
+
+								<!-- **** Export Buchunsstapel ***** -->
+								<div class="imixs-form-section">
+									<div class="ui-state-highlight ui-corner-all"
+										style="margin-bottom: 10px; padding: .5em;">
+										<h3>Export DATEV Buchungsstapel</h3>
+										<p>Definieren Sie hier den Export Workflow und das Export
+											Interval für den Buchunsstapel.</p>
+									</div>
 
 
-								<dl>
-									<dt>
-										<h:outputLabel value="Initial ProcessID" /><span class="imixs-required">*</span>
-									</dt>
-									<dd>
-										<h:inputText required="true"
-											value="#{datevController.configuration.item['_datev_processid']}">
-										</h:inputText>
-									</dd>
+									<div class="imixs-form-section-2">
+										<dl>
+											<dt>DATEV Model Version</dt>
+											<dd>
+												<h:inputText required="false"
+													value="#{datevController.configuration.item['_model_version']}">
+												</h:inputText>
+											</dd>
+										</dl>
 
-								</dl>
+										<dl>
+											<dt>DATEV Initial Task</dt>
+											<dd>
+												<h:inputText required="false"
+													value="#{datevController.configuration.item['_initial_task']}">
+												</h:inputText>
+											</dd>
+										</dl>
+									</div>
 
-								<dl>
-									<dt>
-										<h:outputLabel value="Import ActivityID" /><span class="imixs-required">*</span>
-									</dt>
-									<dd>
-										<h:inputText required="true"
-											value="#{datevController.configuration.item['_datev_activityid']}">
-										</h:inputText>
-									</dd>
-
-								</dl>
+									<div class="imixs-form-section">
+										<p>
+											<span class="typcn typcn-lightbulb"></span> The initial task
+											must define a report containing the query and style sheet
+											information. Invoices will be automatically grouped by the
+											optional attribute "_datev_client". The datev workflow may
+											optional include a "invoice_update" item definition.
+										</p>
+									</div>
 
 
-								<dl>
-									<dt>
-										<h:outputLabel value="Primary Key" /><span class="imixs-required">*</span>
-									</dt>
-									<dd>
-										<h:inputText required="true"
-											value="#{datevController.configuration.item['_datev_primarykey']}">
-										</h:inputText>
-									</dd>
-								</dl>
+
+									<!-- include timer control -->
+									<ui:include src="sub_scheduler_control.xhtml">
+										<ui:param name="schedulerController" value="#{datevController}" />
+									</ui:include>
+								</div>
+
 							</div>
 						</div>
 
 
-
-						<!-- **** General info ***** -->
-						<div class="imixs-form-panel">
-							<h1>Timer Settings</h1>
-							<h:inputTextarea required="false"
-								converter="org.imixs.VectorConverter"
-								style="height: 8em; width: 100%;"
-								value="#{datevController.configuration.itemList['txtConfiguration']}">
-							</h:inputTextarea>
-						</div>
-
-
-						<!-- **** Status ***** -->
-						<div class="imixs-form-panel">
-							<h1>
-								<h:outputText
-									value="Timer Status ⇢ #{datevController.configuration.item['statusMessage']}" />
-							</h1>
-
-							<h:panelGrid columns="2" id="timer_details">
-
-								<h:panelGroup layout="block" style="width:150px;">
-									<h:outputText value="ID: " />
-								</h:panelGroup>
-								<h:panelGroup>
-									<h:outputText
-										value="#{datevController.configuration.item['$UniqueID']}" />
-
-									<h:outputText
-										rendered="#{!empty datevController.configuration.item['nextTimeout']}"
-										value=" (running)" />
-								</h:panelGroup>
-
-
-								<h:outputText value="Schedule: " />
-								<h:outputText
-									value="#{datevController.configuration.item['Schedule']}" />
-
-
-
-								<h:outputText value="Next Timeout: " />
-								<h:panelGroup>
-									<h:outputText
-										value="#{datevController.configuration.item['nextTimeout']}"
-										rendered="#{! empty datevController.configuration.item['nextTimeout']}">
-										<f:convertDateTime timeZone="#{message.timeZone}" type="both"
-											pattern="#{message.dateTimePattern}" />
-
-
-									</h:outputText>
-									<h:outputText value=" " />
-								</h:panelGroup>
-
-								<h:outputText value="TimeRemaining: " />
-								<h:outputText
-									value="#{datevController.millisToShortDHMS(datevController.configuration.item['timeRemaining'])}" />
-								<h:panelGroup>
-									<hr />
-								</h:panelGroup>
-								<h:panelGroup>
-									<hr />
-								</h:panelGroup>
-
-
-
-
-								<h:outputText value="Last run: " />
-								<h:outputText
-									value="#{datevController.configuration.item['datLastRun']}">
-									<f:convertDateTime timeZone="#{message.timeZone}" type="both"
-										pattern="#{message.dateTimePattern}" />
-								</h:outputText>
-
-
-
-								<h:outputText value="Import file modified: " />
-								<h:outputText
-									value="#{datevController.configuration.item['_datev_datlastimport']}">
-									<f:convertDateTime timeZone="#{message.timeZone}" type="both"
-										pattern="#{message.dateTimePattern}" />
-								</h:outputText>
-
-
-
-
-								<h:outputText value="Workitems read " />
-								<h:outputText
-									value="#{datevController.configuration.item['numWorkitemsTotal']}" />
-
-
-								<h:outputText value="Workitems imported: " />
-								<h:outputText
-									value="#{datevController.configuration.item['numWorkItemsImported']}" />
-
-								<h:outputText value="Workitems updated: " />
-								<h:outputText
-									value="#{datevController.configuration.item['numWorkItemsUpdated']}" />
-
-								<h:outputText value="Workitems failed: " />
-								<h:outputText
-									value="#{datevController.configuration.item['numWorkItemsFailed']}" />
-
-
-								<h:outputText value="Status: " />
-
-
-								<h:panelGroup>
-									<!-- no error message -->
-									<h:panelGroup
-										rendered="#{! empty datevController.configuration.item['errormessage']}">
-
-										<h:outputText style="color:red;font-weight:bold;"
-											value="Error: " />
-										<h:outputText style="color:red;"
-											value="#{datevController.configuration.item['errormessage']}" />
-									</h:panelGroup>
-									<!-- Error message  -->
-									<h:panelGroup
-										rendered="#{empty datevController.configuration.item['errormessage']}">
-
-
-										<h:outputText style="color:green;font-weight:bold;"
-											value="OK " />
-									</h:panelGroup>
-								</h:panelGroup>
-
-							</h:panelGrid>
-
-							<br />
-							<h:commandButton value="#{message.refresh}"
-								actionListener="#{datevController.refresh}">
-								<f:ajax render="timer_details" />
-							</h:commandButton>
-
-
-						</div>
-
-
-
-
-
-
-
-
 					</div>
 
 
+
+
 					<div class="imixs-footer">
-
-
 						<h:outputLabel value="#{message.modified}: " />
 						<h:outputText
 							value="#{datevController.configuration.item['$modified']}">
 							<f:convertDateTime timeZone="#{message.timeZone}" type="both"
 								pattern="#{message.dateTimePattern}" />
 						</h:outputText>
-						<h:outputText
-							value=" #{message.by} #{datevController.configuration.item['namcurrenteditor']}" />
+
 
 						<br />
 
-						<h:commandButton action="datev_config_list"
-							actionListener="#{datevController.saveConfiguration}"
-							value="Save">
-						</h:commandButton>
-
 						<h:commandButton
-							actionListener="#{datevController.doStartScheduler}"
-							value="start">
-						</h:commandButton>
-						<h:commandButton
-							actionListener="#{datevController.doStopScheduler}" value="stop">
-						</h:commandButton>
-						<h:commandButton
-							actionListener="#{datevController.doRestartScheduler}"
-							value="restart">
+							actionListener="#{datevController.saveConfiguration()}"
+							value="#{message.save}">
 						</h:commandButton>
 
-
-						<h:commandButton actionListener="#{datevController.doClearCache}"
-							value="clear-cache">
-						</h:commandButton>
-
-						<h:commandButton value="#{message.close}" immediate="true"
-							action="datev_config_list" />
+						<h:commandButton value="#{message.close}" action="notes" />
 
 					</div>
+
 				</div>
 			</h:form>
 		</f:view>

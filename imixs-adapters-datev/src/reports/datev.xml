@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<data
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<document>
+		<item name="$modified">
+			<value xsi:type="xs:dateTime">2018-09-24T13:31:42.056Z</value>
+		</item>
+		<item name="$processid">
+			<value xsi:type="xs:int">5810</value>
+		</item>
+		<item name="$uniqueid">
+			<value xsi:type="xs:string">5a45c36b-a870-427b-996d-44cb0c0a63a7</value>
+		</item>
+		<item name="$workflowgroup">
+			<value xsi:type="xs:string">Rechnungseingang</value>
+		</item>
+		<item name="_amount_brutto">
+			<value xsi:type="xs:decimal">345.00</value>
+		</item>
+		<item name="_childitems">
+			<value xsi:type="xmlItemArray">
+				<item name="_konto_name">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="numpos">
+					<value xsi:type="xs:int">1</value>
+				</item>
+				<item name="_konto">
+					<value xsi:type="xs:string">adsf</value>
+				</item>
+				<item name="_tax">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="_amount">
+					<value xsi:type="xs:decimal">344.00</value>
+				</item>
+				<item name="_costcentre2">
+					<value xsi:type="xs:string"></value>
+				</item>
+			</value>
+			<value xsi:type="xmlItemArray">
+				<item name="_konto_name">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="numpos">
+					<value xsi:type="xs:int">2</value>
+				</item>
+				<item name="_konto">
+					<value xsi:type="xs:string">345</value>
+				</item>
+				<item name="_tax">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="_amount">
+					<value xsi:type="xs:decimal">0.99</value>
+				</item>
+				<item name="_costcentre2">
+					<value xsi:type="xs:string"></value>
+				</item>
+			</value>
+			<value xsi:type="xmlItemArray">
+				<item name="_konto_name">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="numpos">
+					<value xsi:type="xs:int">3</value>
+				</item>
+				<item name="_konto">
+					<value xsi:type="xs:string">345</value>
+				</item>
+				<item name="_tax">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="_amount">
+					<value xsi:type="xs:decimal">0.01</value>
+				</item>
+				<item name="_costcentre2">
+					<value xsi:type="xs:string"></value>
+				</item>
+			</value>
+		</item>
+		<item name="_currency">
+			<value xsi:type="xs:string">EUR</value>
+		</item>
+		<item name="_invoicedate">
+			<value xsi:type="xs:dateTime">2018-09-13T22:00:00Z</value>
+		</item>
+		<item name="_invoicenumber">
+			<value xsi:type="xs:string">345</value>
+		</item>
+		<item name="_subject">
+			<value xsi:type="xs:string">asdfasd</value>
+		</item>
+	</document>
+	<document>
+		<item name="$modified">
+			<value xsi:type="xs:dateTime">2018-09-24T13:53:08.491Z</value>
+		</item>
+		<item name="$processid">
+			<value xsi:type="xs:int">5810</value>
+		</item>
+		<item name="$uniqueid">
+			<value xsi:type="xs:string">d2d0c3cc-5f2a-483d-bbff-ee82549ef135</value>
+		</item>
+		<item name="$workflowgroup">
+			<value xsi:type="xs:string">Rechnungseingang</value>
+		</item>
+		<item name="_amount_brutto">
+			<value xsi:type="xs:decimal">35.00</value>
+		</item>
+		<item name="_childitems">
+			<value xsi:type="xmlItemArray">
+				<item name="_konto">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="numpos">
+					<value xsi:type="xs:int">1</value>
+				</item>
+				<item name="_konto_name">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="_amount">
+					<value xsi:type="xs:decimal">35.00</value>
+				</item>
+			</value>
+		</item>
+		<item name="_currency">
+			<value xsi:type="xs:string">EUR</value>
+		</item>
+		<item name="_invoicedate">
+			<value xsi:type="xs:dateTime">2018-09-05T22:00:00Z</value>
+		</item>
+		<item name="_invoicenumber">
+			<value xsi:type="xs:string">345</value>
+		</item>
+		<item name="_subject">
+			<value xsi:type="xs:string">test</value>
+		</item>
+	</document>
+	<document>
+		<item name="$modified">
+			<value xsi:type="xs:dateTime">2018-09-26T11:30:31.332Z</value>
+		</item>
+		<item name="$processid">
+			<value xsi:type="xs:int">5810</value>
+		</item>
+		<item name="$uniqueid">
+			<value xsi:type="xs:string">a12779c3-6866-4b73-9edf-78895352df05</value>
+		</item>
+		<item name="$workflowgroup">
+			<value xsi:type="xs:string">Rechnungseingang</value>
+		</item>
+		<item name="_amount_brutto">
+			<value xsi:type="xs:decimal">345.00</value>
+		</item>
+		<item name="_childitems">
+			<value xsi:type="xmlItemArray">
+				<item name="_konto">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="numpos">
+					<value xsi:type="xs:int">1</value>
+				</item>
+				<item name="_konto_name">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="_amount">
+					<value xsi:type="xs:decimal">345.00</value>
+				</item>
+			</value>
+		</item>
+		<item name="_currency">
+			<value xsi:type="xs:string">EUR</value>
+		</item>
+		<item name="_invoicedate">
+			<value xsi:type="xs:dateTime">2018-08-31T22:00:00Z</value>
+		</item>
+		<item name="_invoicenumber">
+			<value xsi:type="xs:string">34</value>
+		</item>
+		<item name="_subject">
+			<value xsi:type="xs:string">Test</value>
+		</item>
+	</document>
+	<document>
+		<item name="$modified">
+			<value xsi:type="xs:dateTime">2018-09-26T11:30:38.515Z</value>
+		</item>
+		<item name="$processid">
+			<value xsi:type="xs:int">5810</value>
+		</item>
+		<item name="$uniqueid">
+			<value xsi:type="xs:string">066b3d61-220e-4671-89f6-f579e00e534a</value>
+		</item>
+		<item name="$workflowgroup">
+			<value xsi:type="xs:string">Rechnungseingang</value>
+		</item>
+		<item name="_amount_brutto">
+			<value xsi:type="xs:decimal">345.00</value>
+		</item>
+		<item name="_childitems">
+			<value xsi:nil="true"/>
+		</item>
+		<item name="_currency">
+			<value xsi:type="xs:string">EUR</value>
+		</item>
+		<item name="_invoicedate">
+			<value xsi:type="xs:dateTime">2018-09-05T22:00:00Z</value>
+		</item>
+		<item name="_invoicenumber">
+			<value xsi:type="xs:string">345</value>
+		</item>
+		<item name="_subject">
+			<value xsi:type="xs:string">test</value>
+		</item>
+	</document>
+	<document>
+		<item name="$modified">
+			<value xsi:type="xs:dateTime">2018-09-26T11:30:43.111Z</value>
+		</item>
+		<item name="$processid">
+			<value xsi:type="xs:int">5810</value>
+		</item>
+		<item name="$uniqueid">
+			<value xsi:type="xs:string">629adc05-a954-42ae-bcb5-a197d419ad84</value>
+		</item>
+		<item name="$workflowgroup">
+			<value xsi:type="xs:string">Rechnungseingang</value>
+		</item>
+		<item name="_amount_brutto">
+			<value xsi:type="xs:decimal">55</value>
+		</item>
+		<item name="_childitems">
+			<value xsi:type="xmlItemArray">
+				<item name="_konto_name">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="numpos">
+					<value xsi:type="xs:int">1</value>
+				</item>
+				<item name="_tax">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="_konto">
+					<value xsi:type="xs:string">345</value>
+				</item>
+				<item name="_costcentre2">
+					<value xsi:type="xs:string"></value>
+				</item>
+				<item name="_amount">
+					<value xsi:type="xs:decimal">55.00</value>
+				</item>
+			</value>
+		</item>
+		<item name="_currency">
+			<value xsi:type="xs:string">EUR</value>
+		</item>
+		<item name="_invoicedate">
+			<value xsi:type="xs:dateTime">2018-09-07T22:00:00Z</value>
+		</item>
+		<item name="_invoicenumber">
+			<value xsi:type="xs:string">55</value>
+		</item>
+		<item name="_subject">
+			<value xsi:type="xs:string">asdf</value>
+		</item>
+	</document>
+
+	<document>
+		<item name="$modelversion">
+			<value xsi:type="xs:string">datev-export-de-1.0.0</value>
+		</item>
+		<item name="$modified">
+			<value xsi:type="xs:dateTime">2018-09-26T11:30:43.111Z</value>
+		</item> 
+		<item name="$processid">
+			<value xsi:type="xs:int">1000</value>
+		</item>
+		<item name="$taskid">
+			<value xsi:type="xs:int">1000</value>
+		</item>
+		<item name="$uniqueid">
+			<value xsi:type="xs:string">a8a5a0fa-48bd-49d4-987d-bda597c66055</value>
+		</item>
+		<item name="$workflowgroup">
+			<value xsi:type="xs:string">DATEV-Export</value>
+		</item>
+		<item name="_scheduler_log">
+			<value xsi:type="xs:string">Invoice: 6b3aedd7-209c-4b4a-b771-37783257db78
+				added. </value>
+			<value xsi:type="xs:string">Invoice: 45229284-20f9-4ff4-8efb-249eb0251ebb
+				added. </value>
+			<value xsi:type="xs:string">Invoice: 9cf48434-8c39-438f-b053-14afd7e70032
+				added. </value>
+			<value xsi:type="xs:string">Invoice: 78e89726-b7b2-41fe-9964-7f62c3837f01
+				added. </value>
+		</item>
+		<item name="_subject">
+			<value xsi:type="xs:string">Muster GmbH</value>
+		</item>
+		<item name="txtworkitemref">
+			<value xsi:type="xs:string">6b3aedd7-209c-4b4a-b771-37783257db78</value>
+			<value xsi:type="xs:string">45229284-20f9-4ff4-8efb-249eb0251ebb</value>
+			<value xsi:type="xs:string">9cf48434-8c39-438f-b053-14afd7e70032</value>
+			<value xsi:type="xs:string">78e89726-b7b2-41fe-9964-7f62c3837f01</value>
+		</item>
+	</document>	
+</data>
