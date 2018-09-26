@@ -36,17 +36,19 @@ import org.imixs.workflow.engine.scheduler.SchedulerService;
 import org.imixs.workflow.sepa.services.SepaScheduler;
 
 /**
- * The SepaConfigController is used to configure the SepaService. This service
+ * The SepaController is used to configure the SepaService. This service
  * is used to generate sepa export workitems.
  * <p>
- * The SepaConfigController creates a configuration entity "type=configuration;
+ * The Controller creates a configuration entity "type=configuration;
  * txtname=sepa".
  * <p>
  * The following config items are defined:
  * 
  * <pre>
- * _bic - bic validated
- * _iban - iban validated
+ * _model_version = model version for the SEPA export
+ * _initial_task = inital task ID
+ * _dbtr_IBAN = default IBAN for the SEPA export file
+ * _dbtr_BIC = default BIC for the SEPA export file
  * </pre>
  * 
  * 

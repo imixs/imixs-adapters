@@ -20,7 +20,7 @@ Other tasks and events can be defined based on the required business logic.
 
 ## The SepaScheduler
 
-The SEPA export is managed by the SeapScheduler which is an implementation of the interface _org.imxis.workflow.scheduler.Scheduler_.
+The SEPA export is managed by the SepaScheduler which is an implementation of the interface _org.imxis.workflow.scheduler.Scheduler_.
 The scheduler configuration object must at least provide the following items:
 
  * \_model\_version = model version for the SEPA export
@@ -82,3 +82,21 @@ To identify the type of document you can make use of the xsl select statement:
 	</xsl:template>
 	.....
 
+# Development
+
+## Maven
+
+
+The imxis-adapter-sepa module can be added into an applicaton module. The module provides CDI and EJB components. Optional the module contains also JSF pages to be used for frontends. 
+
+Add the following maven dependency into a parent project:
+
+
+	<!-- SEPA Adapter -->
+	<dependency>
+		<groupId>org.imixs.workflow</groupId>
+		<artifactId>imixs-adapters-sepa</artifactId>
+		<version>${org.imixs.adapters.version}</version>
+		<scope>provided</scope>
+	</dependency>
+	

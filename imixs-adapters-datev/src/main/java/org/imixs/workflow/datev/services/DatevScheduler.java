@@ -20,7 +20,7 @@
  *  	Imixs Software Solutions GmbH - initial API and implementation
  *  	Ralph Soika
  *******************************************************************************/
-package org.imixs.workflow.sepa.services;
+package org.imixs.workflow.datev.services;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -54,8 +54,8 @@ import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.util.XMLParser;
 
 /**
- * The SepaScheduler implementation exports workflow invoice data into a SEPA
- * file..
+ * The DatevScheduler implementation exports workflow invoice data into a DATEV
+ * file.
  * <p>
  * The class implements the interface
  * _org.imixs.workflow.engine.scheduler.Scheduler_ and can be used in
@@ -65,9 +65,9 @@ import org.imixs.workflow.util.XMLParser;
  * @author rsoika
  * 
  */
-public class SepaScheduler implements Scheduler {
+public class DatevScheduler implements Scheduler {
 
-	public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
+	public static final String DATEV_CONFIGURATION = "DATEV_CONFIGURATION";
 
 	public static final int EVENT_START = 100;
 	public static final int EVENT_SUCCESS = 200;
@@ -94,7 +94,7 @@ public class SepaScheduler implements Scheduler {
 	@EJB
 	ReportService reportService;
 
-	private static Logger logger = Logger.getLogger(SepaScheduler.class.getName());
+	private static Logger logger = Logger.getLogger(DatevScheduler.class.getName());
 
 	/**
 	 * This is the method which processes the timeout event depending on the running
@@ -108,7 +108,7 @@ public class SepaScheduler implements Scheduler {
 	public ItemCollection run(ItemCollection configuration) throws SchedulerException {
 		ByteArrayOutputStream outputStream = null;
 		String reportName = "";
-		ItemCollection sepaExport = null;
+		ItemCollection datevExport = null;
 		int maxCount = configuration.getItemValueInteger("_maxcount");
 		if (maxCount == 0) {
 			maxCount = -1;
@@ -130,66 +130,57 @@ public class SepaScheduler implements Scheduler {
 						"unable to load report '" + reportName + "'. Please check  model configuration");
 			}
 
-			// build the sepa export workitem....
-			sepaExport = new ItemCollection().model(modelVersion).task(taskID);
+			// build the datev export workitem....
+			datevExport = new ItemCollection().model(modelVersion).task(taskID);
 			// set unqiueid, needed for xslt
-			sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
+			datevExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
 			// copy iban/bic
-			sepaExport.setItemValue("_dbtr_iban", configuration.getItemValue("_dbtr_iban"));
-			sepaExport.setItemValue("_dbtr_bic", configuration.getItemValue("_dbtr_bic"));
-			sepaExport.setItemValue("_subject", configuration.getItemValue("_subject"));
-			sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
+			datevExport.setItemValue("_dbtr_iban", configuration.getItemValue("_dbtr_iban"));
+			datevExport.setItemValue("_dbtr_bic", configuration.getItemValue("_dbtr_bic"));
+			datevExport.setItemValue("_subject", configuration.getItemValue("_subject"));
+			datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
 			// get the data source based on the report definition....
 			List<ItemCollection> data = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false, null);
 
-			logMessage("Sepa export started....", configuration, null);
+			logMessage("DATEV export started....", configuration, null);
 			logMessage("...found " + data.size() + " invoices...", configuration, null);
 
-			// update the invoices with the _sepa_iban if not provided
-			// link the invoices with the sepa workitem. Count invoices and controll sum
+			// update the invoices with optional datev date  if not provided
+			// link the invoices with the datev workitem.
 			if (data.size() > 0) {
 				int count = data.size();
 				for (ItemCollection invoice : data) {
-					// test if invoice has a _dbtr_iban and _dbtr_bic
-
-					if (invoice.getItemValueString("_dbtr_iban").isEmpty()) {
-						// overtake _dbtr_iban from sepa export
-						invoice.setItemValue("_dbtr_iban", sepaExport.getItemValue("_dbtr_iban"));
-					}
-					if (invoice.getItemValueString("_dbtr_bic").isEmpty()) {
-						// overtake _dbtr_bic from sepa export
-						invoice.setItemValue("_dbtr_bic", sepaExport.getItemValue("_dbtr_bic"));
-					}
-					sepaExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
+					
+					datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
 					// write log
-					logMessage("Invoice: " + invoice.getUniqueID() + " added. ", configuration, sepaExport);
+					logMessage("Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
 
 				}
 
-				// finally we add the sepa export document to the data collection
-				data.add(sepaExport);
+				// finally we add the datev export document to the data collection
+				data.add(datevExport);
 
 				// create the attachment based on the report definition
 				// write a file to workitem
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
-				String sepaFileName = "sepa_" + df.format(new Date()) + ".xml";
+				DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HHmm");
+				String datevFileName = "EXTF_Buchungsstapel_" + df.format(new Date()) + ".csv";
 
-				FileData filedata = reportService.transformDataSource(report, data, sepaFileName);
+				FileData filedata = reportService.transformDataSource(report, data, datevFileName);
 
 				// attach the file
-				sepaExport.addFileData(filedata);
+				datevExport.addFileData(filedata);
 
 				// update and process invoices...
-				processInvoices(sepaExport, data, event, configuration);
+				processInvoices(datevExport, data, event, configuration);
 
 				// write log
-				logMessage("Sepa export finished.", configuration, sepaExport);
-				logMessage(count + " invoices exported. ", configuration, sepaExport);
+				logMessage("DATEV export finished.", configuration, datevExport);
+				logMessage(count + " invoices exported. ", configuration, datevExport);
 
-				// finish by proessing the sepa export workitem....
-				sepaExport.event(EVENT_START).event(EVENT_SUCCESS);
-				workflowService.processWorkItem(sepaExport);
+				// finish by proessing the datev export workitem....
+				datevExport.event(EVENT_START).event(EVENT_SUCCESS);
+				workflowService.processWorkItem(datevExport);
 
 			} else {
 				// no invoices found - so we terminate
@@ -200,26 +191,26 @@ public class SepaScheduler implements Scheduler {
 		} catch (ModelException | JAXBException | TransformerException | IOException | AccessDeniedException
 				| ProcessingErrorException | PluginException | QueryException e) {
 			try {
-				if (sepaExport != null) {
-					// execute sepa workflow with EVENT_FAILED
-					logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
-					sepaExport.event(EVENT_FAILED);
-					workflowService.processWorkItem(sepaExport);
+				if (datevExport != null) {
+					// execute datev workflow with EVENT_FAILED
+					logMessage("Failed: " + e.getMessage(), configuration, datevExport);
+					datevExport.event(EVENT_FAILED);
+					workflowService.processWorkItem(datevExport);
 				}
 			} catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
 				throw new SchedulerException(REPORT_ERROR,
-						"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+						"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
 			}
 
 			throw new SchedulerException(REPORT_ERROR,
-					"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+					"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
 		} finally {
 			if (outputStream != null) {
 				try {
 					outputStream.close();
 				} catch (IOException e) {
 					throw new SchedulerException(REPORT_ERROR,
-							"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+							"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
 
 				}
 			}
@@ -266,9 +257,9 @@ public class SepaScheduler implements Scheduler {
 	 * 
 	 * @see org.imixs.workflow.engine.plugins.SplitAndJoinPlugin.java
 	 * 
-	 * @param sepaExport - sepa export workitem
+	 * @param datevExport - datev export workitem
 	 * @param invoices   - list of invoices
-	 * @param event      - current sepa export event containing the invoice_update
+	 * @param event      - current datev export event containing the invoice_update
 	 *                   definition.
 	 * @throws AccessDeniedException
 	 * @throws ProcessingErrorException
@@ -276,13 +267,13 @@ public class SepaScheduler implements Scheduler {
 	 * @throws ModelException
 	 */
 	@SuppressWarnings("unchecked")
-	protected void processInvoices(ItemCollection sepaExport, List<ItemCollection> invoices, final ItemCollection event,
+	protected void processInvoices(ItemCollection datevExport, List<ItemCollection> invoices, final ItemCollection event,
 			ItemCollection configuration)
 			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
 
 		List<String> subProcessDefinitions = null;
 		// test for items with name subprocess_update definition.
-		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, sepaExport, false);
+		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, datevExport, false);
 
 		subProcessDefinitions = evalItemCollection.getItemValue(INVOICE_UPDATE);
 
@@ -325,7 +316,7 @@ public class SepaScheduler implements Scheduler {
 							logger.finest("...... subprocess matches criteria.");
 							// test for field list...
 							if (processData.hasItem("items")) {
-								logger.warning("subprocess itemList is not supported by the SepaScheduler!");
+								logger.warning("subprocess itemList is not supported by the DatevScheduler!");
 							}
 							try {
 								invoice.setEventID(Integer.valueOf(processData.getItemValueString("event")));
@@ -342,7 +333,7 @@ public class SepaScheduler implements Scheduler {
 						}
 					} else {
 						logMessage("...invoice " + _invoice.getUniqueID() + " could not be loaded!", configuration,
-								sepaExport);
+								datevExport);
 					}
 				}
 			}
