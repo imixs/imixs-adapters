@@ -86,14 +86,21 @@ Funktionsergänzung;</xsl:text>
 		match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']">
 		
 		<xsl:variable name="date" select="item[@name='$modified']/value"/>
+		<xsl:variable name="datevdate" select="format-dateTime($date, '[D01][M01]')" />
+			
+		 <xsl:for-each select="item[@name='_childitems']/value">
 		
-		<xsl:value-of select="item[@name='_childitems']/value/item[@name='_amount']/value" />
-		<xsl:text>;S;;;;</xsl:text>
-		<xsl:value-of select="item[@name='_childitems']/value/item[@name='_konto']/value" /><xsl:text>;</xsl:text>
-		<xsl:value-of select="item[@name='_childitems']/value/item[@name='_konto']/value" /><xsl:text>;</xsl:text>
-		<xsl:text>;</xsl:text>
-		<xsl:value-of select="concat(substring($date,9,2),substring($date,6,2))"/><xsl:text>;</xsl:text>
-		<xsl:text>;;;;http://;;;;;;;;;;;;;</xsl:text>
-		<xsl:text>&#xa;</xsl:text>
+			<xsl:variable name="betrag" select="replace(./item[@name='_amount']/value, '\.', ',')"/>
+
+			<xsl:value-of select="$betrag" />
+			<xsl:text>;S;;;;</xsl:text>
+			<xsl:value-of select="./item[@name='_konto']/value" /><xsl:text>;</xsl:text>
+			<xsl:value-of select="./item[@name='_konto']/value" /><xsl:text>;</xsl:text>
+			<xsl:text>;</xsl:text>
+			<xsl:value-of select="$datevdate"/><xsl:text>;</xsl:text>
+			<xsl:text>;;;;http://;;;;;;;;;;;;;</xsl:text>
+			<xsl:text>&#xa;</xsl:text>
+			
+		</xsl:for-each>
 	</xsl:template>
 </xsl:stylesheet>
