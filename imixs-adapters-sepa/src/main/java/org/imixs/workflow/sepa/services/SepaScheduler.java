@@ -137,7 +137,6 @@ public class SepaScheduler implements Scheduler {
 			// copy iban/bic
 			sepaExport.setItemValue("_dbtr_iban", configuration.getItemValue("_dbtr_iban"));
 			sepaExport.setItemValue("_dbtr_bic", configuration.getItemValue("_dbtr_bic"));
-			sepaExport.setItemValue("_subject", configuration.getItemValue("_subject"));
 			sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
 			// get the data source based on the report definition....
