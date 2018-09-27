@@ -26,8 +26,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -77,9 +80,9 @@ public class DatevScheduler implements Scheduler {
 
 	public static final String ITEM_MODEL_VERSION = "_model_version";
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
-	
-	public static final String ITEM_DATEV_CLIENT_ID="_datev_client_id";
-	public static final String ITEM_DATEV_CONSULTANT_ID="_datev_consultant_id";
+
+	public static final String ITEM_DATEV_CLIENT_ID = "_datev_client_id";
+	public static final String ITEM_DATEV_CONSULTANT_ID = "_datev_consultant_id";
 
 	public static final String REPORT_ERROR = "REPORT_ERROR";
 
@@ -133,59 +136,80 @@ public class DatevScheduler implements Scheduler {
 						"unable to load report '" + reportName + "'. Please check  model configuration");
 			}
 
-			// build the datev export workitem....
-			datevExport = new ItemCollection().model(modelVersion).task(taskID);
-			// set unqiueid, needed for xslt
-			datevExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
-			// copy datev_client_id
-			datevExport.setItemValue(ITEM_DATEV_CLIENT_ID, configuration.getItemValue(ITEM_DATEV_CLIENT_ID));
-			datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID, configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
-			datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
-
 			// get the data source based on the report definition....
-			List<ItemCollection> data = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false, null);
+			List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
+					null);
 
-			logMessage("DATEV export started....", configuration, null);
-			logMessage("...found " + data.size() + " invoices...", configuration, null);
+			logMessage("...DATEV export started....", configuration, null);
+			logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
 
 			// update the invoices with optional datev_client_id if not provided
 			// link the invoices with the datev workitem.
-			if (data.size() > 0) {
-				int count = data.size();
-				for (ItemCollection invoice : data) {
-
+			if (masterDataSet.size() > 0) {
+				int count = masterDataSet.size();
+				// add ITEM_DATEV_CLIENT_ID from the DATEV convig if missing
+				for (ItemCollection invoice : masterDataSet) {
 					if (invoice.getItemValueString(ITEM_DATEV_CLIENT_ID).isEmpty()) {
-						invoice.replaceItemValue(ITEM_DATEV_CLIENT_ID, datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID));
+						invoice.replaceItemValue(ITEM_DATEV_CLIENT_ID,
+								configuration.getItemValue(ITEM_DATEV_CLIENT_ID));
 					}
-					datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
+				}
+
+				Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet, ITEM_DATEV_CLIENT_ID);
+
+				// now we iterate over each invoice grouped by the _datev_client_id
+				for (String key : invoiceGroups.keySet()) {
+				
+					List<ItemCollection> data = invoiceGroups.get(key);
+					int groupCount=data.size();
+					// build the datev export workitem....
+					datevExport = new ItemCollection().model(modelVersion).task(taskID);
+					datevExport.replaceItemValue(WorkflowKernel.CREATED,new Date());
+					// set unqiueid, needed for xslt
+					datevExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
+					// copy datev_client_id
+					datevExport.setItemValue(ITEM_DATEV_CLIENT_ID, key);
+					datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
+							configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
+					datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
+
+					logMessage("...starting DATEV export for ClientID=" + key + "...", configuration, datevExport);
+
+					
+					// link invoices with export workitem....
+					for (ItemCollection invoice : data) {
+						datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
+						// write log
+						logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
+					}
+
+					// finally we add the datev export document to the data collection
+					data.add(datevExport);
+
+					// create the attachment based on the report definition
+					// write a file to workitem
+					DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HHmm");
+					String datevFileName = "EXTF_Buchungsstapel_" + df.format(new Date()) + ".csv";
+
+					FileData filedata = reportService.transformDataSource(report, data, datevFileName);
+
+					// attach the file
+					datevExport.addFileData(filedata);
+
+					// update and process invoices...
+					processInvoices(datevExport, data, event, configuration);
+
 					// write log
-					logMessage("Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
+					logMessage("...DATEV export ClientID=" + key + "  finished.", configuration, datevExport);
+					logMessage("..." + groupCount + " invoices exported. ", configuration, datevExport);
+
+					// finish by proessing the datev export workitem....
+					datevExport.event(EVENT_START).event(EVENT_SUCCESS);
+					workflowService.processWorkItem(datevExport);
 
 				}
 
-				// finally we add the datev export document to the data collection
-				data.add(datevExport);
-
-				// create the attachment based on the report definition
-				// write a file to workitem
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HHmm");
-				String datevFileName = "EXTF_Buchungsstapel_" + df.format(new Date()) + ".csv";
-
-				FileData filedata = reportService.transformDataSource(report, data, datevFileName);
-
-				// attach the file
-				datevExport.addFileData(filedata);
-
-				// update and process invoices...
-				processInvoices(datevExport, data, event, configuration);
-
-				// write log
-				logMessage("DATEV export finished.", configuration, datevExport);
-				logMessage(count + " invoices exported. ", configuration, datevExport);
-
-				// finish by proessing the datev export workitem....
-				datevExport.event(EVENT_START).event(EVENT_SUCCESS);
-				workflowService.processWorkItem(datevExport);
+				logMessage("...DATEV export completed", configuration, null);
 
 			} else {
 				// no invoices found - so we terminate
@@ -222,6 +246,28 @@ public class DatevScheduler implements Scheduler {
 		}
 
 		return configuration;
+	}
+
+	/**
+	 * This method gorups a colleciton of invoices by a given key item.
+	 * 
+	 * @return a map with keys and lists of ItemCollection objects.
+	 */
+	private Map<String, List<ItemCollection>> groupInvoicesBy(List<ItemCollection> datasource, String keyItem) {
+		Map<String, List<ItemCollection>> result = new HashMap<>();
+		logger.info("......grouping invoices by '" + keyItem + "'");
+		for (ItemCollection invoice : datasource) {
+			String key = invoice.getItemValueString(keyItem);
+			logger.info("......building invoice group for '" + key + "'");
+			List<ItemCollection> group = result.get(key);
+			if (group == null) {
+				group = new ArrayList<ItemCollection>();
+			}
+			group.add(invoice);
+			result.put(key, group);
+		}
+
+		return result;
 	}
 
 	/**
