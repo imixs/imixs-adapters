@@ -22,23 +22,20 @@
 		match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'DATEV-Export']">
 
 		<xsl:variable name="date" select="item[@name='$modified']/value"/>
-		<xsl:variable name="datevdate" select="concat(substring($date,0,5),substring($date,6,2),substring($date,9,2),substring($date,12,2),substring($date,15,2),substring($date,18,2),substring($date,21,3))"/>
 	
 
-
-
 		<!-- Header -->
-<xsl:text>„EXTF“;510;21;“Buchungsstapel“;7;</xsl:text>
-<xsl:value-of select="$datevdate"></xsl:value-of>
-<xsl:text>;;“RE“;“ImixsWorkflow“;““;</xsl:text>
-<xsl:value-of select="item[@name='_datev_consultantid']/value" /><xsl:text>;</xsl:text>
-<xsl:value-of select="item[@name='_datev_clientid']/value" /><xsl:text>;</xsl:text>
+<xsl:text>"EXTF";510;21;"Buchungsstapel";7;</xsl:text>
+<xsl:value-of select="format-dateTime($date, '[Y0001][M01][D01][H01][m01][s01][f001]')"></xsl:value-of>
+<xsl:text>;;"RE";"ImixsWorkflow";"";</xsl:text>
+<xsl:value-of select="item[@name='_datev_consultant_id']/value" /><xsl:text>;</xsl:text>
+<xsl:value-of select="item[@name='_datev_client_id']/value" /><xsl:text>;</xsl:text>
 <xsl:value-of select="concat(substring($date,0,5),'0101')"/><xsl:text>;</xsl:text>
 <xsl:text>4;</xsl:text>
 <xsl:value-of select="concat(substring($date,0,5),'0101')"/><xsl:text>;</xsl:text>
 <xsl:value-of select="concat(substring($date,0,5),'1231')"/><xsl:text>;</xsl:text>
-<xsl:text>“</xsl:text><xsl:value-of select="concat('Rechnungen ',substring($date,0,5),substring($date,6,2),substring($date,9,2))"/><xsl:text>“</xsl:text><xsl:text>;</xsl:text>
-<xsl:text>““;1;0;0;;;;;;;;;““;““</xsl:text>
+<xsl:text>"</xsl:text><xsl:value-of select="concat('Rechnungen ',format-dateTime($date, '[D01][M01]'))"/><xsl:text>"</xsl:text><xsl:text>;</xsl:text>
+<xsl:text>"";1;0;0;;;;;;;;;"";""</xsl:text>
 
 <xsl:text>&#xa;</xsl:text>
 
@@ -53,8 +50,7 @@
 <xsl:text>Beleginfo – Art 6;Beleginfo – Inhalt 6;</xsl:text>
 <xsl:text>Beleginfo – Art 7;Beleginfo – Inhalt 7;</xsl:text>
 <xsl:text>Beleginfo – Art 8;Beleginfo – Inhalt 8;</xsl:text>
-<xsl:text>KOST1 – Kostenstelle;KOST2 – Kostenstelle;KOST-Menge;EU-Mitgliedstaat u. USt-IdNr.;EU-Steuersatz;Abw. Versteuerungsart;Sachverhalt L+L;Funktionsergänzung L+L;BU 49 Hauptfunktionstyp;BU 49 Hauptfunktionsnummer;BU 49
-Funktionsergänzung;</xsl:text>
+<xsl:text>KOST1 – Kostenstelle;KOST2 – Kostenstelle;KOST-Menge;EU-Mitgliedstaat u. USt-IdNr.;EU-Steuersatz;Abw. Versteuerungsart;Sachverhalt L+L;Funktionsergänzung L+L;BU 49 Hauptfunktionstyp;BU 49 Hauptfunktionsnummer;BU 49 Funktionsergänzung;</xsl:text>
 <xsl:text>Zusatzinformation – Art 1;Zusatzinformation – Inhalt 1;</xsl:text>
 <xsl:text>Zusatzinformation – Art 2;Zusatzinformation – Inhalt 2;</xsl:text>
 <xsl:text>Zusatzinformation – Art 3;Zusatzinformation – Inhalt 3;</xsl:text>
@@ -86,19 +82,24 @@ Funktionsergänzung;</xsl:text>
 		match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']">
 		
 		<xsl:variable name="date" select="item[@name='$modified']/value"/>
-		<xsl:variable name="datevdate" select="format-dateTime($date, '[D01][M01]')" />
-			
-		 <xsl:for-each select="item[@name='_childitems']/value">
+		<xsl:variable name="gegenkonto" select="item[@name='_kreditor_konto']/value"/>
+		<xsl:variable name="subject" select="item[@name='_subject']/value"/>
+		<xsl:variable name="uniqueid" select="item[@name='$uniqueid']/value"/>
+		
+		
+		<xsl:for-each select="item[@name='_childitems']/value">
 		
 			<xsl:variable name="betrag" select="replace(./item[@name='_amount']/value, '\.', ',')"/>
 
 			<xsl:value-of select="$betrag" />
-			<xsl:text>;S;;;;</xsl:text>
+			<xsl:text>;S;;;;;</xsl:text>
 			<xsl:value-of select="./item[@name='_konto']/value" /><xsl:text>;</xsl:text>
-			<xsl:value-of select="./item[@name='_konto']/value" /><xsl:text>;</xsl:text>
-			<xsl:text>;</xsl:text>
-			<xsl:value-of select="$datevdate"/><xsl:text>;</xsl:text>
-			<xsl:text>;;;;http://;;;;;;;;;;;;;</xsl:text>
+			<xsl:value-of select="$gegenkonto" /><xsl:text>;</xsl:text>
+			<xsl:value-of select="./item[@name='_tax']/value" /><xsl:text>;</xsl:text>
+			<xsl:value-of select="format-dateTime($date, '[D01][M01]')"/><xsl:text>;</xsl:text>
+			<xsl:value-of select="$subject"/><xsl:text>;</xsl:text>
+			<xsl:text>http://localhost:8080?workitem=</xsl:text><xsl:value-of select="$uniqueid"/><xsl:text>;</xsl:text>
+			<xsl:text>;;;;;;;;;;;;;;;;</xsl:text>
 			<xsl:text>&#xa;</xsl:text>
 			
 		</xsl:for-each>

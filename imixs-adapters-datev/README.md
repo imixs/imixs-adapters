@@ -36,8 +36,11 @@ This example configuration will select all invoices form the Model _invoice-1.0.
 
 ### Grouping the Data Source
 
-The SeapScheduler automatically groups the data source by the attribute \_datev\_client. This feature is optional and used to generate seperate process instances for each DATEV client. 
+The SeapScheduler automatically groups the data source by the attribute \_datev\_client\_id. This feature is optional and used to generate separate process instances for each DATEV client. If the \_datev\_client\_id it is usually hard coded in the xsl template. 
 
+Selecting only invoices providing a \_datev\_client\_id can done by the following example query:
+
+	(type:"workitem" AND $modelversion:"rechnungseingang-0.0.1" AND _datev_client_id:["" TO *]) 
 
 
 ## Updating Invoices

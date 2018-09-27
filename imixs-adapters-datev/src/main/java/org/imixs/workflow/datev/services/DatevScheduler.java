@@ -77,6 +77,9 @@ public class DatevScheduler implements Scheduler {
 
 	public static final String ITEM_MODEL_VERSION = "_model_version";
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
+	
+	public static final String ITEM_DATEV_CLIENT_ID="_datev_client_id";
+	public static final String ITEM_DATEV_CONSULTANT_ID="_datev_consultant_id";
 
 	public static final String REPORT_ERROR = "REPORT_ERROR";
 
@@ -134,10 +137,9 @@ public class DatevScheduler implements Scheduler {
 			datevExport = new ItemCollection().model(modelVersion).task(taskID);
 			// set unqiueid, needed for xslt
 			datevExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
-			// copy iban/bic
-			datevExport.setItemValue("_dbtr_iban", configuration.getItemValue("_dbtr_iban"));
-			datevExport.setItemValue("_dbtr_bic", configuration.getItemValue("_dbtr_bic"));
-			datevExport.setItemValue("_subject", configuration.getItemValue("_subject"));
+			// copy datev_client_id
+			datevExport.setItemValue(ITEM_DATEV_CLIENT_ID, configuration.getItemValue(ITEM_DATEV_CLIENT_ID));
+			datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID, configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
 			datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
 			// get the data source based on the report definition....
@@ -146,12 +148,15 @@ public class DatevScheduler implements Scheduler {
 			logMessage("DATEV export started....", configuration, null);
 			logMessage("...found " + data.size() + " invoices...", configuration, null);
 
-			// update the invoices with optional datev date if not provided
+			// update the invoices with optional datev_client_id if not provided
 			// link the invoices with the datev workitem.
 			if (data.size() > 0) {
 				int count = data.size();
 				for (ItemCollection invoice : data) {
 
+					if (invoice.getItemValueString(ITEM_DATEV_CLIENT_ID).isEmpty()) {
+						invoice.replaceItemValue(ITEM_DATEV_CLIENT_ID, datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID));
+					}
 					datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
 					// write log
 					logMessage("Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
