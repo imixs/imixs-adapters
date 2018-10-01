@@ -53,7 +53,7 @@
 									</dt>
 									<dd>
 										<h:inputText required="true"
-											value="#{sepaController.configuration.item['_subject']}">
+											value="#{sepaController.configuration.item['_dbtr_name']}">
 										</h:inputText>
 									</dd>
 								</dl>
@@ -138,7 +138,9 @@
 
 						<!-- include timer control -->
 
-						<ui:include src="sub_scheduler_control.xhtml"></ui:include>
+						<ui:include src="sub_scheduler_control.xhtml">
+							<ui:param name="schedulerController" value="#{sepaController}" />
+						</ui:include>
 
 
 

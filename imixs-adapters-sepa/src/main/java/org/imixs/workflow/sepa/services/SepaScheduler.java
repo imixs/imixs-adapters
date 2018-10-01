@@ -26,8 +26,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -77,7 +80,16 @@ public class SepaScheduler implements Scheduler {
 
 	public static final String ITEM_MODEL_VERSION = "_model_version";
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
+	
+	public static final String ITEM_DBTR_IBAN = "_dbtr_iban";
+	public static final String ITEM_DBTR_BIC = "_dbtr_bic";
+	public static final String ITEM_DBTR_NAME = "_dbtr_name";
 
+	public static final String ITEM_CDTR_IBAN = "_cdtr_iban";
+	public static final String ITEM_CDTR_BIC = "_cdtr_bic";
+	public static final String ITEM_CDTR_NAME = "_cdtr_name";
+
+	
 	public static final String REPORT_ERROR = "REPORT_ERROR";
 
 	public static final int MAX_COUNT = 999;
@@ -130,65 +142,94 @@ public class SepaScheduler implements Scheduler {
 						"unable to load report '" + reportName + "'. Please check  model configuration");
 			}
 
-			// build the sepa export workitem....
-			sepaExport = new ItemCollection().model(modelVersion).task(taskID);
-			// set unqiueid, needed for xslt
-			sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
-			// copy iban/bic
-			sepaExport.setItemValue("_dbtr_iban", configuration.getItemValue("_dbtr_iban"));
-			sepaExport.setItemValue("_dbtr_bic", configuration.getItemValue("_dbtr_bic"));
-			sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
-
 			// get the data source based on the report definition....
-			List<ItemCollection> data = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false, null);
+			List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false, null);
 
-			logMessage("Sepa export started....", configuration, null);
-			logMessage("...found " + data.size() + " invoices...", configuration, null);
+			logMessage("...SEPA export started....", configuration, null);
+			logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
 
-			// update the invoices with the _sepa_iban if not provided
-			// link the invoices with the sepa workitem. Count invoices and controll sum
-			if (data.size() > 0) {
-				int count = data.size();
-				for (ItemCollection invoice : data) {
+			// update the invoices with optional datev_client_id if not provided
+			// link the invoices with the datev workitem.
+			if (masterDataSet.size() > 0) {
+				// add ITEM_DATEV_CLIENT_ID from the DATEV config if missing
+				for (ItemCollection invoice : masterDataSet) {
 					// test if invoice has a _dbtr_iban and _dbtr_bic
 
-					if (invoice.getItemValueString("_dbtr_iban").isEmpty()) {
+					if (invoice.getItemValueString(ITEM_DBTR_IBAN).isEmpty()) {
 						// overtake _dbtr_iban from sepa export
-						invoice.setItemValue("_dbtr_iban", sepaExport.getItemValue("_dbtr_iban"));
+						invoice.setItemValue(ITEM_DBTR_IBAN, configuration.getItemValue(ITEM_DBTR_IBAN));
 					}
-					if (invoice.getItemValueString("_dbtr_bic").isEmpty()) {
+					if (invoice.getItemValueString(ITEM_DBTR_BIC).isEmpty()) {
 						// overtake _dbtr_bic from sepa export
-						invoice.setItemValue("_dbtr_bic", sepaExport.getItemValue("_dbtr_bic"));
+						invoice.setItemValue(ITEM_DBTR_BIC, configuration.getItemValue(ITEM_DBTR_BIC));
 					}
-					sepaExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
+				
+				}
+
+				Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet, ITEM_DBTR_IBAN);
+
+				
+				// now we iterate over each invoice grouped by the _datev_client_id
+				for (String key : invoiceGroups.keySet()) {
+
+					List<ItemCollection> data = invoiceGroups.get(key);
+					int groupCount = data.size();
+					// build the datev export workitem....
+					sepaExport = new ItemCollection().model(modelVersion).task(taskID);
+					sepaExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
+					sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
+					// set unqiueid, needed for xslt
+					sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
+					// copy dbtr_iban
+					sepaExport.setItemValue(ITEM_DBTR_IBAN, key);
+					
+					// set _dbtr_name from first invoice if available...
+					ItemCollection firstInvoice = data.get(0);
+					if (firstInvoice.hasItem(ITEM_DBTR_NAME)) {
+						sepaExport.setItemValue(ITEM_DBTR_NAME,
+								firstInvoice.getItemValue(ITEM_DBTR_NAME));
+					}
+
+					// set workflow group to identify document in xslt
+					sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
+
+					logMessage("...starting SEPA export for iban=" + key + "...", configuration, sepaExport);
+
+					// link invoices with export workitem....
+					for (ItemCollection invoice : data) {
+						sepaExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
+						// write log
+						logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration, sepaExport);
+					}
+
+					// finally we add the datev export document to the data collection
+					data.add(sepaExport);
+
+					
+					// create the attachment based on the report definition
+					// write a file to workitem
+					DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
+					String sepaFileName = "sepa_" + df.format(new Date()) + ".xml";
+
+					FileData filedata = reportService.transformDataSource(report, data, sepaFileName);
+
+					// attach the file
+					sepaExport.addFileData(filedata);
+
+					// update and process invoices...
+					processInvoices(sepaExport, data, event, configuration);
+
 					// write log
-					logMessage("Invoice: " + invoice.getUniqueID() + " added. ", configuration, sepaExport);
+					logMessage("...SEPA export " + key + "  finished.", configuration, sepaExport);
+					logMessage("..." + groupCount + " invoices exported. ", configuration, sepaExport);
+
+					// finish by proessing the datev export workitem....
+					sepaExport.event(EVENT_START).event(EVENT_SUCCESS);
+					workflowService.processWorkItem(sepaExport);
 
 				}
 
-				// finally we add the sepa export document to the data collection
-				data.add(sepaExport);
-
-				// create the attachment based on the report definition
-				// write a file to workitem
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
-				String sepaFileName = "sepa_" + df.format(new Date()) + ".xml";
-
-				FileData filedata = reportService.transformDataSource(report, data, sepaFileName);
-
-				// attach the file
-				sepaExport.addFileData(filedata);
-
-				// update and process invoices...
-				processInvoices(sepaExport, data, event, configuration);
-
-				// write log
-				logMessage("Sepa export finished.", configuration, sepaExport);
-				logMessage(count + " invoices exported. ", configuration, sepaExport);
-
-				// finish by proessing the sepa export workitem....
-				sepaExport.event(EVENT_START).event(EVENT_SUCCESS);
-				workflowService.processWorkItem(sepaExport);
+				logMessage("...SEPA export completed", configuration, null);
 
 			} else {
 				// no invoices found - so we terminate
@@ -227,6 +268,30 @@ public class SepaScheduler implements Scheduler {
 		return configuration;
 	}
 
+	
+	/**
+	 * This method groups a collection of invoices by a given key item.
+	 * 
+	 * @return a map with keys and lists of ItemCollection objects.
+	 */
+	private Map<String, List<ItemCollection>> groupInvoicesBy(List<ItemCollection> datasource, String keyItem) {
+		Map<String, List<ItemCollection>> result = new HashMap<>();
+		logger.info("......grouping invoices by '" + keyItem + "'");
+		for (ItemCollection invoice : datasource) {
+			String key = invoice.getItemValueString(keyItem);
+			logger.info("......building invoice group for '" + key + "'");
+			List<ItemCollection> group = result.get(key);
+			if (group == null) {
+				group = new ArrayList<ItemCollection>();
+			}
+			group.add(invoice);
+			result.put(key, group);
+		}
+
+		return result;
+	}
+	
+	
 	/**
 	 * Creates a new log entry stored in the item _scheduler_log. The log can be
 	 * writen optional to the configuraiton and the workitem

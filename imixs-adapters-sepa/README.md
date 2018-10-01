@@ -25,8 +25,21 @@ The scheduler configuration object must at least provide the following items:
 
  * \_model\_version = model version for the SEPA export
  * \_initial\_task = inital task ID
- * \_dbtr\_IBAN = default IBAN for the SEPA export file 
- * \_dbtr\_BIC = default BIC for the SEPA export file
+ * \_dbtr\_IBAN = default debitor IBAN  
+ * \_dbtr\_BIC = default debitor BIC 
+ * \_dbtr\_NAME = default debitor NAME 
+ 
+Aligned to the SEPA standard an invoice processed by the SepaScheduler should provide the following items. 
+
+ * \_cdtr\_IBAN = default debitor IBAN  
+ * \_cdtr\_BIC = default debitor BIC 
+ * \_cdtr\_NAME = default debitor NAME 
+ * \_subject = invoice/topic
+
+
+**Note:** These are recommended default item names. The items can be change to the spec of an application and XSL template.   
+ 
+### Data Source
  
 The start event (100) must be linked to a report definition. The report describes the data source and the template to translate the 
 data source into a SEPA file format. See the following example for a data source query defined by a report:
@@ -38,7 +51,7 @@ This example configuration will select all invoices form the Model _invoice-1.0.
 
 ### Grouping the Data Source
 
-The SeapScheduler automatically groups the data source by the attribute \_dbtr\_iban. This feature is optional and used to generate seperate process instances for each debitor. 
+The SeapScheduler automatically groups the data source by the attribute \_dbtr\_iban. This feature is optional and used to generate separate process instances for each debitor. 
 
 
 

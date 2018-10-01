@@ -66,7 +66,7 @@
 					<Dbtr>
 						<Nm>
 							<xsl:value-of
-								select="$exportWorkitem/item[@name='_subject']/value" />
+								select="$exportWorkitem/item[@name='_dbtr_name']/value" />
 						</Nm>
 					</Dbtr>
 					<DbtrAcct>
@@ -138,7 +138,7 @@
 			</CdtrAgt>
 			<Cdtr>
 				<Nm>
-					<xsl:value-of select="item[@name='_supplier']/value" />
+					<xsl:value-of select="item[@name='_cdtr_name']/value" />
 				</Nm>
 			</Cdtr>
 			<CdtrAcct>
