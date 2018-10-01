@@ -83,6 +83,7 @@ public class DatevScheduler implements Scheduler {
 
 	public static final String ITEM_DATEV_CLIENT_ID = "_datev_client_id";
 	public static final String ITEM_DATEV_CONSULTANT_ID = "_datev_consultant_id";
+	public static final String ITEM_DATEV_FISCAL_START = "_datev_fiscal_start";
 
 	public static final String REPORT_ERROR = "REPORT_ERROR";
 
@@ -146,8 +147,7 @@ public class DatevScheduler implements Scheduler {
 			// update the invoices with optional datev_client_id if not provided
 			// link the invoices with the datev workitem.
 			if (masterDataSet.size() > 0) {
-				int count = masterDataSet.size();
-				// add ITEM_DATEV_CLIENT_ID from the DATEV convig if missing
+				// add ITEM_DATEV_CLIENT_ID from the DATEV config if missing
 				for (ItemCollection invoice : masterDataSet) {
 					if (invoice.getItemValueString(ITEM_DATEV_CLIENT_ID).isEmpty()) {
 						invoice.replaceItemValue(ITEM_DATEV_CLIENT_ID,
@@ -159,23 +159,31 @@ public class DatevScheduler implements Scheduler {
 
 				// now we iterate over each invoice grouped by the _datev_client_id
 				for (String key : invoiceGroups.keySet()) {
-				
+
 					List<ItemCollection> data = invoiceGroups.get(key);
-					int groupCount=data.size();
+					int groupCount = data.size();
 					// build the datev export workitem....
 					datevExport = new ItemCollection().model(modelVersion).task(taskID);
-					datevExport.replaceItemValue(WorkflowKernel.CREATED,new Date());
+					datevExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
+					datevExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
 					// set unqiueid, needed for xslt
 					datevExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
 					// copy datev_client_id
 					datevExport.setItemValue(ITEM_DATEV_CLIENT_ID, key);
+
+					// set _datev_fiscal_start (date) from first invoice if available...
+					ItemCollection firstInvoice = data.get(0);
+					if (firstInvoice.hasItem(ITEM_DATEV_FISCAL_START)) {
+						datevExport.setItemValue(ITEM_DATEV_FISCAL_START,
+								firstInvoice.getItemValue(ITEM_DATEV_FISCAL_START));
+					}
+
 					datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
 							configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
 					datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
 					logMessage("...starting DATEV export for ClientID=" + key + "...", configuration, datevExport);
 
-					
 					// link invoices with export workitem....
 					for (ItemCollection invoice : data) {
 						datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
