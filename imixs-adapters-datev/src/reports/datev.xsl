@@ -31,7 +31,7 @@
 <xsl:value-of select="item[@name='_datev_consultant_id']/value" /><xsl:text>;</xsl:text>
 <xsl:value-of select="item[@name='_datev_client_id']/value" /><xsl:text>;</xsl:text>
 <xsl:value-of select="concat(substring($date,0,5),'0101')"/><xsl:text>;</xsl:text>
-<xsl:text>4;</xsl:text>
+<xsl:text>6;</xsl:text>
 <xsl:value-of select="concat(substring($date,0,5),'0101')"/><xsl:text>;</xsl:text>
 <xsl:value-of select="concat(substring($date,0,5),'1231')"/><xsl:text>;</xsl:text>
 <xsl:text>"</xsl:text><xsl:value-of select="concat('Rechnungen ',format-dateTime($date, '[D01][M01]'))"/><xsl:text>"</xsl:text><xsl:text>;</xsl:text>

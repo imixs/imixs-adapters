@@ -25,6 +25,8 @@ The scheduler configuration object must at least provide the following items:
 
  * \_model\_version = model version for the DATEV export
  * \_initial\_task = inital task ID
+
+### Data Source
  
 The start event (100) must be linked to a report definition. The report describes the data source and the template to translate the 
 data source into a DATEV file format. See the following example for a data source query defined by a report:

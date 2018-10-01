@@ -257,7 +257,7 @@ public class DatevScheduler implements Scheduler {
 	}
 
 	/**
-	 * This method gorups a colleciton of invoices by a given key item.
+	 * This method groups a collection of invoices by a given key item.
 	 * 
 	 * @return a map with keys and lists of ItemCollection objects.
 	 */
