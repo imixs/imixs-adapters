@@ -364,11 +364,9 @@ public class DatevScheduler implements Scheduler {
 					ItemCollection invoice = workflowService.getWorkItem(_invoice.getUniqueID());
 
 					if (invoice != null) {
-
-						// test if process matches
+						// test if invoice matches update criteria.... 
 						String subModelVersion = invoice.getModelVersion();
 						String subProcessID = "" + invoice.getTaskID();
-
 						if (Pattern.compile(model_pattern).matcher(subModelVersion).find()
 								&& Pattern.compile(process_pattern).matcher(subProcessID).find()) {
 
@@ -390,10 +388,7 @@ public class DatevScheduler implements Scheduler {
 							invoice = workflowService.processWorkItem(invoice);
 							logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration, null);
 						}
-					} else {
-						logMessage("...invoice " + _invoice.getUniqueID() + " could not be loaded!", configuration,
-								datevExport);
-					}
+					} 
 				}
 			}
 

@@ -80,7 +80,7 @@ public class SepaScheduler implements Scheduler {
 
 	public static final String ITEM_MODEL_VERSION = "_model_version";
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
-	
+
 	public static final String ITEM_DBTR_IBAN = "_dbtr_iban";
 	public static final String ITEM_DBTR_BIC = "_dbtr_bic";
 	public static final String ITEM_DBTR_NAME = "_dbtr_name";
@@ -89,7 +89,6 @@ public class SepaScheduler implements Scheduler {
 	public static final String ITEM_CDTR_BIC = "_cdtr_bic";
 	public static final String ITEM_CDTR_NAME = "_cdtr_name";
 
-	
 	public static final String REPORT_ERROR = "REPORT_ERROR";
 
 	public static final int MAX_COUNT = 999;
@@ -143,7 +142,8 @@ public class SepaScheduler implements Scheduler {
 			}
 
 			// get the data source based on the report definition....
-			List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false, null);
+			List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
+					null);
 
 			logMessage("...SEPA export started....", configuration, null);
 			logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
@@ -163,12 +163,11 @@ public class SepaScheduler implements Scheduler {
 						// overtake _dbtr_bic from sepa export
 						invoice.setItemValue(ITEM_DBTR_BIC, configuration.getItemValue(ITEM_DBTR_BIC));
 					}
-				
+
 				}
 
 				Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet, ITEM_DBTR_IBAN);
 
-				
 				// now we iterate over each invoice grouped by the _datev_client_id
 				for (String key : invoiceGroups.keySet()) {
 
@@ -182,12 +181,11 @@ public class SepaScheduler implements Scheduler {
 					sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
 					// copy dbtr_iban
 					sepaExport.setItemValue(ITEM_DBTR_IBAN, key);
-					
+
 					// set _dbtr_name from first invoice if available...
 					ItemCollection firstInvoice = data.get(0);
 					if (firstInvoice.hasItem(ITEM_DBTR_NAME)) {
-						sepaExport.setItemValue(ITEM_DBTR_NAME,
-								firstInvoice.getItemValue(ITEM_DBTR_NAME));
+						sepaExport.setItemValue(ITEM_DBTR_NAME, firstInvoice.getItemValue(ITEM_DBTR_NAME));
 					}
 
 					// set workflow group to identify document in xslt
@@ -205,7 +203,6 @@ public class SepaScheduler implements Scheduler {
 					// finally we add the datev export document to the data collection
 					data.add(sepaExport);
 
-					
 					// create the attachment based on the report definition
 					// write a file to workitem
 					DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
@@ -268,7 +265,6 @@ public class SepaScheduler implements Scheduler {
 		return configuration;
 	}
 
-	
 	/**
 	 * This method groups a collection of invoices by a given key item.
 	 * 
@@ -290,8 +286,7 @@ public class SepaScheduler implements Scheduler {
 
 		return result;
 	}
-	
-	
+
 	/**
 	 * Creates a new log entry stored in the item _scheduler_log. The log can be
 	 * writen optional to the configuraiton and the workitem
@@ -378,11 +373,9 @@ public class SepaScheduler implements Scheduler {
 					ItemCollection invoice = workflowService.getWorkItem(_invoice.getUniqueID());
 
 					if (invoice != null) {
-
-						// test if process matches
+						// test if invoice matches update criteria....
 						String subModelVersion = invoice.getModelVersion();
 						String subProcessID = "" + invoice.getTaskID();
-
 						if (Pattern.compile(model_pattern).matcher(subModelVersion).find()
 								&& Pattern.compile(process_pattern).matcher(subProcessID).find()) {
 
@@ -404,9 +397,6 @@ public class SepaScheduler implements Scheduler {
 							invoice = workflowService.processWorkItem(invoice);
 							logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration, null);
 						}
-					} else {
-						logMessage("...invoice " + _invoice.getUniqueID() + " could not be loaded!", configuration,
-								sepaExport);
 					}
 				}
 			}
