@@ -117,6 +117,7 @@ public class LDAPCache {
 
 	/**
 	 * returns true if the key is contained in the cache.
+	 * This does not mean that the object is useable!
 	 * 
 	 */
 	public boolean contains(String key) {

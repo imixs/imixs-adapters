@@ -214,10 +214,15 @@ public class LDAPLookupService {
 			return null;
 		}
 
-		// also null objects can be returned here (if no ldap attributes exist)
+		// also null objects can be returned here (if LDAPCache was serialized.)
 		if (!refresh && ldapCache.contains(aUID)) {
-			logger.finest("......fetched user: '" + aUID + "' from cache.");
-			return (ItemCollection) ldapCache.get(aUID);
+			logger.finest("......fetching user: '" + aUID + "' from cache...");
+			ItemCollection user=(ItemCollection) ldapCache.get(aUID);
+			if (user!=null && user.getAllItems().size()>0) {
+				return user;
+			} 
+			// user object is expired
+			logger.finest("......user object expired!");
 		}
 		long l = System.currentTimeMillis();
 		// start lookup
@@ -231,7 +236,6 @@ public class LDAPLookupService {
 				// found!)
 				logger.finest("......put user: '" + aUID + "' into cache.");
 				ldapCache.put(aUID, user);
-
 				logger.fine("... lookup user '" + aUID + "' successfull in " + (System.currentTimeMillis() - l) + "ms");
 			} else {
 				logger.finest("......user: '" + aUID + "' not found");
