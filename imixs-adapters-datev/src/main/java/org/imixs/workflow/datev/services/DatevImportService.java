@@ -148,9 +148,20 @@ public class DatevImportService {
 	 * All existing entries not listed in the current file will be removed.
 	 * 
 	 * <p>
+	 * Each imported document will have the item '_datev_client_id' and
+	 * '_datev_consultant_id'. These item are mapped to the "Mandant id" and
+	 * "Berater id" from Datev. These categories allow the import of data from
+	 * different clients and consults. It is important that the fields
+	 * '_datev_client_id' and '_datev_consultant_id' are added to the lucene index
+	 * so that a search for data of a specific client is possible.
+	 * <p>
+	 * {@code
+	 *   lucence.indexFieldListNoAnalyze=....,_datev_client_id,_datev_consultant_id
+	 * }
 	 * 
-	 * The method returns a log file. If an error occurs a plugin exception is
-	 * thrown
+	 * <p>
+	 * 
+	 * The method returns a log . If an error occurs a plugin exception is thrown
 	 * 
 	 * @return ErrorMessage or empty String
 	 * @throws PluginException
@@ -158,6 +169,8 @@ public class DatevImportService {
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
 	public String importData(InputStream imputStream, String encoding) throws PluginException {
 		String type = null;
+		String clientID = null;
+		String consultenID = null;
 		logger.info("...starting csv data import...");
 		String log = "";
 		int line = 0;
@@ -181,17 +194,27 @@ public class DatevImportService {
 			// read first line containing the object type
 			String header1 = in.readLine();
 			String[] header1List = header1.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
-			header1List=normalizeValueList(header1List);
+			header1List = normalizeValueList(header1List);
 			if (header1List == null || header1List.length < 4) {
 				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
 						"File Format not supported, 1st line must contain the fromatname in column 4 (type).");
 			}
-			type=header1List[3];
-			if (type == null || type.isEmpty() ) {
+			type = header1List[3];
+
+			if (type == null || type.isEmpty()) {
 				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
 						"File Format not supported, 1st line must contain the fromatname (type).");
 
 			}
+
+			clientID = header1List[11];
+			consultenID = header1List[12];
+			if (clientID == null || clientID.isEmpty() || consultenID == null || consultenID.isEmpty()) {
+				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
+						"File Format not supported, 1st line must contain the Mandant and Berater ID.");
+
+			}
+
 			type = type.trim().toLowerCase();
 			logger.info("...object type=" + type);
 			line++;
@@ -221,7 +244,7 @@ public class DatevImportService {
 				ItemCollection oldEntity = findEntityByName(entity.getItemValueString("txtName"), type);
 				if (oldEntity == null) {
 					// create new workitem
-					saveEntry(entity, type);
+					saveEntry(entity, type, clientID, consultenID);
 					workitemsImported++;
 				} else {
 					// test if modified....
@@ -230,7 +253,7 @@ public class DatevImportService {
 						// copy all datev entries from the import into the
 						// existing entity
 						oldEntity.replaceAllItems(entity.getAllItems());
-						saveEntry(oldEntity, type);
+						saveEntry(oldEntity, type, clientID, consultenID);
 						workitemsUpdated++;
 					}
 				}
@@ -281,25 +304,23 @@ public class DatevImportService {
 		logger.info(log);
 		return log;
 	}
-	
-	
-	
+
 	/**
-	 * This method removes the " from  a value list
+	 * This method removes the " from a value list
 	 * 
 	 * 
 	 * @param data
 	 * @return
 	 */
 	public String[] normalizeValueList(String[] data) {
-		
-		for (int i=0;i<data.length ;i++) {
-			String value=data[i];
+
+		for (int i = 0; i < data.length; i++) {
+			String value = data[i];
 			if (value.startsWith("\"") && value.endsWith("\"")) {
-				value=value.substring(1,value.length()-1);
-				data[i]=value;
+				value = value.substring(1, value.length() - 1);
+				data[i] = value;
 			}
-		
+
 		}
 		return data;
 	}
@@ -344,11 +365,14 @@ public class DatevImportService {
 	 * @throws ModelException
 	 */
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-	public void saveEntry(ItemCollection aWorkitem, String type)
+	public void saveEntry(ItemCollection aWorkitem, String type, String clientID, String consultenID)
 			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
 
 		// add type...
 		aWorkitem.replaceItemValue("type", type);
+		// add client and consult id...
+		aWorkitem.replaceItemValue(DatevScheduler.ITEM_DATEV_CLIENT_ID, clientID);
+		aWorkitem.replaceItemValue(DatevScheduler.ITEM_DATEV_CONSULTANT_ID, consultenID);
 
 		documentService.save(aWorkitem);
 	}
@@ -368,7 +392,7 @@ public class DatevImportService {
 		// @see
 		// http://stackoverflow.com/questions/2241758/regarding-java-split-command-parsing-csv-file
 		String[] valuList = data.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
-		valuList=normalizeValueList(valuList);
+		valuList = normalizeValueList(valuList);
 		for (String itemValue : valuList) {
 			// test if the token has content
 			itemValue = itemValue.trim();
