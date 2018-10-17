@@ -67,7 +67,7 @@ public class TestDatevImportService {
 
 			br.close();
 			Assert.assertNotNull(result);
-			Assert.assertTrue(result.size() > 3);
+			Assert.assertTrue(result.size() >= 3);
 
 		} catch (Exception e) {
 
