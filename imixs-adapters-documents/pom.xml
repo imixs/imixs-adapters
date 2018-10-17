@@ -12,9 +12,9 @@
 
 	<properties>
 		<org.imixs.archive.version>1.0.0</org.imixs.archive.version>
-		<apache.poi.version>3.17</apache.poi.version>
-		<apache.pdfbox.version>2.0.7</apache.pdfbox.version>
-		<apache.tika.version>1.16</apache.tika.version>
+		<apache.poi.version>4.0.0</apache.poi.version>
+		<apache.pdfbox.version>2.0.12</apache.pdfbox.version>
+		<apache.tika.version>1.19.1</apache.tika.version>
 	</properties>
 
 
