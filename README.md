@@ -32,8 +32,7 @@ The [Magento adapter](imixs-adapters-magento-ejb) provides a client API to conne
 
 The DATEV adapter project supports services to import and export data with the DATEV system (DATEV is a finance software in Germany).  The project is split into a back-end (EJB) and a front-end (JSF) component. 
 
-* [imixs-adapters-datev-ejb](imixs-adapters-datev-ejb)
-* [imixs-adapters-datev-web](imixs-adapters-datev-web)
+* [imixs-adapters-datev](imixs-adapters-datev)
 
 
 
