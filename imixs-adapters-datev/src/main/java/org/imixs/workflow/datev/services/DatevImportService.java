@@ -30,7 +30,7 @@ import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 
 /**
- * This EJB provides methods to import data from a DATEV file.
+ * This Service provides methods to import data from a DATEV file.
  * <p>
  * The import file must contain 2 header rows. The 1st row contains the object
  * type, the 2nd row contains the filed names.
@@ -46,6 +46,12 @@ import org.imixs.workflow.exceptions.QueryException;
  * <pre>
  * Konto;Kontobeschriftung;SprachId
  * </pre>
+ * 
+ * <p>
+ * The service provides methods to search for DATEV objects by key or search
+ * phrase. A search result can be optional restricted to a specific DATEV
+ * client. NOTE: the item _datev_client_id must be part of the property
+ * lucence.indexFieldListNoAnalyze to use this feature.
  * 
  * @see DatevWorkflowService to import datev data and assign the data to a
  *      workflow model.
@@ -74,12 +80,30 @@ public class DatevImportService {
 
 	/**
 	 * This method finds a datev entity by the attribute 'txtName'
+	 * <p>
+	 * The param clientID is optional and restricts the result to a specific DATEV
+	 * client. NOTE: the item _datev_client_id must be part of the property
+	 * lucence.indexFieldListNoAnalyze.
 	 * 
-	 * @return datev entity or null if no entity with the given name exits
+	 * @param key
+	 *            - name of the object (txtname)
+	 * @param type
+	 *            - DATEV type of the object
+	 * @param clientID
+	 *            - optional restriction to a specific client id (_datev_client_id)
+	 * 
+	 * @return DATEV entity or null if no entity with the given name exits
 	 */
-	public ItemCollection findEntityByName(String sKey, String type) {
+	public ItemCollection findEntityByName(String key, String type, String clientID) {
 
-		String searchTerm = "(type:\"" + type + "\" AND txtname:\"" + sKey + "\")";
+		String searchTerm = "(type:\"" + type + "\" AND txtname:\"" + key + "\"";
+
+		// restrict to client id?
+		if (clientID != null && !clientID.isEmpty()) {
+			searchTerm += " AND _datev_client_id:\"" + clientID + "\"";
+		}
+
+		searchTerm += ")";
 
 		Collection<ItemCollection> col;
 		try {
@@ -98,14 +122,21 @@ public class DatevImportService {
 
 	/**
 	 * This method returns a list of ItemCollections matching the search phrase and
-	 * type.
+	 * type. The type depends on the datev import file
 	 * <p>
-	 * The type depends on the datev import file
+	 * The param clientID is optional and restricts the result to a specific DATEV
+	 * client. NOTE: the item _datev_client_id must be part of the property
+	 * lucence.indexFieldListNoAnalyze.
 	 * 
-	 * @param phrase - search phrase
+	 * @param phrase
+	 *            - search phrase
+	 * @param type
+	 *            - DATEV type of the object
+	 * @param clientID
+	 *            - optional restriction to a specific client id (_datev_client_id)
 	 * @return - list of matching profiles
 	 */
-	public List<ItemCollection> searchEntity(String phrase, String type) {
+	public List<ItemCollection> searchEntity(String phrase, String type, String clientID) {
 
 		List<ItemCollection> searchResult = new ArrayList<ItemCollection>();
 
@@ -117,7 +148,16 @@ public class DatevImportService {
 			phrase = phrase.trim();
 			// phrase = LuceneSearchService.escapeSearchTerm(phrase);
 			phrase = LuceneSearchService.normalizeSearchTerm(phrase);
-			String sQuery = "(type:\"" + type + "\") AND (" + phrase + "*)";
+			String sQuery = "(type:\"" + type + "\"";
+
+			// restrict to client id?
+			if (clientID != null && !clientID.isEmpty()) {
+				sQuery += " AND _datev_client_id:\"" + clientID + "\"";
+			}
+
+			sQuery += ")";
+
+			sQuery += " AND (" + phrase + "*)";
 
 			logger.finest("searchprofile: " + sQuery);
 
@@ -241,7 +281,7 @@ public class DatevImportService {
 				idCache.add(entity.getItemValueString("txtname"));
 
 				// test if entity already exits....
-				ItemCollection oldEntity = findEntityByName(entity.getItemValueString("txtName"), type);
+				ItemCollection oldEntity = findEntityByName(entity.getItemValueString("txtName"), type, clientID);
 				if (oldEntity == null) {
 					// create new workitem
 					saveEntry(entity, type, clientID, consultenID);
