@@ -41,10 +41,10 @@
 
 			<h1>
 				<h:outputText id="timer_status"
-					value="Timer Status ⇢ #{schedulerController.configuration.item['statusMessage']}" />
+					value="Timer Status ⇢ #{schedulerController.configuration.item['_scheduler_status']}" />
 
 				<h:panelGroup
-					rendered="#{! empty schedulerController.configuration.item['errormessage']}"
+					rendered="#{! empty schedulerController.configuration.item['_scheduler_errormessage']}"
 					class="small" style="color:red">
 					<br />Error: #{schedulerController.configuration.item['errormessage']}"
 								</h:panelGroup>
@@ -84,25 +84,28 @@
 				<h:outputText
 					value="#{schedulerController.millisToShortDHMS(schedulerController.configuration.item['timeRemaining'])}" />
 
-				<h:outputLabel value="Last run: " />
-				<h:outputText
-					value="#{schedulerController.configuration.item['datLastRun']}">
-					<f:convertDateTime timeZone="#{message.timeZone}" type="both"
-						pattern="#{message.dateTimePatternShort}" />
-				</h:outputText>
 
-				<h:outputLabel value="Log: " />
-				<h:panelGroup>
-					<pre>
-					<ui:repeat var="logentry"
-							value="#{workitem.itemList['_scheduler_log']}">
-						<h:outputText escape="false" value="#{logentry}" />
-							<br />
-					</ui:repeat>
-				</pre>
-				</h:panelGroup>
+
 
 			</h:panelGrid>
+
+			<h:outputLabel value="Last Run: " />
+			<h:panelGroup layout="block" class="ui-state-highlight ui-corner-all"
+				style="padding: .5em;">
+				<ui:fragment
+					rendered="#{! empty schedulerController.configuration.item['_scheduler_logmessage']}">
+					<ui:repeat var="logentry"
+						value="#{schedulerController.configuration.itemList['_scheduler_logmessage']}">
+						<h:outputText escape="false" value="#{logentry}" />
+						<br />
+					</ui:repeat>
+				</ui:fragment>
+				<ui:fragment
+					rendered="#{empty schedulerController.configuration.item['_scheduler_logmessage']}">
+				No Data.
+				</ui:fragment>
+
+			</h:panelGroup>
 
 		</h:panelGroup>
 
@@ -114,13 +117,14 @@
 		</h:commandButton>
 
 
-		<h:commandButton actionListener="#{schedulerController.startScheduler}"
-			value="start">
+		<h:commandButton
+			actionListener="#{schedulerController.startScheduler}" value="start">
 		</h:commandButton>
 		<h:commandButton actionListener="#{schedulerController.stopScheduler}"
 			value="stop">
 		</h:commandButton>
-		<h:commandButton actionListener="#{schedulerController.restartScheduler}"
+		<h:commandButton
+			actionListener="#{schedulerController.restartScheduler}"
 			value="restart">
 		</h:commandButton>
 		<hr />
