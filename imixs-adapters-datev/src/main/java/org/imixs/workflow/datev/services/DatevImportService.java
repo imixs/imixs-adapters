@@ -273,7 +273,11 @@ public class DatevImportService {
 				line++;
 				workitemsTotal++;
 				ItemCollection entity = readEntity(dataLine, fields);
-
+				// add client and consulten id
+				entity.replaceItemValue("_datev_client_id", clientID);
+				entity.replaceItemValue("_datev_consultant_id", consultenID);
+				
+				
 				// replace txtName by the key field
 				entity.replaceItemValue("txtname", entity.getItemValue(keyField));
 
@@ -463,6 +467,17 @@ public class DatevImportService {
 	 */
 	private boolean isEqualEntity(ItemCollection oldEntity, ItemCollection entity, List<String> fields) {
 
+		// test datev client id and consulten id
+		if (!entity.getItemValue("_datev_client_id").equals(oldEntity.getItemValue("_datev_client_id"))) {
+			// not equal
+			return false;
+		}
+		if (!entity.getItemValue("_datev_consultant_id").equals(oldEntity.getItemValue("_datev_consultant_id"))) {
+			// not equal
+			return false;
+		}
+		
+		
 		for (String itemName : fields) {
 			if (!entity.getItemValue(itemName).equals(oldEntity.getItemValue(itemName))) {
 				// not equal
