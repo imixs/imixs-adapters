@@ -43,7 +43,7 @@ This item fields which are part of each imported datev dataset can be used to im
 
 Data can be selected by a query based on the type and the categories. See the following example:
 
-	(type:"Kontenbeschrftungen" AND _datev_client_id:"00001" AND _datev_consultant_id:"00001")
+	(type:"Kontenbeschriftungen" AND _datev_client_id:"00001" AND _datev_consultant_id:"00001")
 
 
 ## DATEV Export

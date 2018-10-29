@@ -72,6 +72,7 @@ public class DatevImportService {
 
 	public static final String DATEN_FEHLER = "DATEN_FEHLER";
 	public static final String IMPORT_ERROR = "IMPORT_ERROR";
+	public static final int MAX_SEARCH_RESULT = 100;
 
 	@EJB
 	DocumentService documentService;
@@ -162,9 +163,8 @@ public class DatevImportService {
 			logger.finest("searchprofile: " + sQuery);
 
 			// start lucene search
-
 			logger.fine("searchWorkitems: " + sQuery);
-			col = documentService.find(sQuery, 0, -1);
+			col = documentService.find(sQuery, MAX_SEARCH_RESULT, 0);
 		} catch (Exception e) {
 			logger.warning("  lucene error - " + e.getMessage());
 		}
@@ -276,8 +276,7 @@ public class DatevImportService {
 				// add client and consulten id
 				entity.replaceItemValue("_datev_client_id", clientID);
 				entity.replaceItemValue("_datev_consultant_id", consultenID);
-				
-				
+
 				// replace txtName by the key field
 				entity.replaceItemValue("txtname", entity.getItemValue(keyField));
 
@@ -329,17 +328,29 @@ public class DatevImportService {
 			}
 		}
 
-		logger.info("removing deprecated entries...");
-		// now we remove all existing entries not listed in the file
-		List<ItemCollection> entries = documentService.getDocumentsByType(type);
-		if (entries != null && entries.size() > 0) {
-			for (ItemCollection entity : entries) {
-				String id = entity.getItemValueString("txtname");
-				if (!idCache.contains(id)) {
-					documentService.remove(entity);
-					workitemsDeleted++;
+		try {
+			logger.info("removing deprecated entries...");
+			// now we remove all existing entries not listed in the file
+			String sQuery = "(type:\"" + type + "\"";
+			if (clientID != null && !clientID.isEmpty()) {
+				sQuery += " AND _datev_client_id:\"" + clientID + "\"";
+			}
+			sQuery += ")";
+			List<ItemCollection> entries = documentService.find(sQuery, 999, 0);
+			if (entries != null && entries.size() > 0) {
+				for (ItemCollection entity : entries) {
+					String id = entity.getItemValueString("txtname");
+					if (!idCache.contains(id)) {
+						documentService.remove(entity);
+						workitemsDeleted++;
+					}
 				}
 			}
+		} catch (QueryException e) {
+			// Catch Workflow Exceptions
+			String sError = "import error: unable to delete data";
+			logger.severe(sError);
+			throw new PluginException(DatevImportService.class.getName(), DATEN_FEHLER, sError, e);
 		}
 
 		log += workitemsTotal + " entries read \n" + workitemsImported + " new entries \n" + workitemsUpdated
@@ -476,8 +487,7 @@ public class DatevImportService {
 			// not equal
 			return false;
 		}
-		
-		
+
 		for (String itemName : fields) {
 			if (!entity.getItemValue(itemName).equals(oldEntity.getItemValue(itemName))) {
 				// not equal
