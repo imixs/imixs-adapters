@@ -8,6 +8,10 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import javax.ejb.EJB;
+import javax.xml.bind.JAXBException;
+import javax.xml.transform.TransformerException;
+
 import org.apache.pdfbox.cos.COSInputStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentNameDictionary;
@@ -17,14 +21,17 @@ import org.apache.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecifica
 import org.apache.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.util.XMLParser;
+import org.imixs.workflow.xml.XMLDocumentAdapter;
+import org.imixs.workflow.xml.XSLHandler;
 
 /**
- * The <i>PDFXMLExtractorPlugin</i> extracts embedded XML files from a PDF document and transforms the
- * content into a Imixs XMLDocument. This data can be added into the current
- * workitem for further processing.
+ * The <i>PDFXMLExtractorPlugin</i> extracts embedded XML files from a PDF
+ * document and transforms the content into a Imixs XMLDocument. This data can
+ * be added into the current workitem for further processing.
  * <p>
  * The plugin is based on the Apache PDFBox project.
  * <p>
@@ -52,9 +59,13 @@ public class PDFXMLExtractorPlugin extends AbstractPlugin {
 
 	public static final String PARSING_EXCEPTION = "PARSING_EXCEPTION";
 	public static final String PLUGIN_ERROR = "PLUGIN_ERROR";
+	public static final String REPORT_ERROR = "REPORT_ERROR";
 
 	public static final String FILE_PATTERN_PDF = ".[pP][dD][fF]";
 	public static final String FILE_PATTERN_XML = ".[xX][mM][lL]";
+
+	@EJB
+	ReportService reportService;
 
 	private static Logger logger = Logger.getLogger(PDFXMLExtractorPlugin.class.getName());
 
@@ -78,18 +89,55 @@ public class PDFXMLExtractorPlugin extends AbstractPlugin {
 		String processValue = evalItemCollection.getItemValueString(PDFXMLEXTRACTOR);
 		if (!processValue.isEmpty()) {
 			ItemCollection processData = XMLParser.parseItemStructure(processValue);
-			String report = processData.getItemValueString("report");
+			String reportName = processData.getItemValueString("report");
 			String file_pattern = processData.getItemValueString("filename");
 
 			xmlData = getXMLFile(document, file_pattern);
 
 			if (xmlData != null) {
 
-				logger.info("...do something with the xml file.." + report);
+				logger.info("...do something with the xml file.." + reportName);
 
+				// load the report
+				ItemCollection report = reportService.findReport(reportName);
+				if (report == null) {
+					throw new PluginException(PDFXMLExtractorPlugin.class.getSimpleName(), REPORT_ERROR,
+							"unable to load report '" + reportName + "'. Please check  model configuration");
+				}
+				String xsl = report.getItemValueString("XSL").trim();
+				String encoding = report.getItemValueString("encoding");
+				// no encoding defined so take a default encoding
+				// (UTF-8)
+				if ("".equals(encoding)) {
+					encoding = "UTF-8";
+				}
+
+				byte[] byteData = null;
+				ItemCollection resultItemCol = null;
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+				try {
+					String xml = new String(xmlData);
+					XSLHandler.transform(new String(xml), xsl, encoding, outputStream);
+					byteData = outputStream.toByteArray();
+					// create XMLDocument
+					resultItemCol = XMLDocumentAdapter.readItemCollection(byteData);
+				} catch (TransformerException | JAXBException | IOException e) {
+
+					e.printStackTrace();
+
+				} finally {
+					try {
+						outputStream.close();
+					} catch (IOException e) {
+
+						e.printStackTrace();
+					}
+				}
+				// merge the data....
+				if (resultItemCol != null) {
+					document.replaceAllItems(resultItemCol.getAllItems());
+				}
 			}
-
-			// verify all files....
 
 		}
 
