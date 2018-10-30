@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xs="http://www.w3.org/2001/XMLSchema"
+      xmlns:rsm="urn:ferd:CrossIndustryDocument:invoice:1p0"
+      xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:12">
+   <document>
+      <item name="test">
+         <value xsi:type="xs:int">500</value>
+      </item>
+      <item name="_zugferd_id">
+         <value xsi:type="xs:string">12345</value>
+      </item>
+      <item name="_zugferd_name">
+         <value xsi:type="xs:string">RECHNUNG</value>
+      </item>
+      <item name="_zugferd_TypeCode">
+         <value xsi:type="xs:string">380</value>
+      </item>
+      <item name="_zugferd_IssueDateTime">
+         <value xsi:type="xs:string">20121031
+			</value>
+      </item>
+      <item name="_zugferd_sellertradeParty_Name">
+         <value xsi:type="xs:string">Musteriieferant</value>
+      </item>
+      <item name="_zugferd_BuyerTradeParty_Name">
+         <value xsi:type="xs:string">Firma Musterkunde</value>
+      </item>
+      <item name="_zugferd_InvoiceCurrencyCode">
+         <value xsi:type="xs:string">EUR</value>
+      </item>
+      <item name="_zugferd_GrandTotalAmount">
+         <value xsi:type="xs:string">1707.57
+				</value>
+      </item>
+      <item name="_zugferd_IBAN">
+         <value xsi:type="xs:string">00000000000000000</value>
+      </item>
+      <item name="_zugferd_BIC">
+         <value xsi:type="xs:string">PBNKDEFF</value>
+      </item>
+   </document>
+</data>

@@ -22,18 +22,18 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.util.XMLParser;
 
 /**
- * The PDFXMLPlugin extracts embedded files from a PDF and transforms the
- * content into a Imixs Workitem Format. This data can be added into the current
+ * The <i>PDFXMLExtractorPlugin</i> extracts embedded XML files from a PDF document and transforms the
+ * content into a Imixs XMLDocument. This data can be added into the current
  * workitem for further processing.
  * <p>
  * The plugin is based on the Apache PDFBox project.
  * <p>
- * To activate the plugin the BPMN event must contain the following item
+ * To activate the plugin, the BPMN event must contain the following item
  * definition
  * 
  * <pre>
  * {@code
-     <item name="PDFXMLPlugin">
+     <item name="PDFXMLExtractor">
     <filename>*.xml</filename>
     <report>myReport</report>
    </item>
@@ -46,9 +46,9 @@ import org.imixs.workflow.util.XMLParser;
  * @version 1.0
  * @author rsoika
  */
-public class PDFXMLPlugin extends AbstractPlugin {
+public class PDFXMLExtractorPlugin extends AbstractPlugin {
 
-	public static final String PDFXMLPLUGIN = "PDFXMLPlugin";
+	public static final String PDFXMLEXTRACTOR = "PDFXMLExtractor";
 
 	public static final String PARSING_EXCEPTION = "PARSING_EXCEPTION";
 	public static final String PLUGIN_ERROR = "PLUGIN_ERROR";
@@ -56,7 +56,7 @@ public class PDFXMLPlugin extends AbstractPlugin {
 	public static final String FILE_PATTERN_PDF = ".[pP][dD][fF]";
 	public static final String FILE_PATTERN_XML = ".[xX][mM][lL]";
 
-	private static Logger logger = Logger.getLogger(PDFXMLPlugin.class.getName());
+	private static Logger logger = Logger.getLogger(PDFXMLExtractorPlugin.class.getName());
 
 	/**
 	 * This method parses the content of an attached pdf file and extracts an
@@ -75,7 +75,7 @@ public class PDFXMLPlugin extends AbstractPlugin {
 			return document;
 		}
 
-		String processValue = evalItemCollection.getItemValueString(PDFXMLPLUGIN);
+		String processValue = evalItemCollection.getItemValueString(PDFXMLEXTRACTOR);
 		if (!processValue.isEmpty()) {
 			ItemCollection processData = XMLParser.parseItemStructure(processValue);
 			String report = processData.getItemValueString("report");
