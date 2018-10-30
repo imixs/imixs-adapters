@@ -1,10 +1,11 @@
 # Imixs-Documents
 
 The Imixs-Documents is a adapter project for collecting textual information from attached documents during the processing phase.
-This extracted text information is added into the item '_dms_' wich can be part of the lucene full-text-index. The DMS meta data is handled by the DMSPlugin.
+The extracted textual information can be added into a workitem for further processing. For example the textual OCR information 
+from a PDF document can be stored into the item '_dms_'. In this way a fulltext search is supported. But also other information like embedded XML files can be process in various ways. 
 
 
-## Plugins
+## Document Parser Plugins
 
 The Imixs-Document adapter supports two kind of parsers
 
@@ -20,18 +21,35 @@ To activate the parsing process one of the following plugins can be configured i
 
 See details about the different parsers below. 
 
-## Searching Documents
+### Searching Documents
 
 Imixs-Documents provide the feature to search also for the content of parsed documents. To activate this feature, the item 'dms' must be included into the lucene fulltext index. You can add the attribute to the lucene configuration in the imixs.properties file:
 
 	lucence.fulltextFieldList=.....,dms
-	
+	  
 
-# ZUGFeRD Adapter
 
-The adapter project includes additional support for ZUGFeRD PDF files. We use the io.konik lib to extract the invoice data.
-This feature is still under development. 
+## PDF XML Plugin
 
+The plugin class "org.imixs.workflow.documents.parser.PDFXMLPlugin can be used to extract a embedded file from a PDF document and convert the data into a Imixs Workitem. 
+
+The plugin can be activated by the BPMN Model with the following result definition: 
+
+
+	<item name="PDFXMLPlugin">
+		<filename>*.xml</filename>
+	    <report>myReport</report>
+	</item>
+
+The Item "PDFXMLPlugin" provides the following processing instructions for the PDFXMLPlugin:
+
+ * filename - regular expression to select embedded files
+ * report - imixs-report definition to convert the xml into a Imixs WorkItem. 
+
+
+###  ZUGFeRD Support
+
+ZUGFeRD is a standard for electronic invoices in PDF/A format. The invoice data is stored in a embedded XML file. With the XMLDocumentPlugin this data can be transformed and embedded into a WorkItem. The project includes examples how to transform a ZUGFeRD invoice into a Imixs WorkItem. 
 
 
 # How to Install
