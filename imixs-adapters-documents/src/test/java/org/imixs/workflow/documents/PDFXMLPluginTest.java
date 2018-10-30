@@ -2,29 +2,13 @@ package org.imixs.workflow.documents;
 
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
-import org.apache.pdfbox.cos.COSDocument;
-import org.apache.pdfbox.cos.COSObject;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentNameDictionary;
-import org.apache.pdfbox.pdmodel.PDEmbeddedFilesNameTreeNode;
-import org.apache.pdfbox.pdmodel.common.PDNameTreeNode;
-import org.apache.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification;
-import org.apache.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.text.PDFTextStripperByArea;
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.documents.parser.DocumentCoreParser;
 import org.imixs.workflow.engine.WorkflowMockEnvironment;
-import org.imixs.workflow.engine.plugins.SplitAndJoinPlugin;
 import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.junit.After;
@@ -32,11 +16,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import com.sun.xml.txw2.Document;
-
-import io.konik.PdfHandler;
-import io.konik.zugferd.Invoice;
 
 /**
  * This test class tests PDFXMLPlugin
@@ -47,10 +26,9 @@ import io.konik.zugferd.Invoice;
 public class PDFXMLPluginTest {
 	private static Logger logger = Logger.getLogger(PDFXMLPluginTest.class.getName());
 
-	PDFXMLPlugin plugin=null;
-	ItemCollection event=null;
-	
-	
+	PDFXMLPlugin plugin = null;
+	ItemCollection event = null;
+
 	/**
 	 * We use the provided test workflow model form the AbstractWorkflowServiceTest
 	 * 
@@ -58,12 +36,9 @@ public class PDFXMLPluginTest {
 	 */
 	WorkflowMockEnvironment workflowMockEnvironment;
 
-	
-	
-	
 	@Before
 	public void setup() throws PluginException, ModelException {
-		
+
 		workflowMockEnvironment = new WorkflowMockEnvironment();
 		workflowMockEnvironment.setModelPath("/bpmn/TestZUGFeRD.bpmn");
 
@@ -72,12 +47,7 @@ public class PDFXMLPluginTest {
 		// mock abstract plugin class for the plitAndJoinPlugin
 		plugin = Mockito.mock(PDFXMLPlugin.class, Mockito.CALLS_REAL_METHODS);
 		when(plugin.getWorkflowService()).thenReturn(workflowMockEnvironment.getWorkflowService());
-		
-		
-	//	when(plugin.getWorkflowService().evalWorkflowResult(Mockito.any(ItemCollection.class),Mockito.any(ItemCollection.class))).thenCallRealMethod();
-		
-		
-		
+
 		try {
 			plugin.init(workflowMockEnvironment.getWorkflowContext());
 		} catch (PluginException e) {
@@ -85,10 +55,6 @@ public class PDFXMLPluginTest {
 			e.printStackTrace();
 		}
 
-		
-		
-		 
-		
 	}
 
 	@After
@@ -97,51 +63,48 @@ public class PDFXMLPluginTest {
 	}
 
 	/**
-	 * Test parsing a pdf file....
+	 * Test extracting an embedded xml file from a PDF file using the pdfBox
+	 * library.
 	 * 
-	 * @throws Exception
 	 */
 	@Test
-	public void parserTestPdf() throws Exception {
-		ItemCollection workitem=null;
+	public void parserTestPdf() {
+		ItemCollection workitem = null;
 		try {
 			event = workflowMockEnvironment.getModel().getEvent(100, 10);
-
-			//Build a Document....
-			workitem=new ItemCollection();
-
-			
-			// load the exampl pdf ..
+			// Build a Document....
+			workitem = new ItemCollection();
+			// load the example pdf ..
 			String fileName = "ZUGFeRD/20160504_MX16124-000005_001-001_Muster.pdf";
 			InputStream inputStream = getClass().getResourceAsStream("/" + fileName);
-			byte[] fileData = streamToByteArray(inputStream);
+			byte[] fileData = PDFXMLPlugin.streamToByteArray(inputStream);
 			workitem.addFile(fileData, fileName, "");
+
+			byte[] xmldata = PDFXMLPlugin.getXMLFile(workitem, ".pdf");
+
+			Assert.assertNotNull(xmldata);
 			
-			
-			workitem=plugin.run(workitem, event);
-		} catch (PluginException e) {
+			// show first 100 characters from xml.....
+			String xml=new String(xmldata);
+			logger.info(xml.substring(0, 100) + "...");
+
+		} catch (PluginException | ModelException | IOException e) {
 
 			e.printStackTrace();
 			Assert.fail();
 		}
 
-		
-		
 		Assert.assertNotNull(workitem);
 
 	}
 
-	
-	
-	/* Helper method */
-	private static byte[] streamToByteArray(InputStream ins) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		byte[] byteBuffer = new byte[1024];
-		int len;
-		while ((len = ins.read(byteBuffer)) > -1) {
-			baos.write(byteBuffer, 0, len);
-		}
-		baos.flush();
-		return baos.toByteArray();
+	/**
+	 * Test the regex for pdf file names.
+	 */
+	@Test
+	public void testRegex() {
+		Assert.assertTrue(Pattern.compile(".pdf").matcher("sample.pdf").find());
+		Assert.assertTrue(Pattern.compile(".[pP][dD][fF]").matcher("sample.PDF").find());
 	}
+
 }
