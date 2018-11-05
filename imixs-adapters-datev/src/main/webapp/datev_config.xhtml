@@ -28,8 +28,6 @@
 
 
 			<h:form id="import_form_id">
-				<!-- ########## Error ########## -->
-				<ui:include src="/pages/error_message.xhtml" />
 
 
 
@@ -37,6 +35,10 @@
 				<div class="imixs-form">
 					<div class="imixs-header">
 						<h1>DATEV</h1>
+
+						<!-- ########## Error ########## -->
+						<ui:include src="/pages/error_message.xhtml" />
+
 					</div>
 
 
@@ -110,33 +112,78 @@
 											Interval für den Buchunsstapel.</p>
 									</div>
 
-
 									<div class="imixs-form-section-2">
+
 										<dl>
-											<dt>DATEV Model Version</dt>
+											<dt>
+												DATEV Schnittstellen-Typ <span class="imixs-required">*</span>
+											</dt>
 											<dd>
-												<h:inputText required="false"
+												<h:selectOneRadio
+													value="#{datevController.configuration.item['_export_type']}"
+													required="true">
+													<f:selectItem itemValue="xml"
+														itemLabel="DATEV Belegsatzschnittstelle im XML-Format"></f:selectItem>
+													<f:selectItem itemValue="csv"
+														itemLabel="DATEV-Format (csv)"></f:selectItem>
+												</h:selectOneRadio>
+											</dd>
+										</dl>
+									</div>
+									<div class="imixs-form-section-2">
+
+										<dl>
+											<dt>
+												DATEV Model Version <span class="imixs-required">*</span>
+											</dt>
+											<dd>
+												<h:inputText required="true"
 													value="#{datevController.configuration.item['_model_version']}">
 												</h:inputText>
 											</dd>
 										</dl>
 
 										<dl>
-											<dt>DATEV Initial Task</dt>
+											<dt>
+												DATEV Initial Task <span class="imixs-required">*</span>
+											</dt>
 											<dd>
-												<h:inputText required="false"
+												<h:inputText required="true"
 													value="#{datevController.configuration.item['_initial_task']}">
 												</h:inputText>
 											</dd>
 										</dl>
+
 									</div>
+
+									<div class="imixs-form-section-2">
+										<dl>
+											<dt>
+												DATEV Beraternummer <span class="imixs-required">*</span>
+											</dt>
+											<dd>
+												<h:inputText required="true"
+													value="#{datevController.configuration.item['_datev_consultant_id']}">
+												</h:inputText>
+											</dd>
+										</dl>
+										<dl>
+											<dt>DATEV Mandantennummer (optional)</dt>
+											<dd>
+												<h:inputText required="false"
+													value="#{datevController.configuration.item['_datev_client_id']}">
+												</h:inputText>
+											</dd>
+										</dl>
+									</div>
+
 
 									<div class="imixs-form-section">
 										<p>
 											<span class="typcn typcn-lightbulb"></span> The initial task
 											must define a report containing the query and style sheet
 											information. Invoices will be automatically grouped by the
-											optional attribute "_datev_client". The datev workflow may
+											optional attribute "_datev_client_id". The datev workflow may
 											optional include a "invoice_update" item definition.
 										</p>
 									</div>
@@ -145,7 +192,8 @@
 
 									<!-- include timer control -->
 									<ui:include src="sub_scheduler_control.xhtml">
-										<ui:param name="schedulerController" value="#{datevController}" />
+										<ui:param name="schedulerController"
+											value="#{datevController}" />
 									</ui:include>
 								</div>
 

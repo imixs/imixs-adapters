@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LedgerImport xmlns="http://xml.datev.de/bedi/tps/ledger/v040" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xml.datev.de/bedi/tps/ledger/v040 Belegverwaltung_online_ledger_import_v040.xsd" version="4.0" generator_info="DATEV Musterdaten" generating_system="DATEV manuell" xml_data="Kopie nur zur Verbuchung berechtigt nicht zum Vorsteuerabzug">
+	<consolidate consolidatedAmount="7959.12" consolidatedDate="2016-01-05" consolidatedInvoiceId="5000022" consolidatedCurrencyCode="EUR">
+		<accountsPayableLedger>
+			<date>2016-01-05</date>
+			<amount>7918.50</amount>
+			<accountNo>3400</accountNo>
+			<tax>19.00</tax>
+			<information>Musterrechnung für Buchung mit zwei Steuersätzen und Kontierung und Bankverbindung</information>
+			<currencyCode>EUR</currencyCode>
+			<invoiceId>5000022</invoiceId>
+			<bookingText>Wareneingang</bookingText>
+			<partyId>70000</partyId>
+			<bankCode>76040061</bankCode>
+			<bankAccount>794000</bankAccount>
+			<bankCountry>DE</bankCountry>
+			<iban>DE46760400610000794000</iban>
+			<swiftCode>COBADEFF760</swiftCode>
+			<dueDate>2016-01-19</dueDate>
+			<bpAccountNo>70000</bpAccountNo>
+			<supplierName>Holzfachmarkt Zimmertest</supplierName>
+			<supplierCity>Nürnberg</supplierCity>
+		</accountsPayableLedger>
+		<accountsPayableLedger>
+			<date>2016-01-05</date>
+			<amount>40.62</amount>
+			<accountNo>3300</accountNo>
+			<tax>7.00</tax>
+			<information>Musterrechnung für Buchung mit zwei Steuersätzen und Kontierung und Bankverbindung</information>
+			<currencyCode>EUR</currencyCode>
+			<invoiceId>5000022</invoiceId>
+			<bookingText>Wareneingang</bookingText>
+			<partyId>70000</partyId>
+			<bankCode>76040061</bankCode>
+			<bankAccount>794000</bankAccount>
+			<bankCountry>DE</bankCountry>
+			<iban>DE46760400610000794000</iban>
+			<swiftCode>COBADEFF760</swiftCode>
+			<dueDate>2016-01-19</dueDate>
+			<bpAccountNo>70000</bpAccountNo>
+			<supplierName>Holzfachmarkt Zimmertest</supplierName>
+			<supplierCity>Nürnberg</supplierCity>
+		</accountsPayableLedger>
+	</consolidate>
+</LedgerImport>

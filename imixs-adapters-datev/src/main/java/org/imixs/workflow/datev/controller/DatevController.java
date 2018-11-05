@@ -23,18 +23,18 @@ package org.imixs.workflow.datev.controller;
  *  
  *******************************************************************************/
 
-
 import java.util.logging.Logger;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
-import org.imixs.workflow.datev.services.DatevScheduler;
+import org.imixs.workflow.datev.services.DatevSchedulerCSV;
+import org.imixs.workflow.datev.services.DatevSchedulerXML;
 import org.imixs.workflow.engine.scheduler.SchedulerController;
 
 /**
- *  The DatevController is used to configure the DatevScheduler. This service
- * is used to generate datev export workitems.
+ * The DatevController is used to configure the DatevScheduler. This service is
+ * used to generate datev export workitems.
  * <p>
  * The Controller creates a configuration entity "type=configuration;
  * txtname=datev".
@@ -61,22 +61,30 @@ public class DatevController extends SchedulerController {
 	private static final long serialVersionUID = 1L;
 	private static Logger logger = Logger.getLogger(DatevController.class.getName());
 
-	
 	@Override
 	public String getName() {
 		return DATEV_CONFIGURATION;
 	}
-	
 
 	/**
-	 * Returns the sepa scheduler class name
+	 * Returns the sepa scheduler class name. This name depends on the _export_type.
+	 * 
+	 * There are two export interfaces available - csv and XML
+	 * 
 	 */
 	@Override
 	public String getSchedulerClass() {
-		logger.finest("......datev scheduler: " + DatevScheduler.class.getName());
-		return DatevScheduler.class.getName();
+
+		String schedulerClass = null;
+		if ("xml".equals(this.getConfiguration().getItemValueString("_export_type"))) {
+			schedulerClass = DatevSchedulerXML.class.getName();
+		} else {
+			// default is CSV
+			schedulerClass = DatevSchedulerCSV.class.getName();
+		}
+
+		logger.finest("......datev scheduler: " + schedulerClass);
+		return schedulerClass;
 	}
-
-
 
 }

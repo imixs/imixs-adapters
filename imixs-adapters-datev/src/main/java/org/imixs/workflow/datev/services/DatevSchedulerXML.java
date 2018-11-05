@@ -57,18 +57,31 @@ import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.util.XMLParser;
 
 /**
- * The DatevScheduler implementation exports workflow invoice data into a DATEV
- * file.
+ * The DatevSchedulerXML implementation exports workflow invoice data into the
+ * DATEV Belegsatzschnittstelle im XML-Format
  * <p>
  * The class implements the interface
  * _org.imixs.workflow.engine.scheduler.Scheduler_ and can be used in
  * combination with the Imxis-Workflow Scheduler Service.
+ * <p>
+ * The goal of the DatevSchedulerXML is to create a ZIP file containing the
+ * invoices files and the DATEV Belegsatz data in xml format. One XML file is
+ * generated for each invoide. The file "document.xml" contains the links to the
+ * invoice attachments.
  * 
+ * <pre>
+	├── document.xml/
+	├── Eingangsrechnung_001.pdf
+	├── Eingangsrechnung_001.xml
+	├── Eingangsrechnung_002.pdf
+	├── Eingangsrechnung_002.xml
+ * </pre>
+ *
  * @see SchedulerService
  * @author rsoika
  * 
  */
-public class DatevScheduler implements Scheduler {
+public class DatevSchedulerXML implements Scheduler {
 
 	public static final String DATEV_CONFIGURATION = "DATEV_CONFIGURATION";
 
@@ -101,12 +114,13 @@ public class DatevScheduler implements Scheduler {
 	@EJB
 	ReportService reportService;
 
-	private static Logger logger = Logger.getLogger(DatevScheduler.class.getName());
+	private static Logger logger = Logger.getLogger(DatevSchedulerXML.class.getName());
 
 	/**
 	 * This is the method which processes the timeout event depending on the running
 	 * timer settings.
 	 * 
+	 *
 	 * 
 	 * 
 	 * @param timer
@@ -184,13 +198,29 @@ public class DatevScheduler implements Scheduler {
 
 					logMessage("...starting DATEV export for ClientID=" + key + "...", configuration, datevExport);
 
-					// link invoices with export workitem....
+				
+					
+					// now we iterate over all invoices in this group
+					// and create a XML file with belegsatzdaten for each invoice
+					
 					for (ItemCollection invoice : data) {
-						datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
-						// write log
+						// first link invoices with export workitem....
+							datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
+
+							
+						// create XML file
+							// we need a set of two documents - the DatevExport configuration Document and the invoice 
+							
+							
+							
+							
+							// write log
 						logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
 					}
 
+					
+					
+					
 					// finally we add the datev export document to the data collection
 					data.add(datevExport);
 
@@ -316,10 +346,13 @@ public class DatevScheduler implements Scheduler {
 	 * 
 	 * @see org.imixs.workflow.engine.plugins.SplitAndJoinPlugin.java
 	 * 
-	 * @param datevExport - datev export workitem
-	 * @param invoices    - list of invoices
-	 * @param event       - current datev export event containing the invoice_update
-	 *                    definition.
+	 * @param datevExport
+	 *            - datev export workitem
+	 * @param invoices
+	 *            - list of invoices
+	 * @param event
+	 *            - current datev export event containing the invoice_update
+	 *            definition.
 	 * @throws AccessDeniedException
 	 * @throws ProcessingErrorException
 	 * @throws PluginException
@@ -364,7 +397,7 @@ public class DatevScheduler implements Scheduler {
 					ItemCollection invoice = workflowService.getWorkItem(_invoice.getUniqueID());
 
 					if (invoice != null) {
-						// test if invoice matches update criteria.... 
+						// test if invoice matches update criteria....
 						String subModelVersion = invoice.getModelVersion();
 						String subProcessID = "" + invoice.getTaskID();
 						if (Pattern.compile(model_pattern).matcher(subModelVersion).find()
@@ -388,7 +421,7 @@ public class DatevScheduler implements Scheduler {
 							invoice = workflowService.processWorkItem(invoice);
 							logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration, null);
 						}
-					} 
+					}
 				}
 			}
 
