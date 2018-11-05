@@ -14,6 +14,7 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -106,6 +107,7 @@ public class PDFXMLExtractorPluginTest {
 	 * 
 	 */
 	@Test
+	@Ignore
 	public void testMergeXMLData() {
 		ItemCollection workitem = null;
 		try {

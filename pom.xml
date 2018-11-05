@@ -71,8 +71,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>4.4.4-SNAPSHOT</org.imixs.workflow.version>
-		<org.imixs.marty.version>3.3.2</org.imixs.marty.version>
+		<org.imixs.workflow.version>4.4.4</org.imixs.workflow.version>
+		<org.imixs.marty.version>3.3.6</org.imixs.marty.version>
 		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
 		<github.global.server>imixs-github-repo</github.global.server>
 	</properties>
@@ -199,6 +199,15 @@
 			</plugin>
 
 
+			<!--  temporarily fix issue imixs-workflow #442  -->
+			<plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-surefire-plugin</artifactId>
+	            <configuration>
+	                <useSystemClassLoader>false</useSystemClassLoader>
+	            </configuration>
+	            <version>2.22.1</version>
+	        </plugin>
 		
 		</plugins>
 	</build>

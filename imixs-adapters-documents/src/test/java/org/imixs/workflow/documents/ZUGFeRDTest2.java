@@ -55,7 +55,7 @@ public class ZUGFeRDTest2 {
 	@Test
 	public void parserTestPdf() throws Exception {
 
-		String fileName = "20160504_MX16124-000005_001-001_Muster.pdf";
+		String fileName = "ZUGFeRD/20160504_MX16124-000005_001-001_Muster.pdf";
 
 		PdfHandler handler = new PdfHandler();
 		InputStream inputZugferdPdfStream = getClass().getResourceAsStream("/" + fileName);
@@ -79,7 +79,7 @@ public class ZUGFeRDTest2 {
 	@Test
 	public void simpleTestPdf() throws Exception {
 
-		String fileName = "20160504_MX16124-000005_001-001_Muster.pdf";
+		String fileName = "ZUGFeRD/20160504_MX16124-000005_001-001_Muster.pdf";
 		InputStream inputStream = getClass().getResourceAsStream("/" + fileName);
 		PDDocument doc = new PDDocument();
 		try {
