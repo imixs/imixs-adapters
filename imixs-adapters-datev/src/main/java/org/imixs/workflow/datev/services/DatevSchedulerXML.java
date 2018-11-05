@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.ejb.EJB;
 import javax.xml.bind.JAXBException;
@@ -55,6 +57,8 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.util.XMLParser;
+import org.imixs.workflow.xml.XMLDocumentAdapter;
+import org.imixs.workflow.xml.XSLHandler;
 
 /**
  * The DatevSchedulerXML implementation exports workflow invoice data into the
@@ -107,6 +111,9 @@ public class DatevSchedulerXML implements Scheduler {
 
 	@EJB
 	WorkflowService workflowService;
+	
+	@EJB
+	DatevWorkflowService datevWorkflowService;
 
 	@EJB
 	ModelService modelService;
@@ -127,7 +134,7 @@ public class DatevSchedulerXML implements Scheduler {
 	 * @throws QueryException
 	 */
 	public ItemCollection run(ItemCollection configuration) throws SchedulerException {
-		ByteArrayOutputStream outputStream = null;
+		// ByteArrayOutputStream outputStream = null;
 		String reportName = "";
 		ItemCollection datevExport = null;
 		int maxCount = configuration.getItemValueInteger("_maxcount");
@@ -145,7 +152,8 @@ public class DatevSchedulerXML implements Scheduler {
 			ItemCollection task = model.getTask(taskID);
 
 			// load the report
-			ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
+			reportName=event.getItemValueString("txtReportName");
+			ItemCollection report = reportService.findReport(reportName);
 			if (report == null) {
 				throw new SchedulerException(REPORT_ERROR,
 						"unable to load report '" + reportName + "'. Please check  model configuration");
@@ -174,79 +182,113 @@ public class DatevSchedulerXML implements Scheduler {
 				// now we iterate over each invoice grouped by the _datev_client_id
 				for (String key : invoiceGroups.keySet()) {
 
-					List<ItemCollection> data = invoiceGroups.get(key);
-					int groupCount = data.size();
-					// build the datev export workitem....
-					datevExport = new ItemCollection().model(modelVersion).task(taskID);
-					datevExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
-					datevExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
-					// set unqiueid, needed for xslt
-					datevExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
-					// copy datev_client_id
-					datevExport.setItemValue(ITEM_DATEV_CLIENT_ID, key);
+					ZipOutputStream datevZip = null;
+					ByteArrayOutputStream zipOutputStream = null;
+					try {
+						// out put file
+						zipOutputStream = new ByteArrayOutputStream();
+						datevZip = new ZipOutputStream(zipOutputStream);
 
-					// set _datev_fiscal_start (date) from first invoice if available...
-					ItemCollection firstInvoice = data.get(0);
-					if (firstInvoice.hasItem(ITEM_DATEV_FISCAL_START)) {
-						datevExport.setItemValue(ITEM_DATEV_FISCAL_START,
-								firstInvoice.getItemValue(ITEM_DATEV_FISCAL_START));
-					}
+						List<ItemCollection> data = invoiceGroups.get(key);
+						int groupCount = data.size();
+						// build the datev export workitem....
+						datevExport = new ItemCollection().model(modelVersion).task(taskID);
+						datevExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
+						datevExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
+						// set unqiueid, needed for xslt
+						datevExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
+						// copy datev_client_id
+						datevExport.setItemValue(ITEM_DATEV_CLIENT_ID, key);
 
-					datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
-							configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
-					datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
+						// set _datev_fiscal_start (date) from first invoice if available...
+						ItemCollection firstInvoice = data.get(0);
+						if (firstInvoice.hasItem(ITEM_DATEV_FISCAL_START)) {
+							datevExport.setItemValue(ITEM_DATEV_FISCAL_START,
+									firstInvoice.getItemValue(ITEM_DATEV_FISCAL_START));
+						}
 
-					logMessage("...starting DATEV export for ClientID=" + key + "...", configuration, datevExport);
+						datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
+								configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
+						datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
-				
-					
-					// now we iterate over all invoices in this group
-					// and create a XML file with belegsatzdaten for each invoice
-					
-					for (ItemCollection invoice : data) {
-						// first link invoices with export workitem....
+						logMessage("...starting DATEV export for ClientID=" + key + "...", configuration, datevExport);
+
+						// now we iterate over all invoices in this group
+						// and create a XML file with belegsatzdaten for each invoice
+						String xsl = report.getItemValueString("XSL").trim();
+						String encoding = report.getItemValueString("encoding");
+						for (ItemCollection invoice : data) {
+							// first link invoices with export workitem....
 							datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
 
+							// create XML file
+							// we need a set of two documents - the DatevExport configuration Document and
+							// the invoice
+
+							byte[] xmlData = XMLDocumentAdapter.writeItemCollection(invoice);
+							ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+							try {
+								String xml = new String(xmlData);
+								XSLHandler.transform(new String(xml), xsl, encoding, outputStream);
+								byte[] byteData = outputStream.toByteArray();
+
+								// add data to zip...
+								// datevZip.putNextEntry(arg0);
+
+								// name the file inside the zip file
+								datevZip.putNextEntry(new ZipEntry(invoice.getUniqueID() + ".xml"));
+
+								datevZip.write(byteData);
+
 							
-						// create XML file
-							// we need a set of two documents - the DatevExport configuration Document and the invoice 
-							
-							
-							
-							
+							} finally {
+								if (outputStream != null) {
+									try {
+										outputStream.close();
+									} catch (IOException e) {
+										throw new SchedulerException(REPORT_ERROR, "Failed to execute DATEV report '"
+												+ reportName + "' : " + e.getMessage(), e);
+
+									}
+								}
+
+							}
+
 							// write log
-						logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
+							logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration,
+									datevExport);
+						}
+						
+						
+						DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HHmm");
+						String datevFileName = "datev_buchungsstapel_" + df.format(new Date()) + ".zip";
+
+						FileData zipFileData=new FileData(datevFileName, zipOutputStream.toByteArray(),"application/zip" );
+						
+											// attach the file
+						datevExport.addFileData(zipFileData);
+
+						// update and process invoices...
+						processInvoices(datevExport, data, event, configuration);
+
+						// write log
+						logMessage("...DATEV export ClientID=" + key + "  finished.", configuration, datevExport);
+						logMessage("..." + groupCount + " invoices exported. ", configuration, datevExport);
+
+						// finish by proessing the datev export workitem....
+						datevExport.event(EVENT_START).event(EVENT_SUCCESS);
+						workflowService.processWorkItem(datevExport);
+
+					} finally {
+						if (datevZip != null) {
+							datevZip.close();
+						}
+						if (zipOutputStream != null) {
+							zipOutputStream.close();
+						}
+
 					}
-
-					
-					
-					
-					// finally we add the datev export document to the data collection
-					data.add(datevExport);
-
-					// create the attachment based on the report definition
-					// write a file to workitem
-					DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HHmm");
-					String datevFileName = "EXTF_Buchungsstapel_" + df.format(new Date()) + ".csv";
-
-					FileData filedata = reportService.transformDataSource(report, data, datevFileName);
-
-					// attach the file
-					datevExport.addFileData(filedata);
-
-					// update and process invoices...
-					processInvoices(datevExport, data, event, configuration);
-
-					// write log
-					logMessage("...DATEV export ClientID=" + key + "  finished.", configuration, datevExport);
-					logMessage("..." + groupCount + " invoices exported. ", configuration, datevExport);
-
-					// finish by proessing the datev export workitem....
-					datevExport.event(EVENT_START).event(EVENT_SUCCESS);
-					workflowService.processWorkItem(datevExport);
-
 				}
-
 				logMessage("...DATEV export completed", configuration, null);
 
 			} else {
@@ -264,23 +306,13 @@ public class DatevSchedulerXML implements Scheduler {
 					datevExport.event(EVENT_FAILED);
 					workflowService.processWorkItem(datevExport);
 				}
-			} catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
+			} catch (Exception e1) {
 				throw new SchedulerException(REPORT_ERROR,
 						"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
 			}
 
 			throw new SchedulerException(REPORT_ERROR,
 					"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
-		} finally {
-			if (outputStream != null) {
-				try {
-					outputStream.close();
-				} catch (IOException e) {
-					throw new SchedulerException(REPORT_ERROR,
-							"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
-
-				}
-			}
 		}
 
 		return configuration;
@@ -418,7 +450,11 @@ public class DatevSchedulerXML implements Scheduler {
 										e);
 							}
 							// process the exisitng subprocess...
-							invoice = workflowService.processWorkItem(invoice);
+							//invoice = workflowService.processWorkItem(invoice);
+							// try separte transaction...
+							datevWorkflowService.processSingleWorkitem(invoice);
+							
+							
 							logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration, null);
 						}
 					}
