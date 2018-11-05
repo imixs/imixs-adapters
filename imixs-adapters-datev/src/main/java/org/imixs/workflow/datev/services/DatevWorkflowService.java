@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.security.DeclareRoles;
@@ -63,6 +64,7 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.exceptions.WorkflowException;
+import org.imixs.workflow.util.XMLParser;
 
 /**
  * This EJB provides methods to import data from a DATEV file and convert the
@@ -86,6 +88,25 @@ import org.imixs.workflow.exceptions.WorkflowException;
 @LocalBean
 public class DatevWorkflowService {
 
+	public static final String DATEV_CONFIGURATION = "DATEV_CONFIGURATION";
+
+	public static final int EVENT_START = 100;
+	public static final int EVENT_SUCCESS = 200;
+	public static final int EVENT_FAILED = 300;
+	public static final String INVOICE_UPDATE = "invoice_update";
+	public static final String LINK_PROPERTY = "txtworkitemref";
+
+	public static final String ITEM_MODEL_VERSION = "_model_version";
+	public static final String ITEM_INITIAL_TASK = "_initial_task";
+
+	public static final String ITEM_DATEV_CLIENT_ID = "_datev_client_id";
+	public static final String ITEM_DATEV_CONSULTANT_ID = "_datev_consultant_id";
+	public static final String ITEM_DATEV_FISCAL_START = "_datev_fiscal_start";
+
+	public static final String REPORT_ERROR = "REPORT_ERROR";
+
+
+	
 	public final static String MODEL_ERROR = "MODEL_ERROR";
 	public final static String PROCESSING_ERROR = "PROCESSING_ERROR";
 	public final static String CONFIG_ERROR = "CONFIG_ERROR";
@@ -487,4 +508,142 @@ public class DatevWorkflowService {
 		workflowService.processWorkItem(aWorkitem);
 	}
 
+	
+	
+	
+	
+	/**
+	 * This method expects a list of Subprocess definitions. The method updates and
+	 * processes each existing invoice.
+	 * <p>
+	 * The definition is expected in the following format (were regular expressions
+	 * are allowed)
+	 * 
+	 * <pre>
+	 * {@code
+	 * <item name="invoice_update">
+	 *    <modelversion>1.0.0</modelversion>
+	 *    <task>100</task>
+	 *    <event>20</event>
+	 * </item>
+	 * }
+	 * </pre>
+	 * The method runs wit TransactionAttributeType.REQUIRES_NEW so that in case than one of the invoices could not be processed all updates are rolled back.
+	 * This is important to avoid inconsistency during a DATEV export
+	 * 
+	 * @see org.imixs.workflow.engine.plugins.SplitAndJoinPlugin.java
+	 * 
+	 * @param datevExport
+	 *            - datev export workitem
+	 * @param invoices
+	 *            - list of invoices
+	 * @param event
+	 *            - current datev export event containing the invoice_update
+	 *            definition.
+	 * @throws AccessDeniedException
+	 * @throws ProcessingErrorException
+	 * @throws PluginException
+	 * @throws ModelException
+	 */
+	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+	@SuppressWarnings("unchecked")
+	public void processInvoices(ItemCollection datevExport, List<ItemCollection> invoices,
+			final ItemCollection event, ItemCollection configuration)
+			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
+
+		List<String> subProcessDefinitions = null;
+		// test for items with name subprocess_update definition.
+		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, datevExport, false);
+
+		subProcessDefinitions = evalItemCollection.getItemValue(INVOICE_UPDATE);
+
+		if (subProcessDefinitions == null || subProcessDefinitions.size() == 0) {
+			// no definition found
+			return;
+		}
+		// we iterate over each declaration of a SUBPROCESS_CREATE item....
+		for (String processValue : subProcessDefinitions) {
+
+			if (processValue.trim().isEmpty()) {
+				// no definition
+				continue;
+			}
+			// evaluate the item content (XML format expected here!)
+			ItemCollection processData = XMLParser.parseItemStructure(processValue);
+
+			if (processData != null) {
+				// we need to lookup all subprocess instances which are matching
+				// the process definition
+
+				String model_pattern = processData.getItemValueString("modelversion");
+				String process_pattern = processData.getItemValueString("task");
+
+				// process all subprcess matching...
+				for (ItemCollection _invoice : invoices) {
+
+					// load the full invoice workitem....
+					ItemCollection invoice = workflowService.getWorkItem(_invoice.getUniqueID());
+
+					if (invoice != null) {
+						// test if invoice matches update criteria....
+						String subModelVersion = invoice.getModelVersion();
+						String subProcessID = "" + invoice.getTaskID();
+						if (Pattern.compile(model_pattern).matcher(subModelVersion).find()
+								&& Pattern.compile(process_pattern).matcher(subProcessID).find()) {
+
+							logger.finest("...... subprocess matches criteria.");
+							// test for field list...
+							if (processData.hasItem("items")) {
+								logger.warning("subprocess itemList is not supported by the DatevScheduler!");
+							}
+							try {
+								invoice.setEventID(Integer.valueOf(processData.getItemValueString("event")));
+							} catch (java.lang.NumberFormatException e) {
+								throw new ModelException(ModelException.INVALID_MODEL_ENTRY,
+										"unable to parse event '" + processData.getItemValueString("event")
+												+ "'. Please check your model definition '" + invoice.getModelVersion()
+												+ "'!",
+										e);
+							}
+							// process the exisitng subprocess...
+							//invoice = workflowService.processWorkItem(invoice);
+							// try separte transaction...
+							workflowService.processWorkItem(invoice);
+							
+							
+							logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration, null);
+						}
+					}
+				}
+			}
+
+		}
+		// write log
+		DatevWorkflowService.logMessage("..." + invoices.size() + " invoices exported. ", configuration, datevExport);
+
+		// finish by proessing the datev export workitem....
+		datevExport.event(DatevWorkflowService.EVENT_START).event(DatevWorkflowService.EVENT_SUCCESS);
+		workflowService.processWorkItem(datevExport);
+
+	}
+
+	
+	/**
+	 * Creates a new log entry stored in the item _scheduler_log. The log can be
+	 * writen optional to the configuraiton and the workitem
+	 * 
+	 * @param message
+	 * @param configuration
+	 */
+	public static void logMessage(String message, ItemCollection configuration, ItemCollection workitem) {
+		if (configuration != null) {
+			configuration.appendItemValue("_scheduler_log", message);
+		}
+		if (workitem != null) {
+			workitem.appendItemValue("_scheduler_log", message);
+		}
+
+		logger.info(message);
+
+	}
 }

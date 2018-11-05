@@ -70,23 +70,6 @@ import org.imixs.workflow.util.XMLParser;
  */
 public class DatevSchedulerCSV implements Scheduler {
 
-	public static final String DATEV_CONFIGURATION = "DATEV_CONFIGURATION";
-
-	public static final int EVENT_START = 100;
-	public static final int EVENT_SUCCESS = 200;
-	public static final int EVENT_FAILED = 300;
-	public static final String INVOICE_UPDATE = "invoice_update";
-	public static final String LINK_PROPERTY = "txtworkitemref";
-
-	public static final String ITEM_MODEL_VERSION = "_model_version";
-	public static final String ITEM_INITIAL_TASK = "_initial_task";
-
-	public static final String ITEM_DATEV_CLIENT_ID = "_datev_client_id";
-	public static final String ITEM_DATEV_CONSULTANT_ID = "_datev_consultant_id";
-	public static final String ITEM_DATEV_FISCAL_START = "_datev_fiscal_start";
-
-	public static final String REPORT_ERROR = "REPORT_ERROR";
-
 	public static final int MAX_COUNT = 999;
 
 	@EJB
@@ -122,18 +105,18 @@ public class DatevSchedulerCSV implements Scheduler {
 		}
 		try {
 
-			String modelVersion = configuration.getItemValueString(ITEM_MODEL_VERSION);
-			int taskID = configuration.getItemValueInteger(ITEM_INITIAL_TASK);
+			String modelVersion = configuration.getItemValueString(DatevWorkflowService.ITEM_MODEL_VERSION);
+			int taskID = configuration.getItemValueInteger(DatevWorkflowService.ITEM_INITIAL_TASK);
 
 			// fetch the inital event
 			Model model = modelService.getModel(modelVersion);
-			ItemCollection event = model.getEvent(taskID, EVENT_START);
+			ItemCollection event = model.getEvent(taskID, DatevWorkflowService.EVENT_START);
 			ItemCollection task = model.getTask(taskID);
 
 			// load the report
 			ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
 			if (report == null) {
-				throw new SchedulerException(REPORT_ERROR,
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
 						"unable to load report '" + reportName + "'. Please check  model configuration");
 			}
 
@@ -141,21 +124,22 @@ public class DatevSchedulerCSV implements Scheduler {
 			List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
 					null);
 
-			logMessage("...DATEV export started....", configuration, null);
-			logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
+			DatevWorkflowService.logMessage("...DATEV export started....", configuration, null);
+			DatevWorkflowService.logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
 
 			// update the invoices with optional datev_client_id if not provided
 			// link the invoices with the datev workitem.
 			if (masterDataSet.size() > 0) {
 				// add ITEM_DATEV_CLIENT_ID from the DATEV config if missing
 				for (ItemCollection invoice : masterDataSet) {
-					if (invoice.getItemValueString(ITEM_DATEV_CLIENT_ID).isEmpty()) {
-						invoice.replaceItemValue(ITEM_DATEV_CLIENT_ID,
-								configuration.getItemValue(ITEM_DATEV_CLIENT_ID));
+					if (invoice.getItemValueString(DatevWorkflowService.ITEM_DATEV_CLIENT_ID).isEmpty()) {
+						invoice.replaceItemValue(DatevWorkflowService.ITEM_DATEV_CLIENT_ID,
+								configuration.getItemValue(DatevWorkflowService.ITEM_DATEV_CLIENT_ID));
 					}
 				}
 
-				Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet, ITEM_DATEV_CLIENT_ID);
+				Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet,
+						DatevWorkflowService.ITEM_DATEV_CLIENT_ID);
 
 				// now we iterate over each invoice grouped by the _datev_client_id
 				for (String key : invoiceGroups.keySet()) {
@@ -169,26 +153,26 @@ public class DatevSchedulerCSV implements Scheduler {
 					// set unqiueid, needed for xslt
 					datevExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
 					// copy datev_client_id
-					datevExport.setItemValue(ITEM_DATEV_CLIENT_ID, key);
+					datevExport.setItemValue(DatevWorkflowService.ITEM_DATEV_CLIENT_ID, key);
 
 					// set _datev_fiscal_start (date) from first invoice if available...
 					ItemCollection firstInvoice = data.get(0);
-					if (firstInvoice.hasItem(ITEM_DATEV_FISCAL_START)) {
-						datevExport.setItemValue(ITEM_DATEV_FISCAL_START,
-								firstInvoice.getItemValue(ITEM_DATEV_FISCAL_START));
+					if (firstInvoice.hasItem(DatevWorkflowService.ITEM_DATEV_FISCAL_START)) {
+						datevExport.setItemValue(DatevWorkflowService.ITEM_DATEV_FISCAL_START,
+								firstInvoice.getItemValue(DatevWorkflowService.ITEM_DATEV_FISCAL_START));
 					}
 
-					datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
-							configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
+					datevExport.setItemValue(DatevWorkflowService.ITEM_DATEV_CONSULTANT_ID,
+							configuration.getItemValue(DatevWorkflowService.ITEM_DATEV_CONSULTANT_ID));
 					datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
-					logMessage("...starting DATEV export for ClientID=" + key + "...", configuration, datevExport);
+					DatevWorkflowService.logMessage("...starting DATEV export for ClientID=" + key + "...", configuration, datevExport);
 
 					// link invoices with export workitem....
 					for (ItemCollection invoice : data) {
-						datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
+						datevExport.appendItemValue(DatevWorkflowService.LINK_PROPERTY, invoice.getUniqueID());
 						// write log
-						logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
+						DatevWorkflowService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration, datevExport);
 					}
 
 					// finally we add the datev export document to the data collection
@@ -208,16 +192,16 @@ public class DatevSchedulerCSV implements Scheduler {
 					processInvoices(datevExport, data, event, configuration);
 
 					// write log
-					logMessage("...DATEV export ClientID=" + key + "  finished.", configuration, datevExport);
-					logMessage("..." + groupCount + " invoices exported. ", configuration, datevExport);
+					DatevWorkflowService.logMessage("...DATEV export ClientID=" + key + "  finished.", configuration, datevExport);
+					DatevWorkflowService.logMessage("..." + groupCount + " invoices exported. ", configuration, datevExport);
 
 					// finish by proessing the datev export workitem....
-					datevExport.event(EVENT_START).event(EVENT_SUCCESS);
+					datevExport.event(DatevWorkflowService.EVENT_START).event(DatevWorkflowService.EVENT_SUCCESS);
 					workflowService.processWorkItem(datevExport);
 
 				}
 
-				logMessage("...DATEV export completed", configuration, null);
+				DatevWorkflowService.logMessage("...DATEV export completed", configuration, null);
 
 			} else {
 				// no invoices found - so we terminate
@@ -230,23 +214,23 @@ public class DatevSchedulerCSV implements Scheduler {
 			try {
 				if (datevExport != null) {
 					// execute datev workflow with EVENT_FAILED
-					logMessage("Failed: " + e.getMessage(), configuration, datevExport);
-					datevExport.event(EVENT_FAILED);
+					DatevWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, datevExport);
+					datevExport.event(DatevWorkflowService.EVENT_FAILED);
 					workflowService.processWorkItem(datevExport);
 				}
 			} catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
-				throw new SchedulerException(REPORT_ERROR,
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
 						"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
 			}
 
-			throw new SchedulerException(REPORT_ERROR,
+			throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
 					"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
 		} finally {
 			if (outputStream != null) {
 				try {
 					outputStream.close();
 				} catch (IOException e) {
-					throw new SchedulerException(REPORT_ERROR,
+					throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
 							"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
 
 				}
@@ -279,25 +263,6 @@ public class DatevSchedulerCSV implements Scheduler {
 	}
 
 	/**
-	 * Creates a new log entry stored in the item _scheduler_log. The log can be
-	 * writen optional to the configuraiton and the workitem
-	 * 
-	 * @param message
-	 * @param configuration
-	 */
-	private void logMessage(String message, ItemCollection configuration, ItemCollection workitem) {
-		if (configuration != null) {
-			configuration.appendItemValue("_scheduler_log", message);
-		}
-		if (workitem != null) {
-			workitem.appendItemValue("_scheduler_log", message);
-		}
-
-		logger.info(message);
-
-	}
-
-	/**
 	 * This method expects a list of Subprocess definitions. The method updates and
 	 * processes each existing invoice.
 	 * <p>
@@ -316,10 +281,13 @@ public class DatevSchedulerCSV implements Scheduler {
 	 * 
 	 * @see org.imixs.workflow.engine.plugins.SplitAndJoinPlugin.java
 	 * 
-	 * @param datevExport - datev export workitem
-	 * @param invoices    - list of invoices
-	 * @param event       - current datev export event containing the invoice_update
-	 *                    definition.
+	 * @param datevExport
+	 *            - datev export workitem
+	 * @param invoices
+	 *            - list of invoices
+	 * @param event
+	 *            - current datev export event containing the invoice_update
+	 *            definition.
 	 * @throws AccessDeniedException
 	 * @throws ProcessingErrorException
 	 * @throws PluginException
@@ -334,7 +302,7 @@ public class DatevSchedulerCSV implements Scheduler {
 		// test for items with name subprocess_update definition.
 		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, datevExport, false);
 
-		subProcessDefinitions = evalItemCollection.getItemValue(INVOICE_UPDATE);
+		subProcessDefinitions = evalItemCollection.getItemValue(DatevWorkflowService.INVOICE_UPDATE);
 
 		if (subProcessDefinitions == null || subProcessDefinitions.size() == 0) {
 			// no definition found
@@ -364,7 +332,7 @@ public class DatevSchedulerCSV implements Scheduler {
 					ItemCollection invoice = workflowService.getWorkItem(_invoice.getUniqueID());
 
 					if (invoice != null) {
-						// test if invoice matches update criteria.... 
+						// test if invoice matches update criteria....
 						String subModelVersion = invoice.getModelVersion();
 						String subProcessID = "" + invoice.getTaskID();
 						if (Pattern.compile(model_pattern).matcher(subModelVersion).find()
@@ -386,9 +354,9 @@ public class DatevSchedulerCSV implements Scheduler {
 							}
 							// process the exisitng subprocess...
 							invoice = workflowService.processWorkItem(invoice);
-							logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration, null);
+							DatevWorkflowService.logMessage("...invoice " + _invoice.getUniqueID() + " processed.", configuration, null);
 						}
-					} 
+					}
 				}
 			}
 

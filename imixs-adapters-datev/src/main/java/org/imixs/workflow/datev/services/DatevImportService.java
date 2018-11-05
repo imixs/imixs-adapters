@@ -426,8 +426,8 @@ public class DatevImportService {
 		// add type...
 		aWorkitem.replaceItemValue("type", type);
 		// add client and consult id...
-		aWorkitem.replaceItemValue(DatevSchedulerCSV.ITEM_DATEV_CLIENT_ID, clientID);
-		aWorkitem.replaceItemValue(DatevSchedulerCSV.ITEM_DATEV_CONSULTANT_ID, consultenID);
+		aWorkitem.replaceItemValue(DatevWorkflowService.ITEM_DATEV_CLIENT_ID, clientID);
+		aWorkitem.replaceItemValue(DatevWorkflowService.ITEM_DATEV_CONSULTANT_ID, consultenID);
 
 		documentService.save(aWorkitem);
 	}
