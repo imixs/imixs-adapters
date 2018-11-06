@@ -114,7 +114,8 @@ public class DatevSchedulerCSV implements Scheduler {
 			ItemCollection task = model.getTask(taskID);
 
 			// load the report
-			ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
+			reportName = configuration.getItemValueString("_report_invoices");
+			ItemCollection report = reportService.findReport(reportName);
 			if (report == null) {
 				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
 						"unable to load report '" + reportName + "'. Please check  model configuration");

@@ -132,7 +132,7 @@ public class DatevSchedulerXML implements Scheduler {
 			ItemCollection event = model.getEvent(taskID, DatevWorkflowService.EVENT_START);
 
 			// load the report
-			reportName = event.getItemValueString("txtReportName");
+			reportName = configuration.getItemValueString("_report_invoices");
 			ItemCollection report = reportService.findReport(reportName);
 			if (report == null) {
 				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,

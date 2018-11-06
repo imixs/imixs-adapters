@@ -112,7 +112,8 @@
 											Interval für den Buchunsstapel.</p>
 									</div>
 
-									<div class="imixs-form-section-2">
+									<h:panelGroup layout="block" id="report_selection"
+										styleClass="imixs-form-section-2">
 
 										<dl>
 											<dt>
@@ -126,10 +127,33 @@
 														itemLabel="DATEV Belegsatzschnittstelle im XML-Format"></f:selectItem>
 													<f:selectItem itemValue="csv"
 														itemLabel="DATEV-Format (csv)"></f:selectItem>
+													<f:ajax render="report_selection"/>
 												</h:selectOneRadio>
 											</dd>
 										</dl>
-									</div>
+
+										<dl>
+											<dt>
+												DATEV Report Definitionen <span class="imixs-required">*</span>
+											</dt>
+											<dd>
+
+												Belegexport:
+												<h:inputText required="true"
+													value="#{datevController.configuration.item['_report_invoices']}">
+												</h:inputText>
+
+												<h:panelGroup
+													rendered="#{'xml' eq datevController.configuration.item['_export_type']}">
+													<br />
+											Dokumente: <h:inputText required="false"
+														value="#{datevController.configuration.item['_report_documents']}">
+													</h:inputText>
+												</h:panelGroup>
+
+											</dd>
+										</dl>
+									</h:panelGroup>
 									<div class="imixs-form-section-2">
 
 										<dl>
