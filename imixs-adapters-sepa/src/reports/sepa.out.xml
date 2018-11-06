@@ -4,19 +4,19 @@
           xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03 pain.001.003.03.xsd">
    <CstmrCdtTrfInitn>
       <GrpHdr>
-         <MsgId/>
+         <MsgId>a8a5a0fa48bd49d4987dbda597c66055</MsgId>
          <CreDtTm>2018-08-20T17:34:47</CreDtTm>
-         <NbOfTxs>0</NbOfTxs>
-         <CtrlSum>0</CtrlSum>
+         <NbOfTxs>4</NbOfTxs>
+         <CtrlSum>833</CtrlSum>
          <InitgPty>
-            <Nm/>
+            <Nm>Muster GmbH</Nm>
          </InitgPty>
       </GrpHdr>
       <PmtInf>
-         <PmtInfId>-1</PmtInfId>
+         <PmtInfId>a8a5a0fa48bd49d4987dbda597c66055-1</PmtInfId>
          <PmtMtd>TRF</PmtMtd>
-         <NbOfTxs>0</NbOfTxs>
-         <CtrlSum>0</CtrlSum>
+         <NbOfTxs>4</NbOfTxs>
+         <CtrlSum>833</CtrlSum>
          <PmtTpInf>
             <SvcLvl>
                <Cd>SEPA</Cd>
@@ -24,19 +24,115 @@
          </PmtTpInf>
          <ReqdExctnDt>1999-01-01</ReqdExctnDt>
          <Dbtr>
-            <Nm/>
+            <Nm>Muster AG</Nm>
          </Dbtr>
          <DbtrAcct>
             <Id>
-               <IBAN/>
+               <IBAN>DE07500400000582507042</IBAN>
             </Id>
          </DbtrAcct>
          <DbtrAgt>
             <FinInstnId>
-               <BIC/>
+               <BIC>OOBADEFFXXX</BIC>
             </FinInstnId>
          </DbtrAgt>
          <ChrgBr>SLEV</ChrgBr>
+         <CdtTrfTxInf>
+            <PmtId>
+               <EndToEndId>NOTPROVIDED</EndToEndId>
+            </PmtId>
+            <Amt>
+               <InstdAmt Ccy="EUR">354</InstdAmt>
+            </Amt>
+            <CdtrAgt>
+               <FinInstnId>
+                  <BIC>OOBADEFFXXX</BIC>
+               </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+               <Nm>Muster GmbH</Nm>
+            </Cdtr>
+            <CdtrAcct>
+               <Id>
+                  <IBAN>DE07500400000582507042</IBAN>
+               </Id>
+            </CdtrAcct>
+            <RmtInf>
+               <Ustrd>test</Ustrd>
+            </RmtInf>
+         </CdtTrfTxInf>
+         <CdtTrfTxInf>
+            <PmtId>
+               <EndToEndId>NOTPROVIDED</EndToEndId>
+            </PmtId>
+            <Amt>
+               <InstdAmt Ccy="EUR">345.00</InstdAmt>
+            </Amt>
+            <CdtrAgt>
+               <FinInstnId>
+                  <BIC>OOBADEFFXXX</BIC>
+               </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+               <Nm>Muster GmbH</Nm>
+            </Cdtr>
+            <CdtrAcct>
+               <Id>
+                  <IBAN>DE07500400000582507042</IBAN>
+               </Id>
+            </CdtrAcct>
+            <RmtInf>
+               <Ustrd>Servicerechnung</Ustrd>
+            </RmtInf>
+         </CdtTrfTxInf>
+         <CdtTrfTxInf>
+            <PmtId>
+               <EndToEndId>NOTPROVIDED</EndToEndId>
+            </PmtId>
+            <Amt>
+               <InstdAmt Ccy="EUR">34.00</InstdAmt>
+            </Amt>
+            <CdtrAgt>
+               <FinInstnId>
+                  <BIC>OOBADEFFXXX</BIC>
+               </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+               <Nm>Muster GmbH</Nm>
+            </Cdtr>
+            <CdtrAcct>
+               <Id>
+                  <IBAN>DE07500400000582507042</IBAN>
+               </Id>
+            </CdtrAcct>
+            <RmtInf>
+               <Ustrd>asdf</Ustrd>
+            </RmtInf>
+         </CdtTrfTxInf>
+         <CdtTrfTxInf>
+            <PmtId>
+               <EndToEndId>NOTPROVIDED</EndToEndId>
+            </PmtId>
+            <Amt>
+               <InstdAmt Ccy="EUR">100</InstdAmt>
+            </Amt>
+            <CdtrAgt>
+               <FinInstnId>
+                  <BIC>OOBADEFFXXX</BIC>
+               </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+               <Nm>Muster GmbH</Nm>
+            </Cdtr>
+            <CdtrAcct>
+               <Id>
+                  <IBAN>DE07500400000582507042</IBAN>
+               </Id>
+            </CdtrAcct>
+            <RmtInf>
+               <Ustrd>teasd</Ustrd>
+            </RmtInf>
+         </CdtTrfTxInf>
       </PmtInf>
    </CstmrCdtTrfInitn>
 </Document>

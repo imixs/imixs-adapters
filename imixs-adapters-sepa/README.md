@@ -95,6 +95,33 @@ To identify the type of document you can make use of the xsl select statement:
 	</xsl:template>
 	.....
 
+
+### XSD pain.001.003.03
+
+To align the resulting sepa.xml file with the XSD pain.001.003.03, we do transform some of the origin data from the XML source.
+
+__MsgId__: The tags 'MsgId' and 'PmtInfId' may not be longer as 35 characters. For that reason we remove the '-' from the $uniqueid to shorten the message ids. 
+
+	...
+	<MsgId>
+		<xsl:value-of
+			select="replace($exportWorkitem/item[@name='$uniqueid']/value, '-', '')" />
+	</MsgId>
+	...
+
+__IBAN__: The tags 'iban' may not contain blanks which in genaral is valid to input iban. For that reason we remove the ' ' from the coresponding items.
+
+	
+	...
+	<CdtrAcct>
+		<Id>
+			<IBAN>
+				<xsl:value-of select="replace(item[@name='_cdtr_iban']/value, ' ', '')" />
+			</IBAN>
+		</Id>
+	</CdtrAcct>
+	...
+
 # Development
 
 ## Maven

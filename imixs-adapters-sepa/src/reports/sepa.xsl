@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<xsl:stylesheet 
-	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
 	<xsl:strip-space elements="*" />
 	<xsl:output method="xml" indent="yes" encoding="UTF-8" standalone="yes" />
 
@@ -13,22 +13,21 @@
 			<CstmrCdtTrfInitn>
 
 				<!-- generate header info -->
-				<!-- compute count of inoices -->
+				<!-- compute count of invoices -->
 				<xsl:variable name="count"
 					select="count(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='$uniqueid']/value)" />
-				<!-- comput total amount -->
+				<!-- compute total amount -->
 				<xsl:variable name="total"
 					select="sum(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='_amount_brutto']/value)" />
 
-				<!-- shotcut for the sepa export document -->
+				<!-- shortcut for the sepa export document -->
 				<xsl:variable name="exportWorkitem"
 					select="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'SEPA-Export']" />
-
 
 				<GrpHdr>
 					<MsgId>
 						<xsl:value-of
-							select="$exportWorkitem/item[@name='$uniqueid']/value" />
+							select="replace($exportWorkitem/item[@name='$uniqueid']/value, '-', '')" />
 					</MsgId>
 					<CreDtTm>2018-08-20T17:34:47</CreDtTm>
 					<NbOfTxs>
@@ -48,7 +47,7 @@
 				<PmtInf>
 					<PmtInfId>
 						<xsl:value-of
-							select="$exportWorkitem/item[@name='$uniqueid']/value" /><xsl:text>-1</xsl:text>
+							select="replace($exportWorkitem/item[@name='$uniqueid']/value, '-', '')" /><xsl:text>-1</xsl:text>
 					</PmtInfId>
 					<PmtMtd>TRF</PmtMtd>
 					<NbOfTxs>
@@ -73,7 +72,7 @@
 						<Id>
 							<IBAN>
 								<xsl:value-of
-									select="$exportWorkitem/item[@name='_dbtr_iban']/value" />
+									select="replace($exportWorkitem/item[@name='_dbtr_iban']/value, ' ', '')" />
 							</IBAN>
 						</Id>
 					</DbtrAcct>
@@ -117,7 +116,7 @@
 		match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']">
 
 
-		<CdtTrfTxInf>
+		<CdtTrfTxInf xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03">
 			<PmtId>
 				<EndToEndId>NOTPROVIDED</EndToEndId>
 			</PmtId>
@@ -144,7 +143,7 @@
 			<CdtrAcct>
 				<Id>
 					<IBAN>
-						<xsl:value-of select="item[@name='_cdtr_iban']/value" />
+						<xsl:value-of select="replace(item[@name='_cdtr_iban']/value, ' ', '')" />
 					</IBAN>
 				</Id>
 			</CdtrAcct>

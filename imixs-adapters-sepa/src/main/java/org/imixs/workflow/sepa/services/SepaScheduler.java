@@ -187,7 +187,12 @@ public class SepaScheduler implements Scheduler {
 					if (firstInvoice.hasItem(ITEM_DBTR_NAME)) {
 						sepaExport.setItemValue(ITEM_DBTR_NAME, firstInvoice.getItemValue(ITEM_DBTR_NAME));
 					}
+					// set _dbtr_bic from first invoice if available...
+					if (firstInvoice.hasItem(ITEM_DBTR_BIC)) {
+						sepaExport.setItemValue(ITEM_DBTR_BIC, firstInvoice.getItemValue(ITEM_DBTR_BIC));
+					}
 
+					
 					// set workflow group to identify document in xslt
 					sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
