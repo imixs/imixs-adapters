@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<archive xmlns="http://xml.datev.de/bedi/tps/document/v04.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xml.datev.de/bedi/tps/document/v04.0 Document_v040.xsd"
+         version="4.0"
+         generatingSystem="DATEV-Musterdaten">
+   <header>
+      <date>2018-11-06T15:54:22</date>
+      <description>Belegsatzdaten Eingangsrechnung</description>
+      <clientName>Muster GmbH</clientName>
+   </header>
+   <content>
+      <document>
+         <extension xsi:type="accountsPayableLedger"
+                    datafile="7a63950d-9b67-4dc8-8643-0baf8f8670c5.xml">
+            <property value="2018-11" key="1"/>
+            <property value="Eingangsrechnungen" key="3"/>
+         </extension>
+         <extension xsi:type="File" name="invoicd2.pdf"/>
+      </document>
+      <document>
+         <extension xsi:type="accountsPayableLedger"
+                    datafile="b66e76aa-76a6-4e62-8e55-e77d120b4ed3.xml">
+            <property value="2018-11" key="1"/>
+            <property value="Eingangsrechnungen" key="3"/>
+         </extension>
+         <extension xsi:type="File" name="invoice3.pdf"/>
+      </document>
+      <document>
+         <extension xsi:type="accountsPayableLedger"
+                    datafile="c73b4866-b87d-4e98-b158-47d9bb236695.xml">
+            <property value="2018-11" key="1"/>
+            <property value="Eingangsrechnungen" key="3"/>
+         </extension>
+         <extension xsi:type="File" name="invoic4.pdf"/>
+      </document>
+      <document>
+         <extension xsi:type="accountsPayableLedger"
+                    datafile="43796687-ee28-41d1-bbae-b1eb9b9bc865.xml">
+            <property value="2018-11" key="1"/>
+            <property value="Eingangsrechnungen" key="3"/>
+         </extension>
+         <extension xsi:type="File" name="invoice5.pdf"/>
+      </document>
+      <document>
+         <extension xsi:type="accountsPayableLedger"
+                    datafile="e1cae664-8d93-4084-b1ef-b742db322e08.xml">
+            <property value="2018-11" key="1"/>
+            <property value="Eingangsrechnungen" key="3"/>
+         </extension>
+         <extension xsi:type="File" name="invoice1.pdf"/>
+      </document>
+   </content>
+</archive>

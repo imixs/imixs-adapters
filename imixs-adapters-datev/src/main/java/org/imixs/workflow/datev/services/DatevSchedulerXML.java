@@ -115,8 +115,12 @@ public class DatevSchedulerXML implements Scheduler {
 	 * @throws QueryException
 	 */
 	public ItemCollection run(ItemCollection configuration) throws SchedulerException {
-		// ByteArrayOutputStream outputStream = null;
-		String reportName = "";
+
+		ItemCollection invoiceReport = null;
+		ItemCollection documentsReport = null;
+
+		String reportNameInvoices = "";
+		String reportNameDocuments = "";
 		ItemCollection datevExport = null;
 		int maxCount = configuration.getItemValueInteger("_maxcount");
 		if (maxCount == 0) {
@@ -132,16 +136,24 @@ public class DatevSchedulerXML implements Scheduler {
 			ItemCollection event = model.getEvent(taskID, DatevWorkflowService.EVENT_START);
 
 			// load the report
-			reportName = configuration.getItemValueString("_report_invoices");
-			ItemCollection report = reportService.findReport(reportName);
-			if (report == null) {
+			reportNameInvoices = configuration.getItemValueString("_report_invoices");
+			invoiceReport = reportService.findReport(reportNameInvoices);
+			if (invoiceReport == null) {
 				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-						"unable to load report '" + reportName + "'. Please check  model configuration");
+						"unable to load invoice report definition '" + reportNameInvoices
+								+ "'. Please check  model configuration");
+			}
+			reportNameDocuments = configuration.getItemValueString("_report_documents");
+			documentsReport = reportService.findReport(reportNameDocuments);
+			if (documentsReport == null) {
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
+						"unable to load documents report definition '" + reportNameInvoices
+								+ "'. Please check  model configuration");
 			}
 
 			// get the data source based on the report definition....
-			List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
-					null);
+			List<ItemCollection> masterDataSet = reportService.getDataSource(invoiceReport, MAX_COUNT, 0, "$created",
+					false, null);
 
 			DatevWorkflowService.logMessage("...DATEV export started....", configuration, null);
 			DatevWorkflowService.logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
@@ -166,7 +178,7 @@ public class DatevSchedulerXML implements Scheduler {
 					// get list of invoices by mandant id
 					List<ItemCollection> data = invoiceGroups.get(key);
 					// create export workitem with attached zip file....
-					datevExport = buildZipFile(data, configuration, report);
+					datevExport = buildZipFile(data, configuration, invoiceReport, documentsReport);
 
 					// update and process invoices in new trasaction to avoid partial updates...
 					datevWorkflowService.processInvoices(datevExport, data, event, configuration);
@@ -194,11 +206,11 @@ public class DatevSchedulerXML implements Scheduler {
 				}
 			} catch (Exception e1) {
 				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-						"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
+						"Failed to execute DATEV report '" + reportNameInvoices + "' : " + e.getMessage(), e);
 			}
 
 			throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-					"Failed to execute DATEV report '" + reportName + "' : " + e.getMessage(), e);
+					"Failed to execute DATEV report '" + reportNameInvoices + "' : " + e.getMessage(), e);
 		}
 
 		return configuration;
@@ -233,7 +245,8 @@ public class DatevSchedulerXML implements Scheduler {
 	 * @return
 	 * @throws SchedulerException
 	 */
-	private ItemCollection buildZipFile(List<ItemCollection> data, ItemCollection configuration, ItemCollection report)
+	private ItemCollection buildZipFile(List<ItemCollection> data, ItemCollection configuration, ItemCollection invoiceReport
+			, ItemCollection documentsReport)
 			throws SchedulerException {
 
 		ZipOutputStream datevZip = null;
@@ -272,13 +285,18 @@ public class DatevSchedulerXML implements Scheduler {
 
 			// now we iterate over all invoices in this group
 			// and create a XML file with belegsatzdaten for each invoice
-			String xsl = report.getItemValueString("XSL").trim();
-			if (xsl.isEmpty()) {
+			String xslInvoice = invoiceReport.getItemValueString("XSL").trim();
+			if (xslInvoice.isEmpty()) {
 				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-						"Failed to build DATEV zip archive '" + report.getItemValueString("txtname") + " XSL content is missing.");
+						"Failed to build DATEV zip archive '" + invoiceReport.getItemValueString("txtname") + " XSL content is missing.");
+			}
+			String xslDocuments = documentsReport.getItemValueString("XSL").trim();
+			if (xslDocuments.isEmpty()) {
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
+						"Failed to build DATEV zip archive '" + documentsReport.getItemValueString("txtname") + " XSL content is missing.");
 			}
 			
-			String encoding = report.getItemValueString("encoding");
+			String encoding = invoiceReport.getItemValueString("encoding");
 			for (ItemCollection invoice : data) {
 				// first link invoices with export workitem....
 				datevExport.appendItemValue(DatevWorkflowService.LINK_PROPERTY, invoice.getUniqueID());
@@ -293,7 +311,7 @@ public class DatevSchedulerXML implements Scheduler {
 					outputStream = new ByteArrayOutputStream();
 
 					String xml = new String(xmlData);
-					XSLHandler.transform(new String(xml), xsl, encoding, outputStream);
+					XSLHandler.transform(new String(xml), xslInvoice, encoding, outputStream);
 					byte[] byteData = outputStream.toByteArray();
 
 					// name the file inside the zip file and add a new entry
@@ -304,16 +322,54 @@ public class DatevSchedulerXML implements Scheduler {
 
 				} catch (IOException | TransformerException | JAXBException e) {
 					throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-							"Failed to build DATEV zip archive '" + report.getItemValueString("txtname") + "' : "
+							"Failed to build DATEV zip archive '" + invoiceReport.getItemValueString("txtname") + "' : "
 									+ e.getMessage(),
 							e);
 				}
+				
+				// and now we add the attachment.....
+				FileData fileData=getWorkItemFile(invoice);
+				if (fileData!=null) {
+					// name the file inside the zip file and add a new entry
+					datevZip.putNextEntry(new ZipEntry(fileData.getName()));
+					// write data and close entry
+					datevZip.write(fileData.getContent());
+					datevZip.closeEntry();
+				}
+				
+				
+			
+				
 
 				// write log
 				DatevWorkflowService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration,
 						datevExport);
 			}
+			
+			
+			// now we need to construct the document.xml file containing the attachment information
+			ByteArrayOutputStream outputStream = null;
+			try {
+				byte[] xmlData = XMLDataCollectionAdapter.writeItemCollection(data);
+				outputStream = new ByteArrayOutputStream();
+				String xml = new String(xmlData);
+				XSLHandler.transform(new String(xml), xslDocuments, encoding, outputStream);
+				byte[] byteData = outputStream.toByteArray();
 
+				// name the file inside the zip file and add a new entry
+				datevZip.putNextEntry(new ZipEntry("document.xml"));
+				// write data and close entry
+				datevZip.write(byteData);
+				datevZip.closeEntry();
+			} catch (IOException | TransformerException | JAXBException e) {
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
+						"Failed to build DATEV zip archive '" + documentsReport.getItemValueString("txtname") + "' : "
+								+ e.getMessage(),
+						e);
+			}
+			
+			
+			
 			DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HHmm");
 			String datevFileName = "datev_buchungsstapel_" + df.format(new Date()) + ".zip";
 			
@@ -323,7 +379,7 @@ public class DatevSchedulerXML implements Scheduler {
 
 		} catch (IOException e) {
 			throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-					"Failed to create DATEV archive '" + report.getItemValueString("txtname") + "' : " + e.getMessage(),
+					"Failed to create DATEV archive '" + invoiceReport.getItemValueString("txtname") + "' : " + e.getMessage(),
 					e);
 		} finally {
 			try {
@@ -336,11 +392,37 @@ public class DatevSchedulerXML implements Scheduler {
 				}
 			} catch (IOException e) {
 				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR, "Failed to close DATEV archive '"
-						+ report.getItemValueString("txtname") + "' : " + e.getMessage(), e);
+						+ invoiceReport.getItemValueString("txtname") + "' : " + e.getMessage(), e);
 			}
 
 		}
 		return datevExport;
 	}
 
+	/**
+	 * This method returns the first fileData from a snapshot by a given invoice workItem.
+	 * 
+	 * @param uniqueid
+	 * @param file
+	 *            - file name
+	 * @return FileData object for the given filename.
+	 */
+	private FileData getWorkItemFile(ItemCollection invoice) {
+		String file;
+		String snapshotID;
+
+		List<String> filenames = invoice.getFileNames();
+		if (filenames != null && filenames.size() > 0) {
+			file = filenames.get(0);
+			// test if we have a $snapshotid
+			snapshotID = invoice.getItemValueString("$snapshotid");
+
+			ItemCollection snapshot = documentService.load(snapshotID);
+			if (snapshot != null) {
+				return snapshot.getFileData(file);
+			}
+		}
+
+		return null;
+	}
 }
