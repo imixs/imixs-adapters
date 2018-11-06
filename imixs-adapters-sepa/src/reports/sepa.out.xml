@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03 pain.001.003.03.xsd">
+   <CstmrCdtTrfInitn>
+      <GrpHdr>
+         <MsgId/>
+         <CreDtTm>2018-08-20T17:34:47</CreDtTm>
+         <NbOfTxs>0</NbOfTxs>
+         <CtrlSum>0</CtrlSum>
+         <InitgPty>
+            <Nm/>
+         </InitgPty>
+      </GrpHdr>
+      <PmtInf>
+         <PmtInfId>-1</PmtInfId>
+         <PmtMtd>TRF</PmtMtd>
+         <NbOfTxs>0</NbOfTxs>
+         <CtrlSum>0</CtrlSum>
+         <PmtTpInf>
+            <SvcLvl>
+               <Cd>SEPA</Cd>
+            </SvcLvl>
+         </PmtTpInf>
+         <ReqdExctnDt>1999-01-01</ReqdExctnDt>
+         <Dbtr>
+            <Nm/>
+         </Dbtr>
+         <DbtrAcct>
+            <Id>
+               <IBAN/>
+            </Id>
+         </DbtrAcct>
+         <DbtrAgt>
+            <FinInstnId>
+               <BIC/>
+            </FinInstnId>
+         </DbtrAgt>
+         <ChrgBr>SLEV</ChrgBr>
+      </PmtInf>
+   </CstmrCdtTrfInitn>
+</Document>

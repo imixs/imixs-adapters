@@ -6,6 +6,7 @@
 		standalone="yes" />
 
 	<xsl:template match="/">
+	
 
 		<xsl:variable name="date"
 			select="/data/document/item[@name='$modified']/value" />
@@ -19,7 +20,7 @@
 			select="/data/document/item[@name='_kreditor_konto']/value" />
 
 
-<dreck>asdf</dreck>
+
 		<LedgerImport
 			xmlns="http://xml.datev.de/bedi/tps/ledger/v040"
 			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
