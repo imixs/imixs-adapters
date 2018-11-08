@@ -141,14 +141,14 @@ public class DatevSchedulerXML implements Scheduler {
 			if (invoiceReport == null) {
 				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
 						"unable to load invoice report definition '" + reportNameInvoices
-								+ "'. Please check  model configuration");
+								+ "'. Please check the configuration");
 			}
 			reportNameDocuments = configuration.getItemValueString("_report_documents");
 			documentsReport = reportService.findReport(reportNameDocuments);
 			if (documentsReport == null) {
 				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-						"unable to load documents report definition '" + reportNameInvoices
-								+ "'. Please check  model configuration");
+						"unable to load documents report definition '" + reportNameDocuments
+								+ "'. Please check the configuration");
 			}
 
 			// get the data source based on the report definition....
