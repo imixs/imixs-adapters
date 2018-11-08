@@ -12,7 +12,7 @@
 		<div class="ui-state-highlight ui-corner-all imixs-instruction">
 			<pre>
 				<ui:repeat var="logentry"
-					value="#{workitem.itemList['_scheduler_log']}">
+					value="#{workitem.itemList['_scheduler_logmessage']}">
 				<h:outputText escape="false" value="#{logentry}" /><br />
 				</ui:repeat>
 			</pre>
