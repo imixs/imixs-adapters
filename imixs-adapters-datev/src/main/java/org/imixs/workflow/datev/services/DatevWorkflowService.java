@@ -57,6 +57,7 @@ import javax.ejb.TransactionAttributeType;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.engine.WorkflowService;
+import org.imixs.workflow.engine.scheduler.Scheduler;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.InvalidAccessException;
 import org.imixs.workflow.exceptions.ModelException;
@@ -637,10 +638,10 @@ public class DatevWorkflowService {
 	 */
 	public static void logMessage(String message, ItemCollection configuration, ItemCollection workitem) {
 		if (configuration != null) {
-			configuration.appendItemValue("_scheduler_log", message);
+			configuration.appendItemValue(Scheduler.ITEM_LOGMESSAGE, message);
 		}
 		if (workitem != null) {
-			workitem.appendItemValue("_scheduler_log", message);
+			workitem.appendItemValue(Scheduler.ITEM_LOGMESSAGE, message);
 		}
 
 		logger.info(message);

@@ -195,8 +195,22 @@ public class DatevSchedulerXML implements Scheduler {
 				return configuration;
 			}
 
-		} catch (ModelException | AccessDeniedException | ProcessingErrorException | PluginException
-				| QueryException e) {
+		} catch (PluginException e) {
+			// In case of a plugin exeption we continue the scheduler and mark the export as
+			// failed
+			try {
+				if (datevExport != null) {
+					// execute datev workflow with EVENT_FAILED
+					DatevWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, datevExport);
+					datevExport.event(DatevWorkflowService.EVENT_FAILED);
+					workflowService.processWorkItem(datevExport);
+				}
+			} catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
+						"Failed to execute DATEV report '" + reportNameInvoices + "' : " + e.getMessage(), e);
+			}
+
+		} catch (ModelException | AccessDeniedException | ProcessingErrorException | QueryException e) {
 			try {
 				if (datevExport != null) {
 					// execute datev workflow with EVENT_FAILED
@@ -245,9 +259,8 @@ public class DatevSchedulerXML implements Scheduler {
 	 * @return
 	 * @throws SchedulerException
 	 */
-	private ItemCollection buildZipFile(List<ItemCollection> data, ItemCollection configuration, ItemCollection invoiceReport
-			, ItemCollection documentsReport)
-			throws SchedulerException {
+	private ItemCollection buildZipFile(List<ItemCollection> data, ItemCollection configuration,
+			ItemCollection invoiceReport, ItemCollection documentsReport) throws SchedulerException {
 
 		ZipOutputStream datevZip = null;
 		ByteArrayOutputStream zipOutputStream = null;
@@ -287,15 +300,15 @@ public class DatevSchedulerXML implements Scheduler {
 			// and create a XML file with belegsatzdaten for each invoice
 			String xslInvoice = invoiceReport.getItemValueString("XSL").trim();
 			if (xslInvoice.isEmpty()) {
-				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-						"Failed to build DATEV zip archive '" + invoiceReport.getItemValueString("txtname") + " XSL content is missing.");
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR, "Failed to build DATEV zip archive '"
+						+ invoiceReport.getItemValueString("txtname") + " XSL content is missing.");
 			}
 			String xslDocuments = documentsReport.getItemValueString("XSL").trim();
 			if (xslDocuments.isEmpty()) {
-				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-						"Failed to build DATEV zip archive '" + documentsReport.getItemValueString("txtname") + " XSL content is missing.");
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR, "Failed to build DATEV zip archive '"
+						+ documentsReport.getItemValueString("txtname") + " XSL content is missing.");
 			}
-			
+
 			String encoding = invoiceReport.getItemValueString("encoding");
 			for (ItemCollection invoice : data) {
 				// first link invoices with export workitem....
@@ -326,28 +339,24 @@ public class DatevSchedulerXML implements Scheduler {
 									+ e.getMessage(),
 							e);
 				}
-				
+
 				// and now we add the attachment.....
-				FileData fileData=getWorkItemFile(invoice);
-				if (fileData!=null) {
+				FileData fileData = getWorkItemFile(invoice);
+				if (fileData != null) {
 					// name the file inside the zip file and add a new entry
 					datevZip.putNextEntry(new ZipEntry(fileData.getName()));
 					// write data and close entry
 					datevZip.write(fileData.getContent());
 					datevZip.closeEntry();
 				}
-				
-				
-			
-				
 
 				// write log
 				DatevWorkflowService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration,
 						datevExport);
 			}
-			
-			
-			// now we need to construct the document.xml file containing the attachment information
+
+			// now we need to construct the document.xml file containing the attachment
+			// information
 			ByteArrayOutputStream outputStream = null;
 			try {
 				byte[] xmlData = XMLDataCollectionAdapter.writeItemCollection(data);
@@ -362,25 +371,20 @@ public class DatevSchedulerXML implements Scheduler {
 				datevZip.write(byteData);
 				datevZip.closeEntry();
 			} catch (IOException | TransformerException | JAXBException e) {
-				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-						"Failed to build DATEV zip archive '" + documentsReport.getItemValueString("txtname") + "' : "
-								+ e.getMessage(),
-						e);
+				throw new SchedulerException(DatevWorkflowService.REPORT_ERROR, "Failed to build DATEV zip archive '"
+						+ documentsReport.getItemValueString("txtname") + "' : " + e.getMessage(), e);
 			}
-			
-			
-			
+
 			DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HHmm");
 			String datevFileName = "datev_buchungsstapel_" + df.format(new Date()) + ".zip";
-			
+
 			datevZip.close();
 			FileData zipFileData = new FileData(datevFileName, zipOutputStream.toByteArray(), "application/zip");
 			datevExport.addFileData(zipFileData);
 
 		} catch (IOException e) {
-			throw new SchedulerException(DatevWorkflowService.REPORT_ERROR,
-					"Failed to create DATEV archive '" + invoiceReport.getItemValueString("txtname") + "' : " + e.getMessage(),
-					e);
+			throw new SchedulerException(DatevWorkflowService.REPORT_ERROR, "Failed to create DATEV archive '"
+					+ invoiceReport.getItemValueString("txtname") + "' : " + e.getMessage(), e);
 		} finally {
 			try {
 				// try to close the streams (unclear if necessary here...)
@@ -400,7 +404,8 @@ public class DatevSchedulerXML implements Scheduler {
 	}
 
 	/**
-	 * This method returns the first fileData from a snapshot by a given invoice workItem.
+	 * This method returns the first fileData from a snapshot by a given invoice
+	 * workItem.
 	 * 
 	 * @param uniqueid
 	 * @param file

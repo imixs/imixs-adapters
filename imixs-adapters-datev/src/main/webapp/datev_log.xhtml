@@ -1,0 +1,27 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:i="http://java.sun.com/jsf/composite/imixs"
+	xmlns:marty="http://java.sun.com/jsf/composite/marty">
+
+
+	<div class="imixs-form-section">
+		<h1>Log</h1>
+		<div class="ui-state-highlight ui-corner-all imixs-instruction">
+			<pre>
+				<ui:repeat var="logentry"
+					value="#{workitem.itemList['_scheduler_logmessage']}">
+				<h:outputText escape="false" value="#{logentry}" /><br />
+				</ui:repeat>
+			</pre>
+		</div>
+	</div>
+
+
+
+
+
+</ui:composition>
+
