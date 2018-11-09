@@ -5,6 +5,9 @@
 	<xsl:output method="xml" indent="yes" encoding="UTF-8" standalone="yes" />
 
 	<xsl:template match="/">
+	
+		<xsl:variable name="now" select="current-dateTime()" />
+	
 
 		<Document
 			xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03"
@@ -29,7 +32,8 @@
 						<xsl:value-of
 							select="replace($exportWorkitem/item[@name='$uniqueid']/value, '-', '')" />
 					</MsgId>
-					<CreDtTm>2018-08-20T17:34:47</CreDtTm>
+					<CreDtTm><xsl:value-of
+						select="format-dateTime($now, '[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]')" /></CreDtTm>
 					<NbOfTxs>
 						<xsl:value-of select="$count" />
 					</NbOfTxs>
@@ -61,7 +65,8 @@
 							<Cd>SEPA</Cd>
 						</SvcLvl>
 					</PmtTpInf>
-					<ReqdExctnDt>1999-01-01</ReqdExctnDt>
+					<ReqdExctnDt><xsl:value-of
+						select="format-dateTime($now, '[Y0001]-[M01]-[D01]')" /></ReqdExctnDt>
 					<Dbtr>
 						<Nm>
 							<xsl:value-of
