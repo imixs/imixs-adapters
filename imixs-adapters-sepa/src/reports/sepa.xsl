@@ -39,7 +39,7 @@
 					<InitgPty>
 						<Nm>
 							<xsl:value-of
-								select="$exportWorkitem/item[@name='_subject']/value" />
+								select="$exportWorkitem/item[@name='_dbtr_name']/value" />
 						</Nm>
 					</InitgPty>
 				</GrpHdr>
