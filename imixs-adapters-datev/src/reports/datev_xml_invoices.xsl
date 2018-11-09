@@ -41,16 +41,13 @@
 				<xsl:for-each
 					select="/data/document/item[@name='_childitems']/value">
 
-					<xsl:variable name="betrag"
-						select="replace(./item[@name='_amount']/value, '\.', ',')" />
-
 					<accountsPayableLedger>
 						<date>
 							<xsl:value-of
 								select="format-dateTime($date, '[Y0001]-[M01]-[D01]')" />
 						</date>
 						<amount>
-							<xsl:value-of select="$betrag" />
+							<xsl:value-of select="./item[@name='_amount']/value" />
 						</amount>
 						<accountNo>
 							<xsl:value-of select="./item[@name='_konto']/value" />

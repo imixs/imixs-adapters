@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<LedgerImport xmlns="http://xml.datev.de/bedi/tps/ledger/v040"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://xml.datev.de/bedi/tps/ledger/v040 Belegverwaltung_online_ledger_import_v040.xsd"
+              version="4.0"
+              generator_info="Imixs Office Workflow"
+              generating_system="Imixs Workflow"
+              xml_data="Kopie nur zur Verbuchung berechtigt nicht zum Vorsteuerabzug">
+   <consolidate consolidatedAmount="345.00"
+                consolidatedDate="2018-09-27"
+                consolidatedInvoiceId="345"
+                consolidatedCurrencyCode="EUR">
+      <accountsPayableLedger>
+         <date>2018-09-27</date>
+         <amount>340.00</amount>
+         <accountNo>100800</accountNo>
+         <buCode>3</buCode>
+         <information>TEst</information>
+         <currencyCode>EUR</currencyCode>
+         <invoiceId>345</invoiceId>
+         <bpAccountNo/>
+      </accountsPayableLedger>
+      <accountsPayableLedger>
+         <date>2018-09-27</date>
+         <amount>2.50</amount>
+         <accountNo>30000</accountNo>
+         <buCode>3</buCode>
+         <information>TEst</information>
+         <currencyCode>EUR</currencyCode>
+         <invoiceId>345</invoiceId>
+         <bpAccountNo/>
+      </accountsPayableLedger>
+      <accountsPayableLedger>
+         <date>2018-09-27</date>
+         <amount>2.50</amount>
+         <accountNo>5000</accountNo>
+         <buCode>3</buCode>
+         <information>TEst</information>
+         <currencyCode>EUR</currencyCode>
+         <invoiceId>345</invoiceId>
+         <bpAccountNo/>
+      </accountsPayableLedger>
+   </consolidate>
+</LedgerImport>

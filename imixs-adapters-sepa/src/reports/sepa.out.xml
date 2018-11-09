@@ -5,7 +5,7 @@
    <CstmrCdtTrfInitn>
       <GrpHdr>
          <MsgId>a8a5a0fa48bd49d4987dbda597c66055</MsgId>
-         <CreDtTm>2018-08-20T17:34:47</CreDtTm>
+         <CreDtTm>2018-11-09T12:40:28</CreDtTm>
          <NbOfTxs>4</NbOfTxs>
          <CtrlSum>833</CtrlSum>
          <InitgPty>
@@ -22,7 +22,7 @@
                <Cd>SEPA</Cd>
             </SvcLvl>
          </PmtTpInf>
-         <ReqdExctnDt>1999-01-01</ReqdExctnDt>
+         <ReqdExctnDt>2018-11-09</ReqdExctnDt>
          <Dbtr>
             <Nm>Muster AG</Nm>
          </Dbtr>
