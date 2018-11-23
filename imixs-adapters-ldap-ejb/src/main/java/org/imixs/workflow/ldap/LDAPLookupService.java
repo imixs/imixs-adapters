@@ -57,11 +57,10 @@ public class LDAPLookupService {
 
 	public static final int MAX_RESULT = 20;
 	public static final int TIME_LIMIT = 20000;
-	public static final String LDAP_SEARCH_CONTEXT = "ldap.search.context";
+	public static final String LDAP_SEARCH_CONTEXT = "ldap.search-context";
 	public static final String LDAP_SEARCH_FILTER_DN = "ldap.dn-search-filter";
 	public static final String LDAP_SEARCH_FILTER_GROUP = "ldap.group-search-filter";
-
-	public static final String LDAP_SEARCH_FILTER_PHRASE = "ldap.search.filter.phrase";
+	public static final String LDAP_SEARCH_FILTER_PHRASE = "ldap.search-filter-phrase";
 	public static final String LDAP_USER_ATTRIBUTES = "ldap.user-attributes";
 
 	private boolean enabled = false;
@@ -75,13 +74,9 @@ public class LDAPLookupService {
 	private String[] userAttributesImixs = null; // imixs attributes names if |
 													// defined
 
-	
-	
-	
 	@Inject
 	protected Event<LDAPProfileEvent> ldapProfileEvents;
 
-	
 	@EJB
 	LDAPCache ldapCache;
 
@@ -112,6 +107,17 @@ public class LDAPLookupService {
 			// initialize ldap configuration....
 			logger.finest("......read LDAP configuration...");
 			searchContext = configurationProperties.getProperty(LDAP_SEARCH_CONTEXT, "");
+			// issue #64 - backward compatibility.
+			if (searchContext.isEmpty()) {
+				// try deprecated propertyname ldap.search.context
+				searchContext = configurationProperties.getProperty("ldap.search.context", "");
+				if (!searchContext.isEmpty()) {
+					// we take the deprecated value but we log a warning
+					logger.warning(
+							"imixs property 'ldap.search.context' is deprecated and should be replaced with 'ldap.search-context'");
+				}
+			}
+
 			logger.finest("......" + LDAP_SEARCH_CONTEXT + "=" + searchContext);
 			dnSearchFilter = configurationProperties.getProperty(LDAP_SEARCH_FILTER_DN, "(uid=%u)");
 			logger.finest("......" + LDAP_SEARCH_FILTER_DN + "=" + dnSearchFilter);
@@ -188,7 +194,8 @@ public class LDAPLookupService {
 	 * Returns the ldap attributes for a given user. If no user was found in LDAP
 	 * the method returns null. The method uses an internal cache.
 	 * 
-	 * @param aUID - user id
+	 * @param aUID
+	 *            - user id
 	 * @return ItemCollection containing the user attributes or null if no
 	 *         attributes where found.
 	 */
@@ -203,8 +210,10 @@ public class LDAPLookupService {
 	 * If the boolean 'refresh' is true the method lookup the user in any case with
 	 * a search query and updates the cache.
 	 * 
-	 * @param aUID - user id
-	 * @param refresh - if true, cache will be refreshed. 
+	 * @param aUID
+	 *            - user id
+	 * @param refresh
+	 *            - if true, cache will be refreshed.
 	 * @return ItemCollection containing the user attributes or null if no
 	 *         attributes where found.
 	 */
@@ -217,10 +226,10 @@ public class LDAPLookupService {
 		// also null objects can be returned here (if LDAPCache was serialized.)
 		if (!refresh && ldapCache.contains(aUID)) {
 			logger.finest("......fetching user: '" + aUID + "' from cache...");
-			ItemCollection user=(ItemCollection) ldapCache.get(aUID);
-			if (user!=null && user.getAllItems().size()>0) {
+			ItemCollection user = (ItemCollection) ldapCache.get(aUID);
+			if (user != null && user.getAllItems().size() > 0) {
 				return user;
-			} 
+			}
 			// user object is expired
 			logger.finest("......user object expired!");
 		}
@@ -259,8 +268,10 @@ public class LDAPLookupService {
 	 * This method is used to put a user object into the cache. The method cann be
 	 * called form a external service interface.
 	 * 
-	 * @param aUID - userid
-	 * @param user - user profile
+	 * @param aUID
+	 *            - userid
+	 * @param user
+	 *            - user profile
 	 */
 	public void cache(String aUID, ItemCollection user) {
 		ldapCache.put(aUID, user);
@@ -269,7 +280,8 @@ public class LDAPLookupService {
 	/**
 	 * Returns a list of user entries form the ldap based on a search phrase
 	 * 
-	 * @param searchPhrase - search Phrase
+	 * @param searchPhrase
+	 *            - search Phrase
 	 * @return ItemCollection containing the user attributes or null if no
 	 *         attributes where found.
 	 */
@@ -300,7 +312,8 @@ public class LDAPLookupService {
 	 * array!.
 	 * 
 	 * 
-	 * @param aUID - user unique id
+	 * @param aUID
+	 *            - user unique id
 	 * @return string array of group names
 	 */
 	public String[] findGroups(String aUID) {
@@ -345,7 +358,8 @@ public class LDAPLookupService {
 	 * returns the default attributes for a given user in an ItemCollection. If ldap
 	 * service is disabled or the user was not found then the method returns null.
 	 * 
-	 * @param aUID - user id
+	 * @param aUID
+	 *            - user id
 	 * @return ItemCollection - containing the user attributes or null if no entry
 	 *         was found
 	 */
@@ -420,20 +434,17 @@ public class LDAPLookupService {
 					e.printStackTrace();
 				}
 		}
-		
-		
 
 		// adapt userprofile
 		// fire event
 		if (ldapProfileEvents != null) {
 			LDAPProfileEvent event = new LDAPProfileEvent(user);
 			ldapProfileEvents.fire(event);
-			user = event.getProfile(); 
+			user = event.getProfile();
 		} else {
 			logger.warning("CDI Support is missing - LDAPProfileEvent wil not be fired");
 		}
-		
-		
+
 		return user;
 	}
 
@@ -496,19 +507,17 @@ public class LDAPLookupService {
 						}
 					}
 				}
-				
+
 				// adapt userprofile
 				// fire event
 				if (ldapProfileEvents != null) {
 					LDAPProfileEvent event = new LDAPProfileEvent(itemColUser);
 					ldapProfileEvents.fire(event);
-					itemColUser = event.getProfile(); 
+					itemColUser = event.getProfile();
 				} else {
 					logger.warning("CDI Support is missing - LDAPProfileEvent wil not be fired");
 				}
-				
-				
-				
+
 				// add object to list
 				result.add(itemColUser);
 				if (result.size() >= MAX_RESULT) {
@@ -543,7 +552,8 @@ public class LDAPLookupService {
 	 * Returns a string array containing all group names for a given uid. If not
 	 * groups are found or the uid did not exist the method returns null.
 	 * 
-	 * @param aUID - user id
+	 * @param aUID
+	 *            - user id
 	 * @return array list of user groups or null if no entry was found
 	 */
 	private String[] fetchGroups(String aUID, LdapContext ldapCtx) {
