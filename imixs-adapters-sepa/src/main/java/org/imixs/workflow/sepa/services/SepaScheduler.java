@@ -74,7 +74,7 @@ public class SepaScheduler implements Scheduler {
 
 	@EJB
 	WorkflowService workflowService;
-	
+
 	@EJB
 	SepaWorkflowService sepaWorkflowService;
 
@@ -135,16 +135,19 @@ public class SepaScheduler implements Scheduler {
 
 					if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()) {
 						// overtake _dbtr_iban from sepa export
-						invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN, configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
+						invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
+								configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
 					}
 					if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {
 						// overtake _dbtr_bic from sepa export
-						invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC, configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+						invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
+								configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
 					}
 
 				}
 
-				Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet,SepaWorkflowService.ITEM_DBTR_IBAN);
+				Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet,
+						SepaWorkflowService.ITEM_DBTR_IBAN);
 
 				// now we iterate over each invoice grouped by the _datev_client_id
 				for (String key : invoiceGroups.keySet()) {
@@ -163,29 +166,32 @@ public class SepaScheduler implements Scheduler {
 					// set _dbtr_name from first invoice if available...
 					ItemCollection firstInvoice = data.get(0);
 					if (firstInvoice.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
-						sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME, firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+						sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
+								firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
 					}
 					// set _dbtr_bic from first invoice if available...
 					if (firstInvoice.hasItem(SepaWorkflowService.ITEM_DBTR_BIC)) {
-						sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC, firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+						sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
+								firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
 					}
 
-					
 					// set workflow group to identify document in xslt
 					sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
-					sepaWorkflowService.logMessage("...starting SEPA export for iban=" + key + "...", configuration, sepaExport);
+					sepaWorkflowService.logMessage("...starting SEPA export for iban=" + key + "...", configuration,
+							sepaExport);
 
 					// link invoices with export workitem....
 					for (ItemCollection invoice : data) {
 						sepaExport.appendItemValue(SepaWorkflowService.LINK_PROPERTY, invoice.getUniqueID());
-						
+
 						// avoid unsupported characters in sepa fields
-						invoice=harmonizeItem(invoice,SepaWorkflowService.ITEM_CDTR_NAME);
-						invoice=harmonizeItem(invoice,SepaWorkflowService.ITEM_DBTR_NAME);
-						
+						invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_CDTR_NAME);
+						invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_DBTR_NAME);
+
 						// write log
-						sepaWorkflowService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration, sepaExport);
+						sepaWorkflowService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ",
+								configuration, sepaExport);
 					}
 
 					// finally we add the datev export document to the data collection
@@ -193,9 +199,16 @@ public class SepaScheduler implements Scheduler {
 
 					// create the attachment based on the report definition
 					// write a file to workitem
-					DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
-					String sepaFileName = "sepa_" + df.format(new Date()) + ".xml";
 
+					// create a harmonized debitor name for the filename.....
+					String sDepName = sepaExport.getItemValueString(SepaWorkflowService.ITEM_DBTR_NAME);
+					sDepName = sDepName.replace("&", "_");
+					sDepName = sDepName.replace(">", "_");
+					sDepName = sDepName.replace("<", "_");
+					sDepName = sDepName.replace(" ", "_");
+					// build a timestamp for the filename
+					DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
+					String sepaFileName = "sepa_" + sDepName + "_" + df.format(new Date()) + ".xml";
 					FileData filedata = reportService.transformDataSource(report, data, sepaFileName);
 
 					// attach the file
@@ -206,7 +219,8 @@ public class SepaScheduler implements Scheduler {
 
 					// write log
 					sepaWorkflowService.logMessage("...SEPA export " + key + "  finished.", configuration, sepaExport);
-					sepaWorkflowService.logMessage("..." + groupCount + " invoices exported. ", configuration, sepaExport);
+					sepaWorkflowService.logMessage("..." + groupCount + " invoices exported. ", configuration,
+							sepaExport);
 
 					// finish by proessing the datev export workitem....
 					sepaExport.event(SepaWorkflowService.EVENT_START).event(SepaWorkflowService.EVENT_SUCCESS);
@@ -222,8 +236,9 @@ public class SepaScheduler implements Scheduler {
 				return configuration;
 			}
 
-		} catch ( PluginException e) {
-			// In case of a plugin exeption we continue the scheduler and mark the export as failed
+		} catch (PluginException e) {
+			// In case of a plugin exeption we continue the scheduler and mark the export as
+			// failed
 			try {
 				if (sepaExport != null) {
 					// execute sepa workflow with EVENT_FAILED
@@ -236,7 +251,7 @@ public class SepaScheduler implements Scheduler {
 						"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
 			}
 		} catch (ModelException | JAXBException | TransformerException | IOException | AccessDeniedException
-				| ProcessingErrorException  | QueryException e) {
+				| ProcessingErrorException | QueryException e) {
 			// in all other cases we stop the processing
 			try {
 				if (sepaExport != null) {
@@ -279,22 +294,21 @@ public class SepaScheduler implements Scheduler {
 		return result;
 	}
 
-	
-
 	/**
 	 * Remove characters like '&', '<' and '>' form sepa fields
+	 * 
 	 * @param invoice
 	 * @return
 	 */
 	private ItemCollection harmonizeItem(ItemCollection invoice, String itemName) {
-		String value=null;
-		value=invoice.getItemValueString(itemName);
-		value=value.replace("&"," ");
-		value=value.replace(">"," ");
-		value=value.replace("<"," ");
+		String value = null;
+		value = invoice.getItemValueString(itemName);
+		value = value.replace("&", " ");
+		value = value.replace(">", " ");
+		value = value.replace("<", " ");
 		invoice.replaceItemValue(itemName, value);
 		return invoice;
-		
+
 	}
 
 }
