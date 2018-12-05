@@ -86,8 +86,9 @@ public class MetricService {
 	 * 
 	 * Example:
 	 * 
-	 * http_requests_total{method="post",code="200"} 1027
-	 * http_requests_total{method="post",code="400"} 3
+	 * documents_total{method="load"} 66
+	 * workitems_processed_total{type="workitem",modelversion="auftrag-1.0.0",task="7000",event="10",workflowgroup="Auftrag",workflowstatus="Neuanlage"}
+	 * 1
 	 * 
 	 */
 	@GET
@@ -99,19 +100,18 @@ public class MetricService {
 			public void write(OutputStream os) throws IOException, WebApplicationException {
 				Writer writer = new BufferedWriter(new OutputStreamWriter(os));
 				// Timestamps in the exposition format should generally be avoided
-				
+
 				// write documents metrics
 				writer.write("# HELP documents_total The total number of accessed documents." + "\n");
 				writer.write("# TYPE documents_total counter" + "\n");
 				// iterate over all collected metrics....
-				
+
 				Iterator<Map.Entry<String, AtomicLong>> it = metricTotalDocuments.entrySet().iterator();
 				while (it.hasNext()) {
 					Map.Entry<String, AtomicLong> metric = it.next();
 					writer.write(metric.getKey() + " " + metric.getValue().get() + "\n");
 				}
 
-				
 				// write processing metrics
 				writer.write("# HELP workitems_processed_total The total number of workitems processeds." + "\n");
 				writer.write("# TYPE workitems_processed_total counter" + "\n");
@@ -151,7 +151,7 @@ public class MetricService {
 			// write metric
 			counter.incrementAndGet();
 			metricTotalProcessing.put(metric, counter);
-			logger.info("...metric ProcessingEvent collected in " + (System.currentTimeMillis() - l) + "ms");
+			logger.fine("...metric " + metric + " collected in " + (System.currentTimeMillis() - l) + "ms");
 		}
 	}
 
@@ -168,7 +168,7 @@ public class MetricService {
 		long l = System.currentTimeMillis();
 
 		String metric = buildDocumentMetric(documentEvent);
-		if (metric==null) {
+		if (metric == null) {
 			return;
 		}
 		AtomicLong counter = metricTotalDocuments.get(metric);
@@ -178,7 +178,7 @@ public class MetricService {
 		// write metric
 		counter.incrementAndGet();
 		metricTotalDocuments.put(metric, counter);
-		logger.info("...metric DocumentEvent collected in " + (System.currentTimeMillis() - l) + "ms");
+		logger.fine("...metric " + metric + " collected in " + (System.currentTimeMillis() - l) + "ms");
 
 	}
 
