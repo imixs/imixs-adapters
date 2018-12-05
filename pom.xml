@@ -12,6 +12,7 @@
 		<module>imixs-adapters-sepa</module>
 		<module>imixs-adapters-qrcode</module>
 		<module>imixs-adapters-documents</module>
+		<module>imixs-adapters-prometheus</module>
 	</modules>
 
 	<url>https://github.com/imixs/imixs-adapters</url>
