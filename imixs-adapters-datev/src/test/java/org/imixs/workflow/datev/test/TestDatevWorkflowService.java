@@ -28,7 +28,7 @@ import org.mockito.Spy;
  */
 public class TestDatevWorkflowService {
 
-	@Spy
+	@Spy 
 	private DatevWorkflowService datevService;
 
 	@Before
@@ -48,7 +48,7 @@ public class TestDatevWorkflowService {
 	public void testFieldList() {
 
 		try {
-			String filename = "/DTVF_Deb_Stamm_20160511_101110.csv";
+			String filename = "/csv/DTVF_Deb_Stamm_20160511_101110.csv";
 
 			URL url = this.getClass().getResource(filename);
 			File testFile = new File(url.getFile());
@@ -83,7 +83,7 @@ public class TestDatevWorkflowService {
 	public void testReadFirstEntity() {
 
 		try {
-			String filename = "/DTVF_Deb_Stamm_20160511_101110.csv";
+			String filename = "/csv/DTVF_Deb_Stamm_20160511_101110.csv";
 
 			URL url = this.getClass().getResource(filename);
 			File testFile = new File(url.getFile());

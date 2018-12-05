@@ -49,7 +49,7 @@ public class TestDatevImportService {
 	public void testSKBeschrift() {
 
 		try {
-			String filename = "/DTVF_SKBeschrift_20180917_165234.csv";
+			String filename = "/csv/DTVF_SKBeschrift_20180917_165234.csv";
 
 			URL url = this.getClass().getResource(filename);
 			File testFile = new File(url.getFile());
