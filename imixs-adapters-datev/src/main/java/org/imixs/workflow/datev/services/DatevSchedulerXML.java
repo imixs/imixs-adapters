@@ -282,6 +282,8 @@ public class DatevSchedulerXML implements Scheduler {
 		if (firstInvoice.hasItem(DatevWorkflowService.ITEM_DATEV_FISCAL_START)) {
 			datevExport.setItemValue(DatevWorkflowService.ITEM_DATEV_FISCAL_START,
 					firstInvoice.getItemValue(DatevWorkflowService.ITEM_DATEV_FISCAL_START));
+			datevExport.setItemValue(DatevWorkflowService.ITEM_DATEV_CLIENT_ID,
+					firstInvoice.getItemValue(DatevWorkflowService.ITEM_DATEV_CLIENT_ID));
 		}
 
 		datevExport.setItemValue(DatevWorkflowService.ITEM_DATEV_CONSULTANT_ID,
