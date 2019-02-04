@@ -118,8 +118,10 @@ public class LDAPCache {
 		} catch (NumberFormatException nfe) {
 			expiresTime = DEFAULT_EXPIRES_TIME;
 		}
-		if (expiresTime <= 0)
+		if (expiresTime <= 0) {
 			expiresTime = DEFAULT_EXPIRES_TIME;
+		}
+		logger.info("...Initialize Cache, cache-size=" + iCacheSize + " cache-expires=" + expiresTime + "ms");
 
 		lastReset = System.currentTimeMillis();
 
@@ -154,7 +156,6 @@ public class LDAPCache {
 	 * Cache implementation to hold userData objects
 	 * 
 	 * @author rsoika
-	 * 
 	 */
 	class Cache extends LinkedHashMap<String, Object> implements Serializable {
 		private static final long serialVersionUID = 1L;
