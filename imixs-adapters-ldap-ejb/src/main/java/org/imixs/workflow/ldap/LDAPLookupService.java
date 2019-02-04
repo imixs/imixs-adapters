@@ -231,7 +231,7 @@ public class LDAPLookupService {
 				return user;
 			}
 			// user object is expired
-			logger.finest("......user object expired!");
+			logger.warning("cached LDAP object expired: '" + aUID + "'");
 		}
 		long l = System.currentTimeMillis();
 		// start lookup
@@ -247,7 +247,7 @@ public class LDAPLookupService {
 				ldapCache.put(aUID, user);
 				logger.fine("... lookup user '" + aUID + "' successfull in " + (System.currentTimeMillis() - l) + "ms");
 			} else {
-				logger.finest("......user: '" + aUID + "' not found");
+				logger.warning("no LDAP object found: '" + aUID + "'");
 			}
 			return user;
 
@@ -440,7 +440,12 @@ public class LDAPLookupService {
 		if (ldapProfileEvents != null) {
 			LDAPProfileEvent event = new LDAPProfileEvent(user);
 			ldapProfileEvents.fire(event);
-			user = event.getProfile();
+			ItemCollection newUserObject = event.getProfile();
+			if (newUserObject!=null) {
+				user = newUserObject;
+			} else {
+				logger.warning("LDAPProfileEvent returned a null object for '" + aUID + "'");
+			}
 		} else {
 			logger.warning("CDI Support is missing - LDAPProfileEvent wil not be fired");
 		}

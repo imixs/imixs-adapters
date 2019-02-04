@@ -7,6 +7,8 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.PostActivate;
+import javax.ejb.PrePassivate;
 import javax.ejb.Singleton;
 
 /**
@@ -37,17 +39,19 @@ public class LDAPCache {
 	int DEFAULT_EXPIRES_TIME = 60000;
 	long expiresTime = 0;
 	long lastReset = 0;
-	private Properties configurationProperties = null;
-	private Cache cache = null; // cache holds userdata
+	Properties configurationProperties = null;
+	Cache cache = null; // cache holds userdata
 
 	private static Logger logger = Logger.getLogger(LDAPCache.class
 			.getName());
 
+	
+	
 	@PostConstruct
 	void init() {
 		try {
 			
-			configurationProperties = new Properties();
+			configurationProperties= new Properties();
 			try {
 				configurationProperties.load(Thread.currentThread()
 						.getContextClassLoader()
@@ -66,6 +70,24 @@ public class LDAPCache {
 		}
 	}
 
+	
+	
+	@PrePassivate
+	void pp() {
+		logger.info("LDAP Analyse @PrePassivate....");
+		logger.info("LDAP Analyse cache size= " + cache.size());
+	}
+	
+	@PostActivate
+	void aa() {
+		logger.info("LDAP Analyse@@PostActivate....");
+		logger.info("LDAP Analyse cache size= " + cache.size());
+		
+	}
+	
+	
+	
+	
 	/**
 	 * resets the ldap cache object and reads the config params....
 	 * 
