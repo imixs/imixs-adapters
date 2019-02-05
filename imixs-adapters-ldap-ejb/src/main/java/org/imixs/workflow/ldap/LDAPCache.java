@@ -1,14 +1,15 @@
 package org.imixs.workflow.ldap;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.PostActivate;
 import javax.ejb.PrePassivate;
 import javax.ejb.Singleton;
@@ -31,12 +32,13 @@ import org.imixs.workflow.ItemCollection;
  * sessions. cache-expires specifies the expire time of the cache in
  * milliseconds.
  * 
- * 
+ * @see http://www.adam-bien.com/roller/abien/entry/singleton_the_perfect_cache_facade
  * @version 1.0
  * @author rsoika
  * 
  */
 @Singleton
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class LDAPCache implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -138,6 +140,11 @@ public class LDAPCache implements Serializable {
 	 */
 	@SuppressWarnings("unchecked")
 	public ItemCollection getUser(String key) {
+		// not cache for null values.
+		if (key == null || key.isEmpty()) {
+			return null;
+		}
+
 		ItemCollection user = null;
 
 		// test if cache is expired
@@ -159,7 +166,7 @@ public class LDAPCache implements Serializable {
 
 			// ISSUE #68 - test txtusername add warning if empty
 			if (user.getItemValueString("txtusername").trim().isEmpty()) {
-				logger.warning("ISSUE #68 - txtusername for '" + key + "' is empty!");
+				logger.warning("ISSUE #68 - getUser txtusername for '" + key + "' is empty!");
 			}
 		}
 
@@ -175,12 +182,18 @@ public class LDAPCache implements Serializable {
 	 * @param user
 	 */
 	public void putUser(String key, ItemCollection user) {
+
+		// not cache for null values.
+		if (key == null || key.isEmpty()) {
+			return;
+		}
+
 		// ISSUE #68 - test txtusername add warning if empty
 		if (user != null && user.getItemValueString("txtusername").trim().isEmpty()) {
-			logger.warning("ISSUE #68 - txtusername for '" + key + "' is empty!");
+			logger.warning("ISSUE #68 - putUser txtusername for '" + key + "' is empty!");
 		}
 		if (user == null) {
-			logger.warning("ISSUE #68 - user object for '" + key + "' is null and will not be cached!");
+			logger.warning("ISSUE #68 - putUser user object for '" + key + "' is null and will not be cached!");
 			return;
 		}
 
@@ -194,6 +207,11 @@ public class LDAPCache implements Serializable {
 	 * @return
 	 */
 	public String[] getGroups(String key) {
+		// not cache for null values.
+		if (key == null || key.isEmpty()) {
+			return null;
+		}
+
 		// test if cache is expired
 		if (expiresTime > 0) {
 			Long now = System.currentTimeMillis();
@@ -214,6 +232,11 @@ public class LDAPCache implements Serializable {
 	 * @param groups
 	 */
 	public void putGroups(String key, String[] groups) {
+		// not cache for null values.
+		if (key == null || key.isEmpty()) {
+			return;
+		}
+
 		cache.put(key, groups + GROUP_KEY_SUFIX);
 	}
 
@@ -222,12 +245,12 @@ public class LDAPCache implements Serializable {
 	 * 
 	 * @author rsoika
 	 */
-	class Cache extends LinkedHashMap<String, Object> implements Serializable {
+	class Cache extends ConcurrentHashMap<String, Object> implements Serializable {
 		private static final long serialVersionUID = 1L;
 		private final int capacity;
 
 		public Cache(int capacity) {
-			super(capacity + 1, 1.1f, true);
+			super(capacity + 1, 1.1f);
 			this.capacity = capacity;
 		}
 
