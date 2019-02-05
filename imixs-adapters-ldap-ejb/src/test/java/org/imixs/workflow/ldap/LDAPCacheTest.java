@@ -10,7 +10,6 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ldap.LDAPCache.Cache;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -48,9 +47,9 @@ public class LDAPCacheTest {
 		user.replaceItemValue("CN", "CN=RAlph Soika OU=IMXIS");
 		user.replaceItemValue("objectClass", "Partner");
 
-		ldapCache.put("QX06396", user);
+		ldapCache.putUser("QX06396", user);
 
-		ItemCollection cachedUser = (ItemCollection) ldapCache.get("QX06396");
+		ItemCollection cachedUser = (ItemCollection) ldapCache.getUser("QX06396");
 
 		Assert.assertEquals(user.getItemValueString("txtname"), cachedUser.getItemValueString("txtname"));
 
@@ -60,11 +59,9 @@ public class LDAPCacheTest {
 	 * Tests what happens in case of serialization
 	 */
 	@Test
-	@Ignore
 	public void testSerialization() {
 
 		ItemCollection user = new ItemCollection();
-
 		user.replaceItemValue("txtname", "QX06396");
 		user.replaceItemValue("txtlastname", "Soika");
 		user.replaceItemValue("txtEmail", "ralph.soika@imixs.com");
@@ -74,8 +71,7 @@ public class LDAPCacheTest {
 		user.replaceItemValue("txtusername", "Ralph Soika");
 		user.replaceItemValue("CN", "CN=RAlph Soika OU=IMXIS");
 		user.replaceItemValue("objectClass", "Partner");
-
-		ldapCache.put("QX06396", user);
+		ldapCache.putUser("QX06396", user);
 
 		// serialize....
 		FileOutputStream fileOutputStream;
@@ -87,8 +83,7 @@ public class LDAPCacheTest {
 			objectOutputStream.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-			//Assert.fail();
-			
+			Assert.fail();			
 		}
 
 		// deserialize
@@ -99,12 +94,10 @@ public class LDAPCacheTest {
 			objectInputStream.close();
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
-			//Assert.fail();
+			Assert.fail();
 		}
-		ldapCache = new LDAPCache();
-		ldapCache.init();
-
-		ItemCollection cachedUser = (ItemCollection) ldapCache.get("QX06396");
+		
+		ItemCollection cachedUser = (ItemCollection) ldapCache.getUser("QX06396");
 
 		Assert.assertEquals(user.getItemValueString("txtname"), cachedUser.getItemValueString("txtname"));
 

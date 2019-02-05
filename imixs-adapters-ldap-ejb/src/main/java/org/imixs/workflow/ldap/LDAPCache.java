@@ -2,6 +2,8 @@ package org.imixs.workflow.ldap;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -10,6 +12,8 @@ import javax.annotation.PostConstruct;
 import javax.ejb.PostActivate;
 import javax.ejb.PrePassivate;
 import javax.ejb.Singleton;
+
+import org.imixs.workflow.ItemCollection;
 
 /**
  * This singleton ejb provides a cache to lookup ldap user informations. The
@@ -33,36 +37,31 @@ import javax.ejb.Singleton;
  * 
  */
 @Singleton
-public class LDAPCache {
+public class LDAPCache implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+	private static Logger logger = Logger.getLogger(LDAPCache.class.getName());
 
 	int DEFAULT_CACHE_SIZE = 30;
 	int DEFAULT_EXPIRES_TIME = 60000;
+	final static String GROUP_KEY_SUFIX = "-GROUPS";
 	long expiresTime = 0;
 	long lastReset = 0;
 	Properties configurationProperties = null;
 	Cache cache = null; // cache holds userdata
 
-	private static Logger logger = Logger.getLogger(LDAPCache.class
-			.getName());
-
-	
-	
 	@PostConstruct
 	void init() {
 		try {
-			
-			configurationProperties= new Properties();
+			configurationProperties = new Properties();
 			try {
-				configurationProperties.load(Thread.currentThread()
-						.getContextClassLoader()
-						.getResource("imixs.properties").openStream());
+				configurationProperties.load(
+						Thread.currentThread().getContextClassLoader().getResource("imixs.properties").openStream());
 			} catch (Exception e) {
 				logger.warning("LDAPLookupService unable to find imixs.properties in current classpath");
 				e.printStackTrace();
 			}
 
-			
-			
 			resetCache();
 		} catch (Exception e) {
 			logger.severe("LDAPCache unable to initalize LDAPCache");
@@ -70,24 +69,19 @@ public class LDAPCache {
 		}
 	}
 
-	
-	
 	@PrePassivate
 	void pp() {
-		logger.info("LDAP Analyse @PrePassivate....");
-		logger.info("LDAP Analyse cache size= " + cache.size());
+		logger.info("ISSUE #68 - LDAP Analyse @PrePassivate....");
+		logger.info("ISSUE #68 - LDAP Analyse cache size= " + cache.size());
 	}
-	
+
 	@PostActivate
 	void aa() {
-		logger.info("LDAP Analyse@@PostActivate....");
-		logger.info("LDAP Analyse cache size= " + cache.size());
-		
+		logger.info("ISSUE #68 - LDAP Analyse @PostActivate....");
+		logger.info("ISSUE #68 - LDAP Analyse cache size= " + cache.size());
+
 	}
-	
-	
-	
-	
+
 	/**
 	 * resets the ldap cache object and reads the config params....
 	 * 
@@ -98,8 +92,7 @@ public class LDAPCache {
 		logger.finest("......resetCache - initalizing settings....");
 		int iCacheSize = DEFAULT_CACHE_SIZE;
 		try {
-			iCacheSize = Integer.valueOf(configurationProperties
-					.getProperty("ldap.cache-size", "100"));
+			iCacheSize = Integer.valueOf(configurationProperties.getProperty("ldap.cache-size", "100"));
 		} catch (NumberFormatException nfe) {
 			iCacheSize = DEFAULT_CACHE_SIZE;
 		}
@@ -112,8 +105,7 @@ public class LDAPCache {
 		// read expires time...
 		try {
 			expiresTime = DEFAULT_EXPIRES_TIME;
-			String sExpires = configurationProperties.getProperty(
-					"ldap.cache-expires", "600000");
+			String sExpires = configurationProperties.getProperty("ldap.cache-expires", "600000");
 			expiresTime = Long.valueOf(sExpires);
 		} catch (NumberFormatException nfe) {
 			expiresTime = DEFAULT_EXPIRES_TIME;
@@ -127,29 +119,102 @@ public class LDAPCache {
 
 	}
 
-	public Object get(String key) {
-		// test if cache is expired
-		if (expiresTime > 0) {
-			Long now = System.currentTimeMillis();
-			if ((now - lastReset) > expiresTime) {
-				logger.finest("......LDAPCache Cache expired!");
-				resetCache();
-			}
-		}
-		return cache.get(key);
-	}
-
 	/**
-	 * returns true if the key is contained in the cache.
-	 * This does not mean that the object is useable!
+	 * returns true if the key is contained in the cache. This does not mean that
+	 * the object is useable!
 	 * 
 	 */
 	public boolean contains(String key) {
 		return cache.containsKey(key);
 	}
 
-	public void put(String key, Object value) {
-		cache.put(key, value);
+	/**
+	 * Returns a cached user object. The value is stored as a Map<String,
+	 * List<Object>> and converted into a ItemCollection.
+	 * 
+	 * @param key
+	 * @return Map<String, List<Object>> user items, can be converted into
+	 *         ItemCollection
+	 */
+	@SuppressWarnings("unchecked")
+	public ItemCollection getUser(String key) {
+		ItemCollection user = null;
+
+		// test if cache is expired
+		if (expiresTime > 0) {
+			Long now = System.currentTimeMillis();
+			if ((now - lastReset) > expiresTime) {
+				logger.finest("......LDAPCache Cache expired!");
+				resetCache();
+				return null;
+			}
+		}
+
+		// get user object as map....
+		Map<String, List<Object>> value = (Map<String, List<Object>>) cache.get(key);
+
+		if (value != null) {
+			// convert into ItemCollection
+			user = new ItemCollection(value);
+
+			// ISSUE #68 - test txtusername add warning if empty
+			if (user.getItemValueString("txtusername").trim().isEmpty()) {
+				logger.warning("ISSUE #68 - txtusername for '" + key + "' is empty!");
+			}
+		}
+
+		return user;
+	}
+
+	/**
+	 * The method puts a user ItemCollection into the cache. The method puts only
+	 * the internal items of the ItemCollection into the cache, because the
+	 * ItemCollection is not serializable.
+	 * 
+	 * @param key
+	 * @param user
+	 */
+	public void putUser(String key, ItemCollection user) {
+		// ISSUE #68 - test txtusername add warning if empty
+		if (user != null && user.getItemValueString("txtusername").trim().isEmpty()) {
+			logger.warning("ISSUE #68 - txtusername for '" + key + "' is empty!");
+		}
+		if (user == null) {
+			logger.warning("ISSUE #68 - user object for '" + key + "' is null and will not be cached!");
+			return;
+		}
+
+		cache.put(key, user.getAllItems());
+	}
+
+	/**
+	 * Returns a cached list of group names associated with a userId.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public String[] getGroups(String key) {
+		// test if cache is expired
+		if (expiresTime > 0) {
+			Long now = System.currentTimeMillis();
+			if ((now - lastReset) > expiresTime) {
+				logger.finest("......LDAPCache Cache expired!");
+				resetCache();
+				return null;
+			}
+		}
+
+		return (String[]) cache.get(key + GROUP_KEY_SUFIX);
+	}
+
+	/**
+	 * Stores a list of group names for a given userId.
+	 * 
+	 * @param key
+	 * @param groups
+	 */
+	public void putGroups(String key, String[] groups) {
+		cache.put(key, groups + GROUP_KEY_SUFIX);
 	}
 
 	/**

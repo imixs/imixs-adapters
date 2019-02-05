@@ -226,7 +226,7 @@ public class LDAPLookupService {
 		// also null objects can be returned here (if LDAPCache was serialized.)
 		if (!refresh && ldapCache.contains(aUID)) {
 			logger.finest("......fetching user: '" + aUID + "' from cache...");
-			ItemCollection user = (ItemCollection) ldapCache.get(aUID);
+			ItemCollection user = ldapCache.getUser(aUID);
 			if (user != null && user.getAllItems().size() > 0) {
 				return user;
 			}
@@ -244,7 +244,7 @@ public class LDAPLookupService {
 				// cache user attributes (also null will be set if no entry was
 				// found!)
 				logger.finest("......put user: '" + aUID + "' into cache.");
-				ldapCache.put(aUID, user);
+				ldapCache.putUser(aUID, user);
 				logger.fine("... lookup user '" + aUID + "' successfull in " + (System.currentTimeMillis() - l) + "ms");
 			} else {
 				logger.warning("no LDAP object found: '" + aUID + "'");
@@ -265,7 +265,7 @@ public class LDAPLookupService {
 	}
 
 	/**
-	 * This method is used to put a user object into the cache. The method cann be
+	 * This method is used to put a user object into the cache. The method can be
 	 * called form a external service interface.
 	 * 
 	 * @param aUID
@@ -273,8 +273,8 @@ public class LDAPLookupService {
 	 * @param user
 	 *            - user profile
 	 */
-	public void cache(String aUID, ItemCollection user) {
-		ldapCache.put(aUID, user);
+	public void cacheUser(String aUID, ItemCollection user) {
+		ldapCache.putUser(aUID, user);
 	}
 
 	/**
@@ -318,7 +318,7 @@ public class LDAPLookupService {
 	 */
 	public String[] findGroups(String aUID) {
 		// test cache...
-		String[] groups = (String[]) ldapCache.get(aUID + "-GROUPS");
+		String[] groups = (String[]) ldapCache.getGroups(aUID);
 		if (groups != null) {
 			return groups;
 		}
@@ -338,7 +338,7 @@ public class LDAPLookupService {
 			}
 
 			// cache Group list
-			ldapCache.put(aUID + "-GROUPS", groups);
+			ldapCache.putGroups(aUID , groups);
 
 			return groups;
 
