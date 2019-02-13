@@ -55,52 +55,5 @@ public class LDAPCacheTest {
 
 	}
 
-	/**
-	 * Tests what happens in case of serialization
-	 */
-	@Test
-	public void testSerialization() {
-
-		ItemCollection user = new ItemCollection();
-		user.replaceItemValue("txtname", "QX06396");
-		user.replaceItemValue("txtlastname", "Soika");
-		user.replaceItemValue("txtEmail", "ralph.soika@imixs.com");
-		user.replaceItemValue("txtfirstname", "Ralph");
-		user.replaceItemValue("txtdepartment", "ABC");
-		user.replaceItemValue("txtPhone", "089");
-		user.replaceItemValue("txtusername", "Ralph Soika");
-		user.replaceItemValue("CN", "CN=RAlph Soika OU=IMXIS");
-		user.replaceItemValue("objectClass", "Partner");
-		ldapCache.putUser("QX06396", user);
-
-		// serialize....
-		FileOutputStream fileOutputStream;
-		try {
-			fileOutputStream = new FileOutputStream("ldapcache.ser");
-			ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
-			objectOutputStream.writeObject(ldapCache.cache);
-			objectOutputStream.flush();
-			objectOutputStream.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-			Assert.fail();			
-		}
-
-		// deserialize
-		try {
-			FileInputStream fileInputStream = new FileInputStream("ldapcache.ser");
-			ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-			ldapCache.cache = (Cache) objectInputStream.readObject();
-			objectInputStream.close();
-		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
-			Assert.fail();
-		}
-		
-		ItemCollection cachedUser = (ItemCollection) ldapCache.getUser("QX06396");
-
-		Assert.assertEquals(user.getItemValueString("txtname"), cachedUser.getItemValueString("txtname"));
-
-	}
-
+	
 }

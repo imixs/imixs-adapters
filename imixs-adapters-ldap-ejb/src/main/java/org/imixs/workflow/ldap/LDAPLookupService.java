@@ -239,17 +239,23 @@ public class LDAPLookupService {
 		try {
 			logger.finest("......find user: '" + aUID + "'");
 			ldapCtx = getDirContext();
-			ItemCollection user = fetchUser(aUID, ldapCtx);
-			if (user != null) {
-				// cache user attributes (also null will be set if no entry was
-				// found!)
-				logger.finest("......put user: '" + aUID + "' into cache.");
-				ldapCache.putUser(aUID, user);
-				logger.fine("... lookup user '" + aUID + "' successfull in " + (System.currentTimeMillis() - l) + "ms");
+			if (ldapCtx != null) {
+				ItemCollection user = fetchUser(aUID, ldapCtx);
+				if (user != null) {
+					// cache user attributes (also null will be set if no entry was
+					// found!)
+					logger.finest("......put user: '" + aUID + "' into cache.");
+					ldapCache.putUser(aUID, user);
+					logger.fine(
+							"... lookup user '" + aUID + "' successfull in " + (System.currentTimeMillis() - l) + "ms");
+				} else {
+					logger.warning("no LDAP object found: '" + aUID + "'");
+				}
+				return user;
 			} else {
-				logger.warning("no LDAP object found: '" + aUID + "'");
+				logger.warning("LDAP DirContext could not be opened!");
+				return null;
 			}
-			return user;
 
 		} finally {
 			if (ldapCtx != null)
@@ -338,7 +344,7 @@ public class LDAPLookupService {
 			}
 
 			// cache Group list
-			ldapCache.putGroups(aUID , groups);
+			ldapCache.putGroups(aUID, groups);
 
 			return groups;
 
@@ -371,80 +377,87 @@ public class LDAPLookupService {
 			return null;
 		}
 
-		NamingEnumeration<SearchResult> answer = null;
-		try {
-			user = new ItemCollection();
-			SearchControls ctls = new SearchControls();
-			ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-			ctls.setReturningAttributes(userAttributesLDAP);
+		if (ldapCtx != null) {
 
-			String searchFilter = dnSearchFilter.replace("%u", aUID);
-			logger.finest("......fetchUser: searchContext=" + searchContext);
-			logger.finest("......fetchUser: searchFilter=" + searchFilter);
-			answer = ldapCtx.search(searchContext, searchFilter, ctls);
-			// if nothing found we return null....
-			if (answer == null || !answer.hasMore()) {
-				return null;
-			}
+			NamingEnumeration<SearchResult> answer = null;
+			try {
+				user = new ItemCollection();
+				SearchControls ctls = new SearchControls();
+				ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+				ctls.setReturningAttributes(userAttributesLDAP);
 
-			// fetch the first result....
-			SearchResult entry = (SearchResult) answer.next();
-			sDN = entry.getName();
-			logger.finest("......DN= " + sDN);
+				String searchFilter = dnSearchFilter.replace("%u", aUID);
+				logger.finest("......fetchUser: searchContext=" + searchContext);
+				logger.finest("......fetchUser: searchFilter=" + searchFilter);
+				answer = ldapCtx.search(searchContext, searchFilter, ctls);
+				// if nothing found we return null....
+				if (answer == null || !answer.hasMore()) {
+					return null;
+				}
 
-			Attributes attributes = entry.getAttributes();
-			// fetch all attributes
-			for (int i = 0; i < userAttributesLDAP.length; i++) {
+				// fetch the first result....
+				SearchResult entry = (SearchResult) answer.next();
+				sDN = entry.getName();
+				logger.finest("......DN= " + sDN);
 
-				Attribute atr = attributes.get(userAttributesLDAP[i]);
+				Attributes attributes = entry.getAttributes();
+				// fetch all attributes
+				for (int i = 0; i < userAttributesLDAP.length; i++) {
 
-				logger.finest("......fetch attribute: '" + userAttributesLDAP[i] + "' = " + atr);
-				if (atr != null) {
-					NamingEnumeration<?> values = atr.getAll();
+					Attribute atr = attributes.get(userAttributesLDAP[i]);
 
-					Vector valueList = new Vector();
-					while (values.hasMore()) {
-						valueList.add(values.next());
+					logger.finest("......fetch attribute: '" + userAttributesLDAP[i] + "' = " + atr);
+					if (atr != null) {
+						NamingEnumeration<?> values = atr.getAll();
+
+						Vector valueList = new Vector();
+						while (values.hasMore()) {
+							valueList.add(values.next());
+						}
+						if (valueList.size() > 0)
+							user.replaceItemValue(userAttributesImixs[i], valueList);
 					}
-					if (valueList.size() > 0)
-						user.replaceItemValue(userAttributesImixs[i], valueList);
 				}
-			}
 
-			if (sDN == null) {
-				// empty user entry
-				sDN = aUID;
-				user.replaceItemValue("dn", sDN);
-			}
+				if (sDN == null) {
+					// empty user entry
+					sDN = aUID;
+					user.replaceItemValue("dn", sDN);
+				}
 
-		} catch (NamingException e) {
-			// return null
-			user = null;
-			logger.warning("Unable to fetch DN for: " + aUID);
-			logger.warning(e.getMessage());
-			if (logger.isLoggable(java.util.logging.Level.FINEST))
-				e.printStackTrace();
-
-		} finally {
-			if (answer != null)
-				try {
-					answer.close();
-					answer = null;
-				} catch (NamingException e) {
+			} catch (NamingException e) {
+				// return null
+				user = null;
+				logger.warning("Unable to fetch DN for: " + aUID);
+				logger.warning(e.getMessage());
+				if (logger.isLoggable(java.util.logging.Level.FINEST))
 					e.printStackTrace();
-				}
+
+			} finally {
+				if (answer != null)
+					try {
+						answer.close();
+						answer = null;
+					} catch (NamingException e) {
+						e.printStackTrace();
+					}
+			}
+		} else {
+			logger.warning("missing ldap context obejct (context==null)!");
 		}
 
 		// adapt userprofile
 		// fire event
 		if (ldapProfileEvents != null) {
-			LDAPProfileEvent event = new LDAPProfileEvent(user);
-			ldapProfileEvents.fire(event);
-			ItemCollection newUserObject = event.getProfile();
-			if (newUserObject!=null) {
-				user = newUserObject;
-			} else {
-				logger.warning("LDAPProfileEvent returned a null object for '" + aUID + "'");
+			if (user != null) {
+				LDAPProfileEvent event = new LDAPProfileEvent(user);
+				ldapProfileEvents.fire(event);
+				ItemCollection newUserObject = event.getProfile();
+				if (newUserObject != null) {
+					user = newUserObject;
+				} else {
+					logger.warning("LDAPProfileEvent returned a null object for '" + aUID + "'");
+				}
 			}
 		} else {
 			logger.warning("CDI Support is missing - LDAPProfileEvent wil not be fired");
