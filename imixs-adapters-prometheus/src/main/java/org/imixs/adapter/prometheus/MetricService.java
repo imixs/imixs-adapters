@@ -29,18 +29,18 @@ import org.imixs.workflow.exceptions.AccessDeniedException;
 
 /**
  * The Imixs MetricSerivce is a monitoring resource for Prometheus.
- * 
+ * <p>
  * A metric is generated when a Imixs ProcessingEvent or Imixs DocumentEvent is
  * fired. The service exports metrics in prometheus text format.
- * 
+ * <p>
  * See:
  * 
  * https://prometheus.io/docs/instrumenting/exposition_formats/
  * https://www.oreilly.com/library/view/prometheus-up/9781492034131/ch04.html
- * 
+ * <p>
  * To avoid dependencies, we implement the prometheus exposition text format you
  * ourself.
- * 
+ * <p>
  * Mainly the adaper proivdes counter metrics about processed workitems. A
  * coutner will always increase. To extract the values in prometheus use the
  * rate fuction - Exmaple:
@@ -49,18 +49,11 @@ import org.imixs.workflow.exceptions.AccessDeniedException;
  * 
  * See: https://www.robustperception.io/how-does-a-prometheus-counter-work
  * 
- * 
- * 
- * General architecture is inspired by:
- * 
- * See:
- * 
+ *
+ * @see
  * http://www.adam-bien.com/roller/abien/entry/singleton_the_simplest_possible_jmx
  * http://www.adam-bien.com/roller/abien/entry/monitoring_java_ee_appservers_with
  * http://www.adam-bien.com/roller/abien/entry/java_ee_6_observer_with
- * 
- * 
- * 
  * @author rsoika
  * @version 1.0
  */
