@@ -381,7 +381,7 @@ public class DatevSchedulerXML implements Scheduler {
 			String datevFileName = "datev_buchungsstapel_" + df.format(new Date()) + ".zip";
 
 			datevZip.close();
-			FileData zipFileData = new FileData(datevFileName, zipOutputStream.toByteArray(), "application/zip");
+			FileData zipFileData = new FileData(datevFileName, zipOutputStream.toByteArray(), "application/zip",null);
 			datevExport.addFileData(zipFileData);
 
 		} catch (IOException e) {

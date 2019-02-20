@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>org.imixs.workflow</groupId>
 		<artifactId>imixs-adapters</artifactId>
-		<version>1.5.7-SNAPSHOT</version>
+		<version>1.6.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>imixs-adapters-prometheus</artifactId>
 	<name>Imixs Prometheus Adapter</name>

@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.imixs.workflow</groupId>
 	<artifactId>imixs-adapters</artifactId>
-	<version>1.5.7-SNAPSHOT</version>
+	<version>1.6.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<modules>
 		<module>imixs-adapters-magento-ejb</module>
@@ -72,8 +72,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>4.4.5</org.imixs.workflow.version>
-		<org.imixs.marty.version>3.3.6</org.imixs.marty.version>
+		<org.imixs.workflow.version>4.5.2-SNAPSHOT</org.imixs.workflow.version>
+		<org.imixs.marty.version>3.4.2-SNAPSHOT</org.imixs.marty.version>
 		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
 		<github.global.server>imixs-github-repo</github.global.server>
 	</properties>
