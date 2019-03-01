@@ -10,8 +10,6 @@ import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
-import javax.ejb.PostActivate;
-import javax.ejb.PrePassivate;
 import javax.ejb.Singleton;
 
 import org.imixs.workflow.ItemCollection;
@@ -71,18 +69,18 @@ public class LDAPCache implements Serializable {
 		}
 	}
 
-	@PrePassivate
-	void pp() {
-		logger.info("ISSUE #68 - LDAP Analyse @PrePassivate....");
-		logger.info("ISSUE #68 - LDAP Analyse cache size= " + cache.size());
-	}
-
-	@PostActivate
-	void aa() {
-		logger.info("ISSUE #68 - LDAP Analyse @PostActivate....");
-		logger.info("ISSUE #68 - LDAP Analyse cache size= " + cache.size());
-
-	}
+//	@PrePassivate
+//	void pp() {
+//		logger.info("ISSUE #68 - LDAP Analyse @PrePassivate....");
+//		logger.info("ISSUE #68 - LDAP Analyse cache size= " + cache.size());
+//	}
+//
+//	@PostActivate
+//	void aa() {
+//		logger.info("ISSUE #68 - LDAP Analyse @PostActivate....");
+//		logger.info("ISSUE #68 - LDAP Analyse cache size= " + cache.size());
+//
+//	}
 
 	/**
 	 * resets the ldap cache object and reads the config params....
