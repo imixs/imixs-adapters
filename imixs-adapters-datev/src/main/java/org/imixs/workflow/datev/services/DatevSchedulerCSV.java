@@ -125,7 +125,7 @@ public class DatevSchedulerCSV implements Scheduler {
 			List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
 					null);
 
-			DatevWorkflowService.logMessage("...DATEV export started....", configuration, null);
+			DatevWorkflowService.logMessage("...DATEV csv export started....", configuration, null);
 			DatevWorkflowService.logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
 
 			// update the invoices with optional datev_client_id if not provided
