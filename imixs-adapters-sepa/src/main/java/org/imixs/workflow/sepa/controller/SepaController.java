@@ -63,7 +63,7 @@ public class SepaController extends SchedulerController {
 	public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
 
 	// is empty or match iban/bic pattern
-	public static final String IBAN_PATTERN = "^$|(^[A-Z]{2}(?:[ ]?[0-9]){18,20}$)";
+	public static final String IBAN_PATTERN = "^$|(^[A-Z]{2}(?:[ ]?[A-Z0-9]){13,32}$)";
 	public static final String BIC_PATTERN = "^$|(^([a-zA-Z]{4}[a-zA-Z]{2}[a-zA-Z0-9]{2}([a-zA-Z0-9]{3})?))";
 
 	private static final long serialVersionUID = 1L;
