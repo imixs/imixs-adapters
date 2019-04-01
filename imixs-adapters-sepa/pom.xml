@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>org.imixs.workflow</groupId>
 		<artifactId>imixs-adapters</artifactId>
-		<version>1.6.1-SNAPSHOT</version>
+		<version>1.6.1</version>
 	</parent>
 	<artifactId>imixs-adapters-sepa</artifactId>
 	<name>Imixs SEPA Adapter</name>
