@@ -467,6 +467,109 @@ public class LDAPLookupService {
 	}
 
 	/**
+	 * Returns all attributes for a given user in an ItemCollection. If ldap service
+	 * is disabled or the user was not found then the method returns null.
+	 * <p>
+	 * The method makes a direct ldap lookup. No cache is used.
+	 * 
+	 * @param aUID
+	 *            - user id
+	 * @return ItemCollection - containing the user attributes or null if no entry
+	 *         was found
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public ItemCollection lookupLdapAttriubtes(String aUID) {
+		ItemCollection user = null;
+		LdapContext ldapCtx = null;
+		NamingEnumeration<SearchResult> answer = null;
+		String sDN = null;
+		if (!enabled || aUID == null || aUID.isEmpty()) {
+			return null;
+		}
+
+		// start lookup
+
+		try {
+			logger.finest("......find user: '" + aUID + "'");
+			ldapCtx = getDirContext();
+
+			if (ldapCtx != null) {
+				user = new ItemCollection();
+				SearchControls ctls = new SearchControls();
+				ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+				// return all attributes..
+				// ctls.setReturningAttributes(userAttributesLDAP);
+
+				String searchFilter = dnSearchFilter.replace("%u", aUID);
+				logger.finest("......lookup: searchContext=" + searchContext);
+				logger.finest("......lookup: searchFilter=" + searchFilter);
+				answer = ldapCtx.search(searchContext, searchFilter, ctls);
+				// if nothing found we return null....
+				if (answer == null || !answer.hasMore()) {
+					return null;
+				}
+
+				// fetch the first result....
+				SearchResult entry = (SearchResult) answer.next();
+				sDN = entry.getName();
+				logger.finest("......DN= " + sDN);
+
+				Attributes attributes = entry.getAttributes();
+
+				for (NamingEnumeration ae = attributes.getAll(); ae.hasMore();) {
+
+					Attribute attr = (Attribute) ae.next();
+					String itemName = attr.getID();
+					if (attr != null) {
+						NamingEnumeration<?> values = attr.getAll();
+
+						Vector valueList = new Vector();
+						while (values.hasMore()) {
+							valueList.add(values.next());
+						}
+						if (valueList.size() > 0)
+							user.replaceItemValue(itemName, valueList);
+					}
+				}
+
+				if (sDN == null) {
+					// empty user entry
+					sDN = aUID;
+					user.replaceItemValue("dn", sDN);
+				}
+			} else {
+				logger.warning("missing ldap context obejct (context==null)!");
+			}
+		} catch (NamingException e) {
+			// return null
+			user = null;
+			logger.warning("Unable to fetch DN for: " + aUID);
+			logger.warning(e.getMessage());
+			if (logger.isLoggable(java.util.logging.Level.FINEST))
+				e.printStackTrace();
+
+		} finally {
+			if (answer != null)
+				try {
+					answer.close();
+					answer = null;
+				} catch (NamingException e) {
+					e.printStackTrace();
+				}
+
+			if (ldapCtx != null)
+				try {
+					ldapCtx.close();
+					ldapCtx = null;
+				} catch (NamingException e) {
+					e.printStackTrace();
+				}
+		}
+
+		return user;
+	}
+
+	/**
 	 * This method searches a list of user objects by a given search phrase.
 	 * 
 	 * @param searchPhrase
