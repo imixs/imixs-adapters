@@ -471,6 +471,9 @@ public class LDAPLookupService {
 	 * is disabled or the user was not found then the method returns null.
 	 * <p>
 	 * The method makes a direct ldap lookup. No cache is used.
+	 * <p>
+	 * It is recommended to use the method findUser instead of the method
+	 * lookupLdapAttributes to use the internal caching mechanism.
 	 * 
 	 * @param aUID
 	 *            - user id
@@ -478,7 +481,7 @@ public class LDAPLookupService {
 	 *         was found
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public ItemCollection lookupLdapAttriubtes(String aUID) {
+	public ItemCollection lookupLdapAttributes(String aUID) {
 		ItemCollection user = null;
 		LdapContext ldapCtx = null;
 		NamingEnumeration<SearchResult> answer = null;
