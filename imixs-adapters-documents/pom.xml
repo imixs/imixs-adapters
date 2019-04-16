@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>org.imixs.workflow</groupId>
 		<artifactId>imixs-adapters</artifactId>
-		<version>1.6.3-SNAPSHOT</version>
+		<version>1.6.2-SNAPSHOT</version>
 	</parent>
 	<artifactId>imixs-adapters-documents</artifactId>
 	<name>Imixs Documents</name>
