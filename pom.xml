@@ -6,6 +6,7 @@
 	<artifactId>imixs-adapters</artifactId>
 	<version>1.6.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
+	<name>Imxis Adapters</name>
 	<modules>
 		<module>imixs-adapters-magento-ejb</module>
 		<module>imixs-adapters-ldap-ejb</module>
@@ -65,6 +66,61 @@
 		<org.imixs.workflow.version>4.5.2</org.imixs.workflow.version>
 		<org.imixs.marty.version>3.4.2</org.imixs.marty.version>
 	</properties>
+	
+	<profiles>
+		<!-- Activate using the release property -->
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<!-- To generate javadoc -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>3.0.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>2.10.4</version>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- To sign the artifacts -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.6</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+	
 
 	<build>
 		<plugins>
@@ -102,9 +158,6 @@
 					<autoReleaseAfterClose>true</autoReleaseAfterClose>
 				</configuration>
 			</plugin>
-
-
-
 		</plugins>
 	</build>
 
@@ -214,8 +267,6 @@
 			<version>6.0</version>
 			<scope>provided</scope>
 		</dependency>
-
-
 		<!-- Testing -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -230,5 +281,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<name>Imxis Adapters</name>
 </project>
