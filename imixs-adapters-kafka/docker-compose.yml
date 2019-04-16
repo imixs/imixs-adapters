@@ -17,6 +17,7 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "adminadmin"
       POSTGRES_CONNECTION: "jdbc:postgresql://db/workflow"
+      # LISTENERS: INSIDE://:9092,OUTSIDE://:9094
       KAFKA_BROKERS: "kafka:9092"
       KAFKA_CLIENTID: "imixs-workflow1"
     ports:
