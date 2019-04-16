@@ -38,4 +38,5 @@
 			<version>2.2.0</version>
 		</dependency>
 	</dependencies>
+	<url>https://github.com/imixs/imixs-adapters</url>
 </project>

@@ -22,4 +22,6 @@
 	</dependencies>
 
 
+	<url>https://github.com/imixs/imixs-adapters</url>
+	<description>Imixs Prometheus Adapter</description>
 </project>

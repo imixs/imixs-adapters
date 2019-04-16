@@ -32,4 +32,6 @@
 		</dependency>
 	</dependencies>
 	<name>Imixs QR-Code</name>
+	<url>https://github.com/imixs/imixs-adapters</url>
+	<description>Imixs QR-Code Adapter</description>
 </project>

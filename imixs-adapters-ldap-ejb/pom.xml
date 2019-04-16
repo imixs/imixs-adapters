@@ -22,4 +22,6 @@
 		</dependency>
 	</dependencies>
 	<name>Imixs LDAP Adapter</name>
+	<url>https://github.com/imixs/imixs-adapters</url>
+	<description>Imixs LDAP Adapter</description>
 </project>

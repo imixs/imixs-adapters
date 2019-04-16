@@ -230,4 +230,5 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<name>Imxis Adapters</name>
 </project>

@@ -33,4 +33,6 @@
 	</dependencies>
 
 
+	<url>https://github.com/imixs/imixs-adapters</url>
+	<description>Imixs SEPA Adapter</description>
 </project>

@@ -87,4 +87,6 @@
 
 	</dependencies>
 	<name>Imixs Magento Adapter</name>
+	<url>https://github.com/imixs/imixs-adapters</url>
+	<description>Imixs Magento Adapter</description>
 </project>
