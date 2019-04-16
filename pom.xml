@@ -8,7 +8,6 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>imixs-adapters-magento-ejb</module>
-		<module>imixs-adapters-testing</module>
 		<module>imixs-adapters-ldap-ejb</module>
 		<module>imixs-adapters-datev</module>
 		<module>imixs-adapters-sepa</module>
