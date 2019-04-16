@@ -60,25 +60,12 @@
 		</license>
 	</licenses>
 
-	<!-- Imixs Repo -->
-	<repositories>
-		<repository>
-			<id>imixs-mvn-repo</id>
-			<url>https://raw.githubusercontent.com/imixs/imixs-mvn-repo/master/</url>
-			<snapshots>
-				<enabled>false</enabled>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-		</repository>
-	</repositories>
-
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.imixs.workflow.version>4.5.2</org.imixs.workflow.version>
 		<org.imixs.marty.version>3.4.2</org.imixs.marty.version>
-		<!-- imixs-github-repo on github - see ~/.m2/settings.xml -->
-		<github.global.server>imixs-github-repo</github.global.server>
 	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -90,9 +77,6 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-
-
-
 
 			<!-- release management -->
 			<plugin>
@@ -106,62 +90,20 @@
 					<goals>deploy</goals>
 				</configuration>
 			</plugin>
-
-
-
-			<!-- Maven Deployment to Github -->
+			<!-- release to Maven central -->
 			<plugin>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<version>2.8.1</version>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.8</version>
+				<extensions>true</extensions>
 				<configuration>
-					<altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>com.github.github</groupId>
-				<artifactId>site-maven-plugin</artifactId>
-				<version>0.12</version>
-				<configuration>
-					<!-- git commit message -->
-					<message>Maven artifacts for ${project.version}</message>
-					<!-- disable webpage processing -->
-					<noJekyll>true</noJekyll>
-					<!-- matches distribution management repository url above -->
-					<outputDirectory>${project.build.directory}/mvn-repo</outputDirectory>
-					<!-- remote branch name -->
-					<branch>refs/heads/master</branch>
-					<!-- If you remove this then the old artifact will be removed and new 
-						one will replace. But with the merge tag you can just release by changing 
-						the version -->
-					<merge>true</merge>
-					<includes>
-						<include>**/*</include>
-					</includes>
-					<!-- github repo name -->
-					<repositoryName>imixs-mvn-repo</repositoryName>
-					<!-- github username -->
-					<repositoryOwner>imixs</repositoryOwner>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>site</goal>
-						</goals>
-						<phase>deploy</phase>
-					</execution>
-				</executions>
-			</plugin>
 
 
-			<!-- temporarily fix issue imixs-workflow #442 -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<useSystemClassLoader>false</useSystemClassLoader>
-				</configuration>
-				<version>2.22.1</version>
-			</plugin>
 
 		</plugins>
 	</build>
