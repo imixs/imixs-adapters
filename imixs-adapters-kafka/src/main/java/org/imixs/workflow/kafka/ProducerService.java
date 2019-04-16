@@ -43,24 +43,17 @@ import org.imixs.workflow.engine.ProcessingEvent;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class ProducerService implements Serializable {
 
-	public static String KAFKA_BROKERS = "localhost:9092";
-	public static Integer MESSAGE_COUNT = 1000;
-	public static String CLIENT_ID = "client1";
-	public static String TOPIC_NAME = "demo";
-	public static String GROUP_ID_CONFIG = "consumerGroup1";
-	public static Integer MAX_NO_MESSAGE_FOUND_COUNT = 100;
-	public static String OFFSET_RESET_LATEST = "latest";
-	public static String OFFSET_RESET_EARLIER = "earliest";
-	public static Integer MAX_POLL_RECORDS = 1;
+	public static final String ENV_KAFKA_BROKERS = "KAFKA_BROKERS";
+	public static final String ENV_KAFKA_CLIENTID = "KAFKA_CLIENTID";
 
 	private static final long serialVersionUID = 1L;
-	@SuppressWarnings("unused")
+
 	private static Logger logger = Logger.getLogger(ProducerService.class.getName());
 
 	Producer<Long, String> producer;
 
 	/**
-	 * The above snippet creates a Kafka producer with some properties.
+	 * This method creates a Kafka producer with some properties during initalization.
 	 * <p>
 	 * BOOTSTRAP_SERVERS_CONFIG: The Kafka broker's address. If Kafka is running in
 	 * a cluster then you can provide comma (,) seperated addresses. For
@@ -84,19 +77,16 @@ public class ProducerService implements Serializable {
 	 */
 	@PostConstruct
 	void init() {
-
+		logger.info("...init KafkaProducer...");
 		Properties props = new Properties();
 
-		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKERS);
-		props.put(ProducerConfig.CLIENT_ID_CONFIG, CLIENT_ID);
+		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, getEnv(ENV_KAFKA_BROKERS, "kafka:9092"));
+		props.put(ProducerConfig.CLIENT_ID_CONFIG, getEnv(ENV_KAFKA_CLIENTID, "Imixs-Workflow-1"));
 		props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
 		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-		// props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG,
-		// CustomPartitioner.class.getName());
-
+		//props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG, CustomPartitioner.class.getName());
 		producer = new KafkaProducer<>(props);
-
 	}
 
 	/**
@@ -106,29 +96,49 @@ public class ProducerService implements Serializable {
 
 		if (ProcessingEvent.AFTER_PROCESS == documentEvent.getEventType()) {
 
+			logger.info("...consuming ProcssingEvent... send new kafka event...");
+
 			String uid = documentEvent.getDocument().getUniqueID();
-			ProducerRecord<Long, String> record = new ProducerRecord<Long, String>(TOPIC_NAME,
-					"processed workitem: " + uid);
+			// we use the model version as the topic name
+
+			String topic = documentEvent.getDocument().getModelVersion();
+			String value = documentEvent.getDocument().getWorkflowGroup() + ":" + uid;
+
+			ProducerRecord<Long, String> record = new ProducerRecord<Long, String>(topic, value);
 
 			try {
 				RecordMetadata metadata = producer.send(record).get();
-				System.out.println("Record sent with key " + uid + " to partition " + metadata.partition()
-
+				logger.info("...Imixs-Workflow Event sent with key " + uid + " to partition " + metadata.partition()
 						+ " with offset " + metadata.offset());
 			}
 
 			catch (ExecutionException e) {
-				System.out.println("Error in sending record");
-				System.out.println(e);
+				logger.info("Error in sending record: " + e.getMessage());
 			}
 
 			catch (InterruptedException e) {
-				System.out.println("Error in sending record");
-				System.out.println(e);
+				System.out.println("Error in sending record: " + e.getMessage());
 			}
 
 		}
 
 	}
 
+	/**
+	 * Returns a environment variable. An environment variable can be provided as a
+	 * System property. 
+	 * 
+	 * @param env
+	 *            - environment variable name
+	 * @param defaultValue
+	 *            - optional default value
+	 * @return value
+	 */
+	public static String getEnv(String env, String defaultValue) {
+		String result = System.getenv(env);
+		if (result == null || result.isEmpty()) {
+			result = defaultValue;
+		}
+		return result;
+	}
 }
