@@ -1,4 +1,4 @@
-# Magento Adapers
+# Magento Adapter
 
 The Imixs-Magento-Adapter is a connector module providing a set of classes to connect to the Ecommerce Softwareplattform Magento. Magento provides two different WebService Interfaces. The Magento Rest API for a simple Rest Service based on a the OAuth 1.0.a protocol and the Magento SOAP API for a SOAP interface.
 

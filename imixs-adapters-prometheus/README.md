@@ -1,6 +1,6 @@
-# imixs-prometheus-adapter
+# Imixs Prometheus Adapter
 
-The _imixs-prometheus-adapter_ provides a rest servcie enpoint exposing Imxis-Workflow metrics. 
+This adapter module provides a rest service endpoint exposing Imxis-Workflow metrics. 
 
 The metric can be collected by the following Rest Service resource:
 

@@ -1,6 +1,6 @@
-# Apache Kafka
+# Apache Kafka Adapter
 
-This project provides an Apache Kafka messaging service for Imixs-Workflow events.
+This adapter module provides an Apache Kafka messaging service for Imixs-Workflow events.
 
 See:
 

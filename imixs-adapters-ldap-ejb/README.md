@@ -1,6 +1,6 @@
-# imixs-adapters LDAP
+# LDAP Adapter
 
-The Imixs-Adapters LDAP subproject provides a set of services and plug-ins to be used to lookup user meta data form a LDAP directory.
+This adapter module provides a set of services and plug-ins to be used to lookup user meta data form a LDAP directory.
 The Services and Plug-ins are connected to a LDAP service either directly or by using a JNDI connector (to be configured on the application server). 
 
 The jndi name to connect to an LDAP server is:

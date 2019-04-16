@@ -1,6 +1,6 @@
-# imixs-datev-adapter
+# DATEV Adapter
 
-The _imixs-datev-adapter_ provides services to import and export data from DATEV.
+This adapter module provides services to import and export data from DATEV.
 The import feature allows the import of DATEV master data like 'Kontenbeschriftungen'.
 The export feature allows the export of workflow invoice data into a DATEV file (Buchungstapel).
 

@@ -1,6 +1,6 @@
-# imixs-sepa-adapter
+# Imixs SEPA Adapter
 
-The _imixs-sepa-adapter_ provides services to export workflow invoice data into a sepa file.
+This adapter module provides services to export workflow invoice data into a sepa file.
 
 
 ## Model Based Configuration
