@@ -31,12 +31,8 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class ConsumerService implements Serializable {
 
-	public static String KAFKA_BROKERS = "localhost:9092";
-	public static Integer MESSAGE_COUNT = 1000;
-	public static String CLIENT_ID = "client1";
 	
-	
-	public static String TOPIC_NAME = "1.0.1"; // just an example
+	public static String TOPIC_NAME = "IN-1.0.1"; // just an example
 	public static String GROUP_ID_CONFIG = "consumerGroup1";
 	public static Integer MAX_NO_MESSAGE_FOUND_COUNT = 100;
 	public static String OFFSET_RESET_LATEST = "latest";
@@ -44,9 +40,7 @@ public class ConsumerService implements Serializable {
 	public static Integer MAX_POLL_RECORDS = 1;
 
 	private static final long serialVersionUID = 1L;
-	@SuppressWarnings("unused")
 	private static Logger logger = Logger.getLogger(ConsumerService.class.getName());
-
 
 	Consumer<Long, String> consumer;
 
@@ -77,13 +71,11 @@ public class ConsumerService implements Serializable {
 	void init() {
 
 		Properties props = new Properties();
-
-		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKERS);
+		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+				ConfigService.getEnv(ConfigService.ENV_KAFKA_BROKERS, "kafka:9092"));
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_CONFIG);
-		
-		props.put(ProducerConfig.CLIENT_ID_CONFIG, ConfigService.getEnv(ConfigService.ENV_KAFKA_CLIENTID, "Imixs-Workflow-1"));
-		
-		
+		props.put(ProducerConfig.CLIENT_ID_CONFIG,
+				ConfigService.getEnv(ConfigService.ENV_KAFKA_CLIENTID, "Imixs-Workflow-1"));
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 		props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS);
@@ -91,12 +83,11 @@ public class ConsumerService implements Serializable {
 		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OFFSET_RESET_EARLIER);
 
 		consumer = new KafkaConsumer<>(props);
-		
-		
+
 		// here we need to subsribe the topics!
-//		logger.info("...register topic: " + TOPIC_NAME);
-//		consumer.subscribe(Collections.singletonList(TOPIC_NAME));
-//		runConsumer();
+		logger.info("...register topic: " + TOPIC_NAME);
+		consumer.subscribe(Collections.singletonList(TOPIC_NAME));
+		runConsumer();
 	}
 
 	void runConsumer() {

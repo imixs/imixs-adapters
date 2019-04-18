@@ -32,7 +32,7 @@ public class TestProducer {
 	
 	@Before
 	public void setup() {
-		Properties props = new Properties();
+		Properties props = new Properties(); 
 
 		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9094");
 		
@@ -58,10 +58,10 @@ public class TestProducer {
 	/** 
 	 * test the fieldlist of the first line of the file
 	 */
-	@Test 
+	@Test  
 	public void testSendMessages() {
 		
-		ProducerRecord<Long, String> record = new ProducerRecord<Long, String>("1.0.1", "some data test...");
+		ProducerRecord<Long, String> record = new ProducerRecord<Long, String>("IN-1.0.1", "some data test Hey!...");
 
 		try {
 			RecordMetadata metadata = producer.send(record).get();
