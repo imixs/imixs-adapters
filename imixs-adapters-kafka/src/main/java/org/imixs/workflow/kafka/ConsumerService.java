@@ -56,6 +56,9 @@ public class ConsumerService implements Serializable {
 	/**
 	 * On startup we just initialize a new Timer running each 10 seconds to poll the
 	 * message queue
+	 * <p>
+	 * 
+	 * @see https://stackoverflow.com/questions/55640112/how-to-implement-a-permanent-background-process-with-ejbs
 	 * 
 	 */
 	@PostConstruct

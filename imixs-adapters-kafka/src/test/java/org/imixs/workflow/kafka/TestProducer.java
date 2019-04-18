@@ -4,7 +4,6 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -19,7 +18,7 @@ import org.junit.Test;
 import junit.framework.Assert;
 
 /**
- * This test verifies the IBAN regex
+ * Junit test producing a imixs kafka event
  * 
  * @author rsoika
  * 
