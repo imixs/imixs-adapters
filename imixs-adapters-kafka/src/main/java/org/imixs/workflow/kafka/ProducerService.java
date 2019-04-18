@@ -43,9 +43,6 @@ import org.imixs.workflow.engine.ProcessingEvent;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class ProducerService implements Serializable {
 
-	public static final String ENV_KAFKA_BROKERS = "KAFKA_BROKERS";
-	public static final String ENV_KAFKA_CLIENTID = "KAFKA_CLIENTID";
-
 	private static final long serialVersionUID = 1L;
 
 	private static Logger logger = Logger.getLogger(ProducerService.class.getName());
@@ -80,8 +77,8 @@ public class ProducerService implements Serializable {
 		logger.info("...init KafkaProducer...");
 		Properties props = new Properties();
 
-		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, getEnv(ENV_KAFKA_BROKERS, "kafka:9092"));
-		props.put(ProducerConfig.CLIENT_ID_CONFIG, getEnv(ENV_KAFKA_CLIENTID, "Imixs-Workflow-1"));
+		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, ConfigService.getEnv(ConfigService.ENV_KAFKA_BROKERS, "kafka:9092"));
+		props.put(ProducerConfig.CLIENT_ID_CONFIG, ConfigService.getEnv(ConfigService.ENV_KAFKA_CLIENTID, "Imixs-Workflow-1"));
 		props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
 		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
@@ -124,21 +121,5 @@ public class ProducerService implements Serializable {
 
 	}
 
-	/**
-	 * Returns a environment variable. An environment variable can be provided as a
-	 * System property. 
-	 * 
-	 * @param env
-	 *            - environment variable name
-	 * @param defaultValue
-	 *            - optional default value
-	 * @return value
-	 */
-	public static String getEnv(String env, String defaultValue) {
-		String result = System.getenv(env);
-		if (result == null || result.isEmpty()) {
-			result = defaultValue;
-		}
-		return result;
-	}
+	
 }

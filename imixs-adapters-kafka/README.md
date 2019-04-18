@@ -15,7 +15,7 @@ To test the behavior of the Imxis Kafka Adapter, you can run [Imixs-Microservice
 
 ## How to create a custom Docker Image from Imixs-Microservcie
 
-To create a custom Docker image of the Imixs-Microservice just jecout the project from [Github](https://github.com/imixs/imixs-microservice) and add the Imixs-Adapters-Kafka dependency:
+To create a custom Docker image of the Imixs-Microservice just checkout the project from [Github](https://github.com/imixs/imixs-microservice) and add the Imixs-Adapters-Kafka dependency into the maven pom.xml:
 
 		<dependency>
 			<groupId>org.imixs.workflow</groupId>
@@ -30,13 +30,45 @@ The Imixs-Microservice project already includes this dependency in the pom.xml. 
 	$ cd ~/git/imixs-microservice
 	$ mvn clean install -Pdocker-build
 	
-After that you can switch back into the imixs-adapter-kafka project and start the Imixs-Microservice Container with the docker-compose.yml file:
+Now you have a local Docker image of the Imixs-Microservice including the Apache-Kafka adapter project.
+
+Switch back into the imixs-adapter-kafka project and start the Imixs-Microservice Container with the docker-compose.yml file:
 
 	$ cd ~/git/imixs-adapters/imixs-adapters-kafka/
 	$ docker-compose up
 
-This will start an instance of your new build Docker image of Imixs-Microservice including the Kafka Adater and also a local Kafak Server.
 
+This docker-compose.ymls file will start the following components in a Docker stack:
+
+ * Imixs-Microservice including the Kafka Adapter and running in Wildfly Debug mode listening to port 8787 
+ * Postgres DB for Imixs-Workflow
+ * Apache Kafka single node cluster
+ * Zookeeper 
+ 
+Take note of the following setup within the docker-compose.yml file:
+
+	....
+	  kafka:
+	    image: wurstmeister/kafka:latest
+	    ports:
+	      - target: 9094
+	        published: 9094
+	        protocol: tcp
+	        mode: host
+	    environment:
+	      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+	      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+	      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://localhost:9094
+	      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
+	      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+
+
+This defines port 9092 for the internal network communication with kafka (kafka:9092). The port number 9094 is for the outside communication and bound to the host name 'localhost'. This is for local dev test only. In production environment you can add the real host name here or use the following bash command to resolve the host name from the docker info: 
+
+	 HOSTNAME_COMMAND: "docker info | grep ^Name: | cut -d' ' -f 2" 
+	 
+ 
+ 
 
 ## Test the Kafka Adapter
 
@@ -62,3 +94,19 @@ Now you can create a process instance which will trigger the Kafka Adapter:
          ]}' \
          http://localhost:8080/api/workflow/workitem.json
          	
+
+###  Error while fetching metadata with correlation id 537 : {1.0.1=LEADER_NOT_AVAILABLE}
+
+If you got a error message like this one:
+
+	 Error while fetching metadata with correlation id 537 : {1.0.1=LEADER_NOT_AVAILABLE}
+
+
+Then first shutdown your stack with the command:
+
+	$ docker-compose down
+
+and restart it again
+
+	$ docker-compose up
+
