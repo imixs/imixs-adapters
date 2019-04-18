@@ -12,6 +12,8 @@ services:
   # Imixs Microservice Project
   app:
     image: imixs/imixs-microservice:latest
+    depends_on:
+      - db
     environment:
       WILDFLY_PASS: adminadmin
       DEBUG: "true"    

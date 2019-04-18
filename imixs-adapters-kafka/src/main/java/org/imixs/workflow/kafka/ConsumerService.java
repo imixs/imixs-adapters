@@ -1,15 +1,19 @@
 package org.imixs.workflow.kafka;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.ConcurrencyManagement;
-import javax.ejb.ConcurrencyManagementType;
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.ejb.Timeout;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -28,10 +32,14 @@ import org.apache.kafka.common.serialization.StringDeserializer;
  */
 @Startup
 @Singleton
-@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+// @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class ConsumerService implements Serializable {
 
-	
+	private static final long TEN_SECONDS = 10 * 1000L;
+
+	@Resource
+	private TimerService timerService;
+
 	public static String TOPIC_NAME = "IN-1.0.1"; // just an example
 	public static String GROUP_ID_CONFIG = "consumerGroup1";
 	public static Integer MAX_NO_MESSAGE_FOUND_COUNT = 100;
@@ -43,9 +51,29 @@ public class ConsumerService implements Serializable {
 	private static Logger logger = Logger.getLogger(ConsumerService.class.getName());
 
 	Consumer<Long, String> consumer;
+	Properties props = null;
 
 	/**
-	 * The above snippet creates a Kafka producer with some properties.
+	 * On startup we just initialize a new Timer running each 10 seconds to poll the
+	 * message queue
+	 * 
+	 */
+	@PostConstruct
+	void init() {
+		TimerConfig config = new TimerConfig();
+		config.setPersistent(false);
+		timerService.createIntervalTimer(TEN_SECONDS, TEN_SECONDS, config);
+	}
+
+	@PreDestroy
+	void close() {
+		if (consumer != null) {
+			consumer.close();
+		}
+	}
+
+	/**
+	 * Helper method initializes a new consumer if no consumer is available.
 	 * <p>
 	 * BOOTSTRAP_SERVERS_CONFIG: The Kafka broker's address. If Kafka is running in
 	 * a cluster then you can provide comma (,) seperated addresses. For
@@ -67,46 +95,47 @@ public class ConsumerService implements Serializable {
 	 * object then you create your custom serializer class.
 	 * 
 	 */
-	@PostConstruct
-	void init() {
+	void initalizeConsumer() {
 
-		Properties props = new Properties();
-		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-				ConfigService.getEnv(ConfigService.ENV_KAFKA_BROKERS, "kafka:9092"));
-		props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_CONFIG);
-		props.put(ProducerConfig.CLIENT_ID_CONFIG,
-				ConfigService.getEnv(ConfigService.ENV_KAFKA_CLIENTID, "Imixs-Workflow-1"));
-		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
-		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-		props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS);
-		props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OFFSET_RESET_EARLIER);
+		if (consumer == null) {
+			logger.info("......initalize kafka consumer...");
+			props = new Properties();
+			props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+					ConfigService.getEnv(ConfigService.ENV_KAFKA_BROKERS, "kafka:9092"));
+			props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_CONFIG);
+			props.put(ProducerConfig.CLIENT_ID_CONFIG,
+					ConfigService.getEnv(ConfigService.ENV_KAFKA_CLIENTID, "Imixs-Workflow-1"));
+			props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
+			props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+			props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, MAX_POLL_RECORDS);
+			props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+			props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, OFFSET_RESET_EARLIER);
 
-		consumer = new KafkaConsumer<>(props);
+			// props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000");
 
-		// here we need to subsribe the topics!
-		logger.info("...register topic: " + TOPIC_NAME);
-		consumer.subscribe(Collections.singletonList(TOPIC_NAME));
-		runConsumer();
+			consumer = new KafkaConsumer<>(props);
+
+			// here we need to subsribe the topics!
+			logger.info("...register topic: " + TOPIC_NAME);
+			consumer.subscribe(Collections.singletonList(TOPIC_NAME));
+		}
 	}
 
-	void runConsumer() {
+	/**
+	 * Using EJB TimerService in current project for tasks like periodic data
+	 * pruning, or back-end data synchronization. It allows not only single time
+	 * execution, but also interval timers and timers with calendar based schedule.
+	 */
+	@Timeout
+	private synchronized void onTimer() {
 
-		int noMessageFound = 0;
+		// initalize consumer if not available
+		initalizeConsumer();
 
-		while (true) {
-
-			ConsumerRecords<Long, String> consumerRecords = consumer.poll(1000);
-			// 1000 is the time in milliseconds consumer will wait if no record is found at
-			// broker.
-			if (consumerRecords.count() == 0) {
-				noMessageFound++;
-				if (noMessageFound > MAX_NO_MESSAGE_FOUND_COUNT)
-					// If no message found count is reached to threshold exit loop.
-					break;
-				else
-					continue;
-			}
+		ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(1000));
+		// time in milliseconds consumer will wait if no record is found at
+		// broker.
+		if (consumerRecords.count() > 0) {
 
 			// print each record.
 			consumerRecords.forEach(record -> {
@@ -120,7 +149,6 @@ public class ConsumerService implements Serializable {
 			consumer.commitAsync();
 		}
 
-		consumer.close();
 	}
 
 }
