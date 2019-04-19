@@ -10,20 +10,20 @@ box "Apache-Kafka" #EEEEEE
 participant Kafka
 end box
 
-
 == Processing Life-Cycle ==
 
-activate WorkflowService #EEEEEE
 
-WorkflowService --> WorkflowService : processing workitem
+
+activate WorkflowService #EEEEEE
+WorkflowService -> WorkflowService : processing workitem
 
 WorkflowService -> ProducerService: ProcessingEvent.AFTER_PROCESS
 activate ProducerService
 
-ProducerService --> ProducerService: create kafka message
+ProducerService -> ProducerService: create kafka message
 ProducerService --> Kafka : send message
 
-ProducerService -> WorkflowService: return new process instance
+ProducerService -> WorkflowService: 
 deactivate ProducerService
 deactivate WorkflowService
 

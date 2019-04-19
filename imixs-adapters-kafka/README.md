@@ -6,10 +6,10 @@ This adapter module provides an Apache Kafka messaging service for Imixs-Workflo
 
 With Imixs-Kafka you can easily send Workflow Messages automatically during the processing life-cycle. With the Autowire-Function new process instances are send into a Kafka Message Queue so that any consumer interested in workflow events can consume the message and react in various ways.
 
-<br /><br /><img src="src/uml/kafka-adapter-producer.png" />
+<img src="src/uml/kafka-adapter-producer.png" />
 
 
-The Adapter filters Workflow events by the Model Version number so you can control which kind of workflows are send into a message queue. 
+The Adapter filters Workflow events by its Model Version, so you can control which kind of workflows should be send into a message queue. 
 
 ## Workflow Messages based on Business Logic
 
@@ -17,11 +17,23 @@ Another way to send Workflow Messages into a Kafka queue is the Imixs-Adapter Cl
 
 	org.imixs.workflow.kafka.KafkaAdapter
 
-This implementation is based on the [Imixs-Adapter concept](https://www.imixs.org/doc/core/adapter-api.html) and allows a more fine grained modeling of a asynchronous service integration. The Imixs-Kafka Adapter can configured directly in a BPMN 2.0 Model.
+This implementation is based on the [Imixs-Adapter concept](https://www.imixs.org/doc/core/adapter-api.html) and allows a more fine grained modeling of a asynchronous service integration. 
+
+The Imixs-Kafka Adapter can be configured directly in a BPMN 2.0 Model.
 
 <img src="https://www.imixs.org/doc/images/modelling/bpmn_screen_37.png" />
 
 You can configure the integration of the Kakfa Producer Service in various ways. 
+
+
+
+## Consuming Worklfow Message
+
+The other way to integrate Imixs-Workflow into a Kafka infrastructure is to send Workflow Messages to a Kafka queue to be processed by the Imixs-Workflow Instance. In this way a client can sends a Process Instance to a predefined Message queue.
+
+<img src="src/uml/kafka-adapter-consumer.png" />
+
+Imixs-Workflow will automatically consume messages for a predefined topic and process the workflow data. In this way messages can be used to trigger the event-based Imixs-Workflow engine. 
 
 # <img src="https://github.com/imixs/imixs-microservice/raw/master/small_h-trans.png">
 
@@ -86,10 +98,10 @@ This defines port 9092 for the internal network communication with kafka (kafka:
 
 ## Test the Kafka Adapter
 
-First upload the demo model located under /src/model.ticket.bpmn
+First upload the demo model located under /src/model/
 
 
-	curl --user admin:adminadmin --request POST -Tsrc/model/ticket.bpmn http://localhost:8080/api/model/bpmn
+	curl --user admin:adminadmin --request POST -Tsrc/model/kafka-ticket-1.0.0.bpmn http://localhost:8080/api/model/bpmn
 
 You can verify the availiblity of the model under the Web URI:
 
@@ -101,7 +113,7 @@ Now you can create a process instance which will trigger the Kafka Adapter:
 	curl --user admin:adminadmin -H "Content-Type: application/json" -H 'Accept: application/json'  -d \
        '{"item":[ \
                  {"name":"type","value":{"@type":"xs:string","$":"workitem"}}, \
-                 {"name":"$modelversion","value":{"@type":"xs:string","$":"1.0.1"}}, \
+                 {"name":"$modelversion","value":{"@type":"xs:string","$":"kafka-ticket-1.0"}}, \
                  {"name":"$taskid","value":{"@type":"xs:int","$":"1000"}}, \
                  {"name":"$eventid","value":{"@type":"xs:int","$":"10"}}, \
                  {"name":"txtname","value":{"@type":"xs:string","$":"test-json"}}\
@@ -118,7 +130,7 @@ The junit class 'TestProcuer' contains an example how to send a workflow message
 
 If you got a error message like this one:
 
-	 Error while fetching metadata with correlation id 537 : {1.0.1=LEADER_NOT_AVAILABLE}
+	 Error while fetching metadata with correlation id 537 : {kafka-ticket-1.0=LEADER_NOT_AVAILABLE}
 
 
 Then first shutdown your stack with the command:

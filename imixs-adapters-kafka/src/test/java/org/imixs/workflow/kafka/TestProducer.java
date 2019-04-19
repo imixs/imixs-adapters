@@ -73,7 +73,7 @@ public class TestProducer {
 		// JSON request:  
 		String json_workitem = "{\"item\":[ "
 				+ "             {\"name\":\"type\",\"value\":{\"@type\":\"xs:string\",\"$\":\"workitem\"}}, "
-				+ "             {\"name\":\"$modelversion\",\"value\":{\"@type\":\"xs:string\",\"$\":\"1.0.1\"}}, "
+				+ "             {\"name\":\"$modelversion\",\"value\":{\"@type\":\"xs:string\",\"$\":\"kafka-ticket-1.0\"}}, "
 				+ "             {\"name\":\"$taskid\",\"value\":{\"@type\":\"xs:int\",\"$\":\"1000\"}}, "
 				+ "             {\"name\":\"$eventid\",\"value\":{\"@type\":\"xs:int\",\"$\":\"10\"}}, "
 				+ "             {\"name\":\"txtname\",\"value\":{\"@type\":\"xs:string\",\"$\":\"test-json\"}}"

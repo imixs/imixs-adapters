@@ -1,0 +1,55 @@
+@startuml
+autonumber
+
+
+box "Client" #EEEEEE
+participant Client
+end box
+
+
+box "Imixs-Workflow" #LightBlue
+participant ConsumerService
+participant WorkflowService
+end box
+
+box "Apache-Kafka" #EEEEEE
+participant MessageQueue
+end box
+
+
+box "Imixs-Workflow" #LightBlue
+participant ConsumerService
+participant WorkflowService
+end box
+
+== Client Life-Cycle ==
+
+activate Client #EEEEEE
+
+Client -> Client : create workitem
+
+
+
+
+Client --> MessageQueue : send workflow event
+deactivate Client #EEEEEE
+
+== Processing Life-Cycle ==
+ConsumerService --> MessageQueue: poll workitem events
+activate ConsumerService
+
+ConsumerService -> WorkflowService : processing workitem
+
+activate WorkflowService #EEEEEE
+
+
+WorkflowService -> ConsumerService: 
+
+
+deactivate WorkflowService
+
+ConsumerService --> MessageQueue: commit
+
+deactivate ConsumerService 
+
+@enduml

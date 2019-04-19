@@ -23,16 +23,18 @@ services:
       # LISTENERS: INSIDE://:9092,OUTSIDE://:9094
       KAFKA_BROKERS: "kafka:9092"
       KAFKA_CLIENTID: "imixs-workflow1"
+      # KAFKA_AUTOWIRE: "(^kafka-ticket)"
+        
     ports:
       - "8080:8080"
       - "9990:9990"
       - "8787:8787"
 
   # Imixs Admin Client
-#  imixsadmin:
-#    image: imixs/imixs-admin
-#    ports:
-#      - "8888:8080"
+  imixsadmin:
+    image: imixs/imixs-admin
+    ports:
+      - "8888:8080"
       
       
   #     

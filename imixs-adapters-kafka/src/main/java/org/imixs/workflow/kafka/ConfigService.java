@@ -17,6 +17,7 @@ public class ConfigService implements Serializable {
 
 	public static final String ENV_KAFKA_BROKERS = "KAFKA_BROKERS";
 	public static final String ENV_KAFKA_CLIENTID = "KAFKA_CLIENTID";
+	public static final String ENV_KAFKA_AUTOWIRE = "KAFKA_AUTOWIRE";
 
 	private static final long serialVersionUID = 1L;
 
