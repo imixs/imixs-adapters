@@ -1,0 +1,31 @@
+@startuml
+autonumber
+
+box "Imixs-Workflow" #LightBlue
+participant WorkflowService
+participant ProducerService
+end box
+
+box "Apache-Kafka" #EEEEEE
+participant Kafka
+end box
+
+
+== Processing Life-Cycle ==
+
+activate WorkflowService #EEEEEE
+
+WorkflowService --> WorkflowService : processing workitem
+
+WorkflowService -> ProducerService: ProcessingEvent.AFTER_PROCESS
+activate ProducerService
+
+ProducerService --> ProducerService: create kafka message
+ProducerService --> Kafka : send message
+
+ProducerService -> WorkflowService: return new process instance
+deactivate ProducerService
+deactivate WorkflowService
+
+
+@enduml

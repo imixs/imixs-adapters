@@ -2,12 +2,13 @@
 
 This adapter module provides an Apache Kafka messaging service for Imixs-Workflow events.
 
-See:
+## Workflow Message Autowire
 
-* https://dzone.com/articles/kafka-producer-and-consumer-example
-* https://dzone.com/articles/writing-a-kafka-consumer-in-java
+With Imixs-Kafka you can easily send Workflow Messages automatically during the processing life-cycle. With the Autowire-Function new process instances are send into a Kafka Message Queue so that any consumer interested in workflow events can consume the message and react in various ways.
 
+<img src="./uml/kafka-adapter-prodcuer.png" />
 
+The Adapter filters Workflow events by the Model Version number so you can control which kind of workflows are send into a message queue. 
 
 # <img src="https://github.com/imixs/imixs-microservice/raw/master/small_h-trans.png">
 
