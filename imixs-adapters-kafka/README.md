@@ -29,11 +29,11 @@ You can configure the integration of the Kakfa Producer Service in various ways.
 
 ## Consuming Worklfow Message
 
-The other way to integrate Imixs-Workflow into a Kafka infrastructure is to send Workflow Messages to a Kafka queue to be processed by the Imixs-Workflow Instance. In this way a client can sends a Process Instance to a predefined Message queue.
+The other way to integrate Imixs-Workflow into a Kafka infrastructure is to send Workflow Messages to a Kafka queue to be processed by the Imixs-Workflow Instance. In this way a client sends a Process Instance to a predefined topic.
 
 <img src="src/uml/kafka-adapter-consumer.png" />
 
-Imixs-Workflow will automatically consume messages for a predefined topic and process the workflow data. In this way messages can be used to trigger the event-based Imixs-Workflow engine. 
+Imixs-Workflow will automatically consume those messages and process the workflow data. In this way messages can be used to trigger the event-based Imixs-Workflow engine. 
 
 # <img src="https://github.com/imixs/imixs-microservice/raw/master/small_h-trans.png">
 
@@ -64,7 +64,7 @@ Switch back into the imixs-adapter-kafka project and start the Imixs-Microservic
 	$ docker-compose up
 
 
-This docker-compose.ymls file will start the following components in a Docker stack:
+This docker-compose.yml file will start the following components in a Docker stack:
 
  * Imixs-Microservice including the Kafka Adapter and running in Wildfly Debug mode listening to port 8787 
  * Postgres DB for Imixs-Workflow
@@ -121,9 +121,11 @@ Now you can create a process instance which will trigger the Kafka Adapter:
          http://localhost:8080/api/workflow/workitem.json
          	
 
+Please find the details in the [Imixs-Microservice Project on Github](https://github.com/imixs/imixs-microservice)
+
 ### Producer Test
 
-The junit class 'TestProcuer' contains an example how to send a workflow message to the Workflow instance. 
+The project contains the junit class 'TestProcuer' with an example how to send a workflow message to the Workflow instance. 
 
 
 ###  Error while fetching metadata with correlation id 537 : {1.0.1=LEADER_NOT_AVAILABLE}
