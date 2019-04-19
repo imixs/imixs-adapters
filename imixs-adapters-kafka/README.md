@@ -6,9 +6,22 @@ This adapter module provides an Apache Kafka messaging service for Imixs-Workflo
 
 With Imixs-Kafka you can easily send Workflow Messages automatically during the processing life-cycle. With the Autowire-Function new process instances are send into a Kafka Message Queue so that any consumer interested in workflow events can consume the message and react in various ways.
 
-<img src="src/uml/kafka-adapter-prodcuer.png" />
+<br /><br /><img src="src/uml/kafka-adapter-producer.png" />
+
 
 The Adapter filters Workflow events by the Model Version number so you can control which kind of workflows are send into a message queue. 
+
+## Workflow Messages based on Business Logic
+
+Another way to send Workflow Messages into a Kafka queue is the Imixs-Adapter Class.
+
+	org.imixs.workflow.kafka.KafkaAdapter
+
+This implementation is based on the [Imixs-Adapter concept](https://www.imixs.org/doc/core/adapter-api.html) and allows a more fine grained modeling of a asynchronous service integration. The Imixs-Kafka Adapter can configured directly in a BPMN 2.0 Model.
+
+<img src="https://www.imixs.org/doc/images/modelling/bpmn_screen_37.png" />
+
+You can configure the integration of the Kakfa Producer Service in various ways. 
 
 # <img src="https://github.com/imixs/imixs-microservice/raw/master/small_h-trans.png">
 
@@ -95,6 +108,11 @@ Now you can create a process instance which will trigger the Kafka Adapter:
          ]}' \
          http://localhost:8080/api/workflow/workitem.json
          	
+
+### Producer Test
+
+The junit class 'TestProcuer' contains an example how to send a workflow message to the Workflow instance. 
+
 
 ###  Error while fetching metadata with correlation id 537 : {1.0.1=LEADER_NOT_AVAILABLE}
 
