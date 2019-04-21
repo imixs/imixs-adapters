@@ -13,6 +13,7 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import junit.framework.Assert;
@@ -68,6 +69,7 @@ public class TestProducer {
 	 * 
 	 */
 	@Test
+	@Ignore
 	public void testSendMessages() { 
 
 		// JSON request:  
