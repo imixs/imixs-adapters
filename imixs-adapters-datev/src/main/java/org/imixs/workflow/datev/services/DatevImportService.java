@@ -76,6 +76,9 @@ public class DatevImportService {
 
 	@EJB
 	DocumentService documentService;
+	
+	@EJB
+	LuceneSearchService luceneSearchService;
 
 	private static Logger logger = Logger.getLogger(DatevImportService.class.getName());
 
@@ -148,7 +151,7 @@ public class DatevImportService {
 		try {
 			phrase = phrase.trim();
 			// phrase = LuceneSearchService.escapeSearchTerm(phrase);
-			phrase = LuceneSearchService.normalizeSearchTerm(phrase);
+			phrase = luceneSearchService.normalizeSearchTerm(phrase);
 			String sQuery = "(type:\"" + type + "\"";
 
 			// restrict to client id?
