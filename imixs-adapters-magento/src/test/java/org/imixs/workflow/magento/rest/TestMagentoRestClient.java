@@ -11,16 +11,15 @@ import java.util.Scanner;
 
 import javax.naming.NamingException;
 
-import junit.framework.Assert;
-
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.engine.PropertyService;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.magento.MagentoClientFactory;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.scribe.model.Token;
+
+import junit.framework.Assert;
 
 /**
  * Dieser test testet die Magento Schnittstelle
@@ -51,7 +50,7 @@ import org.scribe.model.Token;
 public class TestMagentoRestClient {
 	MagentoApi magentoApi = null;
 	MagentoRestClient magentoClient = null;
-	PropertyService propertyService = null;
+	
 	Properties properties = null;
 
 	Map<String, ItemCollection> database = new HashMap<String, ItemCollection>();

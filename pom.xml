@@ -62,6 +62,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.imixs.workflow.version>5.0.2-SNAPSHOT</org.imixs.workflow.version>
 		<org.imixs.marty.version>4.0.0</org.imixs.marty.version>
+		<microprofile.version>2.2</microprofile.version>
 	</properties>
 	
 	<profiles>
@@ -261,7 +262,16 @@
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
-			<version>6.0</version>
+			<version>8.0</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<!-- Microprofile -->
+		<dependency>
+			<groupId>org.eclipse.microprofile</groupId>
+			<artifactId>microprofile</artifactId>
+			<version>${microprofile.version}</version>
+			<type>pom</type>
 			<scope>provided</scope>
 		</dependency>
 		<!-- Testing -->

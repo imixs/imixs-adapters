@@ -37,11 +37,11 @@ import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
-import javax.ejb.EJB;
 import javax.ejb.Singleton;
+import javax.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.engine.PropertyService;
 
 /**
  * The MagentoCache is a sigelton EJB providing an application wide cache
@@ -74,27 +74,20 @@ public class MagentoCache {
 
 	private ConcurrentHashMap<String, ItemCollection> customerCache = null;
 	private ConcurrentHashMap<String, ItemCollection> productCache = null;
-	private int refresh = 600; // default 10 minutes
+
 
 	private static Logger logger = Logger.getLogger(MagentoCache.class
 			.getName());
 
-	@EJB
-	PropertyService propertyService;
 
+	@Inject 
+	@ConfigProperty(name = "magento.cache.refresh", defaultValue = "600")
+	private int refresh; // default 10 minutes
+	
+	
 	@PostConstruct
 	public void initialize() {
 		clearCache();
-
-		// read configuration
-		String sRefresh = propertyService.getProperties().getProperty(
-				"magento.cache.refresh", "600");
-		try {
-			refresh = Integer.parseInt(sRefresh);
-		} catch (NumberFormatException e) {
-			refresh = 600; // default 10 minutes
-		}
-
 	}
 
 	/**

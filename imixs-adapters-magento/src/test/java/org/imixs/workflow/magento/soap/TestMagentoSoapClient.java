@@ -8,10 +8,7 @@ import java.util.Properties;
 
 import javax.naming.NamingException;
 
-import junit.framework.Assert;
-
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.engine.PropertyService;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.magento.MagentoClient;
 import org.imixs.workflow.magento.MagentoClientFactory;
@@ -19,6 +16,8 @@ import org.imixs.workflow.magento.MagentoException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import junit.framework.Assert;
 
 /**
  * Dieser test testet die Magento Schnittstelle
@@ -48,7 +47,6 @@ import org.junit.Test;
  */
 public class TestMagentoSoapClient {
 	MagentoClient magentoClient = null;
-	PropertyService propertyService = null;
 	Properties properties = null;
 
 	Map<String, ItemCollection> database = new HashMap<String, ItemCollection>();
