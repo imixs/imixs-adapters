@@ -66,10 +66,10 @@ public class LDAPLookupService {
 	private boolean enabled = false;
 	private Properties configurationProperties = null;
 
-	private String dnSearchFilter = null;
-	private String searchFilterPhrase = null;
-	private String groupSearchFilter = null;
-	private String searchContext = null;
+	private String _dnSearchFilter = null;
+	private String _searchFilterPhrase = null;
+	private String _groupSearchFilter = null;
+	private String _searchContext = null;
 	private String[] userAttributesLDAP = null; // ldap attribute names
 	private String[] userAttributesImixs = null; // imixs attributes names if |
 													// defined
@@ -106,27 +106,27 @@ public class LDAPLookupService {
 
 			// initialize ldap configuration....
 			logger.finest("......read LDAP configuration...");
-			searchContext = configurationProperties.getProperty(LDAP_SEARCH_CONTEXT, "");
+			setSearchContext(configurationProperties.getProperty(LDAP_SEARCH_CONTEXT, ""));
 			// issue #64 - backward compatibility.
-			if (searchContext.isEmpty()) {
+			if (_searchContext.isEmpty()) {
 				// try deprecated propertyname ldap.search.context
-				searchContext = configurationProperties.getProperty("ldap.search.context", "");
-				if (!searchContext.isEmpty()) {
+				setSearchContext(configurationProperties.getProperty("ldap.search.context", ""));
+				if (!_searchContext.isEmpty()) {
 					// we take the deprecated value but we log a warning
 					logger.warning(
 							"imixs property 'ldap.search.context' is deprecated and should be replaced with 'ldap.search-context'");
 				}
 			}
 
-			logger.finest("......" + LDAP_SEARCH_CONTEXT + "=" + searchContext);
-			dnSearchFilter = configurationProperties.getProperty(LDAP_SEARCH_FILTER_DN, "(uid=%u)");
-			logger.finest("......" + LDAP_SEARCH_FILTER_DN + "=" + dnSearchFilter);
+			logger.finest("......" + LDAP_SEARCH_CONTEXT + "=" + getSearchContext());
+			setDnSearchFilter(configurationProperties.getProperty(LDAP_SEARCH_FILTER_DN, "(uid=%u)"));
+			logger.finest("......" + LDAP_SEARCH_FILTER_DN + "=" + getDnSearchFilter());
 
-			searchFilterPhrase = configurationProperties.getProperty(LDAP_SEARCH_FILTER_PHRASE);
-			logger.finest("......" + LDAP_SEARCH_FILTER_PHRASE + "=" + searchFilterPhrase);
+			setSearchFilterPhrase(configurationProperties.getProperty(LDAP_SEARCH_FILTER_PHRASE));
+			logger.finest("......" + LDAP_SEARCH_FILTER_PHRASE + "=" + getSearchFilterPhrase());
 
-			groupSearchFilter = configurationProperties.getProperty(LDAP_SEARCH_FILTER_GROUP, "(member=%d)");
-			logger.finest("......" + LDAP_SEARCH_FILTER_GROUP + "=" + groupSearchFilter);
+			setGroupSearchFilter(configurationProperties.getProperty(LDAP_SEARCH_FILTER_GROUP, "(member=%d)"));
+			logger.finest("......" + LDAP_SEARCH_FILTER_GROUP + "=" + getGroupSearchFilter());
 			// read user attributes
 			String sAttributes = configurationProperties.getProperty(LDAP_USER_ATTRIBUTES, "uid,SN,CN,mail");
 			logger.finest("......" + LDAP_USER_ATTRIBUTES + "=" + sAttributes);
@@ -185,6 +185,53 @@ public class LDAPLookupService {
 			e.printStackTrace();
 		}
 	}
+
+	
+	
+	public String getDnSearchFilter() {
+		return _dnSearchFilter;
+	}
+
+
+	public void setDnSearchFilter(String dnSearchFilter) {
+		this._dnSearchFilter = dnSearchFilter;
+	}
+
+
+
+	public String getSearchFilterPhrase() {
+		return _searchFilterPhrase;
+	}
+
+
+
+	public void setSearchFilterPhrase(String searchFilterPhrase) {
+		this._searchFilterPhrase = searchFilterPhrase;
+	}
+
+
+
+	public String getGroupSearchFilter() {
+		return _groupSearchFilter;
+	}
+
+
+
+	public void setGroupSearchFilter(String groupSearchFilter) {
+		this._groupSearchFilter = groupSearchFilter;
+	}
+
+
+
+	public String getSearchContext() {
+		return _searchContext;
+	}
+
+	public void setSearchContext(String searchContext) {
+		this._searchContext = searchContext;
+	}
+
+
 
 	public boolean isEnabled() {
 		return enabled;
@@ -386,10 +433,10 @@ public class LDAPLookupService {
 				ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 				ctls.setReturningAttributes(userAttributesLDAP);
 
-				String searchFilter = dnSearchFilter.replace("%u", aUID);
-				logger.finest("......fetchUser: searchContext=" + searchContext);
+				String searchFilter = getDnSearchFilter().replace("%u", aUID);
+				logger.finest("......fetchUser: searchContext=" + getSearchContext());
 				logger.finest("......fetchUser: searchFilter=" + searchFilter);
-				answer = ldapCtx.search(searchContext, searchFilter, ctls);
+				answer = ldapCtx.search(getSearchContext(), searchFilter, ctls);
 				// if nothing found we return null....
 				if (answer == null || !answer.hasMore()) {
 					return null;
@@ -503,10 +550,10 @@ public class LDAPLookupService {
 				// return all attributes..
 				// ctls.setReturningAttributes(userAttributesLDAP);
 
-				String searchFilter = dnSearchFilter.replace("%u", aUID);
-				logger.finest("......lookup: searchContext=" + searchContext);
+				String searchFilter = getDnSearchFilter().replace("%u", aUID);
+				logger.finest("......lookup: searchContext=" + getSearchContext());
 				logger.finest("......lookup: searchFilter=" + searchFilter);
-				answer = ldapCtx.search(searchContext, searchFilter, ctls);
+				answer = ldapCtx.search(getSearchContext(), searchFilter, ctls);
 				// if nothing found we return null....
 				if (answer == null || !answer.hasMore()) {
 					return null;
@@ -596,9 +643,9 @@ public class LDAPLookupService {
 			ctls.setReturningAttributes(userAttributesLDAP);
 			ctls.setCountLimit(MAX_RESULT);
 			ctls.setTimeLimit(TIME_LIMIT);
-			String searchFilter = searchFilterPhrase.replace("?", searchPhrase);
+			String searchFilter = getSearchFilterPhrase().replace("?", searchPhrase);
 			logger.finest("......fetchUser: searchFilter = " + searchFilter);
-			answer = ldapCtx.search(searchContext, searchFilter, ctls);
+			answer = ldapCtx.search(getSearchContext(), searchFilter, ctls);
 			if (answer == null) {
 				logger.finest("......search returend null");
 				return result;
@@ -711,10 +758,10 @@ public class LDAPLookupService {
 			ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 			ctls.setReturningAttributes(returnedAtts);
 
-			String searchFilter = groupSearchFilter.replace("%d", sDN);
+			String searchFilter = getGroupSearchFilter().replace("%d", sDN);
 			logger.finest("......groupSearchFilter:" + searchFilter);
 
-			answer = ldapCtx.search(searchContext, searchFilter, ctls);
+			answer = ldapCtx.search(getSearchContext(), searchFilter, ctls);
 			if (answer == null)
 				return null;
 
@@ -723,9 +770,7 @@ public class LDAPLookupService {
 				String sGroupName = entry.getName();
 
 				// TODO : it is not possible to ask for the attribute cn - maybe
-				// a
-				// domino
-				// problem so we take the name....
+				// a domino problem so we take the name....
 				/*
 				 * Attributes attrs = entry.getAttributes(); Attribute attr = attrs.get("cn");
 				 * if (attr != null) sGroupName = (String) attr.get(0);
