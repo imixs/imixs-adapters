@@ -122,7 +122,7 @@ public class LDAPLookupService {
 			setDnSearchFilter(configurationProperties.getProperty(LDAP_SEARCH_FILTER_DN, "(uid=%u)"));
 			logger.finest("......" + LDAP_SEARCH_FILTER_DN + "=" + getDnSearchFilter());
 
-			setSearchFilterPhrase(configurationProperties.getProperty(LDAP_SEARCH_FILTER_PHRASE));
+			setSearchFilterPhrase(configurationProperties.getProperty(LDAP_SEARCH_FILTER_PHRASE,"(|(mail=?*)(cn=?*))"));
 			logger.finest("......" + LDAP_SEARCH_FILTER_PHRASE + "=" + getSearchFilterPhrase());
 
 			setGroupSearchFilter(configurationProperties.getProperty(LDAP_SEARCH_FILTER_GROUP, "(member=%d)"));
