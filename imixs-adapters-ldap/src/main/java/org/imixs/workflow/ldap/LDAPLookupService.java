@@ -698,7 +698,6 @@ public class LDAPLookupService {
 			}
 
 		} catch (NamingException e) {
-
 			logger.warning("ldap search error: " + e.getMessage());
 			if (logger.isLoggable(java.util.logging.Level.FINEST)) {
 				e.printStackTrace();
