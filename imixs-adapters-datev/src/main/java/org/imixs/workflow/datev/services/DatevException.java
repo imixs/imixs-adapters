@@ -11,7 +11,6 @@ public class DatevException extends PluginException{
 	public DatevException(String aErrorContext, String aErrorCode,
 			String message) {
 		super(aErrorContext, aErrorCode, message);
-		
 	}
 
 	public DatevException(String aErrorContext, String aErrorCode,

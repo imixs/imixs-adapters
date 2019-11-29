@@ -22,7 +22,7 @@ import javax.ejb.TransactionAttributeType;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.engine.DocumentService;
-import org.imixs.workflow.engine.lucene.LuceneSearchService;
+import org.imixs.workflow.engine.index.SchemaService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
@@ -78,7 +78,7 @@ public class DatevImportService {
 	DocumentService documentService;
 	
 	@EJB
-	LuceneSearchService luceneSearchService;
+	SchemaService schemaService;
 
 	private static Logger logger = Logger.getLogger(DatevImportService.class.getName());
 
@@ -151,7 +151,7 @@ public class DatevImportService {
 		try {
 			phrase = phrase.trim();
 			// phrase = LuceneSearchService.escapeSearchTerm(phrase);
-			phrase = luceneSearchService.normalizeSearchTerm(phrase);
+			phrase = schemaService.normalizeSearchTerm(phrase);
 			String sQuery = "(type:\"" + type + "\"";
 
 			// restrict to client id?
