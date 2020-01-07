@@ -67,248 +67,248 @@ import org.imixs.workflow.exceptions.QueryException;
  */
 public class SepaScheduler implements Scheduler {
 
-	public static final int MAX_COUNT = 999;
+    public static final int MAX_COUNT = 999;
 
-	@EJB
-	DocumentService documentService;
+    @EJB
+    DocumentService documentService;
 
-	@EJB
-	WorkflowService workflowService;
+    @EJB
+    WorkflowService workflowService;
 
-	@EJB
-	SepaWorkflowService sepaWorkflowService;
+    @EJB
+    SepaWorkflowService sepaWorkflowService;
 
-	@EJB
-	ModelService modelService;
+    @EJB
+    ModelService modelService;
 
-	@EJB
-	ReportService reportService;
+    @EJB
+    ReportService reportService;
 
-	private static Logger logger = Logger.getLogger(SepaScheduler.class.getName());
+    private static Logger logger = Logger.getLogger(SepaScheduler.class.getName());
 
-	/**
-	 * This is the method which processes the timeout event depending on the running
-	 * timer settings.
-	 * 
-	 * 
-	 * 
-	 * @param timer
-	 * @throws QueryException
-	 */
-	public ItemCollection run(ItemCollection configuration) throws SchedulerException {
-		String reportName = "";
-		ItemCollection sepaExport = null;
-		int maxCount = configuration.getItemValueInteger("_maxcount");
-		if (maxCount == 0) {
-			maxCount = -1;
-		}
-		try {
+    /**
+     * This is the method which processes the timeout event depending on the running
+     * timer settings.
+     * 
+     * 
+     * 
+     * @param timer
+     * @throws QueryException
+     */
+    public ItemCollection run(ItemCollection configuration) throws SchedulerException {
+        String reportName = "";
+        ItemCollection sepaExport = null;
+        int maxCount = configuration.getItemValueInteger("_maxcount");
+        if (maxCount == 0) {
+            maxCount = -1;
+        }
+        try {
 
-			String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
-			int taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
+            String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
+            int taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
 
-			// fetch the inital event
-			Model model = modelService.getModel(modelVersion);
-			ItemCollection event = model.getEvent(taskID, SepaWorkflowService.EVENT_START);
-			ItemCollection task = model.getTask(taskID);
+            // fetch the inital event
+            Model model = modelService.getModel(modelVersion);
+            ItemCollection event = model.getEvent(taskID, SepaWorkflowService.EVENT_START);
+            ItemCollection task = model.getTask(taskID);
 
-			// load the report
-			ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
-			if (report == null) {
-				throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
-						"unable to load report '" + reportName + "'. Please check  model configuration");
-			}
+            // load the report
+            ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
+            if (report == null) {
+                throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
+                        "unable to load report '" + reportName + "'. Please check  model configuration");
+            }
 
-			// get the data source based on the report definition....
-			List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
-					null);
+            // get the data source based on the report definition....
+            List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
+                    null);
 
-			sepaWorkflowService.logMessage("...SEPA export started....", configuration, null);
-			sepaWorkflowService.logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
+            sepaWorkflowService.logMessage("...SEPA export started....", configuration, null);
+            sepaWorkflowService.logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
 
-			// update the invoices with optional datev_client_id if not provided
-			// link the invoices with the datev workitem.
-			if (masterDataSet.size() > 0) {
-				// add ITEM_DATEV_CLIENT_ID from the DATEV config if missing
-				for (ItemCollection invoice : masterDataSet) {
-					// test if invoice has a _dbtr_iban and _dbtr_bic
+            // update the invoices with ITEM_DBTR_IBAN
+            if (masterDataSet.size() > 0) {
+                // if ITEM_DBTR_IBAN is missing, then we take the default form the configuration
+                for (ItemCollection invoice : masterDataSet) {
+                    // test if invoice has a _dbtr_iban and _dbtr_bic
+                    if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()) {
+                        // overtake _dbtr_iban from sepa export
+                        invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
+                                configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
+                    }
+                    if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {
+                        // overtake _dbtr_bic from sepa export
+                        invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
+                                configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+                    }
 
-					if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()) {
-						// overtake _dbtr_iban from sepa export
-						invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
-								configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
-					}
-					if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {
-						// overtake _dbtr_bic from sepa export
-						invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
-								configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
-					}
+                }
 
-				}
+                Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet,
+                        SepaWorkflowService.ITEM_DBTR_IBAN);
 
-				Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet,
-						SepaWorkflowService.ITEM_DBTR_IBAN);
+                // now we iterate over each invoice grouped by the ITEM_DBTR_IBAN
+                // so we create one export file for a group of invoices.
+                for (String key : invoiceGroups.keySet()) {
 
-				// now we iterate over each invoice grouped by the _datev_client_id
-				for (String key : invoiceGroups.keySet()) {
+                    List<ItemCollection> data = invoiceGroups.get(key);
+                    int groupCount = data.size();
+                    // build the sepa export workitem....
+                    sepaExport = new ItemCollection().model(modelVersion).task(taskID);
+                    sepaExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
+                    sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
+                    // set unqiueid, needed for xslt
+                    sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
+                    // copy dbtr_iban
+                    sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN, key);
 
-					List<ItemCollection> data = invoiceGroups.get(key);
-					int groupCount = data.size();
-					// build the datev export workitem....
-					sepaExport = new ItemCollection().model(modelVersion).task(taskID);
-					sepaExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
-					sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
-					// set unqiueid, needed for xslt
-					sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
-					// copy dbtr_iban
-					sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN, key);
+                    // set _dbtr_name from first invoice if available...
+                    ItemCollection firstInvoice = data.get(0);
+                    if (firstInvoice.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
+                        sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
+                                firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+                    }
+                    // set _dbtr_bic from first invoice if available...
+                    if (firstInvoice.hasItem(SepaWorkflowService.ITEM_DBTR_BIC)) {
+                        sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
+                                firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+                    }
 
-					// set _dbtr_name from first invoice if available...
-					ItemCollection firstInvoice = data.get(0);
-					if (firstInvoice.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
-						sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
-								firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
-					}
-					// set _dbtr_bic from first invoice if available...
-					if (firstInvoice.hasItem(SepaWorkflowService.ITEM_DBTR_BIC)) {
-						sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
-								firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
-					}
+                    // set workflow group to identify document in xslt
+                    sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP,
+                            task.getItemValue(WorkflowKernel.WORKFLOWGROUP));
 
-					// set workflow group to identify document in xslt
-					sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
+                    sepaWorkflowService.logMessage("...starting SEPA export for iban=" + key + "...", configuration,
+                            sepaExport);
 
-					sepaWorkflowService.logMessage("...starting SEPA export for iban=" + key + "...", configuration,
-							sepaExport);
+                    // link invoices with export workitem....
+                    for (ItemCollection invoice : data) {
+                        sepaExport.appendItemValue(SepaWorkflowService.LINK_PROPERTY, invoice.getUniqueID());
 
-					// link invoices with export workitem....
-					for (ItemCollection invoice : data) {
-						sepaExport.appendItemValue(SepaWorkflowService.LINK_PROPERTY, invoice.getUniqueID());
+                        // avoid unsupported characters in sepa fields
+                        invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_CDTR_NAME);
+                        invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_DBTR_NAME);
 
-						// avoid unsupported characters in sepa fields
-						invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_CDTR_NAME);
-						invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_DBTR_NAME);
+                        // write log
+                        sepaWorkflowService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ",
+                                configuration, sepaExport);
+                    }
 
-						// write log
-						sepaWorkflowService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ",
-								configuration, sepaExport);
-					}
+                    // finally we add the datev export document to the data collection
+                    data.add(sepaExport);
 
-					// finally we add the datev export document to the data collection
-					data.add(sepaExport);
+                    // create the attachment based on the report definition
+                    // write a file to workitem
 
-					// create the attachment based on the report definition
-					// write a file to workitem
+                    // create a harmonized debitor name for the filename.....
+                    String sDepName = sepaExport.getItemValueString(SepaWorkflowService.ITEM_DBTR_NAME);
+                    sDepName = sDepName.replace("&", "_");
+                    sDepName = sDepName.replace(">", "_");
+                    sDepName = sDepName.replace("<", "_");
+                    sDepName = sDepName.replace(" ", "_");
+                    // build a timestamp for the filename
+                    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
+                    String sepaFileName = "sepa_" + sDepName + "_" + df.format(new Date()) + ".xml";
+                    FileData filedata = reportService.transformDataSource(report, data, sepaFileName);
 
-					// create a harmonized debitor name for the filename.....
-					String sDepName = sepaExport.getItemValueString(SepaWorkflowService.ITEM_DBTR_NAME);
-					sDepName = sDepName.replace("&", "_");
-					sDepName = sDepName.replace(">", "_");
-					sDepName = sDepName.replace("<", "_");
-					sDepName = sDepName.replace(" ", "_");
-					// build a timestamp for the filename
-					DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
-					String sepaFileName = "sepa_" + sDepName + "_" + df.format(new Date()) + ".xml";
-					FileData filedata = reportService.transformDataSource(report, data, sepaFileName);
+                    // attach the file
+                    sepaExport.addFileData(filedata);
 
-					// attach the file
-					sepaExport.addFileData(filedata);
+                    // update and process invoices...
+                    sepaWorkflowService.processInvoices(sepaExport, data, event, configuration);
 
-					// update and process invoices...
-					sepaWorkflowService.processInvoices(sepaExport, data, event, configuration);
+                    // write log
+                    sepaWorkflowService.logMessage("...SEPA export " + key + "  finished.", configuration, sepaExport);
+                    sepaWorkflowService.logMessage("..." + groupCount + " invoices exported. ", configuration,
+                            sepaExport);
 
-					// write log
-					sepaWorkflowService.logMessage("...SEPA export " + key + "  finished.", configuration, sepaExport);
-					sepaWorkflowService.logMessage("..." + groupCount + " invoices exported. ", configuration,
-							sepaExport);
+                    // finish by processing the export workitem....
+                    sepaExport.event(SepaWorkflowService.EVENT_START).event(SepaWorkflowService.EVENT_SUCCESS);
+                    workflowService.processWorkItem(sepaExport);
 
-					// finish by proessing the datev export workitem....
-					sepaExport.event(SepaWorkflowService.EVENT_START).event(SepaWorkflowService.EVENT_SUCCESS);
-					workflowService.processWorkItem(sepaExport);
+                }
 
-				}
+                sepaWorkflowService.logMessage("...SEPA export completed", configuration, null);
 
-				sepaWorkflowService.logMessage("...SEPA export completed", configuration, null);
+            } else {
+                // no invoices found - so we terminate
+                logger.finest("......no invoices found.");
+                return configuration;
+            }
 
-			} else {
-				// no invoices found - so we terminate
-				logger.finest("......no invoices found.");
-				return configuration;
-			}
+        } catch (PluginException e) {
+            // In case of a plugin exeption we continue the scheduler and mark the export as
+            // failed
+            try {
+                if (sepaExport != null) {
+                    // execute sepa workflow with EVENT_FAILED
+                    sepaWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
+                    sepaExport.event(SepaWorkflowService.EVENT_FAILED);
+                    workflowService.processWorkItem(sepaExport);
+                }
+            } catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
+                throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
+                        "Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+            }
+        } catch (ModelException | JAXBException | TransformerException | IOException | AccessDeniedException
+                | ProcessingErrorException | QueryException e) {
+            // in all other cases we stop the processing
+            try {
+                if (sepaExport != null) {
+                    // execute sepa workflow with EVENT_FAILED
+                    sepaWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
+                    sepaExport.event(SepaWorkflowService.EVENT_FAILED);
+                    workflowService.processWorkItem(sepaExport);
+                }
+            } catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
+                throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
+                        "Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+            }
 
-		} catch (PluginException e) {
-			// In case of a plugin exeption we continue the scheduler and mark the export as
-			// failed
-			try {
-				if (sepaExport != null) {
-					// execute sepa workflow with EVENT_FAILED
-					sepaWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
-					sepaExport.event(SepaWorkflowService.EVENT_FAILED);
-					workflowService.processWorkItem(sepaExport);
-				}
-			} catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
-				throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
-						"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
-			}
-		} catch (ModelException | JAXBException | TransformerException | IOException | AccessDeniedException
-				| ProcessingErrorException | QueryException e) {
-			// in all other cases we stop the processing
-			try {
-				if (sepaExport != null) {
-					// execute sepa workflow with EVENT_FAILED
-					sepaWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
-					sepaExport.event(SepaWorkflowService.EVENT_FAILED);
-					workflowService.processWorkItem(sepaExport);
-				}
-			} catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
-				throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
-						"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
-			}
+            throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
+                    "Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+        }
 
-			throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
-					"Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
-		}
+        return configuration;
+    }
 
-		return configuration;
-	}
+    /**
+     * This method groups a collection of invoices by a given key item.
+     * 
+     * @return a map with keys and lists of ItemCollection objects.
+     */
+    private Map<String, List<ItemCollection>> groupInvoicesBy(List<ItemCollection> datasource, String keyItem) {
+        Map<String, List<ItemCollection>> result = new HashMap<>();
+        logger.info("......grouping invoices by '" + keyItem + "'");
+        for (ItemCollection invoice : datasource) {
+            String key = invoice.getItemValueString(keyItem);
+            logger.info("......building invoice group for '" + key + "'");
+            List<ItemCollection> group = result.get(key);
+            if (group == null) {
+                group = new ArrayList<ItemCollection>();
+            }
+            group.add(invoice);
+            result.put(key, group);
+        }
 
-	/**
-	 * This method groups a collection of invoices by a given key item.
-	 * 
-	 * @return a map with keys and lists of ItemCollection objects.
-	 */
-	private Map<String, List<ItemCollection>> groupInvoicesBy(List<ItemCollection> datasource, String keyItem) {
-		Map<String, List<ItemCollection>> result = new HashMap<>();
-		logger.info("......grouping invoices by '" + keyItem + "'");
-		for (ItemCollection invoice : datasource) {
-			String key = invoice.getItemValueString(keyItem);
-			logger.info("......building invoice group for '" + key + "'");
-			List<ItemCollection> group = result.get(key);
-			if (group == null) {
-				group = new ArrayList<ItemCollection>();
-			}
-			group.add(invoice);
-			result.put(key, group);
-		}
+        return result;
+    }
 
-		return result;
-	}
+    /**
+     * Remove characters like '&', '<' and '>' form sepa fields
+     * 
+     * @param invoice
+     * @return
+     */
+    private ItemCollection harmonizeItem(ItemCollection invoice, String itemName) {
+        String value = null;
+        value = invoice.getItemValueString(itemName);
+        value = value.replace("&", " ");
+        value = value.replace(">", " ");
+        value = value.replace("<", " ");
+        invoice.replaceItemValue(itemName, value);
+        return invoice;
 
-	/**
-	 * Remove characters like '&', '<' and '>' form sepa fields
-	 * 
-	 * @param invoice
-	 * @return
-	 */
-	private ItemCollection harmonizeItem(ItemCollection invoice, String itemName) {
-		String value = null;
-		value = invoice.getItemValueString(itemName);
-		value = value.replace("&", " ");
-		value = value.replace(">", " ");
-		value = value.replace("<", " ");
-		invoice.replaceItemValue(itemName, value);
-		return invoice;
-
-	}
+    }
 
 }
