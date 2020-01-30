@@ -20,8 +20,11 @@
 				<xsl:variable name="count"
 					select="count(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='$uniqueid']/value)" />
 				<!-- compute total amount -->
-				<xsl:variable name="total"
+				<xsl:variable name="totalsum"
 					select="sum(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='_amount_brutto']/value)" />
+				<!-- round to 2 digits -->
+				<xsl:variable name="total"
+					select="round-half-to-even($totalsum, 2)" />
 
 				<!-- shortcut for the sepa export document -->
 				<xsl:variable name="exportWorkitem"
