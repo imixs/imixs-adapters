@@ -174,9 +174,9 @@ public class SepaScheduler implements Scheduler {
                                 firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
                     }
 
-                    // set workflow group to identify document in xslt
-                    sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP,
-                            task.getItemValue(WorkflowKernel.WORKFLOWGROUP));
+                    // set workflow group name from the Task Element to identify document in xslt
+                    String modelTaskGroupName = task.getItemValueString("txtworkflowgroup"); // DO NOT CHANGE!
+                    sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, modelTaskGroupName);
 
                     sepaWorkflowService.logMessage("...starting SEPA export for iban=" + key + "...", configuration,
                             sepaExport);
