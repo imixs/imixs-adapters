@@ -194,7 +194,7 @@ public class SepaScheduler implements Scheduler {
                                 configuration, sepaExport);
                     }
 
-                    // finally we add the datev export document to the data collection
+                    // finally we add the sepa export document to the data collection
                     data.add(sepaExport);
 
                     // create the attachment based on the report definition
