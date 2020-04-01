@@ -68,7 +68,7 @@ import org.imixs.workflow.xml.XSLHandler;
  * <p>
  * The goal of the DatevSchedulerXML is to create a ZIP file containing the
  * invoices files and the DATEV Belegsatz data in xml format. One XML file is
- * generated for each invoide. The file "document.xml" contains the links to the
+ * generated for each invoice. The file "document.xml" contains the links to the
  * invoice attachments.
  * 
  * <pre>
