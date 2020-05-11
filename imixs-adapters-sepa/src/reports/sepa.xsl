@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xsl:stylesheet
-	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	version="2.0">
 	<xsl:strip-space elements="*" />
 	<xsl:output method="xml" indent="yes" encoding="UTF-8" standalone="yes" />
 
@@ -21,10 +23,10 @@
 					select="count(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='$uniqueid']/value)" />
 				<!-- compute total amount -->
 				<xsl:variable name="totalsum"
-					select="sum(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='_amount_brutto']/value)" />
+					select="xs:decimal(sum(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='_amount_brutto']/value))" />
 				<!-- round to 2 digits -->
 				<xsl:variable name="total"
-					select="round-half-to-even($totalsum, 2)" />
+					select="xs:decimal(round-half-to-even($totalsum, 2))" />
 
 				<!-- shortcut for the sepa export document -->
 				<xsl:variable name="exportWorkitem"
