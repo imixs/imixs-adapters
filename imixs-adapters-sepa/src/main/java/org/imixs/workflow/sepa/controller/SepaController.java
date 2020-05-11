@@ -152,7 +152,11 @@ public class SepaController extends SchedulerController {
         double result = 0;
         for (String id : refids) {
             ItemCollection doc = documentService.load(id);
-            result = result + doc.getItemValueDouble(item);
+            if (doc!=null) {
+                result = result + doc.getItemValueDouble(item);
+            } else {
+                logger.warning("invalid read access to calculate sepa sum");
+            }
         }
         // rond with 2 digits
         return Math.round(result * 100.0) / 100.0;
