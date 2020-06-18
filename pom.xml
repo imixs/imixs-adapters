@@ -10,8 +10,7 @@
 		<module>imixs-adapters-ldap</module>
 		<module>imixs-adapters-datev</module>
 		<module>imixs-adapters-sepa</module>
-		<module>imixs-adapters-qrcode</module>
-		<module>imixs-adapters-prometheus</module>
+		<module>imixs-adapters-qrcode</module>		
 		<module>imixs-adapters-kafka</module>
 	</modules>
 
