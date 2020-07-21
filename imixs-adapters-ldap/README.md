@@ -51,55 +51,6 @@ Note: A system-check form the web-front-end did discard the ProfileService cache
  
 
 
-## The LDAP User Interceptor 
-
-The interceptor class 
-
-	org.imixs.workflow.ldap.LDAPUserInterceptor
-
-is used to provide the ProfileService with optional attributes form an external ldap directory. The interceptor class can be configured in the ejb-jar.xml deployment descriptor:
-
-
-	...
-	<assembly-descriptor>
-		<!-- LDAPUserInterceptor -->
-		<interceptor-binding> 
-		    <description>Intercepter to add ldap attributes into the profile context</description> 
-		    <ejb-name>ProfileService</ejb-name> 
-			<interceptor-class>org.imixs.workflow.ldap.LDAPUserInterceptor</interceptor-class> 
-		</interceptor-binding>
-	</assembly-descriptor>
-	...
-
-The configuration to lookup a user is done by the imixs.properties.
-
-
-## The LDAP Group Interceptor 
-
-The interceptor class 
-
-	org.imixs.workflow.ldap.LDAPGroupInterceptor
-
-is used to provide the user access management with user groups provided by an external ldap directory. The interceptor class can be configured in the ejb-jar.xml deployment descriptor:
-
-
-	...
-	<assembly-descriptor>
-		<!-- LDAPGroupInterceptor -->
-		<interceptor-binding> 
-		    <description>Intercepter to add ldap attributes into the profile context</description> 
-		    <ejb-name>ProfileService</ejb-name> 
-			<interceptor-class>org.imixs.workflow.ldap.LDAPGroupInterceptor</interceptor-class> 
-		</interceptor-binding>
-	</assembly-descriptor>
-	...
-
-The configuration to lookup a user is done by the imixs.properties.
-
-
-
-
-
 
 ## Lookup LDAP Context
 The ldap context can either be injected by a JNDI name or constructed manually based on a given configuration:
@@ -140,9 +91,9 @@ A userid lookup is typically made against the AD attribute 'samAccountName' usin
 	(samAccountName=%u)
 
 
-## Adapt LDAP Profile
+## The LDAPProfileEvent
 
-The LdapLookupService sends a CDI Event (org.imixs.workflow.ldap.LDAPProfileEvent). This event can be observed by CDI classes to adapt the content of a fetched ldap user profile. 
+The LdapLookupService sends the CDI Event 'org.imixs.workflow.ldap.LDAPProfileEvent'. This event can be observed by CDI classes to adapt the content of a fetched ldap user profile. 
 
 See the following example:
 
@@ -156,6 +107,45 @@ See the following example:
 			event.setProfile(profile);
 		}
 	}
+
+
+
+## The Marty ProfileEvent
+
+The Imixs-Marty ProfileService sends the CDI event 'ProfileEvent' during the creation and the lookup of a profile object. The event can be observed by a client service to enrich a profile with attributes from an LDAP object. 
+
+
+	org.imixs.marty.ejb.ProfileEvent
+
+The ProfileEvent defines the following event types:
+
+ - ON_PROFILE_LOOKUP - send if a local lookup for a profile failed
+ - ON_PROFILE_CREATE - send immediately before a profile object is created
+
+
+
+
+## The LDAP Group Interceptor 
+
+The interceptor class 
+
+	org.imixs.workflow.ldap.LDAPGroupInterceptor
+
+is used to provide the user access management with user groups provided by an external ldap directory. The interceptor class can be configured in the ejb-jar.xml deployment descriptor:
+
+
+	...
+	<assembly-descriptor>
+		<!-- LDAPGroupInterceptor -->
+		<interceptor-binding> 
+		    <description>Intercepter to add ldap attributes into the profile context</description> 
+		    <ejb-name>ProfileService</ejb-name> 
+			<interceptor-class>org.imixs.workflow.ldap.LDAPGroupInterceptor</interceptor-class> 
+		</interceptor-binding>
+	</assembly-descriptor>
+	...
+
+The configuration to lookup a user is done by the imixs.properties.
 
 
 

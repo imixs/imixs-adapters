@@ -95,7 +95,7 @@ public class LDAPLookupService {
             logger.finest("......init lookup service");
             // load confiugration entity
 
-            // Disabled because of confglict with LDAPGroupInterceptor
+            // Disabled because of conflict with LDAPGroupInterceptor
             // configurationProperties = propertyService.getProperties();
             configurationProperties = new Properties();
             try {

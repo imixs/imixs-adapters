@@ -42,7 +42,7 @@ public class LDAPCache implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private static Logger logger = Logger.getLogger(LDAPCache.class.getName());
 
-	int DEFAULT_CACHE_SIZE = 30;
+	int DEFAULT_CACHE_SIZE = 100;
 	int DEFAULT_EXPIRES_TIME = 60000;
 	final static String GROUP_KEY_SUFIX = "-GROUPS";
 	long expiresTime = 0;
@@ -68,19 +68,6 @@ public class LDAPCache implements Serializable {
 			e.printStackTrace();
 		}
 	}
-
-//	@PrePassivate
-//	void pp() {
-//		logger.info("ISSUE #68 - LDAP Analyse @PrePassivate....");
-//		logger.info("ISSUE #68 - LDAP Analyse cache size= " + cache.size());
-//	}
-//
-//	@PostActivate
-//	void aa() {
-//		logger.info("ISSUE #68 - LDAP Analyse @PostActivate....");
-//		logger.info("ISSUE #68 - LDAP Analyse cache size= " + cache.size());
-//
-//	}
 
 	/**
 	 * resets the ldap cache object and reads the config params....
