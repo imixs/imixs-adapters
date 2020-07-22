@@ -30,6 +30,7 @@ The configuration, to directly connect the services with a ldap server, is done 
 
 
 ### User Attributes
+
 The property ldap.user-attrbutes provides a list of ldap attributes to be stored in the corresponding User Profile document. The attributes are comma separated. Optional a target-fieldname can be defined by | followed by the document item:
 
     ldap.user-attributes=uid,SN,CN,mail|txtEmail
@@ -112,15 +113,25 @@ See the following example:
 
 ## The Marty ProfileEvent
 
-The Imixs-Marty ProfileService sends the CDI event 'ProfileEvent' during the creation and the lookup of a profile object. The event can be observed by a client service to enrich a profile with attributes from an LDAP object. 
+The Imixs-Marty ProfileService sends the CDI event '*org.imixs.marty.ejb.ProfileEvent*' during the creation and the lookup of a profile object. The event is observed by the LDAPLookupService to enrich a profile with attributes from an LDAP object. 
 
 
-	org.imixs.marty.ejb.ProfileEvent
+### ON_PROFILE_LOOKUP 
 
-The ProfileEvent defines the following event types:
+The event type 'ON_PROFILE_LOOKUP' is send by the ProfileService in case a local lookup for a profile failed. This means no profile document exists in the workflow instance. In this situation the LDAPLookupService lookups the profile data in the LDAP directory and returns a corresponding ItemCollection. The profile is not saved in the database but cached in the local LDAPCache.
 
- - ON_PROFILE_LOOKUP - send if a local lookup for a profile failed
- - ON_PROFILE_CREATE - send immediately before a profile object is created
+### ON_PROFILE_CREATE
+
+The event type 'ON_PROFILE_CREATE' is send immediately before a profile object is created. The attributes of the profile are updated by LDAPLookupService with the defined user attribures. 
+
+
+## The LDAPPlugin
+
+The LDAPPlugin can be used in the system model to update a user profile when processed with the data stored in the LDAP directory.
+
+	org.imixs.workflow.ldap.LDAPPlugin
+
+The plugin runs on Profile Entities only. The plugin makes a ldap lookup and updates all items defined by he property ldap.user-attributes
 
 
 

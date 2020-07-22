@@ -532,7 +532,7 @@ public class LDAPLookupService {
      * 
      */
     @SuppressWarnings("unchecked")
-    private void updateProfileLDAPData(String userID, ItemCollection profile) {
+    public void updateProfileLDAPData(String userID, ItemCollection profile) {
         // compare attributes....
         ItemCollection ldapUser = findUser(userID);
         boolean bUpdate = false;
