@@ -107,7 +107,7 @@ public class SepaScheduler implements Scheduler {
             String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
             int taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
 
-            // fetch the inital event
+            // fetch the initial event
             Model model = modelService.getModel(modelVersion);
             ItemCollection event = model.getEvent(taskID, SepaWorkflowService.EVENT_START);
             ItemCollection task = model.getTask(taskID);
@@ -116,7 +116,7 @@ public class SepaScheduler implements Scheduler {
             ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
             if (report == null) {
                 throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
-                        "unable to load report '" + reportName + "'. Please check  model configuration");
+                        "Missing report definition. Unable to load report '" + reportName + "'. Please check  model configuration " + taskID+"."+SepaWorkflowService.EVENT_START);
             }
 
             // get the data source based on the report definition....
@@ -141,9 +141,14 @@ public class SepaScheduler implements Scheduler {
                         invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
                                 configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
                     }
-
+                    if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_NAME).isEmpty()) {
+                        // overtake _dbtr_bic from sepa export
+                        invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
+                                configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+                    }
                 }
 
+                // group all invoices by the IBAN number
                 Map<String, List<ItemCollection>> invoiceGroups = groupInvoicesBy(masterDataSet,
                         SepaWorkflowService.ITEM_DBTR_IBAN);
 
@@ -159,6 +164,7 @@ public class SepaScheduler implements Scheduler {
                     sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
                     // set unqiueid, needed for xslt
                     sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
+                    
                     // copy dbtr_iban
                     sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN, key);
 
