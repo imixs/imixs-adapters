@@ -14,15 +14,22 @@
 		<module>imixs-adapters-kafka</module>
 	</modules>
 
-	<url>https://github.com/imixs/imixs-adapters</url>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<org.imixs.workflow.version>5.1.10</org.imixs.workflow.version>
+		<org.imixs.marty.version>4.1.6-SNAPSHOT</org.imixs.marty.version>
+		<microprofile.version>2.2</microprofile.version>
+	</properties>
 
+	<description>
+		Connect Imixs-Workflow with services and software platforms
+	</description>
+
+	<url>https://github.com/imixs/imixs-adapters</url>
 	<organization>
 		<name>Imixs Software Solutions GmbH</name>
 		<url>http://www.imixs.com</url>
 	</organization>
-
-
-	<description>Connect Imixs-Workflow with services and software platforms</description>
 
 	<developers>
 		<developer>
@@ -39,15 +46,19 @@
 			<timezone>2</timezone>
 		</developer>
 	</developers>
-	<issueManagement>
-		<url>https://github.com/imixs/imixs-adapters/issues</url>
-	</issueManagement>
+
 	<scm>
 		<connection>scm:git:https://github.com/imixs/imixs-adapters.git</connection>
 		<developerConnection>scm:git:https://github.com/imixs/imixs-adapters.git</developerConnection>
 		<url>https://github.com/imixs/imixs-adapters/</url>
 		<tag>HEAD</tag>
 	</scm>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/imixs/imixs-adapters/issues</url>
+	</issueManagement>
+	
 	<licenses>
 		<license>
 			<name>GNU General Public License</name>
@@ -57,15 +68,6 @@
 		</license>
 	</licenses>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>5.1.10</org.imixs.workflow.version>
-		<org.imixs.marty.version>4.1.6-SNAPSHOT</org.imixs.marty.version>
-		<microprofile.version>2.2</microprofile.version>
-	</properties>
-	
-
-	
 	<build>
 		<plugins>
 
@@ -213,8 +215,6 @@
 		</profile>
 	</profiles>
 	
-
-
 	<dependencyManagement>
 		<dependencies>
 			<!-- WORKFLOW -->
@@ -289,7 +289,7 @@
 		</dependency>
 	</dependencies>
 	
-	<!-- Distributen Management oss.sonatype.org -->
+	<!-- Distribution Management oss.sonatype.org -->
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
@@ -300,5 +300,4 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-	
 </project>
