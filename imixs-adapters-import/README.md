@@ -43,8 +43,17 @@ Each source object provides at least the following properties to be used by a ob
 
 The Importer adapter provides a JSF Web UI component to be used for jsf applications. This ui component is optional and can be implement in customized way. 
 
-<img src="./doc/images/webui-01.png" size="800px"/>
+<img src="./doc/images/webui-01.png" size="600px"/>
 
-The CDI Bean DocumentImportController is used to display and select data sources. 
+### The DocumentImportController
 
-<img src="./doc/images/webui-01.png" size="800px" />
+The CDI Bean DocumentImportController is used to display and select data sources. The controller can be extend for individual source definitions. 
+
+<img src="./doc/images/webui-02.png" size="600px" />
+
+
+
+
+
+
+
