@@ -12,6 +12,7 @@
 		<module>imixs-adapters-sepa</module>
 		<module>imixs-adapters-qrcode</module>		
 		<module>imixs-adapters-kafka</module>
+		<module>imixs-adapters-import</module>
 	</modules>
 
 	<properties>
