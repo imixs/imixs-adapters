@@ -21,11 +21,11 @@ This extracted text information is added into the item '_dms_' which can be part
  
 * [imixs-adapters-documents](imixs-adapters-documents)
 
-## Magento Adapter
+## Import Adapter
 
-The [Magento adapter](imixs-adapters-magento-ejb) provides a client API to connect Imixs-Workflow to the Ecommerce Softwareplattform Magento. 
+The [Import adapter](imixs-adapters-import) provides a generic document import service based on the Imixs Scheduler API
 
-* [imixs-adapters-magento-ejb](imixs-adapters-magento-ejb)
+* [imixs-adapters-import](imixs-adapters-import)
 
 
 ## DATEV Adapter
