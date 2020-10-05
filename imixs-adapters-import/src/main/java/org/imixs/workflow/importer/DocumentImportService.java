@@ -25,6 +25,7 @@ package org.imixs.workflow.importer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.ejb.EJB;
@@ -35,7 +36,6 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.engine.scheduler.Scheduler;
 import org.imixs.workflow.exceptions.PluginException;
-import org.imixs.workflow.util.XMLParser;
 
 /**
  * The DocumentImportService provides definitions and methods to process a
@@ -114,25 +114,29 @@ public class DocumentImportService {
     }
 
     /**
-     * This helper method evaluates the options and applies "items" tags to the new
-     * workitem if defined.
-     * 
-     * <pre>
-     * {@code
-    <items>
-        <process.ref>Inbox</process.ref>
-        <space.ref>Development</space.ref>
-    </items>}
-     * </pre>
-     * 
-     * *
+     * This helper method evaluates the options and returns a Properties object 
      * 
      * @throws PluginException
      */
-    public void evalOptions(ItemCollection source, ItemCollection documentContext) throws PluginException {
-        String options = source.getItemValueString(SOURCE_ITEM_OPTIONS);
-        ItemCollection itemsData = XMLParser.parseTag(options, "items");
-        documentContext.replaceAllItems(itemsData.getAllItems());
+    public Properties getOptionsProperties(ItemCollection source) {
+        Properties properties=new Properties();
+        String optionsText = source.getItemValueString(SOURCE_ITEM_OPTIONS);
+        
+        // split in new lines
+        String[] options = optionsText.split("\n");
+        
+        logger.fine("...read source properties");
+        for (String sProperty :options) {
+            
+            int ipos = sProperty.indexOf('=');
+            if (ipos > 0) {
+                String sKey = sProperty.substring(0, sProperty.indexOf('='));
+                String sValue = sProperty.substring(sProperty.indexOf('=') + 1);
+                properties.setProperty(sKey, sValue);
+            }
+        }
+        
+        return properties;
 
     }
 

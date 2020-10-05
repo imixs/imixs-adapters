@@ -227,9 +227,7 @@ public class FTPImportAdapter {
         workitem.event(source.getItemValueInteger(DocumentImportService.SOURCE_ITEM_EVENT));
         workitem.setWorkflowGroup(source.getItemValueString("workflowgroup"));
 
-        // apply options if available....
-        documentImportService.evalOptions(source, workitem);
-
+        
         String contentType = MediaType.WILDCARD;
         if (fileName.toLowerCase().endsWith(".pdf")) {
             contentType = "Application/PDF";
