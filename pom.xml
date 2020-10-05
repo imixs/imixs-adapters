@@ -6,7 +6,6 @@
 	<packaging>pom</packaging>
 	<name>Imxis Adapters</name>
 	<modules>
-		<module>imixs-adapters-magento</module>
 		<module>imixs-adapters-ldap</module>
 		<module>imixs-adapters-datev</module>
 		<module>imixs-adapters-sepa</module>
