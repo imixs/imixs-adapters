@@ -1,4 +1,4 @@
-# Apache Importer Adapter
+# Import Adapter
 
 The Imixs Import Adapter is a generic import adapter service to be used to import documents form various sources. An import scheduler sends CDI events to be processed by specific import observers. The following import sources are supported:
 
