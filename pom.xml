@@ -11,7 +11,6 @@
 		<module>imixs-adapters-sepa</module>
 		<module>imixs-adapters-qrcode</module>		
 		<module>imixs-adapters-kafka</module>
-		<module>imixs-adapters-import</module>
 	</modules>
 
 	<properties>
@@ -19,6 +18,7 @@
 		<org.imixs.workflow.version>5.1.10</org.imixs.workflow.version>
 		<org.imixs.marty.version>4.1.6</org.imixs.marty.version>
 		<microprofile.version>2.2</microprofile.version>
+		<apache.pdfbox.version>2.0.19</apache.pdfbox.version>
 	</properties>
 
 	<description>
