@@ -273,6 +273,9 @@ public class SepaScheduler implements Scheduler {
 
             throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
                     "Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
+        }  catch (RuntimeException re) {
+            logger.severe("...SEPA Runtime Error");
+            sepaWorkflowService.logMessage("!!ERROR!! Failed to run SEPA scheduler: " + re.getMessage(), configuration, null);
         }
 
         return configuration;
