@@ -23,7 +23,7 @@
 					select="count(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='$uniqueid']/value)" />
 				<!-- compute total amount -->
 				<xsl:variable name="totalsum"
-					select="xs:decimal(sum(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='_amount_brutto']/value))" />
+					select="xs:decimal(sum(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='invoice.total']/value))" />
 				<!-- round to 2 digits -->
 				<xsl:variable name="total"
 					select="xs:decimal(round-half-to-even($totalsum, 2))" />
@@ -48,7 +48,7 @@
 					<InitgPty>
 						<Nm>
 							<xsl:value-of
-								select="$exportWorkitem/item[@name='_dbtr_name']/value" />
+								select="$exportWorkitem/item[@name='dbtr.name']/value" />
 						</Nm>
 					</InitgPty>
 				</GrpHdr>
@@ -75,14 +75,14 @@
 					<Dbtr>
 						<Nm>
 							<xsl:value-of
-								select="$exportWorkitem/item[@name='_dbtr_name']/value" />
+								select="$exportWorkitem/item[@name='dbtr.name']/value" />
 						</Nm>
 					</Dbtr>
 					<DbtrAcct>
 						<Id>
 							<IBAN>
 								<xsl:value-of
-									select="replace($exportWorkitem/item[@name='_dbtr_iban']/value, ' ', '')" />
+									select="replace($exportWorkitem/item[@name='dbtr.iban']/value, ' ', '')" />
 							</IBAN>
 						</Id>
 					</DbtrAcct>
@@ -90,7 +90,7 @@
 						<FinInstnId>
 							<BIC>
 								<xsl:value-of
-									select="$exportWorkitem/item[@name='_dbtr_bic']/value" />
+									select="$exportWorkitem/item[@name='dbtr.bic']/value" />
 							</BIC>
 						</FinInstnId>
 					</DbtrAgt>
@@ -133,33 +133,33 @@
 			<Amt>
 				<InstdAmt>
 					<xsl:attribute name="Ccy"><xsl:value-of
-						select="item[@name='_currency']/value" /></xsl:attribute>
+						select="item[@name='invoice.currency']/value" /></xsl:attribute>
 					<xsl:value-of
-						select="item[@name='_amount_brutto']/value" />
+						select="item[@name='invoice.total']/value" />
 				</InstdAmt>
 			</Amt>
 			<CdtrAgt>
 				<FinInstnId>
 					<BIC>
-						<xsl:value-of select="item[@name='_cdtr_bic']/value" />
+						<xsl:value-of select="item[@name='cdtr.bic']/value" />
 					</BIC>
 				</FinInstnId>
 			</CdtrAgt>
 			<Cdtr>
 				<Nm>
-					<xsl:value-of select="item[@name='_cdtr_name']/value" />
+					<xsl:value-of select="item[@name='cdtr.name']/value" />
 				</Nm>
 			</Cdtr>
 			<CdtrAcct>
 				<Id>
 					<IBAN>
-						<xsl:value-of select="replace(item[@name='_cdtr_iban']/value, ' ', '')" />
+						<xsl:value-of select="replace(item[@name='cdtr.iban']/value, ' ', '')" />
 					</IBAN>
 				</Id>
 			</CdtrAcct>
 			<RmtInf>
 				<Ustrd>
-					<xsl:value-of select="item[@name='_subject']/value" />
+					<xsl:value-of select="item[@name='$workflowsummary']/value" />
 				</Ustrd>
 			</RmtInf>
 		</CdtTrfTxInf>

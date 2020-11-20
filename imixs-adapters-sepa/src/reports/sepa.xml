@@ -11,38 +11,38 @@
 		<item name="$workflowgroup">
 			<value xsi:type="xs:string">Rechnungseingang</value>
 		</item>
-		<item name="_amount_brutto">
+		<item name="invoice.total">
 			<value xsi:type="xs:decimal">354</value>
 		</item>
-		<item name="_cdtr_bic">
+		<item name="cdtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_cdtr_iban">
+		<item name="cdtr.iban">
 			<value xsi:type="xs:string">DE07500400000582 5070 42</value>
 		</item>
 
-		<item name="_invoicedate">
+		<item name="invoice.date">
 			<value xsi:type="xs:dateTime">2018-08-23T22:00:00Z</value>
 		</item>
-		<item name="_invoicenumber">
+		<item name="invoice.number">
 			<value xsi:type="xs:string">345</value>
 		</item>
-		<item name="_dbtr_bic">
+		<item name="dbtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_dbtr_iban">
+		<item name="dbtr.iban">
 			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
 		</item>
-		<item name="_subject">
+		<item name="$workflowsummary">
 			<value xsi:type="xs:string">test</value>
 		</item>
-		<item name="_cdtr_name">
+		<item name="cdtr.name">
 			<value xsi:type="xs:string">Muster GmbH</value>
 		</item>
-		<item name="_dbtr_name">
+		<item name="dbtr.name">
 			<value xsi:type="xs:string">Muster AG</value>
 		</item>
-		<item name="_currency">
+		<item name="invoice.currency">
 			<value xsi:type="xs:string">EUR</value>
 		</item>
 		
@@ -58,35 +58,35 @@
 		<item name="$workflowgroup">
 			<value xsi:type="xs:string">Rechnungseingang</value>
 		</item>
-		<item name="_amount_brutto">
+		<item name="invoice.total">
 			<value xsi:type="xs:decimal">345.00</value>
 		</item>
-		<item name="_cdtr_bic">
+		<item name="cdtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_cdtr_iban">
+		<item name="cdtr.iban">
 			<value xsi:type="xs:string">DE07500400000582 5070 42</value>
 		</item>
 
-		<item name="_invoicedate">
+		<item name="invoice.date">
 			<value xsi:type="xs:dateTime">2018-08-29T22:00:00Z</value>
 		</item>
-		<item name="_invoicenumber">
+		<item name="invoice.number">
 			<value xsi:type="xs:string">3245</value>
 		</item>
-		<item name="_dbtr_bic">
+		<item name="dbtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_dbtr_iban">
+		<item name="dbtr.iban">
 			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
 		</item>
-		<item name="_subject">
+		<item name="$workflowsummary">
 			<value xsi:type="xs:string">Servicerechnung</value>
 		</item>
-		<item name="_cdtr_name">
+		<item name="cdtr.name">
 			<value xsi:type="xs:string">Muster GmbH</value>
 		</item>
-		<item name="_dbtr_name">
+		<item name="dbtr.name">
 			<value xsi:type="xs:string">Muster AG</value>
 		</item>
 		<item name="_currency">
@@ -103,35 +103,35 @@
 		<item name="$workflowgroup">
 			<value xsi:type="xs:string">Rechnungseingang</value>
 		</item>
-		<item name="_amount_brutto">
+		<item name="invoice.total">
 			<value xsi:type="xs:decimal">34.00</value>
 		</item>
-		<item name="_cdtr_bic">
+		<item name="cdtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_cdtr_iban">
+		<item name="cdtr.iban">
 			<value xsi:type="xs:string">DE07500400000582 5070 42</value>
 		</item>
 
-		<item name="_invoicedate">
+		<item name="invoice.date">
 			<value xsi:type="xs:dateTime">2018-08-07T22:00:00Z</value>
 		</item>
-		<item name="_invoicenumber">
+		<item name="invoice.number">
 			<value xsi:type="xs:string">345</value>
 		</item>
-		<item name="_dbtr_bic">
+		<item name="dbtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_dbtr_iban">
+		<item name="dbtr.iban">
 			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
 		</item>
-		<item name="_subject">
+		<item name="$workflowsummary">
 			<value xsi:type="xs:string">asdf</value>
 		</item>
-		<item name="_cdtr_name">
+		<item name="cdtr.name">
 			<value xsi:type="xs:string">Muster GmbH</value>
 		</item>
-		<item name="_dbtr_name">
+		<item name="dbtr.name">
 			<value xsi:type="xs:string">Muster AG</value>
 		</item>
 		<item name="_currency">
@@ -148,34 +148,34 @@
 		<item name="$workflowgroup">
 			<value xsi:type="xs:string">Rechnungseingang</value>
 		</item>
-		<item name="_amount_brutto">
+		<item name="invoice.total">
 			<value xsi:type="xs:decimal">100</value>
 		</item>
-		<item name="_cdtr_bic">
+		<item name="cdtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_cdtr_iban">
+		<item name="cdtr.iban">
 			<value xsi:type="xs:string">DE07500400000582 5070 42</value>
 		</item>
-		<item name="_invoicedate">
+		<item name="invoice.date">
 			<value xsi:type="xs:dateTime">2018-09-13T22:00:00Z</value>
 		</item>
-		<item name="_invoicenumber">
+		<item name="invoice.number">
 			<value xsi:type="xs:string">aaaa-bbbb34535345</value>
 		</item>
-		<item name="_dbtr_bic">
+		<item name="dbtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_dbtr_iban">
+		<item name="dbtr.iban">
 			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
 		</item>
-		<item name="_subject">
+		<item name="$workflowsummary">
 			<value xsi:type="xs:string">teasd</value>
 		</item>
-		<item name="_cdtr_name">
+		<item name="cdtr.name">
 			<value xsi:type="xs:string">Muster GmbH</value>
 		</item>
-		<item name="_dbtr_name">
+		<item name="dbtr.name">
 			<value xsi:type="xs:string">Muster AG</value>
 		</item>
 		<item name="_currency">
@@ -198,10 +198,10 @@
 		<item name="$workflowgroup">
 			<value xsi:type="xs:string">SEPA-Export</value>
 		</item>
-		<item name="_dbtr_bic">
+		<item name="dbtr.bic">
 			<value xsi:type="xs:string">OOBADEFFXXX</value>
 		</item>
-		<item name="_dbtr_iban">
+		<item name="dbtr.iban">
 			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
 		</item>
 		<item name="_scheduler_log">
@@ -218,7 +218,7 @@
 				added.
 			</value>
 		</item>
-		<item name="_subject">
+		<item name="$workflowsummary">
 			<value xsi:type="xs:string">Muster GmbH</value>
 		</item>
 		<item name="txtworkitemref">
@@ -227,7 +227,7 @@
 			<value xsi:type="xs:string">9cf48434-8c39-438f-b053-14afd7e70032</value>
 			<value xsi:type="xs:string">78e89726-b7b2-41fe-9964-7f62c3837f01</value>
 		</item>
-		<item name="_dbtr_name">
+		<item name="dbtr.name">
 			<value xsi:type="xs:string">Muster AG</value>
 		</item>
 	</document>
