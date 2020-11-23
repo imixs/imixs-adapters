@@ -43,7 +43,11 @@
 				<!--  load inovice data by documentController:   #{documentController.load(id)} -->
 				<ui:param name="invoice" value="#{documentController.getDocument()}"></ui:param>
 				<tr>
-					<td>#{invoice.item['cdtr.name']}</td>
+					<td><h:link outcome="/pages/workitems/workitem">
+					         #{invoice.item['cdtr.name']}
+					         <f:param name="id" value="#{invoice.item['$uniqueid']}" />
+						</h:link> 
+					</td>
 					<td>#{invoice.item['invoice.number']}</td>
 					<td><h:outputText value="#{invoice.item['invoice.date']}">
 							<f:convertDateTime pattern="#{message.datePatternShort}"
