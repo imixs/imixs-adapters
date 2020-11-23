@@ -95,7 +95,7 @@ public class DatevWorkflowService {
 	public static final int EVENT_SUCCESS = 200;
 	public static final int EVENT_FAILED = 300;
 	public static final String INVOICE_UPDATE = "invoice_update";
-	public static final String LINK_PROPERTY = "txtworkitemref";
+	public static final String LINK_PROPERTY = "$workitemref";
 
 	public static final String ITEM_MODEL_VERSION = "_model_version";
 	public static final String ITEM_INITIAL_TASK = "_initial_task";

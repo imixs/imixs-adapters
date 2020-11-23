@@ -249,7 +249,7 @@
 		<item name="_datev_consultant_id">
 			<value xsi:type="xs:string">100001</value>
 		</item>
-		<item name="txtworkitemref">
+		<item name="$workitemref">
 			<value xsi:type="xs:string">6b3aedd7-209c-4b4a-b771-37783257db78</value>
 			<value xsi:type="xs:string">45229284-20f9-4ff4-8efb-249eb0251ebb</value>
 			<value xsi:type="xs:string">9cf48434-8c39-438f-b053-14afd7e70032</value>
