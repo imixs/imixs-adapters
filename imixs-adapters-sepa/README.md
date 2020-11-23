@@ -5,7 +5,7 @@ This adapter module provides services to export workflow invoice data into a sep
 
 ## Model Based Configuration
 
-The _imixs-sepa-adapter_ can be combined with different kind of workflow models. The SEPA export is configured by the SEPA Model
+The *imixs-sepa-adapter* can be combined with different kind of workflow models. The SEPA export is configured by the SEPA Model
 
 <img src="sepa-export.png" />
 
@@ -15,8 +15,24 @@ This model must at least define an inital Task with the following Events:
  * SEPA Export Finished = 200
  * SEPA Export Failed = 300
  
-Other tasks and events can be defined based on the required business logic. 
+Other tasks and events can be defined based on the required business logic. The module supports two kinds of models
 
+### SEPA Linked Model
+
+In the default setup the SEPA module links the invoices into the SEPA export workitem and updates the invoiced during the export process. For this purpose the init event defines the processing instruction for the linked invoice workitems:
+
+	<sepa name="invoice_update">
+		<modelversion>(^rechnungseingang)</modelversion>
+		<task>5800</task>
+		<event>300</event>
+	</sepa> 
+
+
+### SEPA Parallel Model
+
+As an alternative to the linked model a parallel sepa model can be used to decouple the invoice process from the sepa process. In this case for each invoide a separate SEPA-Request item (type=sepa) will be created which is processed by the sepa export independent form the invoice workflow.
+
+<img src="sepa-export-parallel.png" />
 
 ## The SepaScheduler
 
@@ -25,16 +41,16 @@ The scheduler configuration object must at least provide the following items:
 
  * \_model\_version = model version for the SEPA export
  * \_initial\_task = inital task ID
- * \_dbtr\_IBAN = default debitor IBAN  
- * \_dbtr\_BIC = default debitor BIC 
- * \_dbtr\_NAME = default debitor NAME 
+ * dbtr.IBAN = default debitor IBAN  
+ * dbtr.BIC = default debitor BIC 
+ * dbtr.NAME = default debitor NAME 
  
 Aligned to the SEPA standard an invoice processed by the SepaScheduler should provide the following items. 
 
- * \_cdtr\_IBAN = default debitor IBAN  
- * \_cdtr\_BIC = default debitor BIC 
- * \_cdtr\_NAME = default debitor NAME 
- * \_subject = invoice/topic
+ * cdtr.IBAN = default debitor IBAN  
+ * cdtr.BIC = default debitor BIC 
+ * cdtr.NAME = default debitor NAME 
+ * $workflowsummary = invoice/topic
 
 
 **Note:** These are recommended default item names. The items can be change to the spec of an application and XSL template.   
@@ -55,16 +71,18 @@ The SeapScheduler automatically groups the data source by the attribute \_dbtr\_
 
 
 
-## Updating Invoices
+## Updating Invoices / SEPA Request
 
-In the sepa model the events _finished_ (200) and _failed_ (300)  can be combined with an "invoice_update" definition:
+In the sepa model the event *init* contains an "sepa invoice_update" definition to update the invoice :
 
-	<item name="invoice_update">
+	<sepa name="invoice_update">
 		<modelversion>1.0.0</modelversion>
 		<processid>5800</processid>
 		<activityid>100</activityid>
-	</item>
+	</sepa>
 
+**Note:** In case of a sepa-parallel model the sepa request instance is updated.
+ 
 The SepaScheduler automatically link the invoices with the sepa export Workitem.
 This definition is equals to the SplitAndJoin "subprocess_update" except with the item tag which is not supported for SEPA. 	
 
@@ -116,7 +134,7 @@ __IBAN__: The tags 'iban' may not contain blanks which in genaral is valid to in
 	<CdtrAcct>
 		<Id>
 			<IBAN>
-				<xsl:value-of select="replace(item[@name='_cdtr_iban']/value, ' ', '')" />
+				<xsl:value-of select="replace(item[@name='cdtr.iban']/value, ' ', '')" />
 			</IBAN>
 		</Id>
 	</CdtrAcct>
