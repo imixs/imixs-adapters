@@ -190,6 +190,9 @@ public class SepaScheduler implements Scheduler {
                     // link invoices with export workitem....
                     for (ItemCollection invoice : data) {
                         sepaExport.appendItemValue(SepaWorkflowService.LINK_PROPERTY, invoice.getUniqueID());
+                        // support deprecated ref field
+                        sepaExport.appendItemValue("txtworkitemref", invoice.getUniqueID());
+                        
 
                         // avoid unsupported characters in sepa fields
                         invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_CDTR_NAME);
