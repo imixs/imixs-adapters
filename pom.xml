@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.imixs.workflow</groupId>
 	<artifactId>imixs-adapters</artifactId>
@@ -9,15 +11,16 @@
 		<module>imixs-adapters-ldap</module>
 		<module>imixs-adapters-datev</module>
 		<module>imixs-adapters-sepa</module>
-		<module>imixs-adapters-qrcode</module>		
+		<module>imixs-adapters-qrcode</module>
 		<module>imixs-adapters-kafka</module>
 	</modules>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>5.1.10</org.imixs.workflow.version>
-		<org.imixs.marty.version>4.1.6</org.imixs.marty.version>
-		<microprofile.version>2.2</microprofile.version>
+		<org.imixs.workflow.version>5.2.6</org.imixs.workflow.version>
+		<org.imixs.marty.version>4.1.8</org.imixs.marty.version>
+		<jakarta.version>8.0</jakarta.version>
+		<microprofile.version>3.0</microprofile.version>
 		<apache.pdfbox.version>2.0.19</apache.pdfbox.version>
 	</properties>
 
@@ -58,7 +61,7 @@
 		<system>GitHub</system>
 		<url>https://github.com/imixs/imixs-adapters/issues</url>
 	</issueManagement>
-	
+
 	<licenses>
 		<license>
 			<name>GNU General Public License</name>
@@ -214,6 +217,8 @@
 			</build>
 		</profile>
 	</profiles>
+
+
 	
 	<dependencyManagement>
 		<dependencies>
@@ -258,14 +263,14 @@
 		</dependencies>
 	</dependencyManagement>
 	<dependencies>
-		<!-- JEE Dependencies -->
+		<!-- Jakarta EE -->
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
-			<version>8.0</version>
+			<version>${jakarta.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<!-- Microprofile -->
 		<dependency>
 			<groupId>org.eclipse.microprofile</groupId>

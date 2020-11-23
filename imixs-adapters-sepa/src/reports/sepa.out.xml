@@ -6,9 +6,9 @@
    <CstmrCdtTrfInitn>
       <GrpHdr>
          <MsgId>a8a5a0fa48bd49d4987dbda597c66055</MsgId>
-         <CreDtTm>2020-11-20T15:19:39</CreDtTm>
-         <NbOfTxs>4</NbOfTxs>
-         <CtrlSum>0</CtrlSum>
+         <CreDtTm>2020-11-23T11:56:34</CreDtTm>
+         <NbOfTxs>1</NbOfTxs>
+         <CtrlSum>86.87</CtrlSum>
          <InitgPty>
             <Nm>Muster AG</Nm>
          </InitgPty>
@@ -16,14 +16,14 @@
       <PmtInf>
          <PmtInfId>a8a5a0fa48bd49d4987dbda597c66055-1</PmtInfId>
          <PmtMtd>TRF</PmtMtd>
-         <NbOfTxs>4</NbOfTxs>
-         <CtrlSum>0</CtrlSum>
+         <NbOfTxs>1</NbOfTxs>
+         <CtrlSum>86.87</CtrlSum>
          <PmtTpInf>
             <SvcLvl>
                <Cd>SEPA</Cd>
             </SvcLvl>
          </PmtTpInf>
-         <ReqdExctnDt>2020-11-20</ReqdExctnDt>
+         <ReqdExctnDt>2020-11-23</ReqdExctnDt>
          <Dbtr>
             <Nm>Muster AG</Nm>
          </Dbtr>
@@ -43,95 +43,23 @@
                <EndToEndId>NOTPROVIDED</EndToEndId>
             </PmtId>
             <Amt>
-               <InstdAmt Ccy="EUR"/>
+               <InstdAmt Ccy="EUR">86.87</InstdAmt>
             </Amt>
             <CdtrAgt>
                <FinInstnId>
-                  <BIC>OOBADEFFXXX</BIC>
+                  <BIC>XXXADEMM</BIC>
                </FinInstnId>
             </CdtrAgt>
             <Cdtr>
-               <Nm>Muster GmbH</Nm>
+               <Nm>Supplier-1 GmbH</Nm>
             </Cdtr>
             <CdtrAcct>
                <Id>
-                  <IBAN>DE07500400000582507042</IBAN>
+                  <IBAN>DE74555500000000028273</IBAN>
                </Id>
             </CdtrAcct>
             <RmtInf>
-               <Ustrd>test</Ustrd>
-            </RmtInf>
-         </CdtTrfTxInf>
-         <CdtTrfTxInf>
-            <PmtId>
-               <EndToEndId>NOTPROVIDED</EndToEndId>
-            </PmtId>
-            <Amt>
-               <InstdAmt Ccy=""/>
-            </Amt>
-            <CdtrAgt>
-               <FinInstnId>
-                  <BIC>OOBADEFFXXX</BIC>
-               </FinInstnId>
-            </CdtrAgt>
-            <Cdtr>
-               <Nm>Muster GmbH</Nm>
-            </Cdtr>
-            <CdtrAcct>
-               <Id>
-                  <IBAN>DE07500400000582507042</IBAN>
-               </Id>
-            </CdtrAcct>
-            <RmtInf>
-               <Ustrd>Servicerechnung</Ustrd>
-            </RmtInf>
-         </CdtTrfTxInf>
-         <CdtTrfTxInf>
-            <PmtId>
-               <EndToEndId>NOTPROVIDED</EndToEndId>
-            </PmtId>
-            <Amt>
-               <InstdAmt Ccy=""/>
-            </Amt>
-            <CdtrAgt>
-               <FinInstnId>
-                  <BIC>OOBADEFFXXX</BIC>
-               </FinInstnId>
-            </CdtrAgt>
-            <Cdtr>
-               <Nm>Muster GmbH</Nm>
-            </Cdtr>
-            <CdtrAcct>
-               <Id>
-                  <IBAN>DE07500400000582507042</IBAN>
-               </Id>
-            </CdtrAcct>
-            <RmtInf>
-               <Ustrd>asdf</Ustrd>
-            </RmtInf>
-         </CdtTrfTxInf>
-         <CdtTrfTxInf>
-            <PmtId>
-               <EndToEndId>NOTPROVIDED</EndToEndId>
-            </PmtId>
-            <Amt>
-               <InstdAmt Ccy=""/>
-            </Amt>
-            <CdtrAgt>
-               <FinInstnId>
-                  <BIC>OOBADEFFXXX</BIC>
-               </FinInstnId>
-            </CdtrAgt>
-            <Cdtr>
-               <Nm>Muster GmbH</Nm>
-            </Cdtr>
-            <CdtrAcct>
-               <Id>
-                  <IBAN>DE07500400000582507042</IBAN>
-               </Id>
-            </CdtrAcct>
-            <RmtInf>
-               <Ustrd>teasd</Ustrd>
+               <Ustrd>Invoice Example-1</Ustrd>
             </RmtInf>
          </CdtTrfTxInf>
       </PmtInf>

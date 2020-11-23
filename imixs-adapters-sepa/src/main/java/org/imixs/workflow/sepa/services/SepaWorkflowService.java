@@ -68,18 +68,18 @@ public class SepaWorkflowService {
 	public static final int EVENT_SUCCESS = 200;
 	public static final int EVENT_FAILED = 300;
 	public static final String INVOICE_UPDATE = "invoice_update";
-	public static final String LINK_PROPERTY = "txtworkitemref";
+	public static final String LINK_PROPERTY = "$workitemref";
 
 	public static final String ITEM_MODEL_VERSION = "_model_version";
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
 
-	public static final String ITEM_DBTR_IBAN = "_dbtr_iban";
-	public static final String ITEM_DBTR_BIC = "_dbtr_bic";
-	public static final String ITEM_DBTR_NAME = "_dbtr_name";
+	public static final String ITEM_DBTR_IBAN = "dbtr.iban";
+	public static final String ITEM_DBTR_BIC = "dbtr.bic";
+	public static final String ITEM_DBTR_NAME = "dbtr.name";
 
-	public static final String ITEM_CDTR_IBAN = "_cdtr_iban";
-	public static final String ITEM_CDTR_BIC = "_cdtr_bic";
-	public static final String ITEM_CDTR_NAME = "_cdtr_name";
+	public static final String ITEM_CDTR_IBAN = "cdtr.iban";
+	public static final String ITEM_CDTR_BIC = "cdtr.bic";
+	public static final String ITEM_CDTR_NAME = "cdtr.name";
 
 	public static final String REPORT_ERROR = "REPORT_ERROR";
 
@@ -97,11 +97,11 @@ public class SepaWorkflowService {
 	 * 
 	 * <pre>
 	 * {@code
-	 * <item name="invoice_update">
+	 * <sepa name="invoice_update">
 	 *    <modelversion>1.0.0</modelversion>
 	 *    <task>100</task>
 	 *    <event>20</event>
-	 * </item>
+	 * </sepa>
 	 * }
 	 * </pre>
 	 * 
@@ -127,8 +127,12 @@ public class SepaWorkflowService {
 
 		List<String> subProcessDefinitions = null;
 		// test for items with name subprocess_update definition.
-		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, sepaExport, false);
-
+		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, "sepa",sepaExport, false);
+		if (evalItemCollection==null) {
+			logger.warning("...exprected sepa item in workflow result is missing");
+			return;
+		}
+		
 		subProcessDefinitions = evalItemCollection.getItemValue(INVOICE_UPDATE);
 
 		if (subProcessDefinitions == null || subProcessDefinitions.size() == 0) {

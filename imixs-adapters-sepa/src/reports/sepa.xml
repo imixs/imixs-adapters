@@ -1,187 +1,51 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <data xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<document>
+		<document>
 		<item name="$processid">
-			<value xsi:type="xs:int">5800</value>
+			<value xsi:type="xs:int">210</value>
 		</item>
 		<item name="$uniqueid">
-			<value xsi:type="xs:string">6b3aedd7-209c-4b4a-b771-37783257db78</value>
+			<value xsi:type="xs:string">bf073e72-512c-4d60-af77-4427f0872036</value>
 		</item>
 		<item name="$workflowgroup">
-			<value xsi:type="xs:string">Rechnungseingang</value>
-		</item>
-		<item name="invoice.total">
-			<value xsi:type="xs:decimal">354</value>
-		</item>
-		<item name="cdtr.bic">
-			<value xsi:type="xs:string">OOBADEFFXXX</value>
-		</item>
-		<item name="cdtr.iban">
-			<value xsi:type="xs:string">DE07500400000582 5070 42</value>
-		</item>
-
-		<item name="invoice.date">
-			<value xsi:type="xs:dateTime">2018-08-23T22:00:00Z</value>
-		</item>
-		<item name="invoice.number">
-			<value xsi:type="xs:string">345</value>
-		</item>
-		<item name="dbtr.bic">
-			<value xsi:type="xs:string">OOBADEFFXXX</value>
-		</item>
-		<item name="dbtr.iban">
-			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
+			<value xsi:type="xs:string">SEPA-Request</value>
 		</item>
 		<item name="$workflowsummary">
-			<value xsi:type="xs:string">test</value>
+			<value xsi:type="xs:string">Invoice Example-1</value>
+		</item>
+		<item name="cdtr.bic">
+			<value xsi:type="xs:string">XXXADEMM</value>
+		</item>
+		<item name="cdtr.iban">
+			<value xsi:type="xs:string">DE74 5555 0000 0000 0282 73</value>
 		</item>
 		<item name="cdtr.name">
-			<value xsi:type="xs:string">Muster GmbH</value>
+			<value xsi:type="xs:string">Supplier-1 GmbH</value>
+		</item>
+		<item name="dbtr.bic">
+			<value xsi:nil="true" />
+		</item>
+		<item name="dbtr.iban">
+			<value xsi:nil="true" />
 		</item>
 		<item name="dbtr.name">
-			<value xsi:type="xs:string">Muster AG</value>
+			<value xsi:nil="true" />
 		</item>
 		<item name="invoice.currency">
 			<value xsi:type="xs:string">EUR</value>
 		</item>
-		
-		
-	</document>
-	<document>
-		<item name="$processid">
-			<value xsi:type="xs:int">5800</value>
-		</item>
-		<item name="$uniqueid">
-			<value xsi:type="xs:string">45229284-20f9-4ff4-8efb-249eb0251ebb</value>
-		</item>
-		<item name="$workflowgroup">
-			<value xsi:type="xs:string">Rechnungseingang</value>
-		</item>
-		<item name="invoice.total">
-			<value xsi:type="xs:decimal">345.00</value>
-		</item>
-		<item name="cdtr.bic">
-			<value xsi:type="xs:string">OOBADEFFXXX</value>
-		</item>
-		<item name="cdtr.iban">
-			<value xsi:type="xs:string">DE07500400000582 5070 42</value>
-		</item>
-
 		<item name="invoice.date">
-			<value xsi:type="xs:dateTime">2018-08-29T22:00:00Z</value>
+			<value xsi:type="xs:dateTime">2020-07-07T00:00:00+02:00</value>
 		</item>
 		<item name="invoice.number">
-			<value xsi:type="xs:string">3245</value>
-		</item>
-		<item name="dbtr.bic">
-			<value xsi:type="xs:string">OOBADEFFXXX</value>
-		</item>
-		<item name="dbtr.iban">
-			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
-		</item>
-		<item name="$workflowsummary">
-			<value xsi:type="xs:string">Servicerechnung</value>
-		</item>
-		<item name="cdtr.name">
-			<value xsi:type="xs:string">Muster GmbH</value>
-		</item>
-		<item name="dbtr.name">
-			<value xsi:type="xs:string">Muster AG</value>
-		</item>
-		<item name="_currency">
-			<value xsi:type="xs:string">EUR</value>
-		</item>
-	</document>
-	<document>
-		<item name="$processid">
-			<value xsi:type="xs:int">5800</value>
-		</item>
-		<item name="$uniqueid">
-			<value xsi:type="xs:string">9cf48434-8c39-438f-b053-14afd7e70032</value>
-		</item>
-		<item name="$workflowgroup">
-			<value xsi:type="xs:string">Rechnungseingang</value>
+			<value xsi:type="xs:string">202007000175</value>
 		</item>
 		<item name="invoice.total">
-			<value xsi:type="xs:decimal">34.00</value>
-		</item>
-		<item name="cdtr.bic">
-			<value xsi:type="xs:string">OOBADEFFXXX</value>
-		</item>
-		<item name="cdtr.iban">
-			<value xsi:type="xs:string">DE07500400000582 5070 42</value>
-		</item>
-
-		<item name="invoice.date">
-			<value xsi:type="xs:dateTime">2018-08-07T22:00:00Z</value>
-		</item>
-		<item name="invoice.number">
-			<value xsi:type="xs:string">345</value>
-		</item>
-		<item name="dbtr.bic">
-			<value xsi:type="xs:string">OOBADEFFXXX</value>
-		</item>
-		<item name="dbtr.iban">
-			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
-		</item>
-		<item name="$workflowsummary">
-			<value xsi:type="xs:string">asdf</value>
-		</item>
-		<item name="cdtr.name">
-			<value xsi:type="xs:string">Muster GmbH</value>
-		</item>
-		<item name="dbtr.name">
-			<value xsi:type="xs:string">Muster AG</value>
-		</item>
-		<item name="_currency">
-			<value xsi:type="xs:string">EUR</value>
+			<value xsi:type="xs:decimal">86.87</value>
 		</item>
 	</document>
-	<document>
-		<item name="$processid">
-			<value xsi:type="xs:int">5800</value>
-		</item>
-		<item name="$uniqueid">
-			<value xsi:type="xs:string">78e89726-b7b2-41fe-9964-7f62c3837f01</value>
-		</item>
-		<item name="$workflowgroup">
-			<value xsi:type="xs:string">Rechnungseingang</value>
-		</item>
-		<item name="invoice.total">
-			<value xsi:type="xs:decimal">100</value>
-		</item>
-		<item name="cdtr.bic">
-			<value xsi:type="xs:string">OOBADEFFXXX</value>
-		</item>
-		<item name="cdtr.iban">
-			<value xsi:type="xs:string">DE07500400000582 5070 42</value>
-		</item>
-		<item name="invoice.date">
-			<value xsi:type="xs:dateTime">2018-09-13T22:00:00Z</value>
-		</item>
-		<item name="invoice.number">
-			<value xsi:type="xs:string">aaaa-bbbb34535345</value>
-		</item>
-		<item name="dbtr.bic">
-			<value xsi:type="xs:string">OOBADEFFXXX</value>
-		</item>
-		<item name="dbtr.iban">
-			<value xsi:type="xs:string">DE07 500 4 0000 0582 5070 42</value>
-		</item>
-		<item name="$workflowsummary">
-			<value xsi:type="xs:string">teasd</value>
-		</item>
-		<item name="cdtr.name">
-			<value xsi:type="xs:string">Muster GmbH</value>
-		</item>
-		<item name="dbtr.name">
-			<value xsi:type="xs:string">Muster AG</value>
-		</item>
-		<item name="_currency">
-			<value xsi:type="xs:string">EUR</value>
-		</item>
-	</document>
+	
 	<document>
 		<item name="$modelversion">
 			<value xsi:type="xs:string">sepa-export-de-1.0.0</value>
@@ -221,7 +85,7 @@
 		<item name="$workflowsummary">
 			<value xsi:type="xs:string">Muster GmbH</value>
 		</item>
-		<item name="txtworkitemref">
+		<item name="$workitemref">
 			<value xsi:type="xs:string">6b3aedd7-209c-4b4a-b771-37783257db78</value>
 			<value xsi:type="xs:string">45229284-20f9-4ff4-8efb-249eb0251ebb</value>
 			<value xsi:type="xs:string">9cf48434-8c39-438f-b053-14afd7e70032</value>

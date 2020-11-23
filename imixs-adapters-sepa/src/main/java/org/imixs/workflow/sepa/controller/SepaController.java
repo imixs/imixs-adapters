@@ -97,23 +97,23 @@ public class SepaController extends SchedulerController {
     @Valid
     @Pattern(regexp = SepaController.BIC_PATTERN)
     public String getCdtrBic() {
-        return getConfiguration().getItemValueString("_cdtr_bic");
+        return getConfiguration().getItemValueString("cdtr.bic");
     }
 
     public void setCdtrBic(String bic) {
-        logger.finest("......validate _cdtr_bic...");
-        getConfiguration().setItemValue("_cdtr_bic", bic);
+        logger.finest("......validate cdtr.bic...");
+        getConfiguration().setItemValue("cdtr.bic", bic);
     }
 
     @Valid
     @Pattern(regexp = SepaController.IBAN_PATTERN)
     public String getCdtrIban() {
         logger.finest("......validate _cdtr_iban...");
-        return getConfiguration().getItemValueString("_cdtr_iban");
+        return getConfiguration().getItemValueString("cdtr.iban");
     }
 
     public void setCdtrIban(String iban) {
-        getConfiguration().setItemValue("_cdtr_iban", iban);
+        getConfiguration().setItemValue("cdtr.iban", iban);
     }
 
     /** Debtor **/
