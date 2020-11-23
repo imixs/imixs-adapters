@@ -20,10 +20,10 @@
 				<!-- generate header info -->
 				<!-- compute count of invoices -->
 				<xsl:variable name="count"
-					select="count(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='$uniqueid']/value)" />
+					select="count(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'SEPA-Request']/item[@name='$uniqueid']/value)" />
 				<!-- compute total amount -->
 				<xsl:variable name="totalsum"
-					select="xs:decimal(sum(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']/item[@name='invoice.total']/value))" />
+					select="xs:decimal(sum(/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'SEPA-Request']/item[@name='invoice.total']/value))" />
 				<!-- round to 2 digits -->
 				<xsl:variable name="total"
 					select="xs:decimal(round-half-to-even($totalsum, 2))" />
@@ -102,7 +102,7 @@
 
 					<!-- generate CdtTrfTxInf for each invoice -->
 					<xsl:apply-templates
-						select="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']" />
+						select="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'SEPA-Request']" />
 
 
 
@@ -125,7 +125,7 @@
 
 	<!-- This template builds sepa payment info for each invoice -->
 	<xsl:template
-		match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'Rechnungseingang']">
+		match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'SEPA-Request']">
 
 
 		<CdtTrfTxInf xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03">
