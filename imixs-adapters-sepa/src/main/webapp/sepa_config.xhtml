@@ -5,6 +5,7 @@
 	xmlns:i="http://java.sun.com/jsf/composite/imixs"
 	xmlns:c="http://java.sun.com/jsp/jstl/core"
 	xmlns:marty="http://java.sun.com/jsf/composite/marty"
+	xmlns:a="http://xmlns.jcp.org/jsf/passthrough"
 	template="/layout/template.xhtml">
 
 	<ui:define name="content">
@@ -22,6 +23,26 @@
 						$('[id$=status_panel]').imixsLayout();
 					}
 				}
+				
+				// display summary
+				$(document).ready(function() {
+					// erste Zeile hinzufügen, falls tabelle noch leer ist
+					var posTableEmpty=#{empty sepaController.dbtrList};
+					if (posTableEmpty) {
+						// click on add button
+						posButton=$("[data-id='addposbutton_id']");
+						if (posButton) {
+							$(posButton).click();
+						}
+					}
+				});
+
+				// This method refreshs the layout 
+				function updateSepaList(data) {
+					if (data.status === 'success') {	
+						$('[id$=oderlist]').imixsLayout();				
+					}
+				}				
 
 				/*]]>*/
 			</script>
@@ -45,55 +66,9 @@
 						<!-- **** General info ***** -->
 
 						<div class="imixs-form-panel">
-							<h1>Configuration</h1>
-							<div class="imixs-form-section-2">
-								<dl>
-									<dt>
-										Company: <span class="imixs-required">* </span>
-									</dt>
-									<dd>
-										<h:inputText required="true"
-											value="#{sepaController.configuration.item['dbtr.name']}">
-										</h:inputText>
-									</dd>
-								</dl>
-
-								<dl>
-								</dl>
-
-								<dl>
-									<dt>
-										IBAN <span class="imixs-required">* <h:message
-												for="iban" /></span>
-									</dt>
-									<dd>
-										<h:inputText value="#{sepaController.dbtrIban}"
-											id="iban" required="false"
-											validatorMessage="#{app.IBAN_INVALID}" />
-									</dd>
-
-								</dl>
-
-
-								<dl>
-									<dt>
-										BIC <span class="imixs-required">* <h:message for="bic" /></span>
-									</dt>
-									<dd>
-										<h:inputText value="#{sepaController.dbtrBic}" id="bic"
-											required="false" validatorMessage="#{app.BIC_INVALID}" />
-									</dd>
-
-								</dl>
-
-							</div>
-
-
-
-
-
-
-
+							<h1>Model Configuration</h1>
+							
+							
 							<div class="imixs-form-section-2">
 								<dl>
 									<dt>SEPA Model Version</dt>
@@ -129,20 +104,72 @@
 								</p>
 							</div>
 
+							
 
+							<h:panelGroup layout="block" styleClass="imixs-form-section"
+								id="oderlist" binding="#{orderlistContainer}">
+								<h1>Debitor Options</h1>
 
+								<f:ajax render="oderlist" onevent="updateSepaList">
+									<table class="imixsdatatable imixs-orderitems">
+										<tr>
+											<th style="width: 140px">ID</th>
+											<th style="">Company<span class="imixs-required">
+													*</span></th>
+											<th style="width: 250px;">IBAN</th>
+											<th style="width: 150px;">BIC</th>
+											<th style="width: 50px">
+												<!-- delete -->
+											</th>
+										</tr>
+
+										<ui:repeat var="dbtr"
+											value="#{sepaController.dbtrList}">
+											<tr>
+												<!-- ID -->
+												<td><h:inputText value="#{dbtr.item['name']}"
+														style="width:100%;" /></td>
+
+												<!-- dbtr.name -->
+												<td><h:inputText value="#{dbtr.item['dbtr.name']}"
+														style="width:100%;" /></td>
+
+												<!-- dbtr.iban -->
+												<td><h:inputText value="#{dbtr.item['dbtr.iban']}"
+														style="width:100%;" /></td>
+
+												<!-- dbtr.bic -->
+												<td><h:inputText value="#{dbtr.item['dbtr.bic']}"
+														style="width:100%;" /></td>
+
+												
+												<td><h:commandLink
+														actionListener="#{sepaController.removeDbtr(dbtr.item['name'])}">
+														<span class="typcn typcn-trash imixs-state-info"></span>
+														<f:ajax render="#{orderlistContainer.clientId}"
+															onevent="updateSepaList" />
+													</h:commandLink></td>
+											</tr>
+										</ui:repeat>
+
+									</table>
+									
+
+									<!-- add button -->
+									<h:commandButton value="#{message.add}"
+										a:data-id="addposbutton_id"
+										actionListener="#{sepaController.addDbtr}">
+									</h:commandButton>
+								</f:ajax>
+							</h:panelGroup>
 						</div>
 
-
-
-
 						<!-- include timer control -->
+						<h1>Scheduler</h1>
 
 						<ui:include src="sub_scheduler_control.xhtml">
 							<ui:param name="schedulerController" value="#{sepaController}" />
 						</ui:include>
-
-
 
 
 					</div>
@@ -172,8 +199,11 @@
 
 				</div>
 			</h:form>
+			
+		
 		</f:view>
 	</ui:define>
+
 
 
 
