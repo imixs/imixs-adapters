@@ -154,7 +154,7 @@ Please check the process:
     <bpmn2:task id="Task_2" imixs:processid="1600" name="Abgeschlossen">
       <bpmn2:extensionElements>
         <imixs:item name="txtworkflowsummary" type="xs:string">
-          <imixs:value><![CDATA[SEPA-Lauf <itemvalue format="EEEE, d. MMMM yyyy" locale="de_DE">$created</itemvalue> (<itemvalue>_dbtr_name</itemvalue>)]]></imixs:value>
+          <imixs:value><![CDATA[SEPA-Lauf <itemvalue format="EEEE, d. MMMM yyyy" locale="de_DE">$created</itemvalue> (<itemvalue>payment.type</itemvalue>)]]></imixs:value>
         </imixs:item>
         <imixs:item name="keyupdateacl" type="xs:boolean">
           <imixs:value>true</imixs:value>
@@ -256,7 +256,7 @@ Please check the process:
     <bpmn2:task id="Task_1" imixs:processid="1000" name="Erstellung">
       <bpmn2:extensionElements>
         <imixs:item name="txtworkflowsummary" type="xs:string">
-          <imixs:value><![CDATA[SEPA-Lauf <itemvalue format="EEEE, d. MMMM yyyy" locale="de_DE">$created</itemvalue> (<itemvalue>_dbtr_name</itemvalue>)]]></imixs:value>
+          <imixs:value><![CDATA[SEPA-Lauf <itemvalue format="EEEE, d. MMMM yyyy" locale="de_DE">$created</itemvalue> (<itemvalue>payment.type</itemvalue>)]]></imixs:value>
         </imixs:item>
         <imixs:item name="txteditorid" type="xs:string">
           <imixs:value><![CDATA[form_panel#sepa_export]]></imixs:value>
@@ -296,7 +296,7 @@ Please check the process:
     <bpmn2:task id="Task_6" imixs:processid="1500" name="Fehler">
       <bpmn2:extensionElements>
         <imixs:item name="txtworkflowsummary" type="xs:string">
-          <imixs:value><![CDATA[SEPA-Lauf <itemvalue format="EEEE, d. MMMM yyyy" locale="de_DE">$created</itemvalue> (<itemvalue>_dbtr_name</itemvalue>)]]></imixs:value>
+          <imixs:value><![CDATA[SEPA-Lauf <itemvalue format="EEEE, d. MMMM yyyy" locale="de_DE">$created</itemvalue> (<itemvalue>payment.type</itemvalue>)]]></imixs:value>
         </imixs:item>
         <imixs:item name="keyupdateacl" type="xs:boolean">
           <imixs:value>true</imixs:value>
@@ -340,7 +340,7 @@ Please check the process:
     <bpmn2:task id="Task_7" imixs:processid="1100" name="Zahlungslauf Offen">
       <bpmn2:extensionElements>
         <imixs:item name="txtworkflowsummary" type="xs:string">
-          <imixs:value><![CDATA[SEPA-Lauf <itemvalue format="EEEE, d. MMMM yyyy" locale="de_DE">$created</itemvalue> (<itemvalue>_dbtr_name</itemvalue>)]]></imixs:value>
+          <imixs:value><![CDATA[SEPA-Lauf <itemvalue format="EEEE, d. MMMM yyyy" locale="de_DE">$created</itemvalue> (<itemvalue>payment.type</itemvalue>)]]></imixs:value>
         </imixs:item>
         <imixs:item name="keyupdateacl" type="xs:boolean">
           <imixs:value>true</imixs:value>

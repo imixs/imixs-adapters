@@ -27,7 +27,9 @@
 
 package org.imixs.workflow.sepa.services;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -73,6 +75,8 @@ public class SepaWorkflowService {
 	public static final String ITEM_MODEL_VERSION = "_model_version";
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
 
+    public static final String ITEM_PAYMENT_TYPE = "payment.type";
+
 	public static final String ITEM_DBTR_IBAN = "dbtr.iban";
 	public static final String ITEM_DBTR_BIC = "dbtr.bic";
 	public static final String ITEM_DBTR_NAME = "dbtr.name";
@@ -80,6 +84,8 @@ public class SepaWorkflowService {
 	public static final String ITEM_CDTR_IBAN = "cdtr.iban";
 	public static final String ITEM_CDTR_BIC = "cdtr.bic";
 	public static final String ITEM_CDTR_NAME = "cdtr.name";
+
+	public static final String ITEM_DBTR_CONFIG = "dbtr.config";
 
 	public static final String REPORT_ERROR = "REPORT_ERROR";
 
@@ -107,13 +113,10 @@ public class SepaWorkflowService {
 	 * 
 	 * @see org.imixs.workflow.engine.plugins.SplitAndJoinPlugin.java
 	 * 
-	 * @param sepaExport
-	 *            - sepa export workitem
-	 * @param invoices
-	 *            - list of invoices
-	 * @param event
-	 *            - current sepa export event containing the invoice_update
-	 *            definition.
+	 * @param sepaExport - sepa export workitem
+	 * @param invoices   - list of invoices
+	 * @param event      - current sepa export event containing the invoice_update
+	 *                   definition.
 	 * @throws AccessDeniedException
 	 * @throws ProcessingErrorException
 	 * @throws PluginException
@@ -127,12 +130,12 @@ public class SepaWorkflowService {
 
 		List<String> subProcessDefinitions = null;
 		// test for items with name subprocess_update definition.
-		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, "sepa",sepaExport, false);
-		if (evalItemCollection==null) {
+		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, "sepa", sepaExport, false);
+		if (evalItemCollection == null) {
 			logger.warning("...exprected sepa item in workflow result is missing");
 			return;
 		}
-		
+
 		subProcessDefinitions = evalItemCollection.getItemValue(INVOICE_UPDATE);
 
 		if (subProcessDefinitions == null || subProcessDefinitions.size() == 0) {
@@ -211,6 +214,36 @@ public class SepaWorkflowService {
 
 		logger.info(message);
 
+	}
+
+	/**
+	 * This method returns a ItemColleciton containing the items
+	 * ITEM_DBTR_IBAN,ITEM_DBTR_BIC,ITEM_DBTR_NAME.
+	 * 
+	 * @param paymentType
+	 * @return
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public ItemCollection findDbtrOptionByPaymentType(String paymentType, ItemCollection configuration) {
+		if (paymentType == null) {
+			return null;
+		}
+		// load dbtr list from configuration
+		ArrayList<ItemCollection> dbtrList = new ArrayList<ItemCollection>();
+		List<Object> mapItems = configuration.getItemValue(ITEM_DBTR_CONFIG);
+		for (Object mapOderItem : mapItems) {
+			if (mapOderItem instanceof Map) {
+				ItemCollection itemCol = new ItemCollection((Map) mapOderItem);
+				dbtrList.add(itemCol);
+			}
+		}
+		// test for maching dbtr option by name...
+		for (ItemCollection dbtr : dbtrList) {
+			if (paymentType.equals(dbtr.getItemValueString("name"))) {
+				return dbtr;
+			}
+		}
+		return null;
 	}
 
 }

@@ -116,7 +116,9 @@ public class SepaScheduler implements Scheduler {
             ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
             if (report == null) {
                 throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
-                        "Missing report definition. Unable to load report '" + reportName + "'. Please check  model configuration " + taskID+"."+SepaWorkflowService.EVENT_START);
+                        "Missing report definition. Unable to load report '" + reportName
+                                + "'. Please check  model configuration " + taskID + "."
+                                + SepaWorkflowService.EVENT_START);
             }
 
             // get the data source based on the report definition....
@@ -132,19 +134,22 @@ public class SepaScheduler implements Scheduler {
                 for (ItemCollection invoice : masterDataSet) {
                     // test if invoice has a _dbtr_iban and _dbtr_bic
                     if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()) {
-                        // overtake _dbtr_iban from sepa export
-                        invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
-                                configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
-                    }
-                    if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {
-                        // overtake _dbtr_bic from sepa export
-                        invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
-                                configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
-                    }
-                    if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_NAME).isEmpty()) {
-                        // overtake _dbtr_bic from sepa export
-                        invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
-                                configuration.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+                        // overtake _dbtr_iban from sepa configuration...
+                        String paymentType = invoice.getItemValueString("payment.type");
+                        ItemCollection dbtrOption = sepaWorkflowService.findDbtrOptionByPaymentType(paymentType,
+                                configuration);
+                        if (dbtrOption != null) {
+                            invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
+                                    dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
+                            invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
+                                    dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+                            invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
+                                    dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+                        } else {
+                            sepaWorkflowService.logMessage(
+                                    "...Warning: payment.type '" + paymentType + "' not found in SEPA configuration",
+                                    configuration, null);
+                        }
                     }
                 }
 
@@ -164,7 +169,7 @@ public class SepaScheduler implements Scheduler {
                     sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
                     // set unqiueid, needed for xslt
                     sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
-                    
+
                     // copy dbtr_iban
                     sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN, key);
 
@@ -179,6 +184,11 @@ public class SepaScheduler implements Scheduler {
                         sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
                                 firstInvoice.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
                     }
+                    // set payment.type from first invoice if available...
+                    if (firstInvoice.hasItem(SepaWorkflowService.ITEM_PAYMENT_TYPE)) {
+                        sepaExport.setItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE,
+                                firstInvoice.getItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE));
+                    }
 
                     // set workflow group name from the Task Element to identify document in xslt
                     String modelTaskGroupName = task.getItemValueString("txtworkflowgroup"); // DO NOT CHANGE!
@@ -192,7 +202,6 @@ public class SepaScheduler implements Scheduler {
                         sepaExport.appendItemValue(SepaWorkflowService.LINK_PROPERTY, invoice.getUniqueID());
                         // support deprecated ref field
                         sepaExport.appendItemValue("txtworkitemref", invoice.getUniqueID());
-                        
 
                         // avoid unsupported characters in sepa fields
                         invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_CDTR_NAME);
@@ -276,9 +285,10 @@ public class SepaScheduler implements Scheduler {
 
             throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
                     "Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
-        }  catch (RuntimeException re) {
+        } catch (RuntimeException re) {
             logger.severe("...SEPA Runtime Error");
-            sepaWorkflowService.logMessage("!!ERROR!! Failed to run SEPA scheduler: " + re.getMessage(), configuration, null);
+            sepaWorkflowService.logMessage("!!ERROR!! Failed to run SEPA scheduler: " + re.getMessage(), configuration,
+                    null);
         }
 
         return configuration;
