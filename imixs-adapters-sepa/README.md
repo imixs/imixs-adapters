@@ -68,7 +68,7 @@ This example configuration will select all invoices form the Model _invoice-1.0.
 
 In the SEPA configuration form multiple debitor options can be configured. In this way invoices can be assigned to different dbtr.iban attributes:
 
-<img src="sepa-export-configuration.png" />
+<img src="sepa-configuration.png" />
 
 ### Grouping the Data Source
 
@@ -80,7 +80,14 @@ If the item *dbtr.iban* is not provided by an invoice than the scheduler service
  - dbtr.iban
  - dbtr.bic
 
+In a JSF page the sepa options can be selected using the SepaController:
 
+	<h:selectOneMenu required="true" value="#{workflowController.workitem.item['payment.type']}" >
+		<c:forEach items="#{sepaController.dbtrList}" var="dbtr">	
+			<f:selectItem itemLabel="#{dbtr.item['name']}" itemValue="#{dbtr.item['name']}" />	
+		</c:forEach>
+		<f:selectItem itemLabel="Direct Debit" itemValue="direct_debit" />		
+	</h:selectOneMenu>
 
 ### Updating Invoices / SEPA Request
 
