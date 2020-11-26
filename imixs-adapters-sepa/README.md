@@ -36,7 +36,7 @@ As an alternative to the linked model a parallel sepa model can be used to decou
 
 ## The SepaScheduler
 
-The SEPA export is managed by the SepaScheduler which is an implementation of the interface _org.imxis.workflow.scheduler.Scheduler_.
+The SEPA export is managed by the SepaScheduler which is an implementation of the interface *org.imxis.workflow.scheduler.Scheduler*.
 The scheduler configuration object must at least provide the following items:
 
  * \_model\_version = model version for the SEPA export
@@ -64,14 +64,25 @@ data source into a SEPA file format. See the following example for a data source
 
 This example configuration will select all invoices form the Model _invoice-1.0.0_. 
 
+### DBTR Options
+
+In the SEPA configuration form multiple debitor options can be configured. In this way invoices can be assigned to different dbtr.iban attributes:
+
+<img src="sepa-export-configuration.png" />
 
 ### Grouping the Data Source
 
-The SeapScheduler automatically groups the data source by the attribute \_dbtr\_iban. This feature is optional and used to generate separate process instances for each debitor. 
+The SeapScheduler automatically groups the data source by the attribute *dbtr.iban*. This feature is optional and used to generate separate process instances for each debitor. 
+
+If the item *dbtr.iban* is not provided by an invoice than the scheduler service lookups the item *payment.type* and updates the following items based on the sepa dbtr option list:
+
+ - dbtr.name
+ - dbtr.iban
+ - dbtr.bic
 
 
 
-## Updating Invoices / SEPA Request
+### Updating Invoices / SEPA Request
 
 In the sepa model the event *init* contains an "sepa invoice_update" definition to update the invoice :
 
