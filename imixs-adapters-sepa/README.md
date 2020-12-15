@@ -158,6 +158,29 @@ __IBAN__: The tags 'iban' may not contain blanks which in genaral is valid to in
 	</CdtrAcct>
 	...
 
+
+
+## IBAN / BIC Input Validation
+
+To validate if the provided IBAN/BIC data, the following plugin can be added into a model:
+
+	org.imixs.workflow.sepa.plugins.IBANBICPlugin
+
+The plugin validates the following input items:
+
+ - dbtr.iban
+ - dbtr.bic
+ - cdtr.iban
+ - cdtr.bic
+
+The validation is skipped in case no value is provided. 
+
+The error message can be configured by the resource bundles 'app' or 'custom' with the following message key: 
+
+	ERROR_INVALID_IBANBIC=Your input of the IBAN/BIC is invalid. Please check your data.
+
+
+
 # Development
 
 ## Maven
