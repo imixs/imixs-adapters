@@ -22,7 +22,7 @@ import org.imixs.workflow.sepa.services.SepaWorkflowService;
  */
 public class IBANBICPlugin extends AbstractPlugin {
 
-    // is empty or match iban/bic pattern
+    // is empty or match iban/bic pattern - this pattern allows blanks
     public static final String REGEX_IBAN_PATTERN = "^$|(^[A-Z]{2}(?:[ ]?[A-Z0-9]){13,32}$)";
     public static final String REGEX_BIC_PATTERN = "^$|(^([a-zA-Z]{4}[a-zA-Z]{2}[a-zA-Z0-9]{2}([a-zA-Z0-9]{3})?))";
 
@@ -50,8 +50,8 @@ public class IBANBICPlugin extends AbstractPlugin {
                 || !isValidBIC(workitem.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC))) {
             logger.warning("Invalid iban/bic!");
             String message = resourceBundleHandler.get(ERROR_INVALID_IBANBIC);
-            if (message==null || message.isEmpty()) {
-                message=ERROR_INVALID_IBANBIC;
+            if (message == null || message.isEmpty()) {
+                message = ERROR_INVALID_IBANBIC;
             }
             throw new PluginException(this.getClass().getName(), ERROR_INVALID_IBANBIC, message);
         }
