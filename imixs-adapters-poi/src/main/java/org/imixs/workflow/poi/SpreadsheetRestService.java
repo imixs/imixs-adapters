@@ -26,11 +26,12 @@
  *      Ralph Soika - Software Developer
  */
 
-package org.imixs.workflow.poi.excel;
+package org.imixs.workflow.poi;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -55,6 +56,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -64,8 +68,9 @@ import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.exceptions.QueryException;
 
 /**
- * The SpreadsheetRestService provides a Rest API resource to export the result of a Imixs Report into a .xlsx spredsheet file.
- * The implementation is based on Apache POI.
+ * The SpreadsheetRestService provides a Rest API resource to export the result
+ * of a Imixs Report into a .xlsx spredsheet file. The implementation is based
+ * on Apache POI.
  * 
  * @author rsoika
  * @version 1.0
@@ -161,20 +166,37 @@ public class SpreadsheetRestService {
 		XSSFWorkbook workbook = new XSSFWorkbook();
 		XSSFSheet sheet = workbook.createSheet("Workflow Data");
 
-		Object[][] datatable = new Object[data.size() + 1][items.size()];
+		// bold style
+		CellStyle cellStyleBold = workbook.createCellStyle();
+		Font font = workbook.createFont();
+		font.setBold(true);
+		cellStyleBold.setFont(font);
 
-		// build header
-		int irow = 0;
-		int icol = 0;
+		// date format
+		CellStyle cellStyleDate = workbook.createCellStyle();
+		CreationHelper createHelper = workbook.getCreationHelper();
+		cellStyleDate.setDataFormat(createHelper.createDataFormat().getFormat("m/d/yy h:mm"));
+
+		int rowNum = 0;
+		logger.finest("Creating excel");
+
+		// build the header row
+		Row row = sheet.createRow(rowNum++);
+		row.setRowStyle(cellStyleBold);
+		int colNum = 0;
 		for (String label : labels) {
-			datatable[irow][icol] = label;
-			icol++;
+			Cell cell = row.createCell(colNum++);
+			cell.setCellValue((String) label);
 		}
-		irow++;
+
 		// build body
 		for (ItemCollection doc : data) {
-			icol = 0;
+			row = sheet.createRow(rowNum++);
+			colNum = 0;
+
 			for (String item : items) {
+
+				// extract the value
 				Object value = null;
 				List valueList = doc.getItemValue(item);
 				if (valueList == null || valueList.size() == 0) {
@@ -185,63 +207,41 @@ public class SpreadsheetRestService {
 						value = "";
 					}
 				}
-				datatable[irow][icol] = value;
-				icol++;
-			}
-			irow++;
-		}
 
-		Object[][] datatypes = { { "Datatype", "Type", "Size(in bytes)" }, { "int", "Primitive", 2 },
-				{ "float", "Primitive", 4 }, { "double", "Primitive", 8 }, { "char", "Primitive", 1 },
-				{ "String", "Non-Primitive", "No fixed size" } };
-
-		int rowNum = 0;
-		System.out.println("Creating excel");
-
-		for (Object[] workitem : datatable) {
-			Row row = sheet.createRow(rowNum++);
-			int colNum = 0;
-			for (Object field : workitem) {
+				// build a cell
 				Cell cell = row.createCell(colNum++);
-				if (field instanceof String) {
-					cell.setCellValue((String) field);
-				} else if (field instanceof Integer) {
-					cell.setCellValue((Integer) field);
-				} else if (field instanceof Long) {
-					cell.setCellValue((Long) field);
-				} else if (field instanceof Float) {
-					cell.setCellValue((Float) field);
-				} else if (field instanceof Double) {
-					cell.setCellValue((Double) field);
+
+				if (value instanceof Integer) {
+					cell.setCellValue((Integer) value);
+				} else if (value instanceof Long) {
+					cell.setCellValue((Long) value);
+				} else if (value instanceof Float) {
+					cell.setCellValue((Float) value);
+				} else if (value instanceof Double) {
+					cell.setCellValue((Double) value);
+				} else if (value instanceof Date) {
+					cell.setCellValue((Date) value);
+					// format as date...
+					cell.setCellStyle(cellStyleDate);
+				} else {
+					// default format String
+					cell.setCellValue((String) value);
 				}
+
 			}
+
 		}
 
-		// Creates a ByteArrayOutputStream with default size
+		// write workbook into a byte array
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-		// FileOutputStream outputStream = new FileOutputStream(filename);
 		workbook.write(out);
 		workbook.close();
-
 		byte[] content = out.toByteArray();
-
+		// build a FildData object
 		FileData fileData = new FileData(filename, content, "application/vnd.ms-excel", null);
-
 		out.close();
 		return fileData;
-
 	}
-
-	/**
-	 * This method parses the query Params of a Request URL and adds params to a
-	 * given JPQL Query. In addition the method replace dynamic date values in the
-	 * JPQLStatement
-	 * 
-	 * 
-	 * @param uriInfo
-	 * @return
-	 */
 
 	/**
 	 * Extracts the query parameters and returns a hashmap with key value pairs
