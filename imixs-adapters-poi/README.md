@@ -5,7 +5,19 @@ This adapter module provides services to export the result of an Imixs-Report in
 
 We use XSSF to read and write an OOXML Excel file (XLSX). 
 
-<img src="screen.png" width="700px"/>
+<img src="screen-01.png" width="700px"/>
+
+
+## Imixs-Office-Workflow
+
+The project [Imixs-Office-Worklfow](https://github.com/imixs/imixs-office-workflow) provides a interface to export Imixs-Reports with one of the following content types:
+
+ - vnd.openxmlformats-officedocument. spreadsheetml.sheet 
+ - application/vnd.ms-excel
+
+The feature is automatically integrated into the UI
+
+<img src="screen-02.png" width="700px"/>
 
 ## The Rest API
 
@@ -22,12 +34,13 @@ The contentType and the processing instrcutions (XSL) of a  report definition wi
 
 
 
+
 # Development
 
 ## Maven
 
 
-The imxis-adapter-sepa module can be added into an applicaton module. The module provides CDI and EJB components. Optional the module contains also JSF pages to be used for frontends. 
+The imxis-adapter-poi module can be added into an application module. The module provides CDI and Rest API components. 
 
 Add the following maven dependency into a parent project:
 
