@@ -21,7 +21,7 @@
 			<value xsi:type="xs:string">DE74 5555 0000 0000 0282 73</value>
 		</item>
 		<item name="cdtr.name">
-			<value xsi:type="xs:string">Supplier-1 GmbH</value>
+			<value xsi:type="xs:string">Supplier 1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yyy</value>
 		</item>
 		<item name="dbtr.bic">
 			<value xsi:nil="true" />

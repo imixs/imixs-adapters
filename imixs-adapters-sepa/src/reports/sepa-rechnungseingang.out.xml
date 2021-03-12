@@ -6,7 +6,7 @@
    <CstmrCdtTrfInitn>
       <GrpHdr>
          <MsgId>a8a5a0fa48bd49d4987dbda597c66055</MsgId>
-         <CreDtTm>2020-11-23T11:56:34</CreDtTm>
+         <CreDtTm>2021-03-12T11:27:28</CreDtTm>
          <NbOfTxs>1</NbOfTxs>
          <CtrlSum>86.87</CtrlSum>
          <InitgPty>
@@ -23,7 +23,7 @@
                <Cd>SEPA</Cd>
             </SvcLvl>
          </PmtTpInf>
-         <ReqdExctnDt>2020-11-23</ReqdExctnDt>
+         <ReqdExctnDt>2021-03-12</ReqdExctnDt>
          <Dbtr>
             <Nm>Muster AG</Nm>
          </Dbtr>
@@ -51,7 +51,7 @@
                </FinInstnId>
             </CdtrAgt>
             <Cdtr>
-               <Nm>Supplier-1 GmbH</Nm>
+               <Nm>Supplier 1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx E</Nm>
             </Cdtr>
             <CdtrAcct>
                <Id>
