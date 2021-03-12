@@ -157,7 +157,7 @@
 			<RmtInf>
 				<!-- Max140Text -->
 				<Ustrd>
-					<xsl:value-of select="item[@name='$workflowsummary']/value" />
+					<xsl:value-of select="substring(item[@name='$workflowsummary']/value, 1, 140)" />
 				</Ustrd>
 			</RmtInf>
 		</CdtTrfTxInf>
