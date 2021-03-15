@@ -701,7 +701,7 @@ The SEPA Export process runs on a scheduled basis (e.g. once a day)</bpmn2:text>
           <imixs:value><![CDATA[]]></imixs:value>
         </imixs:item>
         <imixs:item name="txtactivityresult" type="xs:string">
-          <imixs:value><![CDATA[<item name="sepa.status">1</item>]]></imixs:value>
+          <imixs:value><![CDATA[]]></imixs:value>
         </imixs:item>
         <imixs:item name="txtname" type="xs:string">
           <imixs:value><![CDATA[Speichern]]></imixs:value>
@@ -968,7 +968,7 @@ The SEPA Export process runs on a scheduled basis (e.g. once a day)</bpmn2:text>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_Task_4" bpmnElement="Task_4">
         <dc:Bounds height="50.0" width="110.0" x="580.0" y="223.0"/>
-        <bpmndi:BPMNLabel id="BPMNLabel_44">
+        <bpmndi:BPMNLabel id="BPMNLabel_44" labelStyle="BPMNLabelStyle_1">
           <dc:Bounds height="14.0" width="61.0" x="604.0" y="241.0"/>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
