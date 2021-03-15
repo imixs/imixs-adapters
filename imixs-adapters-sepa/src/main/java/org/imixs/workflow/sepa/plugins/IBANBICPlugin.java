@@ -22,7 +22,10 @@ import org.imixs.workflow.sepa.services.SepaWorkflowService;
  * cdtr.bic.
  * <p>
  * Validation is skipped in case no data is provided.
+ * <p>
+ * For validation we use the open source library 'iban4j'
  * 
+ * @see https://github.com/arturmkrtchyan/iban4j
  * @author rsoika
  * @version 1.0
  * 

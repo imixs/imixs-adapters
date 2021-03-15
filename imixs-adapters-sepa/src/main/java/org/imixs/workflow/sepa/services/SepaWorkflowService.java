@@ -76,6 +76,7 @@ public class SepaWorkflowService {
 	public static final String ITEM_INITIAL_TASK = "_initial_task";
 
     public static final String ITEM_PAYMENT_TYPE = "payment.type";
+    public static final String ITEM_SEPA_REPORT = "sepa.report";
 
 	public static final String ITEM_DBTR_IBAN = "dbtr.iban";
 	public static final String ITEM_DBTR_BIC = "dbtr.bic";
@@ -132,7 +133,7 @@ public class SepaWorkflowService {
 		// test for items with name subprocess_update definition.
 		ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, "sepa", sepaExport, false);
 		if (evalItemCollection == null) {
-			logger.warning("...exprected sepa item in workflow result is missing");
+			logger.warning("...expected sepa item in workflow result is missing - data will not be processed!");
 			return;
 		}
 

@@ -126,7 +126,8 @@ public class SepaScheduler implements Scheduler {
                     null);
 
             sepaWorkflowService.logMessage("...SEPA export started....", configuration, null);
-            sepaWorkflowService.logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
+            sepaWorkflowService.logMessage("...found " + masterDataSet.size() + " new invoices...", configuration,
+                    null);
 
             // update the invoices with ITEM_DBTR_IBAN
             if (masterDataSet.size() > 0) {
@@ -145,6 +146,10 @@ public class SepaScheduler implements Scheduler {
                                     dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
                             invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
                                     dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+
+                            // set optional SEPA report definition
+                            invoice.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
+                                    dbtrOption.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
                         } else {
                             sepaWorkflowService.logMessage(
                                     "...Warning: payment.type '" + paymentType + "' not found in SEPA configuration",
@@ -189,6 +194,11 @@ public class SepaScheduler implements Scheduler {
                         sepaExport.setItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE,
                                 firstInvoice.getItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE));
                     }
+                    // set sepa.report from first invoice if available...
+                    if (firstInvoice.hasItem(SepaWorkflowService.ITEM_SEPA_REPORT)) {
+                        sepaExport.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
+                                firstInvoice.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
+                    }
 
                     // set workflow group name from the Task Element to identify document in xslt
                     String modelTaskGroupName = task.getItemValueString("txtworkflowgroup"); // DO NOT CHANGE!
@@ -206,10 +216,7 @@ public class SepaScheduler implements Scheduler {
                         // avoid unsupported characters in sepa fields
                         invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_CDTR_NAME);
                         invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_DBTR_NAME);
-
-                        // write log
-                        sepaWorkflowService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ",
-                                configuration, sepaExport);
+                        logger.finest("......Invoice: " + invoice.getUniqueID() + " added. ");
                     }
 
                     // finally we add the sepa export document to the data collection
@@ -227,7 +234,24 @@ public class SepaScheduler implements Scheduler {
                     // build a timestamp for the filename
                     DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HHmm");
                     String sepaFileName = "sepa_" + sDepName + "_" + df.format(new Date()) + ".xml";
-                    FileData filedata = reportService.transformDataSource(report, data, sepaFileName);
+
+                    // now we transform the data source
+                    // if an optional report definition was defined, this report is used for XSL
+                    // processing if not, than the main report definition is used
+                    FileData filedata = null;
+                    ItemCollection reportOptional = reportService
+                            .findReport(sepaExport.getItemValueString(SepaWorkflowService.ITEM_SEPA_REPORT));
+                    if (reportOptional != null) {
+                        // use optional report
+                        filedata = reportService.transformDataSource(reportOptional, data, sepaFileName);
+                        sepaWorkflowService.logMessage(
+                                "...SEPA export report="
+                                        + sepaExport.getItemValueString(SepaWorkflowService.ITEM_SEPA_REPORT),
+                                configuration, sepaExport);
+                    } else {
+                        // use main report
+                        filedata = reportService.transformDataSource(report, data, sepaFileName);
+                    }
 
                     // attach the file
                     sepaExport.addFileData(filedata);
