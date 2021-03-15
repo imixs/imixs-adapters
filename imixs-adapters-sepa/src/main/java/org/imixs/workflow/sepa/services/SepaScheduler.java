@@ -239,8 +239,8 @@ public class SepaScheduler implements Scheduler {
                     // if an optional report definition was defined, this report is used for XSL
                     // processing if not, than the main report definition is used
                     FileData filedata = null;
-                    ItemCollection reportOptional = reportService
-                            .findReport(sepaExport.getItemValueString(SepaWorkflowService.ITEM_SEPA_REPORT));
+                    String optionalSepaReport = sepaExport.getItemValueString(SepaWorkflowService.ITEM_SEPA_REPORT);
+                    ItemCollection reportOptional = reportService.findReport(optionalSepaReport);
                     if (reportOptional != null) {
                         // use optional report
                         filedata = reportService.transformDataSource(reportOptional, data, sepaFileName);
@@ -249,7 +249,12 @@ public class SepaScheduler implements Scheduler {
                                         + sepaExport.getItemValueString(SepaWorkflowService.ITEM_SEPA_REPORT),
                                 configuration, sepaExport);
                     } else {
-                        // use main report
+                        if (!optionalSepaReport.isEmpty()) {
+                            sepaWorkflowService.logMessage(
+                                    "...WARNING - SEPA export report " + optionalSepaReport + " not found! Default report will be used.",
+                                    configuration, sepaExport);
+                        }
+                        // use the default report
                         filedata = reportService.transformDataSource(report, data, sepaFileName);
                     }
 
