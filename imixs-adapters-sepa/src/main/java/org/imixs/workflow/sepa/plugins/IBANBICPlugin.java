@@ -54,13 +54,27 @@ public class IBANBICPlugin extends AbstractPlugin {
     /**
      * Validates the items dbtr.iban, dbtr.bic, cdtr.iban and cdtr.bic. If the input
      * is not valid the method throws a PluginException
-     * 
+     * <p>
+     * If the event result provides the tag
+     * <p>
+     * {@code<validation name="required">false</validation>}
+     * <p>
+     * the validation will be scipped
      * 
      * @throws PluginException - if invalid iban/bic
      * 
      **/
     @Override
-    public ItemCollection run(ItemCollection workitem, ItemCollection documentActivity) throws PluginException {
+    public ItemCollection run(ItemCollection workitem, ItemCollection event) throws PluginException {
+
+        // skip if validaten tag is required=false
+        ItemCollection evalItemCollection = this.getWorkflowService().evalWorkflowResult(event, "validation", workitem);
+        if (evalItemCollection != null) {
+            // evaluate the validation rules...
+            if ("false".equalsIgnoreCase(evalItemCollection.getItemValueString("required"))) {
+                return workitem;
+            }
+        }
 
         // first we remove tailing spaces....
         trimInput(workitem, IBAN_BIC_ITEMS);
