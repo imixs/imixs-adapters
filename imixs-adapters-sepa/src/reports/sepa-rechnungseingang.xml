@@ -9,6 +9,9 @@
 		<item name="$uniqueid">
 			<value xsi:type="xs:string">bf073e72-512c-4d60-af77-4427f0872036</value>
 		</item>
+		<item name="$modelversion">
+			<value xsi:type="xs:string">rechnungseingang-3.0</value>
+		</item>
 		<item name="$workflowgroup">
 			<value xsi:type="xs:string">Rechnungseingang</value>
 		</item>
@@ -46,6 +49,64 @@
 			<value xsi:type="xs:decimal">86.87</value>
 		</item>
 	</document>
+	
+	
+	
+	<document>
+		<item name="$processid">
+			<value xsi:type="xs:int">210</value>
+		</item>
+		<item name="$uniqueid">
+			<value xsi:type="xs:string">bf073e72asdf-512c-4d60-af77-4427f0872036</value>
+		</item>
+		<item name="$modelversion">
+			<value xsi:type="xs:string">rechnungseingang-sachrechnung-de-1.0</value>
+		</item>
+		<item name="$workflowgroup">
+			<value xsi:type="xs:string">Sachrechnungseingang</value>
+		</item>
+		<item name="$workflowsummary">
+			<value xsi:type="xs:string">Invoice Example-2</value>
+		</item>
+		<item name="cdtr.bic">
+			<value xsi:type="xs:string">XXXADEMM</value>
+		</item>
+		<item name="cdtr.iban">
+			<value xsi:type="xs:string">DE74 5555 0000 0000 0552 73</value>
+		</item>
+		<item name="cdtr.name">
+			<value xsi:type="xs:string">Supplier 2 Eyy XXXXXXXXX</value>
+		</item>
+		<item name="dbtr.bic">
+			<value xsi:nil="true" />
+		</item>
+		<item name="dbtr.iban">
+			<value xsi:nil="true" />
+		</item>
+		<item name="dbtr.name">
+			<value xsi:nil="true" />
+		</item>
+		<item name="invoice.currency">
+			<value xsi:type="xs:string">EUR</value>
+		</item>
+		<item name="invoice.date">
+			<value xsi:type="xs:dateTime">2020-07-07T00:00:00+02:00</value>
+		</item>
+		<item name="invoice.number">
+			<value xsi:type="xs:string">202007000175</value>
+		</item>
+		<item name="invoice.total">
+			<value xsi:type="xs:decimal">50.00</value>
+		</item>
+	</document>
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	<document>
 		<item name="$workflowgroup">
