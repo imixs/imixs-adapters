@@ -196,6 +196,24 @@ The error message can be configured by the resource bundles 'app' or 'custom' wi
 
 For the IBAN/BIC validaten the open source library org.iban4j.IbanUtil is used
 
+
+### Strict Validation
+
+In the default mode the plugin ignores spaces between the digits of IBAN/BIC independent from its position. If you want to force a strict validation than you can set the environment variable *SEPA_VALIDATION_STRICT* to 'true'
+
+	SEPA_VALIDATION_STRICT=true
+
+In this mode only correctly formated IBAN/BIC strings or strings without spaces will be accepted. See the following example:
+
+	# SEPA_VALIDATION_STRICT=false (default)	
+	NL73HIYA0048846703       = OK
+	NL 73HIYA0048846703      = OK
+	
+	# SEPA_VALIDATION_STRICT=true
+	NL73HIYA0048846703       = OK
+	NL73 HIYA 0048 8467 03   = OK
+	NL 73HIYA0048846703      = NOT OK
+
 # Development
 
 ## Maven

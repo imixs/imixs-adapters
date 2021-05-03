@@ -4,6 +4,7 @@ import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.iban4j.BicFormatException;
 import org.iban4j.BicUtil;
 import org.iban4j.IbanFormat;
@@ -24,6 +25,12 @@ import org.imixs.workflow.sepa.services.SepaWorkflowService;
  * Validation is skipped in case no data is provided.
  * <p>
  * For validation we use the open source library 'iban4j'
+ * <p>
+ * Note: In some cases the IBAN/BIC is provided on a external invoice with
+ * spaces at positions which are strictly not allowed. For example a space
+ * between the country and the first to digits 'DE 99'. We accept those settings
+ * by removing all spaces before validation. You can disable this behaviour by
+ * setting the property sepa.validation.strict=true.
  * 
  * @see https://github.com/arturmkrtchyan/iban4j
  * @author rsoika
@@ -32,13 +39,9 @@ import org.imixs.workflow.sepa.services.SepaWorkflowService;
  */
 public class IBANBICPlugin extends AbstractPlugin {
 
-    // is empty or match iban/bic pattern - this pattern allows blanks
-    // public static final String REGEX_IBAN_PATTERN = "^$|(^[A-Z]{2}(?:[
-    // ]?[A-Z0-9]){13,32}$)";
-    // public static final String REGEX_BIC_PATTERN =
-    // "^$|(^([a-zA-Z]{4}[a-zA-Z]{2}[a-zA-Z0-9]{2}([a-zA-Z0-9]{3})?))";
-
     public static final String ERROR_INVALID_IBANBIC = "ERROR_INVALID_IBANBIC";
+    public static final String SEPA_VALIDATION_STRICT = "SEPA_VALIDATION_STRICT";
+    
 
     public static final String[] IBAN_BIC_ITEMS = { SepaWorkflowService.ITEM_DBTR_IBAN,
             SepaWorkflowService.ITEM_CDTR_IBAN, SepaWorkflowService.ITEM_CDTR_BIC, SepaWorkflowService.ITEM_DBTR_BIC };
@@ -47,6 +50,11 @@ public class IBANBICPlugin extends AbstractPlugin {
     public static final String[] BIC_ITEMS = { SepaWorkflowService.ITEM_CDTR_BIC, SepaWorkflowService.ITEM_DBTR_BIC };
 
     private static Logger logger = Logger.getLogger(IBANBICPlugin.class.getName());
+
+    @Inject
+    @ConfigProperty(name = SEPA_VALIDATION_STRICT, defaultValue = "false")
+    boolean sepaValidationStrict;
+  
 
     @Inject
     ResourceBundleHandler resourceBundleHandler;
@@ -106,6 +114,11 @@ public class IBANBICPlugin extends AbstractPlugin {
         return workitem;
     }
 
+    
+    public void setSepaValidationStrict(boolean sepaValidationStrict) {
+        this.sepaValidationStrict = sepaValidationStrict;
+    }
+    
     /**
      * This helper method trims the input if necessary
      */
@@ -130,13 +143,20 @@ public class IBANBICPlugin extends AbstractPlugin {
      * @return
      * @throws PluginException
      */
-    public static void validateIBAN(ItemCollection workitem, String... itemNames) {
+    public  void validateIBAN(ItemCollection workitem, String... itemNames) {
 
         for (String itemName : itemNames) {
             String iban = workitem.getItemValueString(itemName);
             if (iban.isEmpty()) {
                 continue;
             }
+            
+            // strip spaces?
+            if (sepaValidationStrict==false) {
+                // yes...
+                iban=iban.replaceAll("\\s+", "");
+            }
+            
             if (iban.contains(" ")) {
                 // formated
                 IbanUtil.validate(iban, IbanFormat.Default);
@@ -158,13 +178,19 @@ public class IBANBICPlugin extends AbstractPlugin {
      * @return
      * @throws PluginException
      */
-    public static void validateBIC(ItemCollection workitem, String... itemNames) {
+    public  void validateBIC(ItemCollection workitem, String... itemNames) {
 
         for (String itemName : itemNames) {
             String bic = workitem.getItemValueString(itemName);
             if (bic.isEmpty()) {
                 continue;
             }
+            // strip spaces?
+            if (sepaValidationStrict==false) {
+                // yes...
+                bic=bic.replaceAll("\\s+", "");
+            }
+            
             BicUtil.validate(bic);
         }
     }
