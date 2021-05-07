@@ -40,7 +40,7 @@ The contentType and the processing instrcutions (XSL) of a  report definition wi
 ## Maven
 
 
-The imxis-adapter-poi module can be added into an application module. The module provides CDI and Rest API components. 
+The imixs-adapter-poi module can be added into an application module. The module provides CDI and Rest API components. 
 
 Add the following maven dependency into a parent project:
 

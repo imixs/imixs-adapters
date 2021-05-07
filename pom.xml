@@ -12,6 +12,7 @@
 		<module>imixs-adapters-qrcode</module>
 		<module>imixs-adapters-kafka</module>
 		<module>imixs-adapters-poi</module>
+		<module>imixs-adapters-wopi</module>
 	</modules>
 
 	<properties>
