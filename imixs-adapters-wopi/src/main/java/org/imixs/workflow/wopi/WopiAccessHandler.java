@@ -68,7 +68,7 @@ public class WopiAccessHandler {
     void init() {
         jwtPassword = WorkflowKernel.generateUniqueID();
 
-        if (wopiDiscoveryEndpoint.isPresent() && !wopiDiscoveryEndpoint.get().isEmpty()) {
+        if (wopiDiscoveryEndpoint!=null && wopiDiscoveryEndpoint.isPresent() && !wopiDiscoveryEndpoint.get().isEmpty()) {
             try {
                 parseDiscoveryURL(wopiDiscoveryEndpoint.get());
             } catch (SAXException | IOException | ParserConfigurationException e) {
@@ -109,7 +109,7 @@ public class WopiAccessHandler {
         SecretKey secretKey = HMAC.createKey("HmacSHA256", jwtPassword.getBytes());
         try {
             // verify token and get the payload...
-            String payload = new JWTParser().setKey(secretKey).setToken(jwtPassword).verify().getPayload();
+            String payload = new JWTParser().setKey(secretKey).setToken(access_token).verify().getPayload();
 
             // seems to be ok, we test the age of the IOT
             JsonReader reader = Json.createReader(new StringReader(payload));

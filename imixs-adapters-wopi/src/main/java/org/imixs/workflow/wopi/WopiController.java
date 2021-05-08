@@ -34,6 +34,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.imixs.jwt.JWTException;
+import org.imixs.workflow.ItemCollection;
 
 /**
  * The WopiController is front end controller proivdint the access endpoint for
@@ -68,7 +70,7 @@ public class WopiController implements Serializable {
         if (!wopiHostEndpoint.endsWith("/")) {
             wopiHostEndpoint = wopiHostEndpoint + "/";
         }
-
+ 
     }
 
     /**
@@ -77,7 +79,7 @@ public class WopiController implements Serializable {
      * https://localhost:9980/{libreoffice-editor}.html?WOPISrc=http://wopi-app:8080/api/wopi/files/{your-file}
      * 
      */
-    public String getWopiAccessURLByFileName(String filename) {
+    public String getWopiAccessURLByFileName(String uniqueid,String filename) {
 
         // compute the access base url
         String baseURL = wopiAccessHandler.getClientEndpointByFilename(filename);
@@ -94,7 +96,13 @@ public class WopiController implements Serializable {
             baseURL = baseURL + "&";
         }
 
-        baseURL = baseURL + wopiHostEndpoint + "files/" + filename;
+        try {
+            String id=uniqueid+"_"+filename;
+            baseURL = baseURL + "WOPISrc="+ wopiHostEndpoint + "files/" + id + "?access_token="+wopiAccessHandler.generateAccessToken();
+        } catch (JWTException e) {
+            
+            e.printStackTrace();
+        }
 
         if (baseURL.startsWith("http://")) {
             logger.warning("...WOPI Client is running without SSL - this is not recommended for production!" );

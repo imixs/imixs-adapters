@@ -32,9 +32,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 
+import javax.annotation.security.DeclareRoles;
+import javax.annotation.security.RunAs;
+import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.json.Json;
@@ -87,9 +92,12 @@ import org.imixs.workflow.engine.DocumentService;
  * @version 1.0
  * 
  */
+@Stateless
+@LocalBean
+@DeclareRoles({ "org.imixs.ACCESSLEVEL.MANAGERACCESS" })
+@RunAs("org.imixs.ACCESSLEVEL.MANAGERACCESS")
 @Path("/wopi")
 @Produces({ MediaType.APPLICATION_JSON })
-@Stateless
 public class WopiHostService {
 
     @javax.ws.rs.core.Context
@@ -277,21 +285,31 @@ public class WopiHostService {
         // create the json object
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("BaseFileName", fileData.getName());
+        builder.add("Size", fileData.getContent().length);
 
-        builder.add("Size", fileData.getAttribute("size").toString());
         builder.add("OwnerId", "admin");
-
         builder.add("UserId", 1);
+
         Date modified = workitem.getItemValueDate(WorkflowKernel.MODIFIED);
         builder.add("Version", modified.getTime());
-        builder.add("LastModifiedTime", modified.toString());
 
+        // modifed to ISO 8601 String
+        SimpleDateFormat sdf;
+        sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
+        builder.add("LastModifiedTime", sdf.format(modified));
+
+        // compute SHA-256
         try {
-
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(fileData.getContent());
-
-            builder.add("Sha256", hash.toString());
+            // This bytes[] has bytes in decimal format;
+            // Convert it to hexadecimal format
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < hash.length; i++) {
+                sb.append(Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1));
+            }
+            builder.add("Sha256", sb.toString());
         } catch (NoSuchAlgorithmException e) {
             logger.warning("unable to comput Sha256 from content: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();

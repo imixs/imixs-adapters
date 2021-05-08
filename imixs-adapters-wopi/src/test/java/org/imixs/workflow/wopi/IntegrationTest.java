@@ -18,11 +18,11 @@ import javax.net.ssl.X509TrustManager;
  * This class tests if a connection to the rest service end-point can be
  * established.
  * 
- * @author rsoika
+ * @author rsoika 
  * @version 1.0
  */
 public class IntegrationTest {
-
+ 
     private String serviceEndpoint;
     private final static Logger logger = Logger.getLogger(IntegrationTest.class.getName());
 

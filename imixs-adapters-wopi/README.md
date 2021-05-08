@@ -46,6 +46,7 @@ Add the following maven dependency into a parent project:
 		<scope>provided</scope>
 	</dependency>
 
+**Note:** The WopiHostService needs manager access. So you need to tweak your deployment descriptors accordingly.
 
 
 	
