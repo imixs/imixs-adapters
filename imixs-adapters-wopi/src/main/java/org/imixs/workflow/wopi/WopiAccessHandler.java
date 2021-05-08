@@ -46,13 +46,14 @@ public class WopiAccessHandler {
 
     private String jwtPassword;
 
-    private Map<String, String> extensions;
-    private Map<String, String> mimeTypes;
+    private Map<String, String> extensions=null;
+    private Map<String, String> mimeTypes=null;
 
     @Inject
     @ConfigProperty(name = "wopi.discovery.endpoint")
     Optional<String> wopiDiscoveryEndpoint;
-    
+
+ 
     @Inject
     @ConfigProperty(name = "wopi.access.token.expiration", defaultValue = "3600") // 1 hour
     long wopiAccessTokenExpiration;
@@ -61,12 +62,10 @@ public class WopiAccessHandler {
 
     /**
      * PostContruct event - generate a jwt password to compute the access tokens.
-     * 
+     *
      */
     @PostConstruct
     void init() {
-        extensions = new HashMap<String, String>();
-        mimeTypes = new HashMap<String, String>();
         jwtPassword = WorkflowKernel.generateUniqueID();
 
         if (wopiDiscoveryEndpoint.isPresent() && !wopiDiscoveryEndpoint.get().isEmpty()) {
@@ -76,6 +75,8 @@ public class WopiAccessHandler {
                 logger.severe("Failed to parse discovery endpoint '" + wopiDiscoveryEndpoint.get() + "' Error: "
                         + e.getMessage());
                 e.printStackTrace();
+                extensions=null;
+                mimeTypes=null;
             }
         } else {
             logger.warning("...unable to parse discovery endpoint - parameter ' not provided!");
@@ -109,15 +110,15 @@ public class WopiAccessHandler {
         try {
             // verify token and get the payload...
             String payload = new JWTParser().setKey(secretKey).setToken(jwtPassword).verify().getPayload();
-            
+
             // seems to be ok, we test the age of the IOT
             JsonReader reader = Json.createReader(new StringReader(payload));
             JsonObject payloadObject = reader.readObject();
             JsonNumber jsonnumber = payloadObject.getJsonNumber("iat");
-            
-            long lIAT=jsonnumber.longValue(); 
-            long lNow=(new Date().getTime() / 1000) ;
-            long lTimout=lNow-wopiAccessTokenExpiration;
+
+            long lIAT = jsonnumber.longValue();
+            long lNow = (new Date().getTime() / 1000);
+            long lTimout = lNow - wopiAccessTokenExpiration;
             if (lTimout > lIAT) {
                 logger.warning("access_token has expired!");
                 return false;
@@ -138,6 +139,11 @@ public class WopiAccessHandler {
      * @return
      */
     public String getClientEndpointByFilename(String filename) {
+        // lazy initalizing...
+        if (extensions==null) {
+            init();
+        }
+        
         if (extensions != null && filename.contains(".")) {
             String ext = filename.substring(filename.lastIndexOf('.') + 1);
             return extensions.get(ext);
@@ -152,6 +158,11 @@ public class WopiAccessHandler {
      * @return
      */
     public String getClientEndpointByMimeType(String mimeType) {
+        // lazy initalizing...
+        if (extensions==null) {
+            init();
+        }
+        
         if (mimeTypes != null) {
             return mimeTypes.get(mimeType);
         }
@@ -173,12 +184,12 @@ public class WopiAccessHandler {
     void parseDiscoveryURL(String endpoint)
             throws MalformedURLException, SAXException, IOException, ParserConfigurationException {
 
-        logger.info("....parseDiscoveryURL: " + endpoint);
+        logger.info("...discovering WOPI Client endpoints: " + endpoint);
 
         extensions = new HashMap<String, String>();
         mimeTypes = new HashMap<String, String>();
 
-        // pase teh discovery url
+        // parse the discovery URL
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document doc = db.parse(new URL(endpoint).openStream());
@@ -204,10 +215,12 @@ public class WopiAccessHandler {
 
                         if (actionExt != null && !actionExt.isEmpty()) {
                             extensions.put(actionExt, actionurlsrc);
+                            logger.info("...ext=" + actionExt + " -> "+actionurlsrc);
                         } else {
                             // this can be a mimetype...
                             if (appName.contains("/")) {
                                 mimeTypes.put(appName, actionurlsrc);
+                                logger.info("...mimetype=" + appName + " -> "+actionurlsrc);
                             }
                         }
                     }
@@ -217,5 +230,7 @@ public class WopiAccessHandler {
         }
 
     }
+
+  
 
 }

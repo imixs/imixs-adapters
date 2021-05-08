@@ -96,6 +96,11 @@ public class WopiController implements Serializable {
 
         baseURL = baseURL + wopiHostEndpoint + "files/" + filename;
 
+        if (baseURL.startsWith("http://")) {
+            logger.warning("...WOPI Client is running without SSL - this is not recommended for production!" );
+        }
+        
+        
         return baseURL;
     }
 
