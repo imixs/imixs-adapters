@@ -49,4 +49,11 @@ Add the following maven dependency into a parent project:
 **Note:** The WopiHostService needs manager access. So you need to tweak your deployment descriptors accordingly.
 
 
+# More...
+
+See: https://people.gnome.org/~michael/data/2020-02-01-web-collaboration.pdf
+
+Example HTML/IFrame : https://github.com/LibreOffice/online/blob/master/loleaflet/html/framed.doc.html
+
+
 	

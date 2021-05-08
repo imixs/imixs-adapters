@@ -99,12 +99,28 @@ public class WopiAccessHandler {
     }
 
     /**
-     * Validates if a given access_token is still valid
+     * Validates if a given access_token is still valid.
+     * <p>
+     * The method also clears the token form invalid query params. For some reasons Collabora
+     *  sends additional query params starting with '?' which is not expected here! 
      * 
      * @param access_token
      * @return
      */
     public boolean isValidAccessToken(String access_token) {
+        
+        if (access_token == null || access_token.isEmpty()) {
+            logger.warning("...missing access_token!");
+            return false;
+        }
+    
+        // for some reason the LibreOffice Online sends additional query params starting
+        // with '?' with is not expected. We clean the token here.
+        if (access_token.contains("?")) {
+            // clean token....
+            access_token=access_token.substring(0,access_token.indexOf("?"));
+        }
+        
         // We need the secret key...
         SecretKey secretKey = HMAC.createKey("HmacSHA256", jwtPassword.getBytes());
         try {
