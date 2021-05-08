@@ -22,6 +22,7 @@
 		<jakarta.version>8.0</jakarta.version>
 		<microprofile.version>3.0</microprofile.version>
 		<apache.pdfbox.version>2.0.19</apache.pdfbox.version>
+		<org.imixs.jwt.version>1.1.0</org.imixs.jwt.version>
 	</properties>
 
 	<description>
@@ -260,6 +261,13 @@
 				<version>${org.imixs.marty.version}</version>
 				<scope>provided</scope>
 			</dependency>
+							
+			<dependency>
+				<groupId>org.imixs.jwt</groupId>
+				<artifactId>imixs-jwt</artifactId>
+				<version>${org.imixs.jwt.version}</version>
+				<scope>provided</scope>
+			</dependency>		
 
 		</dependencies>
 	</dependencyManagement>

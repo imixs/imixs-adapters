@@ -22,5 +22,13 @@
 			<groupId>org.imixs.workflow</groupId>
 			<artifactId>imixs-workflow-engine</artifactId>
 		</dependency>
+		
+			
+			<dependency>
+				<groupId>org.imixs.jwt</groupId>
+				<artifactId>imixs-jwt</artifactId>
+			
+				<scope>compile</scope>
+			</dependency>			
 	</dependencies>
 </project>

@@ -46,6 +46,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -97,6 +98,9 @@ public class WopiHostService {
     private static Logger logger = Logger.getLogger(WopiHostService.class.getName());
 
     @Inject
+    WopiAccessHandler wopiAccessHandler;
+
+    @Inject
     DocumentService documentService;
 
     /**
@@ -126,7 +130,13 @@ public class WopiHostService {
      */
     @GET
     @Path("/files/{id}/contents")
-    public Response getFileContents(@PathParam("id") String id) {
+    public Response getFileContents(@PathParam("id") String id, @QueryParam("access_token") String accessToken) {
+
+        // validate access_token
+        if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
+            logger.warning("...invalid access_token!");
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
 
         // extract filename form $uniqueid
         int filePart = id.indexOf("_");
@@ -171,7 +181,15 @@ public class WopiHostService {
      */
     @POST
     @Path("/files/{id}/contents")
-    public Response postFileContents(@PathParam("id") String id, InputStream contentStream) {
+    public Response postFileContents(@PathParam("id") String id, InputStream contentStream,
+            @QueryParam("access_token") String accessToken) {
+
+        // validate access_token
+        if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
+            logger.warning("...invalid access_token!");
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
         ItemCollection workitem = null;
         // extract filename form $uniqueid
         int filePart = id.indexOf("_");
@@ -227,7 +245,14 @@ public class WopiHostService {
     @GET
     @Path("/files/{id}")
     @Produces({ MediaType.APPLICATION_JSON })
-    public Response getFileInfo(@PathParam("id") String id) {
+    public Response getFileInfo(@PathParam("id") String id, @QueryParam("access_token") String accessToken) {
+
+        // validate access_token
+        if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
+            logger.warning("...invalid access_token!");
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
         ItemCollection workitem = null;
         // extract filename form $uniqueid
         int filePart = id.indexOf("_");
