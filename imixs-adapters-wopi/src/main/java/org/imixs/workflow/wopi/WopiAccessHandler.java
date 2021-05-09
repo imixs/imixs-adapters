@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
+import javax.ejb.SessionContext;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.Json;
@@ -48,6 +49,7 @@ public class WopiAccessHandler {
 
     private Map<String, String> extensions=null;
     private Map<String, String> mimeTypes=null;
+    private Map<String, byte[]> fileCache=null;
 
     @Inject
     @ConfigProperty(name = "wopi.discovery.endpoint")
@@ -67,6 +69,7 @@ public class WopiAccessHandler {
     @PostConstruct
     void init() {
         jwtPassword = WorkflowKernel.generateUniqueID();
+        fileCache=new HashMap<String, byte[]>();
 
         if (wopiDiscoveryEndpoint!=null && wopiDiscoveryEndpoint.isPresent() && !wopiDiscoveryEndpoint.get().isEmpty()) {
             try {
@@ -82,6 +85,16 @@ public class WopiAccessHandler {
             logger.warning("...unable to parse discovery endpoint - parameter ' not provided!");
         }
 
+    }
+    
+    public void putFile(String jsessionid, byte[] file) {
+        fileCache.put(jsessionid, file);
+    }
+    
+    public byte[] getFile(String jsessionid) {
+        byte[] result=fileCache.get(jsessionid);
+        fileCache.remove(jsessionid);
+        return result;
     }
 
     /**

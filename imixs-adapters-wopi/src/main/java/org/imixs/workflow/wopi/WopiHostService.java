@@ -53,8 +53,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
@@ -126,8 +128,6 @@ public class WopiHostService {
         return message;
     }
 
-    
-    
     /**
      * Returns the file details.
      * <p>
@@ -147,7 +147,8 @@ public class WopiHostService {
     @GET
     @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}")
     @Produces({ MediaType.APPLICATION_JSON })
-    public Response getFileInfo(@PathParam("uniqueid") String uniqueid,@PathParam("file") String file, @QueryParam("access_token") String accessToken) {
+    public Response getFileInfo(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
+            @QueryParam("access_token") String accessToken) {
 
         // validate access_token
         if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
@@ -163,7 +164,7 @@ public class WopiHostService {
 //            return Response.status(Response.Status.BAD_REQUEST).build();
 //        }
 //        String uniqueid = id.substring(0, filePart);
-       // String filename = id.substring(filePart + 1);
+        // String filename = id.substring(filePart + 1);
 
         workitem = documentService.load(uniqueid);
         if (workitem == null) {
@@ -210,8 +211,8 @@ public class WopiHostService {
         }
         // builder.add("AllowExternalMarketplace",true);
         builder.add("UserCanWrite", true);
-        builder.add("SupportsUpdate",true);
-        //builder.add("SupportsLocks",true);
+        builder.add("SupportsUpdate", true);
+        // builder.add("SupportsLocks",true);
 
         JsonObject result = builder.build();
         return Response.ok(result.toString(), MediaType.APPLICATION_JSON).build();
@@ -231,7 +232,8 @@ public class WopiHostService {
      */
     @GET
     @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}/contents")
-    public Response getFileContents(@PathParam("uniqueid") String uniqueid,@PathParam("file") String file, @QueryParam("access_token") String accessToken) {
+    public Response getFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
+            @QueryParam("access_token") String accessToken) {
 
         // validate access_token
         if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
@@ -257,15 +259,19 @@ public class WopiHostService {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         try {
+            logger.info("...sending " + fileData.getContent().length + " bytes...");
             // load file
             Response.ResponseBuilder builder = Response.ok(fileData.getContent(), MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition",
                             "attachment;filename=" + new String(file.getBytes("UTF-8"), "ISO-8859-1"))
                     .header("Content-Length", fileData.getContent());
+
             return builder.status(Response.Status.OK).build();
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
         return Response.status(Response.Status.NOT_FOUND).build();
     }
 
@@ -283,8 +289,8 @@ public class WopiHostService {
     @POST
     @PUT
     @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}/contents")
-    public Response postFileContents(@PathParam("uniqueid") String uniqueid,@PathParam("file") String file, InputStream contentStream,
-            @QueryParam("access_token") String accessToken) {
+    public Response postFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
+            InputStream contentStream, @QueryParam("access_token") String accessToken, @Context UriInfo info) {
 
         logger.info("...... POST postFileContents: " + uniqueid + "/" + file);
         // validate access_token
@@ -293,44 +299,22 @@ public class WopiHostService {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        ItemCollection workitem = null;
-        // extract filename form $uniqueid
-//        int filePart = id.indexOf("_");
-//        if (filePart <= 0) {
-//            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
-//            return Response.status(Response.Status.BAD_REQUEST).build();
-//        }
-//        String uniqueid = id.substring(0, filePart);
-//        String filename = id.substring(filePart + 1);
-
-        workitem = documentService.load(uniqueid);
-        if (workitem == null) {
-            logger.warning("wokitem '" + uniqueid + "' not found!");
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-
         byte[] content;
         try {
+            // extract the jsessionid from accessToken
+            String jsessionid = accessToken.substring(accessToken.indexOf("JSESSIONID=") + 11);
             content = readAllBytes(contentStream);
+
+            logger.info("...receifed " + content.length + " bytes... put into cache");
+            // put the file into the temporary cache
+            wopiAccessHandler.putFile(jsessionid, content);
+
         } catch (IOException e) {
             logger.warning("failed to read document data: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-
-        FileData fileData = workitem.getFileData(file);
-        if (fileData == null) {
-            // create new FileData object
-            fileData = new FileData(file, content, MediaType.APPLICATION_OCTET_STREAM, null);
-
-        } else {
-            // replace content
-            fileData.setContent(content);
-        }
         return Response.status(Response.Status.OK).build();
     }
-
-   
-
 
     /**
      * This method returns the fileData object form a workitem for a coresponding

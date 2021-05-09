@@ -29,7 +29,11 @@ import java.io.Serializable;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.SessionContext;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Observes;
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -69,7 +73,7 @@ public class WopiController implements Serializable {
         if (!wopiHostEndpoint.endsWith("/")) {
             wopiHostEndpoint = wopiHostEndpoint + "/";
         }
- 
+
     }
 
     /**
@@ -78,7 +82,7 @@ public class WopiController implements Serializable {
      * https://localhost:9980/{libreoffice-editor}.html?WOPISrc=http://wopi-app:8080/api/wopi/files/{your-file}
      * 
      */
-    public String getWopiAccessURLByFileName(String uniqueid,String file) {
+    public String getWopiAccessURLByFileName(String uniqueid, String file) {
 
         // compute the access base url
         String baseURL = wopiAccessHandler.getClientEndpointByFilename(file);
@@ -96,18 +100,36 @@ public class WopiController implements Serializable {
         }
 
         try {
-            baseURL = baseURL + "WOPISrc="+ wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token="+wopiAccessHandler.generateAccessToken();
+            baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token="
+                    + wopiAccessHandler.generateAccessToken();
         } catch (JWTException e) {
-            
+
             e.printStackTrace();
         }
 
         if (baseURL.startsWith("http://")) {
-            logger.warning("...WOPI Client is running without SSL - this is not recommended for production!" );
+            logger.warning("...WOPI Client is running without SSL - this is not recommended for production!");
         }
-        
-        
+
         return baseURL;
     }
 
+    
+    /**
+     * This method is called by teh javascript imixs-wopi.js library. 
+     */
+    public void updateFile() {
+        logger.info("now we should take the file... for jsessionid: " + getJsessionID());
+    }
+    
+    
+    private String getJsessionID() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (context != null) {
+            ExternalContext externalContext = context.getExternalContext();
+            return externalContext.getSessionId(false);
+        }
+        // no context!
+        return null;
+    }
 }
