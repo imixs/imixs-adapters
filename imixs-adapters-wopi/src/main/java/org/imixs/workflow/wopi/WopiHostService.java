@@ -145,9 +145,9 @@ public class WopiHostService {
      * 
      */
     @GET
-    @Path("/files/{id}")
+    @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}")
     @Produces({ MediaType.APPLICATION_JSON })
-    public Response getFileInfo(@PathParam("id") String id, @QueryParam("access_token") String accessToken) {
+    public Response getFileInfo(@PathParam("uniqueid") String uniqueid,@PathParam("file") String file, @QueryParam("access_token") String accessToken) {
 
         // validate access_token
         if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
@@ -157,22 +157,22 @@ public class WopiHostService {
 
         ItemCollection workitem = null;
         // extract filename form $uniqueid
-        int filePart = id.indexOf("_");
-        if (filePart <= 0) {
-            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-        String uniqueid = id.substring(0, filePart);
-        String filename = id.substring(filePart + 1);
+//        int filePart = id.indexOf("_");
+//        if (filePart <= 0) {
+//            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
+//            return Response.status(Response.Status.BAD_REQUEST).build();
+//        }
+//        String uniqueid = id.substring(0, filePart);
+       // String filename = id.substring(filePart + 1);
 
         workitem = documentService.load(uniqueid);
         if (workitem == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        FileData fileData = loadFileData(uniqueid, filename);
+        FileData fileData = loadFileData(uniqueid, file);
         if (fileData == null) {
-            logger.warning("wokitem for id parameter '" + id + "' not found!");
+            logger.warning("wokitem '" + uniqueid + "' not found!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -205,7 +205,7 @@ public class WopiHostService {
             }
             builder.add("Sha256", sb.toString());
         } catch (NoSuchAlgorithmException e) {
-            logger.warning("unable to comput Sha256 from content: " + e.getMessage());
+            logger.warning("unable to compute Sha256 from content: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
         // builder.add("AllowExternalMarketplace",true);
@@ -230,8 +230,8 @@ public class WopiHostService {
      * @return
      */
     @GET
-    @Path("/files/{id}/contents")
-    public Response getFileContents(@PathParam("id") String id, @QueryParam("access_token") String accessToken) {
+    @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}/contents")
+    public Response getFileContents(@PathParam("uniqueid") String uniqueid,@PathParam("file") String file, @QueryParam("access_token") String accessToken) {
 
         // validate access_token
         if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
@@ -239,28 +239,28 @@ public class WopiHostService {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        // extract filename form $uniqueid
-        int filePart = id.indexOf("_");
-        if (filePart <= 0) {
-            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-        String uniqueid = id.substring(0, filePart);
-        String filename = id.substring(filePart + 1);
+//        // extract filename form $uniqueid
+//        int filePart = id.indexOf("_");
+//        if (filePart <= 0) {
+//            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
+//            return Response.status(Response.Status.BAD_REQUEST).build();
+//        }
+//        String uniqueid = id.substring(0, filePart);
+//        String filename = id.substring(filePart + 1);
 
         // load the FileData
-        logger.info("...... GET getFileContents: " + id);
-        FileData fileData = loadFileData(uniqueid, filename);
+        logger.info("...... GET getFileContents: " + uniqueid + "/" + file);
+        FileData fileData = loadFileData(uniqueid, file);
 
         if (fileData == null) {
-            logger.warning("no file data found for id parameter '" + id + "'!");
+            logger.warning("no file data found '" + uniqueid + "'!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         try {
             // load file
             Response.ResponseBuilder builder = Response.ok(fileData.getContent(), MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition",
-                            "attachment;filename=" + new String(filename.getBytes("UTF-8"), "ISO-8859-1"))
+                            "attachment;filename=" + new String(file.getBytes("UTF-8"), "ISO-8859-1"))
                     .header("Content-Length", fileData.getContent());
             return builder.status(Response.Status.OK).build();
         } catch (Exception ex) {
@@ -282,11 +282,11 @@ public class WopiHostService {
      */
     @POST
     @PUT
-    @Path("/files/{id}/contents")
-    public Response postFileContents(@PathParam("id") String id, InputStream contentStream,
+    @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}/contents")
+    public Response postFileContents(@PathParam("uniqueid") String uniqueid,@PathParam("file") String file, InputStream contentStream,
             @QueryParam("access_token") String accessToken) {
 
-        logger.info("...... POST postFileContents: " + id);
+        logger.info("...... POST postFileContents: " + uniqueid + "/" + file);
         // validate access_token
         if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
             logger.warning("...invalid access_token!");
@@ -295,17 +295,17 @@ public class WopiHostService {
 
         ItemCollection workitem = null;
         // extract filename form $uniqueid
-        int filePart = id.indexOf("_");
-        if (filePart <= 0) {
-            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-        String uniqueid = id.substring(0, filePart);
-        String filename = id.substring(filePart + 1);
+//        int filePart = id.indexOf("_");
+//        if (filePart <= 0) {
+//            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
+//            return Response.status(Response.Status.BAD_REQUEST).build();
+//        }
+//        String uniqueid = id.substring(0, filePart);
+//        String filename = id.substring(filePart + 1);
 
         workitem = documentService.load(uniqueid);
         if (workitem == null) {
-            logger.warning("wokitem for id parameter '" + id + "' not found!");
+            logger.warning("wokitem '" + uniqueid + "' not found!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -317,10 +317,10 @@ public class WopiHostService {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        FileData fileData = workitem.getFileData(filename);
+        FileData fileData = workitem.getFileData(file);
         if (fileData == null) {
             // create new FileData object
-            fileData = new FileData(filename, content, MediaType.APPLICATION_OCTET_STREAM, null);
+            fileData = new FileData(file, content, MediaType.APPLICATION_OCTET_STREAM, null);
 
         } else {
             // replace content

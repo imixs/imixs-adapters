@@ -108,7 +108,7 @@ public class WopiAccessHandler {
      * @return
      */
     public boolean isValidAccessToken(String access_token) {
-        
+    
         if (access_token == null || access_token.isEmpty()) {
             logger.warning("...missing access_token!");
             return false;
