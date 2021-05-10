@@ -29,33 +29,36 @@ import java.io.Serializable;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.SessionContext;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Observes;
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
+import javax.enterprise.context.ConversationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.jwt.JWTException;
+import org.imixs.workflow.FileData;
+import org.imixs.workflow.faces.fileupload.FileUploadController;
 
 /**
- * The WopiController is front end controller proivdint the access endpoint for
- * a file.
+ * The WopiController is a front end controller providing the access endpoint
+ * for a file.
  * <p>
  * The controller expects the environment variable 'WOPI_HOST_ENDPOINT' with the
  * internal URL the WopiClient can contact the WopiHostService
+ * <p>
+ * The controller also provides a method to update a file saved by the wopi
+ * client. For that reason, the controller is ConversationScoped
  * 
  * @author rsoika
  * 
  */
 @Named
-@RequestScoped
+@ConversationScoped
 public class WopiController implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static Logger logger = Logger.getLogger(WopiController.class.getName());
+
+    private String accessToken = null;
 
     @Inject
     @ConfigProperty(name = "wopi.host.endpoint", defaultValue = "http://localhost:8080/api/wopi/")
@@ -63,6 +66,9 @@ public class WopiController implements Serializable {
 
     @Inject
     WopiAccessHandler wopiAccessHandler;
+
+    @Inject
+    FileUploadController fileUploadController;
 
     /**
      * PostContruct event - generate a jwt password to compute the access tokens.
@@ -76,13 +82,35 @@ public class WopiController implements Serializable {
 
     }
 
+    public String getAccessToken() {
+        return accessToken;
+    }
+
     /**
-     * Returns the access url for the wopi client
+     * This method generates a new access token.
+     * <p>
+     * A access token is specific to a userid and username
+     * 
+     * @return
+     */
+    private String generateAccessToken(String userid, String username) {
+        try {
+            accessToken = wopiAccessHandler.generateAccessToken(userid, username);
+        } catch (JWTException e) {
+            logger.severe("Failed to generate access token: " + e.getMessage());
+        }
+        return accessToken;
+    }
+
+    /**
+     * Returns the access url for the wopi client. 
+     * <p>The method creates an accessToken
+     * (JWT) including the username.
      * 
      * https://localhost:9980/{libreoffice-editor}.html?WOPISrc=http://wopi-app:8080/api/wopi/files/{your-file}
      * 
      */
-    public String getWopiAccessURLByFileName(String uniqueid, String file) {
+    public String getWopiAccessURLByFileName(String uniqueid, String file, String userid, String username) {
 
         // compute the access base url
         String baseURL = wopiAccessHandler.getClientEndpointByFilename(file);
@@ -99,13 +127,11 @@ public class WopiController implements Serializable {
             baseURL = baseURL + "&";
         }
 
-        try {
-            baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token="
-                    + wopiAccessHandler.generateAccessToken();
-        } catch (JWTException e) {
-
-            e.printStackTrace();
-        }
+        String token=generateAccessToken(userid,username);
+        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token="
+                + token;
+        
+        //baseURL = baseURL + "&NotWOPIButIframe=true";
 
         if (baseURL.startsWith("http://")) {
             logger.warning("...WOPI Client is running without SSL - this is not recommended for production!");
@@ -114,22 +140,23 @@ public class WopiController implements Serializable {
         return baseURL;
     }
 
-    
     /**
-     * This method is called by teh javascript imixs-wopi.js library. 
+     * This method is called by the javascript imixs-wopi.js library to fetch the
+     * updated fileData object.
+     * <p>
+     * To access the filedata object, the controller uses the access token
+     * 
      */
     public void updateFile() {
-        logger.info("now we should take the file... for jsessionid: " + getJsessionID());
-    }
-    
-    
-    private String getJsessionID() {
-        FacesContext context = FacesContext.getCurrentInstance();
-        if (context != null) {
-            ExternalContext externalContext = context.getExternalContext();
-            return externalContext.getSessionId(false);
+
+        logger.info("...update fileData...");
+
+        FileData fileData = wopiAccessHandler.fetchFileData( getAccessToken());
+        if (fileData != null) {
+            fileUploadController.addAttachedFile(fileData);
+        } else {
+            logger.warning("...no updated fileData object found");
         }
-        // no context!
-        return null;
     }
+
 }

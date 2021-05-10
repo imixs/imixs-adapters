@@ -51,7 +51,7 @@ Add the following maven dependency into a parent project:
 
 # Integration
 
-The Imixs-WOPI Adapter provides a JavaScript library for an easy integration. To integrate your page can simply load the script and provide a div element to show the editor:
+The Imixs-WOPI Adapter provides a JavaScript library for  a tightly coupling with the Imixs Workflow Engine. To integrate your JSF page you can simply load the script and provide a DIV element to show the editor:
 
 
 	<script type="text/javascript" src="/js/imixs-core.js"></script>
@@ -86,10 +86,18 @@ The Imixs-WOPI Adapter provides a JavaScript library for an easy integration. To
 	</div>
 
 
+## Updating the File Content
+
+When a file was saved by LibreOffice Online, the data is posted to the WOPI Host endpoint '/wopi/files/{name}/contents'. The file content is not directly stored. It is cached by the application scoped WopiAccessHandler. Triggered by a JavaScrict event the WopiController method 'updateFile' is called and the data is stored in the Imixs FileUploadController in the usual way. An Imixs-Workflow application has the full control how to handle the data. This way of implementation is necessary, because the Collabora Server did not handle the JSESSIONID in a way that the WopiHostService can consume the data directly in the context of the current user session. To solve this problem, the  imixs-wopi.js reacts on the 'UI_Save' and  the data is fetched from the application cache by the JSESSIONID prvided by the Collabora back end call. 
+
+The JSF commandScript can also trigger an additional javaScript method to update the DownloadSeciton.
+
+	<h:commandScript name="wopiControllerUpdateFile" action="#{wopiController.updateFile()}" onevent="updateDownloadSection" />
+
 
 ## Reacting on Events
 
-LibreOffice Online sends JavaScript events each time an update of the content is performed by the user. 
+LibreOffice Online sends JavaScript general events each time an update of the content is performed by the user. 
 A javaScript can react on these events be registering a EventListner:
 
 
@@ -109,14 +117,6 @@ A javaScript can react on these events be registering a EventListner:
 	}
 
 
-
-## Updating the File Content
-
-The  imixs-wopi.js reacts on the 'UI_Save' event and triggers WopiController method updateFile. This method fetches the new file content form the WopiAccessHandler file cache. 
-
-The JSF commandScript can also trigger an additional javaScript method to update the DownloadSeciton.
-
-	<h:commandScript name="wopiControllerUpdateFile" action="#{wopiController.updateFile()}" onevent="updateDownloadSection" />
 
 
 # More...

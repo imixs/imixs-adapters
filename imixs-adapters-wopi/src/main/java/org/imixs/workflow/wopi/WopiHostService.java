@@ -150,21 +150,17 @@ public class WopiHostService {
     public Response getFileInfo(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             @QueryParam("access_token") String accessToken) {
 
+        // clean unexpected query params
+        accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
+
         // validate access_token
-        if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
+        JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);
+        if (acessTokenPayload == null) {
             logger.warning("...invalid access_token!");
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
         ItemCollection workitem = null;
-        // extract filename form $uniqueid
-//        int filePart = id.indexOf("_");
-//        if (filePart <= 0) {
-//            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
-//            return Response.status(Response.Status.BAD_REQUEST).build();
-//        }
-//        String uniqueid = id.substring(0, filePart);
-        // String filename = id.substring(filePart + 1);
 
         workitem = documentService.load(uniqueid);
         if (workitem == null) {
@@ -178,41 +174,14 @@ public class WopiHostService {
         }
 
         // create the json object
-        JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add("BaseFileName", fileData.getName());
-        builder.add("Size", fileData.getContent().length);
-
-        builder.add("OwnerId", "admin");
-        builder.add("UserId", 1);
-
-        Date modified = workitem.getItemValueDate(WorkflowKernel.MODIFIED);
-        builder.add("Version", modified.getTime());
-
-        // modifed to ISO 8601 String
-        SimpleDateFormat sdf;
-        sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
-        builder.add("LastModifiedTime", sdf.format(modified));
-
-        // compute SHA-256
+        JsonObjectBuilder builder = null;
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(fileData.getContent());
-            // This bytes[] has bytes in decimal format;
-            // Convert it to hexadecimal format
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hash.length; i++) {
-                sb.append(Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1));
-            }
-            builder.add("Sha256", sb.toString());
+            builder = buildJsonFileInfo(fileData, workitem.getItemValueDate(WorkflowKernel.MODIFIED),
+                    acessTokenPayload);
         } catch (NoSuchAlgorithmException e) {
             logger.warning("unable to compute Sha256 from content: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-        // builder.add("AllowExternalMarketplace",true);
-        builder.add("UserCanWrite", true);
-        builder.add("SupportsUpdate", true);
-        // builder.add("SupportsLocks",true);
 
         JsonObject result = builder.build();
         return Response.ok(result.toString(), MediaType.APPLICATION_JSON).build();
@@ -235,20 +204,15 @@ public class WopiHostService {
     public Response getFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             @QueryParam("access_token") String accessToken) {
 
+        // clean unexpected query params
+        accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
+
         // validate access_token
-        if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
+        JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);
+        if (acessTokenPayload == null) {
             logger.warning("...invalid access_token!");
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-
-//        // extract filename form $uniqueid
-//        int filePart = id.indexOf("_");
-//        if (filePart <= 0) {
-//            logger.warning("Invalid id parameter '" + id + "' uniqueid_filename expected!");
-//            return Response.status(Response.Status.BAD_REQUEST).build();
-//        }
-//        String uniqueid = id.substring(0, filePart);
-//        String filename = id.substring(filePart + 1);
 
         // load the FileData
         logger.info("...... GET getFileContents: " + uniqueid + "/" + file);
@@ -282,6 +246,8 @@ public class WopiHostService {
      * <p>
      * <code> /wopi/xxxxxxx-0000-0000-0000-yyyy_{FILENAME}</code>
      * <p>
+     * The method returns a json string with the LastModifiedTime
+     * <p>
      * 
      * @param name
      * @param content
@@ -292,28 +258,47 @@ public class WopiHostService {
     public Response postFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             InputStream contentStream, @QueryParam("access_token") String accessToken, @Context UriInfo info) {
 
+        // clean unexpected query params
+        accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
+
         logger.info("...... POST postFileContents: " + uniqueid + "/" + file);
+
         // validate access_token
-        if (!wopiAccessHandler.isValidAccessToken(accessToken)) {
+        JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);
+        if (acessTokenPayload == null) {
             logger.warning("...invalid access_token!");
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-
+        FileData fileData = null;
         byte[] content;
         try {
             // extract the jsessionid from accessToken
-            String jsessionid = accessToken.substring(accessToken.indexOf("JSESSIONID=") + 11);
+            //String jsessionid = accessToken.substring(accessToken.indexOf("JSESSIONID=") + 11);
             content = readAllBytes(contentStream);
 
-            logger.info("...receifed " + content.length + " bytes... put into cache");
-            // put the file into the temporary cache
-            wopiAccessHandler.putFile(jsessionid, content);
+            logger.info("...receifed " + content.length + " bytes");
+            // put the file data into the temporary cache
+            fileData = new FileData(file, content, null, null);
+            wopiAccessHandler.putFileData(accessToken, fileData);
 
         } catch (IOException e) {
             logger.warning("failed to read document data: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-        return Response.status(Response.Status.OK).build();
+
+        // build a new json file info
+        // create the json object
+        JsonObjectBuilder builder = null;
+        try {
+            builder = buildJsonFileInfo(fileData, new Date(), acessTokenPayload);
+        } catch (NoSuchAlgorithmException e) {
+            logger.warning("unable to compute Sha256 from content: " + e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        JsonObject result = builder.build();
+        return Response.ok(result.toString(), MediaType.APPLICATION_JSON).build();
+
+        // return Response.status(Response.Status.OK).build();
     }
 
     /**
@@ -391,5 +376,55 @@ public class WopiHostService {
                     exception.addSuppressed(e);
                 }
         }
+    }
+
+    /**
+     * This method builds a fileInfo json object for the wopi client
+     * 
+     * @param fileData
+     * @param modified
+     * @param accessToken
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
+    private JsonObjectBuilder buildJsonFileInfo(FileData fileData, Date modified, JsonObject acessTokenPayload)
+            throws NoSuchAlgorithmException {
+        // create the json object
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        builder.add("BaseFileName", fileData.getName());
+        builder.add("Size", fileData.getContent().length);
+
+        // from the access token we extract the username
+        builder.add("OwnerId", acessTokenPayload.getString("userid"));
+        builder.add("UserId", acessTokenPayload.getString("userid"));
+        builder.add("UserFriendlyName", acessTokenPayload.getString("username"));
+
+        // Date modified = workitem.getItemValueDate(WorkflowKernel.MODIFIED);
+        builder.add("Version", modified.getTime());
+
+        // modifed to ISO 8601 String
+        SimpleDateFormat sdf;
+        sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
+        builder.add("LastModifiedTime", sdf.format(modified));
+
+        // compute SHA-256
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(fileData.getContent());
+        // This bytes[] has bytes in decimal format;
+        // Convert it to hexadecimal format
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < hash.length; i++) {
+            sb.append(Integer.toString((hash[i] & 0xff) + 0x100, 16).substring(1));
+        }
+        builder.add("Sha256", sb.toString());
+
+        // builder.add("AllowExternalMarketplace",true);
+        builder.add("UserCanWrite", true);
+        builder.add("SupportsUpdate", true);
+        //builder.add("EditNotificationPostMessage", true);
+        
+        return builder;
     }
 }

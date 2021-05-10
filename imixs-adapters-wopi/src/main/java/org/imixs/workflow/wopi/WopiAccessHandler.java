@@ -12,7 +12,6 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
-import javax.ejb.SessionContext;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.Json;
@@ -28,6 +27,7 @@ import org.imixs.jwt.HMAC;
 import org.imixs.jwt.JWTBuilder;
 import org.imixs.jwt.JWTException;
 import org.imixs.jwt.JWTParser;
+import org.imixs.workflow.FileData;
 import org.imixs.workflow.WorkflowKernel;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -47,15 +47,15 @@ public class WopiAccessHandler {
 
     private String jwtPassword;
 
-    private Map<String, String> extensions=null;
-    private Map<String, String> mimeTypes=null;
-    private Map<String, byte[]> fileCache=null;
+    private Map<String, String> extensions = null;
+    private Map<String, String> mimeTypes = null;
+    private Map<String, FileData> fileDataCache = null;
+   
 
     @Inject
     @ConfigProperty(name = "wopi.discovery.endpoint")
     Optional<String> wopiDiscoveryEndpoint;
 
- 
     @Inject
     @ConfigProperty(name = "wopi.access.token.expiration", defaultValue = "3600") // 1 hour
     long wopiAccessTokenExpiration;
@@ -69,31 +69,55 @@ public class WopiAccessHandler {
     @PostConstruct
     void init() {
         jwtPassword = WorkflowKernel.generateUniqueID();
-        fileCache=new HashMap<String, byte[]>();
+        fileDataCache = new HashMap<String, FileData>();
 
-        if (wopiDiscoveryEndpoint!=null && wopiDiscoveryEndpoint.isPresent() && !wopiDiscoveryEndpoint.get().isEmpty()) {
+        if (wopiDiscoveryEndpoint != null && wopiDiscoveryEndpoint.isPresent()
+                && !wopiDiscoveryEndpoint.get().isEmpty()) {
             try {
                 parseDiscoveryURL(wopiDiscoveryEndpoint.get());
             } catch (SAXException | IOException | ParserConfigurationException e) {
                 logger.severe("Failed to parse discovery endpoint '" + wopiDiscoveryEndpoint.get() + "' Error: "
                         + e.getMessage());
                 e.printStackTrace();
-                extensions=null;
-                mimeTypes=null;
+                extensions = null;
+                mimeTypes = null;
             }
         } else {
             logger.warning("...unable to parse discovery endpoint - parameter ' not provided!");
         }
 
     }
-    
-    public void putFile(String jsessionid, byte[] file) {
-        fileCache.put(jsessionid, file);
+
+    /**
+     * This method stores a fileData into the application scoped file cache.
+     * <p>
+     * The key to store the object is the access token which is unique within the current user context
+     * 
+     * @param jsessionid
+     * @param file
+     */
+    public void putFileData(String accessToken, FileData fileData) {
+        fileDataCache.put(accessToken, fileData);
+        // print a warning if more than 5 elements are contained in the cache - this
+        // should not happen because the WopiController should fetch the content
+        // Immediately
+        if (fileDataCache.keySet().size() >= 5) {
+            logger.warning("fileDataCache contains actually " + fileDataCache.keySet().size()
+                    + " elements - this should not happen. This may cause a memory leak!");
+        }
     }
-    
-    public byte[] getFile(String jsessionid) {
-        byte[] result=fileCache.get(jsessionid);
-        fileCache.remove(jsessionid);
+
+    /**
+     * This method is called by the WopiController to fetch a file by the access token.
+     * <p>
+     * 
+     * @param accessToken
+     * @return fileData object or null if no object was found for the given
+     *         accessToken
+     */
+    public FileData fetchFileData(String accessToken) {
+        // fetch and remove the fileData object from the cache
+        FileData result = fileDataCache.remove(accessToken);
         return result;
     }
 
@@ -103,9 +127,12 @@ public class WopiAccessHandler {
      * @return
      * @throws JWTException
      */
-    public String generateAccessToken() throws JWTException {
+    public String generateAccessToken( String userid, String username) throws JWTException {
         SecretKey secretKey = HMAC.createKey("HmacSHA256", jwtPassword.getBytes());
-        String payload = "{\"sub\":\"wopi-host\",\"name\":\"imixs-wopi-adapter\"}";
+        String payload = "{\"sub\":\"wopi-host\"";
+        payload=payload    +",\"userid\":\"" + userid + "\"";
+        payload=payload    +",\"username\":\"" + username + "\"";
+        payload=payload      + "}";
         JWTBuilder builder = new JWTBuilder().setKey(secretKey).setPayload(payload);
 
         return builder.getToken();
@@ -114,26 +141,25 @@ public class WopiAccessHandler {
     /**
      * Validates if a given access_token is still valid.
      * <p>
-     * The method also clears the token form invalid query params. For some reasons Collabora
-     *  sends additional query params starting with '?' which is not expected here! 
+     * The method also clears the token form invalid query params. For some reasons
+     * Collabora sends additional query params starting with '?' which is not
+     * expected here!
+     * <p>
+     * In case the token is valid, the method returns the paylod, otherwise the method returns null.
      * 
      * @param access_token
-     * @return
+     * @return the token payload or null if the token is not valid
      */
-    public boolean isValidAccessToken(String access_token) {
-    
+    public JsonObject validateAccessToken(String access_token) {
+
         if (access_token == null || access_token.isEmpty()) {
             logger.warning("...missing access_token!");
-            return false;
+            return null;
         }
-    
-        // for some reason the LibreOffice Online sends additional query params starting
-        // with '?' with is not expected. We clean the token here.
-        if (access_token.contains("?")) {
-            // clean token....
-            access_token=access_token.substring(0,access_token.indexOf("?"));
-        }
-        
+
+        // clean unexpected query params
+        access_token=purgeAccessToken(access_token);
+       
         // We need the secret key...
         SecretKey secretKey = HMAC.createKey("HmacSHA256", jwtPassword.getBytes());
         try {
@@ -150,15 +176,36 @@ public class WopiAccessHandler {
             long lTimout = lNow - wopiAccessTokenExpiration;
             if (lTimout > lIAT) {
                 logger.warning("access_token has expired!");
-                return false;
+                return null;
             }
             // token is valid
-            return true;
+            return payloadObject;
         } catch (JWTException e) {
             // invalid token!
             logger.severe("...invalid access_token: " + e.getMessage());
         }
-        return false;
+        return null;
+    }
+
+    /**
+     * For some reason the LibreOffice Online adds additional query params starting
+     * with '?' into the access token, with is not expected. Thes helper method
+     * removes such parts of the token.
+     * 
+     * @param accesstoken
+     * @return clean access token
+     */
+    public String purgeAccessToken(String access_token) {
+        if (access_token == null || access_token.isEmpty()) {
+            return access_token;
+        }
+        // test if a  '?' is included and remove that part
+        if (access_token.contains("?")) {
+            // clean token....
+            access_token = access_token.substring(0, access_token.indexOf("?"));
+        }
+        return access_token;
+
     }
 
     /**
@@ -169,10 +216,10 @@ public class WopiAccessHandler {
      */
     public String getClientEndpointByFilename(String filename) {
         // lazy initalizing...
-        if (extensions==null) {
+        if (extensions == null) {
             init();
         }
-        
+
         if (extensions != null && filename.contains(".")) {
             String ext = filename.substring(filename.lastIndexOf('.') + 1);
             return extensions.get(ext);
@@ -188,10 +235,10 @@ public class WopiAccessHandler {
      */
     public String getClientEndpointByMimeType(String mimeType) {
         // lazy initalizing...
-        if (extensions==null) {
+        if (extensions == null) {
             init();
         }
-        
+
         if (mimeTypes != null) {
             return mimeTypes.get(mimeType);
         }
@@ -244,12 +291,12 @@ public class WopiAccessHandler {
 
                         if (actionExt != null && !actionExt.isEmpty()) {
                             extensions.put(actionExt, actionurlsrc);
-                            logger.info("...ext=" + actionExt + " -> "+actionurlsrc);
+                            logger.info("...ext=" + actionExt + " -> " + actionurlsrc);
                         } else {
                             // this can be a mimetype...
                             if (appName.contains("/")) {
                                 mimeTypes.put(appName, actionurlsrc);
-                                logger.info("...mimetype=" + appName + " -> "+actionurlsrc);
+                                logger.info("...mimetype=" + appName + " -> " + actionurlsrc);
                             }
                         }
                     }
@@ -259,7 +306,5 @@ public class WopiAccessHandler {
         }
 
     }
-
-  
 
 }

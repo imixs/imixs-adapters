@@ -24,7 +24,11 @@
 			<groupId>org.imixs.workflow</groupId>
 			<artifactId>imixs-workflow-engine</artifactId>
 		</dependency>
-
+		
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-workflow-faces</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.imixs.jwt</groupId>
