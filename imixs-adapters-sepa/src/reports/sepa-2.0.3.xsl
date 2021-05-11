@@ -92,7 +92,7 @@
 						<FinInstnId>
 							<BIC>
 								<xsl:value-of
-									select="$exportWorkitem/item[@name='dbtr.bic']/value" />
+									select="replace($exportWorkitem/item[@name='dbtr.bic']/value, ' ', '')" />
 							</BIC>
 						</FinInstnId>
 					</DbtrAgt>
@@ -137,7 +137,7 @@
 			<CdtrAgt>
 				<FinInstnId>
 					<BIC>
-						<xsl:value-of select="item[@name='cdtr.bic']/value" />
+						<xsl:value-of select="replace(item[@name='cdtr.bic']/value, ' ', '')" />
 					</BIC>
 				</FinInstnId>
 			</CdtrAgt>
