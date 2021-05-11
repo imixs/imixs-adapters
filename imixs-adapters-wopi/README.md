@@ -2,7 +2,7 @@
 
 This adapter module provides a WOPI Host Implementation based on the [WOPI API](https://wopi.readthedocs.io/projects/wopirest/en/latest/). The adapter can be used to integrate WOPI Clients like LibreOffice Online to edit and view office Documents.
 
-<img src="libreoffice-online-screen-001.png" width="700px"/>
+<img src="libreoffice-online-screen-002.png" width="900px"/>
 
 
 ## The Rest API
