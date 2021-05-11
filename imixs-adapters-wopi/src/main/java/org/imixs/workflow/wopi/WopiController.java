@@ -110,7 +110,7 @@ public class WopiController implements Serializable {
      * https://localhost:9980/{libreoffice-editor}.html?WOPISrc=http://wopi-app:8080/api/wopi/files/{your-file}
      * 
      */
-    public String getWopiAccessURLByFileName(String uniqueid, String file, String userid, String username) {
+    public String getWopiAccessURL(String uniqueid, String file, String userid, String username) {
 
         // compute the access base url
         String baseURL = wopiAccessHandler.getClientEndpointByFilename(file);

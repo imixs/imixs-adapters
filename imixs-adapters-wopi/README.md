@@ -7,8 +7,7 @@ This adapter module provides a WOPI Host Implementation based on the [WOPI API](
 
 ## The Rest API
 
-The WOPI Adapter module pvovices a Rest API with the following endpoints: 
-
+The WOPI Adapter module provides a Rest API with the following endpoints. The endpoints are based on the WOPI API. 
 
 
 | Method |URI                           | Description                               					   | 
@@ -21,19 +20,20 @@ The WOPI Adapter module pvovices a Rest API with the following endpoints:
 
 ### Security
 
-The /wopi/ Rest API endpoint must not be protected because LibreOffice has no mechanism to authenticate against a WOPI Host. You need to make sure the endpoint is not protected by the web.xml.
+The WOPI API endpoints /wopi/ must not be protected because LibreOffice has no mechanism to authenticate against a WOPI Host. You need to make sure the endpoint /wopi/ is not protected by the web.xml.
 
 To validate user access the imixs-adapter-wopi module provides an JWT implementation to generate and to validate an access token. The endpoint uri to access the HOST looks like this:
 
 	https://localhost:9980/{libreoffice-editor}.html?WOPISrc=http://wopi-app:8080/api/wopi/files/{your-file}?access_token={JWT} 
 
 
-# Development
+# Integration
+
+The Imixs-WOPI Adapter provides services and a JavaScript library for  a  tightly coupling with the Imixs Workflow Engine. The following section shows how to integrate the Imixs-WOPI Adapter into a application. A prerequisite is that an instance of a WOPI client (e.g. LibreOffice Online) is running. 
 
 ## Maven
 
-
-The imixs-adapter-wopi module can be added into an application module. The module provides CDI and Rest API components. 
+The imixs-adapter-wopi module can be added into an Imixs Workflow application. The module provides CDI and Rest API components. 
 
 Add the following maven dependency into a parent project:
 
@@ -46,56 +46,75 @@ Add the following maven dependency into a parent project:
 		<scope>provided</scope>
 	</dependency>
 
-**Note:** The WopiHostService needs manager access. So you need to tweak your deployment descriptors accordingly.
+**Note:** The WopiHostService needs manager access. So you maybe need to tweak your deployment descriptors accordingly. Also make sure that the Rest API endpoint /api/wopi/ is not protected by JAAC. 
 
 
-# Integration
+## The WopiController
 
-The Imixs-WOPI Adapter provides a JavaScript library for  a tightly coupling with the Imixs Workflow Engine. To integrate your JSF page you can simply load the script and provide a DIV element to show the editor:
+To open the LibreOffice Online Editor you need a access url including the Wopi Host Endpoint and the access token. The CDI Bean WopiController provides a convenient method to generate such a URL:
+
+
+	 <a href="javascript:void;"
+	    onclick="imixsWopi.openViewer('wopi_canvas','#{wopiController.getWopiAccessURL(uniqueID,filename,userid,username)}');">
+	    Edit</a>
+
+In this example we are calling the JavaScript method to open the viewer component in a iframe. See details in the following section.
+
+## JavaScript
+
+The Imixs-WOPI Adapter provides a JavaScript library to open and control the Wopi Editor (Wopi Client).
+The Integration of the Wopi Client into your application is done by a iframe. This necessary to isolate the editor form your surrounding application. 
+To display the editor in a iframe the script library *imixs-wopi.js* provides a method imixsWopi.openViewer. The method expects a DIV element in your existing web page and the access URL to place the iframe with the editor. 
+
 
 
 	<script type="text/javascript" src="/js/imixs-core.js"></script>
 	<script type="text/javascript" src="/js/imixs-wopi.js"></script>
-	<script type="text/javascript">
-		// define imixs script name spaces
-		var imixs = IMIXS.org.imixs.core;
-		$(document).ready(function() {
-			// init wopi viewer...
-			imixsWopi.formID="workitem_form_body";
-			imixsWopi.viewerID="libreoffice_viewer";
-		});
+	<script>
+		// open the wopi viewer
+		function openWopiViewer(url) {
+			// open viewer...		
+			imixsWopi.openViewer('wopi_canvas', url);
+			// define an optional save callback method
+			//imixsWopi.saveCallback=closeWopiViewer;
+		}
 	</script>
-	
+
+
 	....
 	...........
-	
-	<!-- Script called when a file was updated -->
-	<h:commandScript name="wopiControllerUpdateFile" action="#{wopiController.updateFile()}" onevent="someUI-UpdateMethod" />
-	
-	
-	<!-- show no attachments from workitem -->
-	<ui:param name="fileDataList" value="#{workflowController.workitem.fileData}"></ui:param>
-	<ul>
-		<ui:repeat value="#{fileDataList}" var="fileData">
-			<li>#{fileData.name} -> <a href="javascript:void;" onclick="imixsWopi.openViewer('#{wopiController.getWopiAccessURLByFileName(workflowController.workitem.uniqueID,fileData.name)}');"> Edit</a></li>
-		</ui:repeat>	
-	</ul>
-	
-	<div id="libreoffice_viewer" style="display: none;">
-		<!--the place where the editor is loaded.... -->
+	<!-- LibreOffice Editor -->
+	<div id="wopi_controlls">
+		<button onclick="imixsWopi.save(); return false;">Update</button><button onclick="imixsWopi.closeViewer(); return false;">Close</button>
+		<hr />
 	</div>
+	<div id="wopi_canvas" style="display: none;"></div>
+	....
 
+## UI Controlls
+
+The control of closing the editor or saving the content is in this concept part of your application. So in the example above the application shows two buttons to save the content and to close the editor. 
 
 ## Updating the File Content
 
-When a file was saved by LibreOffice Online, the data is posted to the WOPI Host endpoint '/wopi/files/{name}/contents'. The file content is not directly stored. It is cached by the application scoped WopiAccessHandler. Triggered by a JavaScrict event the WopiController method 'updateFile' is called and the data is stored in the Imixs FileUploadController in the usual way. An Imixs-Workflow application has the full control how to handle the data. This way of implementation is necessary, because the Collabora Server did not handle the JSESSIONID in a way that the WopiHostService can consume the data directly in the context of the current user session. To solve this problem, the  imixs-wopi.js reacts on the 'UI_Save' and  the data is fetched from the application cache by the JSESSIONID prvided by the Collabora back end call. 
+When a file was saved by LibreOffice Online, the data is posted to the WOPI Host endpoint '/wopi/files/{name}/contents'. The file content is not directly stored. It is cached by the application scoped WopiAccessHandler. Triggered by a JavaScript event the WopiController method 'updateFile' is called and the data is stored in the Imixs FileUploadController in the usual way. An Imixs-Workflow application has the full control how to handle the data. 
+
+
+The WopiController also provides a Ajax method to update the Imixs FileUploadController after a document was saved. You can integrate the
+controller method with a JSF commandScript: 
+
+	<!-- Script called when a file was updated -->
+	<h:commandScript name="wopiControllerUpdateFile" action="#{wopiController.updateFile()}" onevent="someUI-UpdateMethod" />
+
+The  JavaScript library automatically detects the existence of the method wopiControllerUpdateFile and calls the method after a file was updated and saved. 
+
 
 The JSF commandScript can also trigger an additional javaScript method to update the DownloadSeciton.
 
 	<h:commandScript name="wopiControllerUpdateFile" action="#{wopiController.updateFile()}" onevent="updateDownloadSection" />
 
 
-## Reacting on Events
+## Reacting on PostMessage Events
 
 LibreOffice Online sends JavaScript general events each time an update of the content is performed by the user. 
 A javaScript can react on these events be registering a EventListner:
@@ -116,14 +135,21 @@ A javaScript can react on these events be registering a EventListner:
 		... do something....
 	}
 
+You can also send messages to the editor 
 
+	imixsWopi.postMessage({
+			"MessageId" : "Action_Save",
+			"Values" : {
+				"DontTerminateEdit" : true,
+				"DontSaveIfUnmodified": false,
+				"Notify" : true
+			}
+		});
 
+Find more details about the Post Message in Collaboara [here](https://sdk.collaboraonline.com/docs/postmessage_api.html).
 
-# More...
+## Example Application
 
-See: https://people.gnome.org/~michael/data/2020-02-01-web-collaboration.pdf
-
-Example HTML/IFrame : https://github.com/LibreOffice/online/blob/master/loleaflet/html/framed.doc.html
-
+You can find a full demo integration in the 'wopi-host' branch of the [Imixs-Process-Manager project](https://github.com/imixs/imixs-process-manager/tree/wopi-host).
 
 	
