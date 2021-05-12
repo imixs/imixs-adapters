@@ -40,7 +40,7 @@ To setup the Imixs-WOPI Adapter the following environment variables must be set:
 
 | Variable              | Description  							| Example |
 | --------------------- |---------------------------------------|---------|
-| WOPI_PUBLIC_ENDPOINT  | Public client endpoint to be called by the web appliacation. This endpoint should be SSL encrypted |https://libreoffice.foo.com/loleaflet/6a844e4/loleaflet.html?
+| WOPI_PUBLIC_ENDPOINT  | Public client endpoint to be called by the web application. This endpoint should be SSL encrypted |https://libreoffice.foo.com/loleaflet/6a844e4/loleaflet.html?
 | WOPI_HOST_ENDPOINT    | Internal Wopi Host endpoint is called by the Wopi Client to fetch and store file data. This endpoint should not be public accessible | http://my-app:8080/api/wopi/
 | WOPI_DISCOVERY_ENDPOINT | Optional public discovery endpoint used by the Wopi Host implementation to resolve the public wopi endpoint dynamically. This variable should only be set if no WOPI_PUBLIC_ENDPOINT was defined! | http://localhost:9980/hosting/discovery
 | WOPI_FILE_EXTENSIONS | Optional comma separated list of file extensions to be supported. |.odt,.doc,.docx,.ods,.xls,.xlsx,.ppt,.pptx|     
