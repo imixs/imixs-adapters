@@ -59,11 +59,17 @@ public class WopiController implements Serializable {
     private static Logger logger = Logger.getLogger(WopiController.class.getName());
 
     private String accessToken = null;
+    private boolean enabled = false;
 
     @Inject
-    @ConfigProperty(name = "wopi.host.endpoint", defaultValue = "http://localhost:8080/api/wopi/")
+    @ConfigProperty(name = "wopi.host.endpoint", defaultValue="")
     String wopiHostEndpoint;
 
+    @Inject
+    @ConfigProperty(name = "wopi.file.extensions",defaultValue = ".odt,.doc,.docx,.docm,.rtf,.ods,.xls,.xlsx,.odp,.ppt,.pptx,.odg,.dxf,.emf,.wmf,.vsd,.vsdx")
+    String wopiFileExtensions;
+
+    
     @Inject
     WopiAccessHandler wopiAccessHandler;
 
@@ -76,10 +82,17 @@ public class WopiController implements Serializable {
      */
     @PostConstruct
     void init() {
-        if (!wopiHostEndpoint.endsWith("/")) {
-            wopiHostEndpoint = wopiHostEndpoint + "/";
+        if (wopiHostEndpoint != null  && !wopiHostEndpoint.isEmpty()) {
+            enabled = true;
         }
+    }
 
+    /**
+     * Indicates if the wopi feature is enabled
+     * @return
+     */
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public String getAccessToken() {
@@ -103,19 +116,37 @@ public class WopiController implements Serializable {
     }
 
     /**
-     * Returns the access url for the wopi client. 
-     * <p>The method creates an accessToken
-     * (JWT) including the username.
+     * Returns the access url for the wopi client.
+     * <p>
+     * The method creates an accessToken (JWT) including the username.
      * 
      * https://localhost:9980/{libreoffice-editor}.html?WOPISrc=http://wopi-app:8080/api/wopi/files/{your-file}
      * 
      */
     public String getWopiAccessURL(String uniqueid, String file, String userid, String username) {
 
+        if (!enabled) {
+            return null;
+        }
+        
         // compute the access base url
         String baseURL = wopiAccessHandler.getClientEndpointByFilename(file);
         if (baseURL == null) {
             logger.warning("...no wopi client endpoint found!");
+            return null;
+        }
+        
+        // test file extension
+        String[] extensions = wopiFileExtensions.split(",");
+        boolean supported=false;
+        for (String ext: extensions) {
+            if (file.endsWith(ext)) {
+                supported=true;
+                break;
+            }
+        }
+        if (!supported) {
+            logger.fine("...filextension '" + file + "' is not supported.");
             return null;
         }
 
@@ -127,11 +158,10 @@ public class WopiController implements Serializable {
             baseURL = baseURL + "&";
         }
 
-        String token=generateAccessToken(userid,username);
-        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token="
-                + token;
-        
-        //baseURL = baseURL + "&NotWOPIButIframe=true";
+        String token = generateAccessToken(userid, username);
+        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token=" + token;
+
+        // baseURL = baseURL + "&NotWOPIButIframe=true";
 
         if (baseURL.startsWith("http://")) {
             logger.warning("...WOPI Client is running without SSL - this is not recommended for production!");
@@ -151,7 +181,7 @@ public class WopiController implements Serializable {
 
         logger.info("...update fileData...");
 
-        FileData fileData = wopiAccessHandler.fetchFileData( getAccessToken());
+        FileData fileData = wopiAccessHandler.fetchFileData(getAccessToken());
         if (fileData != null) {
             fileUploadController.addAttachedFile(fileData);
         } else {
