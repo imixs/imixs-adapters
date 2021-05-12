@@ -18,6 +18,8 @@ The WOPI Adapter module provides a Rest API with the following endpoints. The en
 
 
 
+
+
 ### Security
 
 The WOPI API endpoints /wopi/ must not be protected because LibreOffice has no mechanism to authenticate against a WOPI Host. You need to make sure the endpoint /wopi/ is not protected by the web.xml.
@@ -30,6 +32,46 @@ To validate user access the imixs-adapter-wopi module provides an JWT implementa
 # Integration
 
 The Imixs-WOPI Adapter provides services and a JavaScript library for  a  tightly coupling with the Imixs Workflow Engine. The following section shows how to integrate the Imixs-WOPI Adapter into a application. A prerequisite is that an instance of a WOPI client (e.g. LibreOffice Online) is running. 
+
+## Environment 
+
+To setup the Imixs-WOPI Adapter the following environment variables must be set:
+
+
+| Variable              | Description  							| Example |
+| --------------------- |---------------------------------------|---------|
+| WOPI_PUBLIC_ENDPOINT  | Public client endpoint to be called by the web appliacation. This endpoint should be SSL encrypted |https://libreoffice.foo.com/loleaflet/6a844e4/loleaflet.html?
+| WOPI_HOST_ENDPOINT    | Internal Wopi Host endpoint is called by the Wopi Client to fetch and store file data. This endpoint should not be public accessible | http://my-app:8080/api/wopi/
+| WOPI_DISCOVERY_ENDPOINT | Optional public discovery endpoint used by the Wopi Host implementation to resolve the public wopi endpoint dynamically. This variable should only be set if no WOPI_PUBLIC_ENDPOINT was defined! | http://localhost:9980/hosting/discovery
+     
+     
+The following example shows a setup for in a Docker Compose file running in a local dev environment:
+
+	....
+	  my-app:
+	    image: imixs/imixs-office-workflow
+	    environment:
+	      ....
+	      WOPI_PUBLIC_ENDPOINT: "http://localhost:9980/loleaflet/6a844e4/loleaflet.html?"
+	      WOPI_HOST_ENDPOINT: "http://my-app:8080/api/wopi/"    
+	    ....
+	    ports:
+	      - "8080:8080"
+	....	      
+
+In a productive environment, the WOPI_PUBLIC_ENDPOINT should be set to a SSL encrypted Internet domain name:
+
+	....
+	  my-app:
+	    image: imixs/imixs-office-workflow
+	    environment:
+	      ....
+	      WOPI_PUBLIC_ENDPOINT: "https://libreoffice.foo.com/loleaflet/6a844e4/loleaflet.html?"
+	      WOPI_HOST_ENDPOINT: "http://my-app:8080/api/wopi/"    
+	    ....
+	    ports:
+	      - "8080:8080"
+	....	  
 
 ## Maven
 
