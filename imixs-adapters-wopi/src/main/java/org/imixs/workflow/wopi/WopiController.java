@@ -1,6 +1,7 @@
 package org.imixs.workflow.wopi;
 
 import java.io.Serializable;
+import java.util.List;
 
 /*******************************************************************************
  *  Imixs Workflow Technology
@@ -30,12 +31,14 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ConversationScoped;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.jwt.JWTException;
 import org.imixs.workflow.FileData;
+import org.imixs.workflow.faces.data.WorkflowEvent;
 import org.imixs.workflow.faces.fileupload.FileUploadController;
 
 /**
@@ -45,8 +48,8 @@ import org.imixs.workflow.faces.fileupload.FileUploadController;
  * The controller expects the environment variable 'WOPI_HOST_ENDPOINT' with the
  * internal URL the WopiClient can contact the WopiHostService
  * <p>
- * The controller also provides a method to update a file saved by the wopi
- * client. For that reason, the controller is ConversationScoped
+ * The controller also listens on the WorklfowEvent to update modified file
+ * content into the workItem before processing.
  * 
  * @author rsoika
  * 
@@ -62,14 +65,13 @@ public class WopiController implements Serializable {
     private boolean enabled = false;
 
     @Inject
-    @ConfigProperty(name = "wopi.host.endpoint", defaultValue="")
+    @ConfigProperty(name = "wopi.host.endpoint", defaultValue = "")
     String wopiHostEndpoint;
 
     @Inject
-    @ConfigProperty(name = "wopi.file.extensions",defaultValue = ".odt,.doc,.docx,.docm,.rtf,.ods,.xls,.xlsx,.odp,.ppt,.pptx,.odg,.dxf,.emf,.wmf,.vsd,.vsdx")
+    @ConfigProperty(name = "wopi.file.extensions", defaultValue = ".odt,.doc,.docx,.docm,.rtf,.ods,.xls,.xlsx,.odp,.ppt,.pptx,.odg,.dxf,.emf,.wmf,.vsd,.vsdx")
     String wopiFileExtensions;
 
-    
     @Inject
     WopiAccessHandler wopiAccessHandler;
 
@@ -82,13 +84,14 @@ public class WopiController implements Serializable {
      */
     @PostConstruct
     void init() {
-        if (wopiHostEndpoint != null  && !wopiHostEndpoint.isEmpty()) {
+        if (wopiHostEndpoint != null && !wopiHostEndpoint.isEmpty()) {
             enabled = true;
         }
     }
 
     /**
      * Indicates if the wopi feature is enabled
+     * 
      * @return
      */
     public boolean isEnabled() {
@@ -107,12 +110,26 @@ public class WopiController implements Serializable {
      * @return
      */
     private String generateAccessToken(String userid, String username) {
+        // if a accessToken already exists, do not generate a new one
+        if (accessToken != null) {
+            return accessToken;
+        }
+
         try {
+            logger.finest("...... generating new access token");
             accessToken = wopiAccessHandler.generateAccessToken(userid, username);
         } catch (JWTException e) {
             logger.severe("Failed to generate access token: " + e.getMessage());
         }
         return accessToken;
+    }
+    
+    /**
+     * Clears an existing access token.
+     */
+    public void clearAccessToken() {
+        wopiAccessHandler.clearFileCache(accessToken);
+        accessToken=null;
     }
 
     /**
@@ -124,24 +141,23 @@ public class WopiController implements Serializable {
      * 
      */
     public String getWopiAccessURL(String uniqueid, String file, String userid, String username) {
-
         if (!enabled) {
             return null;
         }
-        
+
         // compute the access base url
         String baseURL = wopiAccessHandler.getClientEndpointByFilename(file);
         if (baseURL == null) {
             logger.warning("...no wopi client endpoint found!");
             return null;
         }
-        
+
         // test file extension
         String[] extensions = wopiFileExtensions.split(",");
-        boolean supported=false;
-        for (String ext: extensions) {
+        boolean supported = false;
+        for (String ext : extensions) {
             if (file.endsWith(ext)) {
-                supported=true;
+                supported = true;
                 break;
             }
         }
@@ -162,7 +178,6 @@ public class WopiController implements Serializable {
         baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token=" + token;
 
         // baseURL = baseURL + "&NotWOPIButIframe=true";
-
         if (baseURL.startsWith("http://")) {
             logger.warning("...WOPI Client is running without SSL - this is not recommended for production!");
         }
@@ -170,23 +185,30 @@ public class WopiController implements Serializable {
         return baseURL;
     }
 
+  
+
     /**
-     * This method is called by the javascript imixs-wopi.js library to fetch the
-     * updated fileData object.
+     * This method transfers all cached file updates form the local wopi file cache into the 
+     * current workitem, before the workitem is processed.
+     * The method also clears the file cache.
      * <p>
      * To access the filedata object, the controller uses the access token
      * 
      */
-    public void updateFile() {
+    public void onWorkflowEvent(@Observes WorkflowEvent workflowEvent) {
+        if (workflowEvent == null || workflowEvent.getWorkitem() == null) {
+            return;
+        }
 
-        logger.info("...update fileData...");
-
-        FileData fileData = wopiAccessHandler.fetchFileData(getAccessToken());
-        if (fileData != null) {
-            fileUploadController.addAttachedFile(fileData);
-        } else {
-            logger.warning("...no updated fileData object found");
+        // Update usericon, signature image imformation
+        if (WorkflowEvent.WORKITEM_BEFORE_PROCESS == workflowEvent.getEventType()) {
+            List<FileData> files = wopiAccessHandler.getAllFileData(getAccessToken());
+            for (FileData fileData : files) {
+                logger.info(".....updating " + fileData.getName() + "...");
+                fileUploadController.addAttachedFile(fileData);
+            }
+            // clear file cache
+            wopiAccessHandler.clearFileCache(accessToken);
         }
     }
-
 }

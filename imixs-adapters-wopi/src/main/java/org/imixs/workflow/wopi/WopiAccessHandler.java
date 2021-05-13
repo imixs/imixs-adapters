@@ -1,13 +1,21 @@
 package org.imixs.workflow.wopi;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
@@ -45,7 +53,9 @@ import org.xml.sax.SAXException;
  * Optional a discoveryEndpoint (WOPI_DISCOVERY_ENDPOINT) can be set to resolve
  * the WOPI Client endpoints dynamically. In most cases this is not necessary
  * and a wopi.public.endpoint can be set.
- * 
+ * <p>
+ * The method cacheFileData and fetchFileData are used to store a modified file
+ * object temporarily into the wopi local file cache.
  * 
  * @author rsoika
  * @version 1.0
@@ -54,10 +64,8 @@ import org.xml.sax.SAXException;
 public class WopiAccessHandler {
 
     private String jwtPassword;
-
     private Map<String, String> extensions = null;
     private Map<String, String> mimeTypes = null;
-    private Map<String, FileData> fileDataCache = null;
 
     @Inject
     @ConfigProperty(name = "wopi.discovery.endpoint")
@@ -69,7 +77,11 @@ public class WopiAccessHandler {
 
     @Inject
     @ConfigProperty(name = "wopi.access.token.expiration", defaultValue = "3600") // 1 hour
-    long wopiAccessTokenExpiration;
+    long wopiAccessTokenExpiration; // seconds
+
+    @Inject
+    @ConfigProperty(name = "wopi.file.cache", defaultValue = "/tmp/wopi/") // default cache directory
+    String wopiFileCache;
 
     private static Logger logger = Logger.getLogger(WopiAccessHandler.class.getName());
 
@@ -84,10 +96,9 @@ public class WopiAccessHandler {
     @PostConstruct
     void init() {
         jwtPassword = WorkflowKernel.generateUniqueID();
-        fileDataCache = new HashMap<String, FileData>();
 
         if (wopiPublicEndpoint == null || !wopiPublicEndpoint.isPresent() || wopiPublicEndpoint.get().isEmpty()) {
-            // no public wopi endpoint was defined. In this case the wop endpoints are
+            // no public wopi endpoint was defined. In this case the wopi endpoints are
             // resolved by parsing the wopi discovery endpoint
             if (wopiDiscoveryEndpoint != null && wopiDiscoveryEndpoint.isPresent()
                     && !wopiDiscoveryEndpoint.get().isEmpty()) {
@@ -108,40 +119,122 @@ public class WopiAccessHandler {
     }
 
     /**
-     * This method stores a fileData into the application scoped file cache.
+     * This method caches a fileData temporarily into the servers filesystem. The
+     * cached fileData is identified by the accesstoken+filename (with a hash
+     * value).
      * <p>
-     * The key to store the object is the access token which is unique within the
-     * current user context
+     * The method also deletes outdated cached files. 
      * 
      * @param jsessionid
      * @param file
+     * @throws IOException
      */
-    public void putFileData(String accessToken, FileData fileData) {
-        fileDataCache.put(accessToken, fileData);
-        // print a warning if more than 5 elements are contained in the cache - this
-        // should not happen because the WopiController should fetch the content
-        // Immediately
-        if (fileDataCache.keySet().size() >= 5) {
-            logger.warning("fileDataCache contains actually " + fileDataCache.keySet().size()
-                    + " elements - this should not happen. This may cause a memory leak!");
+    public void cacheFileData(String accessToken, FileData fileData) throws IOException {
+        // test cache folder existence....
+        if (!Files.exists(Paths.get(wopiFileCache))) {
+            logger.info("...creating wopi cache folder '" + wopiFileCache + "'...");
+            Files.createDirectories(Paths.get(wopiFileCache));
         }
+        Path filepath = getCacheFilePath(accessToken, fileData.getName());
+        logger.finest("......cache filepath=" + filepath);
+        Files.write(filepath, fileData.getContent());
+
+        // clean old files
+        deleteFilesOlderThanNSeconds(wopiAccessTokenExpiration, wopiFileCache);
     }
 
     /**
-     * This method is called by the WopiController to fetch a file by the access
-     * token.
+     * This method tries the fetch a file content from the local wopi file cache.
      * <p>
+     * If no cached file data exits, the method returns null.
      * 
      * @param accessToken
-     * @return fileData object or null if no object was found for the given
+     * @return cached fileData object or null if no object was found for the given
      *         accessToken
+     * @throws IOException
      */
-    public FileData fetchFileData(String accessToken) {
-        // fetch and remove the fileData object from the cache
-        FileData result = fileDataCache.remove(accessToken);
+    public FileData fetchFileData(String accessToken, String filename) {
+        Path filepath = getCacheFilePath(accessToken, filename);
+        logger.finest("......fetchData from filepath=" + filepath);
+        byte[] content;
+        try {
+            content = Files.readAllBytes(filepath);
+            FileData fileData = new FileData(filename, content, null, null);
+            return fileData;
+        } catch (IOException e) {
+            logger.finest("...no file found in cache: " + filepath);
+            // no cached file was found
+        }
+        return null;
+    }
+
+    /**
+     * This method is called by the WopiController before a workitem is processed.
+     * The method returns all modified cached files in a list of FileData objects.
+     * 
+     * @param accessToken
+     * @return
+     */
+    public List<FileData> getAllFileData(String accessToken) {
+        List<FileData> result = new ArrayList<FileData>();
+
+        Path searchPath = Paths.get(wopiFileCache);
+        String prafix = accessToken.hashCode() + "";
+        logger.finest("......getAllFileData by prafix " + prafix);
+        try {
+
+            File dir = new File(searchPath.toString());
+            File[] foundFiles = dir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(prafix);
+                }
+            });
+
+            for (File file : foundFiles) {
+                // Process file
+                byte[] content = Files.readAllBytes(Paths.get(wopiFileCache + file.getName()));
+                String filename=file.getName();
+                // cut prefix
+                filename=filename.substring(prafix.length()+1);
+                logger.finest("......found cached file : " + filename);
+                FileData fileData = new FileData(filename, content, null, null);
+                result.add(fileData);
+            }
+
+        } catch (IOException e) {
+            logger.severe("Failed to read file: " + e.getMessage());
+        }
+
         return result;
     }
 
+    
+    /**
+     * Deletes all existing files cached for a given token.
+     * @param accessToken
+     */
+    public void clearFileCache(String accessToken) {
+
+        Path searchPath = Paths.get(wopiFileCache);
+        String prafix = accessToken.hashCode() + "";
+        logger.finest("......clearFileCache by prafix " + prafix);
+        try {
+
+            File dir = new File(searchPath.toString());
+            File[] foundFiles = dir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.startsWith(prafix);
+                }
+            });
+            // delete files...
+            for (File file : foundFiles) {
+                Files.delete(Paths.get(wopiFileCache + file.getName()));
+            }
+        } catch (IOException e) {
+            logger.severe("..failed to delete file: " + e.getMessage());
+        }
+    }
+    
     /**
      * Generates a new access token
      * 
@@ -350,6 +443,50 @@ public class WopiAccessHandler {
             }
         }
 
+    }
+
+    /**
+     * Returns a Path object pointing to a cached file version of a given file an
+     * accesstoken. The accesstoken is hashed. In this way the WopiController can
+     * also fetch all cached files before the workitem is processed or saved by the
+     * user.
+     * 
+     * @param accessToken
+     * @param filename
+     * @return
+     */
+    private Path getCacheFilePath(String accessToken, String filename) {
+        if (!wopiFileCache.endsWith("/")) {
+            wopiFileCache = wopiFileCache + "/";
+        }
+        return Paths.get(wopiFileCache + accessToken.hashCode() + "_" + filename);
+    }
+
+    /**
+     * Non recursive helper method to delete all files in a given folder that are
+     * older than N minutes (ignores sub folders):
+     * 
+     * @param minutes
+     * @param dirPath
+     * @throws IOException
+     */
+    private void deleteFilesOlderThanNSeconds(long seconds, String dirPath) throws IOException {
+        long cutOff = System.currentTimeMillis() - (seconds * 1000);
+        Files.list(Paths.get(dirPath)).filter(path -> {
+            try {
+                return Files.isRegularFile(path) && Files.getLastModifiedTime(path).to(TimeUnit.MILLISECONDS) < cutOff;
+            } catch (IOException ex) {
+                // log here and move on
+                return false;
+            }
+        }).forEach(path -> {
+            try {
+                logger.info("...delete deprecated wopi file: " + path);
+                Files.delete(path);
+            } catch (IOException ex) {
+                // log here and move on
+            }
+        });
     }
 
 }

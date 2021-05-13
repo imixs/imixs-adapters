@@ -161,13 +161,13 @@ public class WopiHostService {
         }
 
         ItemCollection workitem = null;
-
         workitem = documentService.load(uniqueid);
         if (workitem == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        FileData fileData = loadFileData(uniqueid, file);
+        FileData fileData = null;
+        fileData = loadFileData(uniqueid, file, accessToken);
         if (fileData == null) {
             logger.warning("wokitem '" + uniqueid + "' not found!");
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -195,6 +195,8 @@ public class WopiHostService {
      * <p>
      * <code> /wopi/xxxxxxx-0000-0000-0000-yyyy_{FILENAME}</code>
      * <p>
+     * If the file content was already modified before, the content is fetched from the 
+     * local wopi file cache
      * 
      * @param name - the file name to be opened
      * @return
@@ -215,15 +217,14 @@ public class WopiHostService {
         }
 
         // load the FileData
-        logger.info("...... GET getFileContents: " + uniqueid + "/" + file);
-        FileData fileData = loadFileData(uniqueid, file);
-
+        logger.finest("...... GET getFileContents: " + uniqueid + "/" + file);
+        FileData fileData = loadFileData(uniqueid, file, accessToken);
         if (fileData == null) {
             logger.warning("no file data found '" + uniqueid + "'!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         try {
-            logger.info("...sending " + fileData.getContent().length + " bytes...");
+            logger.finest("......sending " + fileData.getContent().length + " bytes...");
             // load file
             Response.ResponseBuilder builder = Response.ok(fileData.getContent(), MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition",
@@ -240,13 +241,13 @@ public class WopiHostService {
     }
 
     /**
-     * saves a file content given form the wopi client
+     * This method stores a modified file content form the wopi client into the local wopi file cache.
      * <p>
-     * The method expects an id consisting of a $uniqueid followed by the filename
+     * The method expects a $uniqueID and filename
      * <p>
-     * <code> /wopi/xxxxxxx-0000-0000-0000-yyyy_{FILENAME}</code>
+     * <code> /wopi/xxxxxxx-0000-0000-0000-yyyy/files/{FILENAME}</code>
      * <p>
-     * The method returns a json string with the LastModifiedTime
+     * The method returns a json file info object
      * <p>
      * 
      * @param name
@@ -258,10 +259,10 @@ public class WopiHostService {
     public Response postFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             InputStream contentStream, @QueryParam("access_token") String accessToken, @Context UriInfo info) {
 
+        logger.info("...updating file content...");
         // clean unexpected query params
         accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
-
-        logger.info("...... POST postFileContents: " + uniqueid + "/" + file);
+        logger.finest("...... POST postFileContents: " + uniqueid + "/" + file);
 
         // validate access_token
         JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);
@@ -272,22 +273,18 @@ public class WopiHostService {
         FileData fileData = null;
         byte[] content;
         try {
-            // extract the jsessionid from accessToken
-            //String jsessionid = accessToken.substring(accessToken.indexOf("JSESSIONID=") + 11);
             content = readAllBytes(contentStream);
-
-            logger.info("...receifed " + content.length + " bytes");
-            // put the file data into the temporary cache
+            logger.finest("...receifed " + content.length + " bytes");
+            // cache the file data temporary 
             fileData = new FileData(file, content, null, null);
-            wopiAccessHandler.putFileData(accessToken, fileData);
+            wopiAccessHandler.cacheFileData(accessToken, fileData);
 
         } catch (IOException e) {
-            logger.warning("failed to read document data: " + e.getMessage());
+            logger.warning("failed to cache document data: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        // build a new json file info
-        // create the json object
+        // build a new JSON file info object
         JsonObjectBuilder builder = null;
         try {
             builder = buildJsonFileInfo(fileData, new Date(), acessTokenPayload);
@@ -297,27 +294,40 @@ public class WopiHostService {
         }
         JsonObject result = builder.build();
         return Response.ok(result.toString(), MediaType.APPLICATION_JSON).build();
-
-        // return Response.status(Response.Status.OK).build();
     }
 
     /**
-     * This method returns the fileData object form a workitem for a coresponding
+     * This method returns the fileData object form a workitem for a corresponding
      * file name. If the fileData object in the workitem has no content than the
      * method loads an optional snapshot workItem.
      * <p>
+     * If a accessToken is provided, the method tries first to fetch the file
+     * content from the local wopi file cache
+     * <p>
+     * 
      * The method returns null if no FileData object exists
      * 
      * @param uniqueid
-     * @param file     - file name
+     * @param accessToken
+     * @param file        - file name
      * @return FileData object for the given filename.
+     * @throws IOException
      */
-    private FileData loadFileData(String uniqueid, String filename) {
+    private FileData loadFileData(String uniqueid, String filename, String accessToken) {
         ItemCollection workitem;
         String snapshotID;
         FileData result;
 
-        // load workitem
+        // do we have an accessToken?
+        if (accessToken != null && !accessToken.isEmpty()) {
+            // try to load the file form cache....
+            result = wopiAccessHandler.fetchFileData(accessToken, filename);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        // load content form workitem....
         workitem = documentService.load(uniqueid);
         if (workitem == null) {
             return null;
@@ -423,8 +433,8 @@ public class WopiHostService {
         // builder.add("AllowExternalMarketplace",true);
         builder.add("UserCanWrite", true);
         builder.add("SupportsUpdate", true);
-        //builder.add("EditNotificationPostMessage", true);
-        
+        // builder.add("EditNotificationPostMessage", true);
+
         return builder;
     }
 }

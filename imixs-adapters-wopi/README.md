@@ -44,6 +44,7 @@ To setup the Imixs-WOPI Adapter the following environment variables must be set:
 | WOPI_HOST_ENDPOINT    | Internal Wopi Host endpoint is called by the Wopi Client to fetch and store file data. This endpoint should not be public accessible | http://my-app:8080/api/wopi/
 | WOPI_DISCOVERY_ENDPOINT | Optional public discovery endpoint used by the Wopi Host implementation to resolve the public wopi endpoint dynamically. This variable should only be set if no WOPI_PUBLIC_ENDPOINT was defined! | http://localhost:9980/hosting/discovery
 | WOPI_FILE_EXTENSIONS | Optional comma separated list of file extensions to be supported. |.odt,.doc,.docx,.ods,.xls,.xlsx,.ppt,.pptx|     
+| WOPI_FILE_CACHE       | file path to cache wopi files temporarily on the wop host | default: /tmp/wopi/
      
 The following example shows a setup for in a Docker Compose file running in a local dev environment:
 
@@ -133,27 +134,37 @@ To display the editor in a iframe the script library *imixs-wopi.js* provides a 
 	<div id="wopi_canvas" style="display: none;"></div>
 	....
 
-## UI Controlls
+## UI Controls
 
 The control of closing the editor or saving the content is in this concept part of your application. So in the example above the application shows two buttons to save the content and to close the editor. 
 
-## Updating the File Content
+## Updating the File Content by Callback method
 
-When a file was saved by LibreOffice Online, the data is posted to the WOPI Host endpoint '/wopi/files/{name}/contents'. The file content is not directly stored. It is cached by the application scoped WopiAccessHandler. Triggered by a JavaScript event the WopiController method 'updateFile' is called and the data is stored in the Imixs FileUploadController in the usual way. An Imixs-Workflow application has the full control how to handle the data. 
+When a file was saved by LibreOffice Online, the data is posted to the WOPI Host endpoint '/wopi/files/{name}/contents'. The file content is not directly stored. It is cached into the local wopi file cache on the Wopi Host. An application can provide a saveCallback method to be triggered after a file was updated. 
 
+	// define save callback when a file was updated....
+	imixsWopi.saveCallback = uiSaveCallback;
+	
+	function uiSaveCallback(filename) {
+		// you can do an ui update based on the filename
+		// ....
+		closeWopiViewer();
+	}
+	// close the wopi viewer
+	function closeWopiViewer(confirmMessage) {
+		// if document was modifed without save then ask the user....
+		if (imixsWopi.isModified) {
+			if (confirm(confirmMessage)) {
+				imixsWopi.save(); return false;
+			}
+		}
+		console.log("close ");
+		$('#wopi_controlls').hide();
+		imixsWopi.closeViewer();
+		// show workflow form
+		$('#imixs_workitem_form_id').show();
+	}
 
-The WopiController also provides a Ajax method to update the Imixs FileUploadController after a document was saved. You can integrate the
-controller method with a JSF commandScript: 
-
-	<!-- Script called when a file was updated -->
-	<h:commandScript name="wopiControllerUpdateFile" action="#{wopiController.updateFile()}" onevent="someUI-UpdateMethod" />
-
-The  JavaScript library automatically detects the existence of the method wopiControllerUpdateFile and calls the method after a file was updated and saved. 
-
-
-The JSF commandScript can also trigger an additional javaScript method to update the DownloadSeciton.
-
-	<h:commandScript name="wopiControllerUpdateFile" action="#{wopiController.updateFile()}" onevent="updateDownloadSection" />
 
 
 ## Reacting on PostMessage Events
