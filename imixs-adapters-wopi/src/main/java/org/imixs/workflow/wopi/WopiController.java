@@ -128,7 +128,9 @@ public class WopiController implements Serializable {
      * Clears an existing access token.
      */
     public void clearAccessToken() {
-        wopiAccessHandler.clearFileCache(accessToken);
+        if (accessToken!=null) {
+            wopiAccessHandler.clearFileCache(accessToken);
+        }
         accessToken=null;
     }
 
@@ -201,7 +203,7 @@ public class WopiController implements Serializable {
         }
 
         // Update usericon, signature image imformation
-        if (WorkflowEvent.WORKITEM_BEFORE_PROCESS == workflowEvent.getEventType()) {
+        if (WorkflowEvent.WORKITEM_BEFORE_PROCESS == workflowEvent.getEventType() && getAccessToken()!=null) {
             List<FileData> files = wopiAccessHandler.getAllFileData(getAccessToken());
             for (FileData fileData : files) {
                 logger.info(".....updating " + fileData.getName() + "...");

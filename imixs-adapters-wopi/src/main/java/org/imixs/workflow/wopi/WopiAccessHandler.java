@@ -177,6 +177,10 @@ public class WopiAccessHandler {
      */
     public List<FileData> getAllFileData(String accessToken) {
         List<FileData> result = new ArrayList<FileData>();
+        if (accessToken==null || accessToken.isEmpty()) {
+            // no data
+            return result;
+        }
 
         Path searchPath = Paths.get(wopiFileCache);
         String prafix = accessToken.hashCode() + "";
@@ -215,6 +219,10 @@ public class WopiAccessHandler {
      */
     public void clearFileCache(String accessToken) {
 
+        if (accessToken==null || accessToken.isEmpty()) {
+            // no data
+            return;
+        }
         Path searchPath = Paths.get(wopiFileCache);
         String prafix = accessToken.hashCode() + "";
         logger.finest("......clearFileCache by prafix " + prafix);
