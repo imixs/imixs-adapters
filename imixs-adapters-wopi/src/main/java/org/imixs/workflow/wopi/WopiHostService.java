@@ -34,6 +34,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
@@ -58,6 +59,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.WorkflowKernel;
@@ -113,6 +115,10 @@ public class WopiHostService {
 
     @Inject
     DocumentService documentService;
+    
+    @Inject
+    @ConfigProperty(name = "wopi.postmessageorigin")
+    Optional<String> postMessageOrigin;
 
     /**
      * GET Method just to test the service readiness
@@ -163,15 +169,19 @@ public class WopiHostService {
         ItemCollection workitem = null;
         workitem = documentService.load(uniqueid);
         if (workitem == null) {
+            logger.warning("wokitem '" + uniqueid + "' not found!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
         FileData fileData = null;
         fileData = loadFileData(uniqueid, file, accessToken);
         if (fileData == null) {
-            logger.warning("wokitem '" + uniqueid + "' not found!");
+            logger.warning("wokitem '" + uniqueid + "' no fileData object not found!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        
+        logger.info("...... GET getFileInfo: " + uniqueid + "/" + file);
+
 
         // create the json object
         JsonObjectBuilder builder = null;
@@ -217,14 +227,14 @@ public class WopiHostService {
         }
 
         // load the FileData
-        logger.finest("...... GET getFileContents: " + uniqueid + "/" + file);
+        logger.info("...... GET getFileContents: " + uniqueid + "/" + file);
         FileData fileData = loadFileData(uniqueid, file, accessToken);
         if (fileData == null) {
             logger.warning("no file data found '" + uniqueid + "'!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         try {
-            logger.finest("......sending " + fileData.getContent().length + " bytes...");
+            logger.info("......sending " + fileData.getContent().length + " bytes...");
             // load file
             Response.ResponseBuilder builder = Response.ok(fileData.getContent(), MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition",
@@ -434,6 +444,13 @@ public class WopiHostService {
         builder.add("UserCanWrite", true);
         builder.add("SupportsUpdate", true);
         // builder.add("EditNotificationPostMessage", true);
+        
+        
+        if (postMessageOrigin.isPresent() && !postMessageOrigin.get().isEmpty()) {
+            logger.info("......setting postMessageOrigin=" + postMessageOrigin.get() );
+            builder.add("PostMessageOrigin", postMessageOrigin.get());
+        }
+        
 
         return builder;
     }
