@@ -19,9 +19,28 @@ IMIXS.namespace("org.imixs.workflow.wopi");
 
 // add a event listner to receife messages from the Wopi Editor
 $(document).ready(function() {
+	
 	// Install the wopi message listener.
 	// receive messages form libreoffice online
 	window.addEventListener("message", imixsWopi.receiveMessage, false);
+	
+	
+	// because of a bug we need to construct a dummy cookie here
+	// https://github.com/CollaboraOnline/online/issues/2380
+	//console.log("adding dummy cookie");
+	var expireDate = new Date();
+	expireDate.setHours(expireDate.getHours() + 24);	
+	var topDomain=window.location.hostname;
+	console.log("...domain=" + topDomain);
+	var domainParts = topDomain.split('.');
+	if (domainParts && domainParts.length>1) {
+		// extract top domain (last to parts)
+	   topDomain='.'+domainParts[domainParts.length-2] +'.'+domainParts[domainParts.length-1];
+	   console.log("..top domain = " + topDomain);
+	}
+	document.cookie = "imixs_wopi_dummy=true;expires=" + expireDate 
+	                  + ";domain=" + topDomain+";path=/";
+    // we hope that we can remove this cooie hack if issue 2380 is fixed
 });
 
 
