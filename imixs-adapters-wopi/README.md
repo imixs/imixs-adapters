@@ -206,4 +206,40 @@ Find more details about the Post Message in Collaboara [here](https://sdk.collab
 
 You can find a full demo integration in the 'wopi-host' branch of the [Imixs-Process-Manager project](https://github.com/imixs/imixs-process-manager/tree/wopi-host).
 
+
+## Working with different domains
+
+Because of a [bug in Collboara](https://github.com/CollaboraOnline/online/issues/2380) you can integrate collabora and imixs-workflow only if both services share the same toplevel domain (e.g. .foo.com).
+
+If you have to domains - e.g. libreoffice.foo.com and imixs.foo.com  than take care about the following additional settings.
+
+### Docker Contaienr Settings
+In the deployment of Collabora container you need to set the environment variable 'domain' pointing to your imixs application:
+
+        - name: domain
+          value: imixs.foo.com 
+
+The value can contain also a regular expression to add multiple host names.
+
+The container variable 'server_name' should not be set.
+
+
+### loolwsd.xml
+
+The loolwsd.xml need also to be customized.
+
+In the tag 'frame_ancestors' you need to add all domain names from applications to be allowed to embed the editor.
+
+	....
+	<frame_ancestors>my-app.foo.com</frame_ancestors>
+	
+Separate multiple hosts by space.
+
+
+
+	
+
+
+
+
 	

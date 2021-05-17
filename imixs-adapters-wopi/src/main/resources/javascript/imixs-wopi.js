@@ -156,7 +156,7 @@ IMIXS.org.imixs.workflow.wopi = (function() {
 			var iframeElement = $("#" + elementid);
 			$(iframeElement).empty();
 			// build iframe....
-			var content = '<iframe id="wopi-iframe" src="" width="100%" height="1000"></iframe>';
+			var content = '<iframe id="wopi-iframe" src="" width="100%" height="1000" allowfullscreen="true" title="Office"></iframe>';
 			$(iframeElement).append(content);
 			var iframe = document.getElementById('wopi-iframe');
 			iframe = iframe.contentWindow || (iframe.contentDocument.document || iframe.contentDocument);
