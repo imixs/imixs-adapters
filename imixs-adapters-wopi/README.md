@@ -209,33 +209,37 @@ You can find a full demo integration in the 'wopi-host' branch of the [Imixs-Pro
 
 ## Working with different domains
 
-Because of a [bug in Collboara](https://github.com/CollaboraOnline/online/issues/2380) you can integrate collabora and imixs-workflow only if both services share the same toplevel domain (e.g. .foo.com).
+Because of a [bug in Collboara](https://github.com/CollaboraOnline/online/issues/2380) you can integrate collabora and imixs-workflow only if both services share the same toplevel domain (e.g. 'libreoffice.foo.com' and  'workflow.foo.com').
 
-If you have to domains - e.g. libreoffice.foo.com and imixs.foo.com  than take care about the following additional settings.
+In addition you have to tweak some settings. In the following example we assume you have the domains:
 
-### Docker Contaienr Settings
-In the deployment of Collabora container you need to set the environment variable 'domain' pointing to your imixs application:
+	libreoffice.foo.com   - for LibreOffice Online/Collabora
+	workflow.foo.com   - for Imixs-Office-Workflow
+
+
+**1. The Docker Container Settings**
+
+First in the deployment of the Collabora container you need to set the environment variable 'domain' pointing to your imixs workflow application:
 
         - name: domain
-          value: imixs.foo.com 
+          value: workflow.foo.com 
 
 The value can contain also a regular expression to add multiple host names.
 
-The container variable 'server_name' should not be set.
 
+**2. The 'frame_ancestors' in loolwsd.xml**
 
-### loolwsd.xml
-
-The loolwsd.xml need also to be customized.
-
-In the tag 'frame_ancestors' you need to add all domain names from applications to be allowed to embed the editor.
+Next you need to set the tag 'frame_ancestors' in the loolwsd.xml file. You need to add all domain names from applications to be allowed to embed the editor.
 
 	....
-	<frame_ancestors>my-app.foo.com</frame_ancestors>
+	<frame_ancestors>workflow.foo.com</frame_ancestors>
 	
-Separate multiple hosts by space.
+The [frame-ancestors](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors) is an official security policy. You can separate multiple hosts by space and you can also use wildcards like in the following example:
+
+	<frame_ancestors>*.foo.com</frame_ancestors>
 
 
+Find more details [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors).
 
 	
 
