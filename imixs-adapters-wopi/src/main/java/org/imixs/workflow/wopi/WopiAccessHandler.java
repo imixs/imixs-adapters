@@ -186,16 +186,20 @@ public class WopiAccessHandler {
         String prafix = accessToken.hashCode() + "";
         logger.finest("......getAllFileData by prafix " + prafix);
         try {
-
             File dir = new File(searchPath.toString());
             File[] foundFiles = dir.listFiles(new FilenameFilter() {
                 public boolean accept(File dir, String name) {
                     return name.startsWith(prafix);
                 }
             });
+            
+            // if no files found then exit
+            if (foundFiles==null) {
+                return result;
+            }
 
+            // Process files
             for (File file : foundFiles) {
-                // Process file
                 byte[] content = Files.readAllBytes(Paths.get(wopiFileCache + file.getName()));
                 String filename=file.getName();
                 // cut prefix
@@ -227,16 +231,17 @@ public class WopiAccessHandler {
         String prafix = accessToken.hashCode() + "";
         logger.finest("......clearFileCache by prafix " + prafix);
         try {
-
             File dir = new File(searchPath.toString());
             File[] foundFiles = dir.listFiles(new FilenameFilter() {
                 public boolean accept(File dir, String name) {
                     return name.startsWith(prafix);
                 }
             });
-            // delete files...
-            for (File file : foundFiles) {
-                Files.delete(Paths.get(wopiFileCache + file.getName()));
+            if (foundFiles!=null) {
+                // delete files...
+                for (File file : foundFiles) {
+                    Files.delete(Paths.get(wopiFileCache + file.getName()));
+                }
             }
         } catch (IOException e) {
             logger.severe("..failed to delete file: " + e.getMessage());

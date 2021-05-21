@@ -241,9 +241,31 @@ The [frame-ancestors](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/
 
 Find more details [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors).
 
+**3. Allow wopi storage in loolwsd.xml**
+
+In the section storage/wop of the loolwsd.xml file you also need to add the host names for your worklfow applications. 
+
+	....
+    <storage desc="Backend storage">
+        <filesystem allow="false" />
+        <wopi desc="Allow/deny wopi storage. Mutually exclusive with webdav." allow="true">
+            <host desc="Regex pattern of hostname to allow or deny." allow="true">workflow.foo.com</host>
+	....
 	
+Here you can use again regexepression.
 
+**4. Using the WOPI_HOST_ENDPOINT in Kubernetes**
 
+Running in Kubernetes you should not use internal host names from the internal Kubernetes Proxy Network. For the "WOPI\_HOST\_ENDPOINT" use the public Internet domain instead:
 
-
-	
+	...
+    spec:
+      containers:
+      - name: imixs-documents
+        image: imixs/imixs-documents:latest
+        env:	
+        ...
+        - name: WOPI_HOST_ENDPOINT
+          value: "https://workflow.foo.com/api/wopi/"
+       ...
+       

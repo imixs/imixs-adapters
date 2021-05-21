@@ -178,10 +178,8 @@ public class WopiController implements Serializable {
 
         String token = generateAccessToken(userid, username);
         baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token=" + token;
-
-        // baseURL = baseURL + "&NotWOPIButIframe=true";
         if (baseURL.startsWith("http://")) {
-            logger.warning("...WOPI Client is running without SSL - this is not recommended for production!");
+            logger.fine("...WOPI Client is running without SSL - this is not recommended for production!");
         }
 
         return baseURL;
