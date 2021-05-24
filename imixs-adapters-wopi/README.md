@@ -269,3 +269,38 @@ Running in Kubernetes you should not use internal host names from the internal K
           value: "https://workflow.foo.com/api/wopi/"
        ...
        
+       
+       
+## The Office Template Adapter
+
+With the adapter class  *org.imixs.workflow.wopi.OfficeTemplateAdapter* a office document template can be imported form the local filesystem into a workitem.
+
+The adapter can be configured by the workflow result:
+
+
+	<office-template name="source-path">./invoice-template.odt/</office-template>
+	<office-template name="target-name">invoice-2020.odt</office-template>
+
+The tag 'source-path' specifies the location of the office template document in the servers local file system. 
+
+The tag 'target-name' is the name of the file to be attached to the current workitem. The name can be computed by <itemvalue> tags. For example:
+
+	<office-template name="target-name">invoice-<itemvalue>invoice.number</itemvalue>.odt</office-template>
+
+
+### Auto Load Editor
+
+With the optional flag 
+
+	<office-template name="auto-open">true</office-template>
+
+The adapter class will set the item "wopi.auto.open". This flag can be used by a frontend implementation to automaitically open the Wopi Editor on load. This feature is implemented in Imixs-Office-Workflow.
+
+The WopiController will automatically clean the flag before processing. 
+
+### Kubernetes
+
+In a Kubernetes environment the office templates can be provided in a ConfigMap object
+
+
+

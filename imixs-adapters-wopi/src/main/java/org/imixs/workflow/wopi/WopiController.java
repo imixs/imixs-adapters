@@ -61,6 +61,8 @@ public class WopiController implements Serializable {
     private static final long serialVersionUID = 1L;
     private static Logger logger = Logger.getLogger(WopiController.class.getName());
 
+    public static final String ITEM_WOPI_AUTO_OPEN = "wopi.auto.open";
+
     private String accessToken = null;
     private boolean enabled = false;
 
@@ -123,15 +125,15 @@ public class WopiController implements Serializable {
         }
         return accessToken;
     }
-    
+
     /**
      * Clears an existing access token.
      */
     public void clearAccessToken() {
-        if (accessToken!=null) {
+        if (accessToken != null) {
             wopiAccessHandler.clearFileCache(accessToken);
         }
-        accessToken=null;
+        accessToken = null;
     }
 
     /**
@@ -185,12 +187,10 @@ public class WopiController implements Serializable {
         return baseURL;
     }
 
-  
-
     /**
-     * This method transfers all cached file updates form the local wopi file cache into the 
-     * current workitem, before the workitem is processed.
-     * The method also clears the file cache.
+     * This method transfers all cached file updates form the local wopi file cache
+     * into the current workitem, before the workitem is processed. The method also
+     * clears the file cache.
      * <p>
      * To access the filedata object, the controller uses the access token
      * 
@@ -200,8 +200,10 @@ public class WopiController implements Serializable {
             return;
         }
 
+        int eventType = workflowEvent.getEventType();
+
         // Update usericon, signature image imformation
-        if (WorkflowEvent.WORKITEM_BEFORE_PROCESS == workflowEvent.getEventType() && getAccessToken()!=null) {
+        if (WorkflowEvent.WORKITEM_BEFORE_PROCESS == eventType && getAccessToken() != null) {
             List<FileData> files = wopiAccessHandler.getAllFileData(getAccessToken());
             for (FileData fileData : files) {
                 logger.info(".....updating " + fileData.getName() + "...");
@@ -209,6 +211,10 @@ public class WopiController implements Serializable {
             }
             // clear file cache
             wopiAccessHandler.clearFileCache(accessToken);
+
+            // reset wopi.auto.open
+            workflowEvent.getWorkitem().setItemValue(ITEM_WOPI_AUTO_OPEN, "");
         }
     }
+
 }
