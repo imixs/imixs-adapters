@@ -37,6 +37,7 @@ import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.jwt.JWTException;
+import org.imixs.marty.util.ResourceBundleHandler;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.faces.data.WorkflowEvent;
 import org.imixs.workflow.faces.fileupload.FileUploadController;
@@ -62,6 +63,8 @@ public class WopiController implements Serializable {
     private static Logger logger = Logger.getLogger(WopiController.class.getName());
 
     public static final String ITEM_WOPI_AUTO_OPEN = "wopi.auto.open";
+    
+    public static final String WOPI_CONFIRM_CHANGES = "WOPI_CONFIRM_CHANGES";
 
     private String accessToken = null;
     private boolean enabled = false;
@@ -76,6 +79,9 @@ public class WopiController implements Serializable {
 
     @Inject
     WopiAccessHandler wopiAccessHandler;
+
+    @Inject
+    ResourceBundleHandler resourceBundleHandler;
 
     @Inject
     FileUploadController fileUploadController;
@@ -217,4 +223,19 @@ public class WopiController implements Serializable {
         }
     }
 
+    /**
+     * This helper method returns the confirm message string used in case the
+     * LibreOffice Online Editor is closed, but contains changes .
+     * 
+     * @return
+     */
+    public String getConfirmMessage() {
+
+        String message = resourceBundleHandler.get(WOPI_CONFIRM_CHANGES);
+        if (message == null || message.isEmpty()) {
+            message = WOPI_CONFIRM_CHANGES;
+        }
+        return message;
+
+    }
 }
