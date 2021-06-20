@@ -23,9 +23,9 @@ public class WopiAccessTokenTest {
         wopiAccessHandler = new WopiAccessHandler();
         wopiAccessHandler.init();
         try {
-            String token=wopiAccessHandler.generateAccessToken();
+            String token=wopiAccessHandler.generateAccessToken("joe","Joe");
             
-            Assert.assertTrue(wopiAccessHandler.isValidAccessToken(token));
+            Assert.assertNotNull(wopiAccessHandler.validateAccessToken(token));
         } catch (JWTException e) {
             
             e.printStackTrace();
