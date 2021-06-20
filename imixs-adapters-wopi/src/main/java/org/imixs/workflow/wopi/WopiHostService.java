@@ -268,8 +268,17 @@ public class WopiHostService {
     @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}/contents")
     public Response postFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             InputStream contentStream, @QueryParam("access_token") String accessToken, @Context UriInfo info) {
-
+        
+        // analyze header X-LOOL-WOPI-Timestamp, X-LOOL-WOPI-IsAutosave, X-LOOL-WOPI-IsExitSave
+        // We do ignroe the X-LOOL-WOPI-IsExitSave event
+        String wopiHeader=servletRequest.getHeader("X-LOOL-WOPI-IsExitSave");
+        if (wopiHeader!=null && "true".equalsIgnoreCase(wopiHeader)) {
+            logger.fine("...ignroe X-LOOL-WOPI-IsExitSave = " + wopiHeader);
+            return  Response.ok().build();
+        }
+        
         logger.info("...updating file content...");
+        
         // clean unexpected query params
         accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
         logger.finest("...... POST postFileContents: " + uniqueid + "/" + file);
