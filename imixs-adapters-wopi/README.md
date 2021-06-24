@@ -273,7 +273,7 @@ Running in Kubernetes you should not use internal host names from the internal K
        
 ## The Office Template Adapter
 
-With the adapter class  *org.imixs.workflow.wopi.OfficeTemplateAdapter* a office document template can be imported form the local filesystem into a workitem.
+With the adapter class *org.imixs.workflow.wopi.OfficeTemplateAdapter* a office document template can be imported form the local filesystem or a textblock entity into a workitem.
 
 The adapter can be configured by the workflow result:
 
@@ -287,6 +287,13 @@ The tag 'target-name' is the name of the file to be attached to the current work
 
 	<office-template name="target-name">invoice-<itemvalue>invoice.number</itemvalue>.odt</office-template>
 
+### Loading Templates from a Textblock
+
+A template can optionally be loaded from a Imixs-Office-Workflow textblock attachment.
+
+	<office-template name="source-path"><textblock>invoice template</textblock></office-template>
+
+In this case the adapter will load the first attachment from the textblock with the name 'inoice template'.
 
 ### Auto Load Editor
 

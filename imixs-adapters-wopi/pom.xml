@@ -36,6 +36,11 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>org.imixs.marty</groupId>
+			<artifactId>imixs-marty-ejb</artifactId>
+		</dependency>
+		
+		<dependency>
 			<groupId>org.imixs.jwt</groupId>
 			<artifactId>imixs-jwt</artifactId>
 			<scope>compile</scope>
