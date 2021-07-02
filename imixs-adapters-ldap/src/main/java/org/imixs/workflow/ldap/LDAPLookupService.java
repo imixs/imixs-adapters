@@ -183,7 +183,7 @@ public class LDAPLookupService {
             }
 
             if (enabled) {
-                logger.info("LDAP connection: OK");
+                logger.fine("LDAP connection: OK");
             } else {
                 logger.warning("LDAP connection: FAILED");
             }
@@ -286,7 +286,7 @@ public class LDAPLookupService {
                     logger.fine(
                             "... lookup user '" + aUID + "' successfull in " + (System.currentTimeMillis() - l) + "ms");
                 } else {
-                    logger.warning("no LDAP object found: '" + aUID + "'");
+                    logger.fine("no LDAP object found: '" + aUID + "'");
                 }
                 return user;
             } else {
@@ -564,7 +564,7 @@ public class LDAPLookupService {
             }
             // save profile?
             if (bUpdate) {
-                logger.info("Updating user profile '" + userID + "' with new ldap attributes....");
+                logger.fine("Updating user profile '" + userID + "' with new ldap attributes....");
             }
         } else {
             logger.warning("userid " + userID + " not found!");
