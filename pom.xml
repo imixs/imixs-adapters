@@ -17,8 +17,9 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>5.2.8</org.imixs.workflow.version>
+		<org.imixs.workflow.version>5.2.11</org.imixs.workflow.version>
 		<org.imixs.marty.version>4.1.11</org.imixs.marty.version>
+		<org.imixs.archive.version>2.2.11</org.imixs.archive.version>
 		<jakarta.version>8.0</jakarta.version>
 		<microprofile.version>3.0</microprofile.version>
 		<apache.pdfbox.version>2.0.19</apache.pdfbox.version>
@@ -267,7 +268,14 @@
 				<artifactId>imixs-jwt</artifactId>
 				<version>${org.imixs.jwt.version}</version>
 				<scope>provided</scope>
-			</dependency>		
+			</dependency>	
+			
+			<dependency>
+				<groupId>org.imixs.workflow</groupId>
+				<artifactId>imixs-archive-api</artifactId>
+				<version>${org.imixs.archive.version}</version>
+				<scope>provided</scope>
+			</dependency>	
 
 		</dependencies>
 	</dependencyManagement>
