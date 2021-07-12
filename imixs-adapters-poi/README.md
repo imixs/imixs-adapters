@@ -34,6 +34,30 @@ The contentType and the processing instrcutions (XSL) of a  report definition wi
 
 
 
+## POI FindReplace Adapter
+
+With the adapter class *org.imixs.workflow.poi.POIFindReplaceAdapter* it is possible to update Word documents (.docx).
+The adapter can replace text fragments in a paragraph.
+
+The adapter uses the method XWPFRun.setText(String) and goes through the file until it finds the corresponding paragraph. The result document is saved in the current workitem.
+
+The following example searches for an attachment with the name 'Agreement-????.docx' and replaces the text fragments *[company.name]*, *[company.country]* and *[contract.startdate]* with the corresponding item values.
+
+      <poi-update name=
+        "filename">Agreement-<itemvalue>numsequencenumber</itemvalue>.docx</poi-update>
+        <poi-update name="findreplace">
+               <find>[company.name]</find>
+               <replace><itemvalue>company.name</itemvalue></replace>
+        </poi-update>
+        <poi-update name="findreplace">
+               <find>[company.country]</find>
+               <replace><itemvalue>company.country</itemvalue></replace>
+        </poi-update>
+        <poi-update name="findreplace">
+               <find>[contract.startdate]</find>
+               <replace><itemvalue format=
+        "EEE, MMM d, yyyy">contract.start</itemvalue></replace>
+       </poi-update>
 
 # Development
 
