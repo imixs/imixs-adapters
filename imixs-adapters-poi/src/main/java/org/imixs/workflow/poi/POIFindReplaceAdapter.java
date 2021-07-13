@@ -97,7 +97,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
 
             // test if first file hast a content
             FileData fileData = document.getFileData(fileName);
-            if (fileData.getContent() == null && fileData.getContent().length < 3) {
+            if (fileData.getContent() == null || fileData.getContent().length < 3) {
                 // load the snapshot
                 fileData = snapshotService.getWorkItemFile(document.getUniqueID(), fileName);
             }
