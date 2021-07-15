@@ -9,6 +9,10 @@ import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -82,6 +86,8 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     public ItemCollection execute(ItemCollection document, ItemCollection event)
             throws AdapterException, PluginException {
 
+        byte[] newContent = null;
+
         // read the config
         ItemCollection poiConfig = workflowService.evalWorkflowResult(event, "poi-update", document, false);
         if (poiConfig == null || !poiConfig.hasItem("findreplace")) {
@@ -91,8 +97,19 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         String fileName = poiConfig.getItemValueString("filename");
         fileName = workflowService.adaptText(fileName, document);
 
+        if (!fileName.toLowerCase().endsWith(".docx") && !fileName.toLowerCase().endsWith(".xls")
+                && !fileName.toLowerCase().endsWith(".xlsx")) {
+            throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+                    "Only .docx, .xls and .xlsx files are supported!");
+        }
+        List<String> replaceDevList = poiConfig.getItemValue("findreplace");
+        if (replaceDevList.size() == 0) {
+            throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+                    "wrong poi configuration");
+        }
+
         logger.fine("......starting update file: " + fileName + "...");
-        XWPFDocument doc = null;
+        // XWPFDocument doc = null;
         try {
 
             // test if first file hast a content
@@ -102,35 +119,65 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                 fileData = snapshotService.getWorkItemFile(document.getUniqueID(), fileName);
             }
             InputStream imputStream = new ByteArrayInputStream(fileData.getContent());
-            doc = new XWPFDocument(imputStream);
-            logger.fine("XWPFDocument loaded");
 
-            List<String> replaceDevList = poiConfig.getItemValue("findreplace");
-            if (replaceDevList.size() == 0) {
-                throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-                        "wrong poi configuration");
-            }
-            for (String entityDev : replaceDevList) {
-                ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
+            // docx files....
+            if (fileName.toLowerCase().endsWith(".docx")) {
+                XWPFDocument doc = new XWPFDocument(imputStream);
+              
 
-                if (entityData != null) {
-                    String find = entityData.getItemValueString("find");
-                    find = workflowService.adaptText(find, document);
-                    String replace = entityData.getItemValueString("replace");
-                    replace = workflowService.adaptText(replace, document);
-                    replaceParagraphs(doc, find, replace);
+                logger.fine("XWPFDocument loaded");
+
+                for (String entityDev : replaceDevList) {
+                    ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
+
+                    if (entityData != null) {
+                        String find = entityData.getItemValueString("find");
+                        find = workflowService.adaptText(find, document);
+                        String replace = entityData.getItemValueString("replace");
+                        replace = workflowService.adaptText(replace, document);
+                        replaceParagraphs(doc, find, replace);
+                    }
                 }
+
+                logger.fine("findreplace completed");
+
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                doc.write(byteArrayOutputStream);
+                doc.close();
+                newContent = byteArrayOutputStream.toByteArray();
+
             }
 
-            logger.fine("findreplace completed");
+            // xlsx files....
+            if (fileName.toLowerCase().endsWith(".xls") || fileName.toLowerCase().endsWith(".xlsx")) {
+                XSSFWorkbook doc = new XSSFWorkbook(imputStream);
+               
 
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            doc.write(byteArrayOutputStream);
+                logger.fine("XSSFWorkbook loaded");
+                // NOTE: we only take the first sheet !
+                XSSFSheet sheet = doc.getSheetAt(0);
 
-            byte[] bytes = byteArrayOutputStream.toByteArray();
-            // public FileData(String name, byte[] content, String contentType, Map<String,
-            // List<Object>> attributes) {
-            FileData fileDataNew = new FileData(fileData.getName(), bytes, fileData.getContentType(), null);
+                for (String entityDev : replaceDevList) {
+                    ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
+
+                    if (entityData != null) {
+                        String find = entityData.getItemValueString("find");
+                        String replace = entityData.getItemValueString("replace");
+                        replace = workflowService.adaptText(replace, document);
+                        replaceCell(sheet, find, replace);
+
+                    }
+                }
+
+                logger.fine("findreplace completed");
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                doc.write(byteArrayOutputStream);
+                doc.close();
+                newContent = byteArrayOutputStream.toByteArray();
+
+            }
+
+            FileData fileDataNew = new FileData(fileData.getName(), newContent, fileData.getContentType(), null);
 
             document.addFileData(fileDataNew);
             logger.fine("new document added");
@@ -144,7 +191,26 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     }
 
     /**
-     * Helph method replaces a given test in a XWPFDocument
+     * Helph method replaces a given cell of a XSSFSheet
+     * @throws PluginException 
+     */
+    private void replaceCell(XSSFSheet sheet, String find, String replace) throws PluginException {
+        logger.finest("update cell " + find);
+        // this must bei a Cell definition! A:1
+        if (find.indexOf(":")==-1) {
+            throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+                    "wrong replacemet configuration - cell position is expected in format 'A:1'!");
+        }
+        String[] cellPos = find.split(":");
+
+        XSSFRow row = sheet.getRow(new Integer(cellPos[1]) - 1);
+        XSSFCell cell = row.getCell(cellColumnToNumber(cellPos[0]));
+
+        cell.setCellValue(replace);
+    }
+
+    /**
+     * Helph method replaces a given text in a XWPFDocument
      */
     private void replaceParagraphs(XWPFDocument doc, String find, String replace) {
         for (XWPFParagraph p : doc.getParagraphs()) {
@@ -162,4 +228,19 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         }
     }
 
+
+    /**
+     * Converts a Excel column string to row number startng with 0
+     * 
+     * @param name
+     * @return
+     */
+    public static int cellColumnToNumber(String name) {
+        name = name.toUpperCase();
+        int number = 0;
+        for (int i = 0; i < name.length(); i++) {
+            number = number * 26 + (name.charAt(i) - ('A' - 1));
+        }
+        return number - 1;
+    }
 }
