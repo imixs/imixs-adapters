@@ -326,13 +326,13 @@ Documents can be converted into different formats by calling the corresponding e
 
 The rest service automatically detects the input document format. You can test the Rest API if you have a running instance of Collaboar with a curl command:
 
-	curl -F "data=@test.txt" https://localhost:9980/lool/convert-to/pdf > out.pdf
+	curl -F "data=@test.txt" http://localhost:9980/lool/convert-to/pdf > out.pdf
 	
 ### Configuration 
 
 The adapter simply posts a given document to the service endpoint. The adapter can be configured by the BPMN event workflow result:
 
-    <wopi-converter name="api-endpoint">https://localhost:9980/lool/convert-to/</wopi-converter>
+    <wopi-converter name="api-endpoint">http://localhost:9980/lool/convert-to/</wopi-converter>
     <wopi-converter name="filename">......</wopi-converter>
     <wopi-converter name="convert-to">pdf</wopi-converter>
 

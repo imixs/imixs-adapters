@@ -113,6 +113,11 @@ public class WopiTemplateAdapter implements SignalAdapter {
             ItemCollection officeTemplateConfig = workflowService.evalWorkflowResult(event, "wopi-template", document,
                     false);
 
+            if (officeTemplateConfig==null) {
+                throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
+                        "missing wopi-template configuraiton in BPMN event!");
+            }
+            
             String sourcePath = officeTemplateConfig.getItemValueString("source-path");
             String targetName = officeTemplateConfig.getItemValueString("target-name");
             boolean autoOpen = officeTemplateConfig.getItemValueBoolean("auto-open");

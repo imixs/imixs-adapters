@@ -1,7 +1,9 @@
 package org.imixs.workflow.wopi;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -74,11 +76,17 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
     @Inject
     SnapshotService snapshotService;
 
+    /**
+     * The execute method expects a 'wop-converter' configuraiton and a
+     * corresponding attachement. The method calls the Collabora Rest API to convert
+     * the file into PDF and attaches the new file.
+     */
     @Override
     public ItemCollection execute(ItemCollection document, ItemCollection event)
             throws AdapterException, PluginException {
 
-        ItemCollection wopiConverterConfig = workflowService.evalWorkflowResult(event, "wopi-converter", document, false);
+        ItemCollection wopiConverterConfig = workflowService.evalWorkflowResult(event, "wopi-converter", document,
+                false);
         if (wopiConverterConfig == null || !wopiConverterConfig.hasItem("api-endpoint")) {
             throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), CONFIG_ERROR,
                     "Converter Error: 'api-endpoint' is not defined in current BPMN configuration");
@@ -92,11 +100,16 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
         fileName = workflowService.adaptText(fileName, document);
 
         String apiEndpoint = wopiConverterConfig.getItemValueString("api-endpoint");
+        if (!apiEndpoint.endsWith("/")) {
+            apiEndpoint = apiEndpoint + "/";
+        }
         String convertTo = wopiConverterConfig.getItemValueString("convert-to");
         if (convertTo.isEmpty()) {
             convertTo = "pdf";
         }
-        logger.info("WopiDocumentConverter: " + apiEndpoint + "/" + convertTo + " - " + fileName);
+        String uri = apiEndpoint + convertTo;
+
+        logger.info("WopiDocumentConverter: " + fileName + " => " + uri);
 
         // load the document content
         // test if first file hast a content
@@ -112,56 +125,106 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
         }
 
         // curl -F "data=@test.txt" https://localhost:9980/lool/convert-to/pdf > out.pdf
-        String uri = apiEndpoint + "/" + convertTo;
-
-        // post multipart/form-data
-        
         try {
-            postDocumentData(uri,fileData);
+            FileData pdfFile = postDocumentData(uri, fileData);
+            document.addFileData(pdfFile);
         } catch (IOException e) {
             throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), DOCUMENT_ERROR,
                     "WopiDocumentConverter Error - failed to post document data: " + e.getMessage());
         }
 
-        return null;
+        return document;
     }
 
     /**
      * Helper method to post the content of a file to the Collabora Rest API
-     * endpoint.
+     * endpoint. The method returns a new FileData object with the PDF content.
+     * 
      * 
      * @param url
      * @param fileData
      * @throws MalformedURLException
      * @throws IOException
      */
-    private void postDocumentData(String url, FileData fileData) throws MalformedURLException, IOException {
+    private FileData postDocumentData(String url, FileData fileData) throws MalformedURLException, IOException {
 
+        logger.finest("post " + fileData.getName() + " " + fileData.getContent().length + " bytes....");
+
+        String fileName = fileData.getName();
+    
         String boundary = Long.toHexString(System.currentTimeMillis());
+        String CRLF = "\r\n";
+
         URLConnection connection = new URL(url).openConnection();
         connection.setDoOutput(true);
         connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-        PrintWriter writer = null;
-        try {
-            writer = new PrintWriter(new OutputStreamWriter(connection.getOutputStream(), "UTF-8"));
 
-            writer.println("--" + boundary);
-            writer.println("Content-Disposition: form-data; name=\"" + fileData.getName() + "\"; filename=\""
-                    + fileData.getName() + "\"");
-            writer.println("Content-Type: text/plain; charset=UTF-8");
-            writer.println();
-            BufferedReader reader = null;
+        OutputStream output = connection.getOutputStream();
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(output), true);
 
-            writer.println(new String(fileData.getContent()));
+        writer.append("--" + boundary).append(CRLF);
+        writer.append("Content-Disposition: form-data; name=\"binaryFile\"; filename=\"" + fileName + "\"")
+                .append(CRLF);
+        writer.append("Content-Type: " + URLConnection.guessContentTypeFromName(fileName)).append(CRLF);
+        writer.append("Content-Transfer-Encoding: binary").append(CRLF);
+        writer.append(CRLF).flush();
+        // write file content..
+        output.write(fileData.getContent());
+        output.flush();
+        writer.append(CRLF).flush();
+        writer.append("--" + boundary + "--").append(CRLF).flush();
 
-            writer.println("--" + boundary + "--");
-        } finally {
-            if (writer != null)
-                writer.close();
-        }
-        // Connection is lazily executed whenever you request any status.
-        int responseCode = ((HttpURLConnection) connection).getResponseCode();
-        // Handle response
-        logger.info("response code=" + responseCode);
+        HttpURLConnection httpConnection = (HttpURLConnection) connection;
+        
+        // read response
+        int responseCode = httpConnection.getResponseCode();
+        logger.finest("response code=" + responseCode);
+        InputStream response = httpConnection.getInputStream();
+        byte[] pdfData = readAllBytes(response);
+
+        logger.finest("read " + pdfData.length + " bytes");
+
+        // construct a new FileData object
+        String pdfFileName = fileName;
+        pdfFileName = pdfFileName.substring(0, pdfFileName.lastIndexOf(".")) + ".pdf";
+        FileData resultFileData = new FileData(pdfFileName, pdfData, "application/pdf", null);
+        // return new pdf fileData object
+        return resultFileData;
     }
+
+    
+    /**
+     * Helper method to read from a inputStream into a byte array.
+     * @param inputStream
+     * @return
+     * @throws IOException
+     */
+    private static byte[] readAllBytes(InputStream inputStream) throws IOException {
+        final int bufLen = 4 * 0x400; // 4KB
+        byte[] buf = new byte[bufLen];
+        int readLen;
+        IOException exception = null;
+
+        try {
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                while ((readLen = inputStream.read(buf, 0, bufLen)) != -1)
+                    outputStream.write(buf, 0, readLen);
+
+                return outputStream.toByteArray();
+            }
+        } catch (IOException e) {
+            exception = e;
+            throw e;
+        } finally {
+            if (exception == null)
+                inputStream.close();
+            else
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    exception.addSuppressed(e);
+                }
+        }
+    }
+
 }
