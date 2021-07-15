@@ -82,7 +82,7 @@ The imixs-adapter-wopi module can be added into an Imixs Workflow application. T
 Add the following maven dependency into a parent project:
 
 
-	<!-- POI Adapter -->
+	<!-- WOPI Adapter -->
 	<dependency>
 		<groupId>org.imixs.workflow</groupId>
 		<artifactId>imixs-adapters-wopi</artifactId>
@@ -271,27 +271,27 @@ Running in Kubernetes you should not use internal host names from the internal K
        
        
        
-## The Office Template Adapter
+## The Wopi Template Adapter
 
-With the adapter class *org.imixs.workflow.wopi.OfficeTemplateAdapter* a office document template can be imported form the local filesystem or a textblock entity into a workitem.
+With the adapter class *org.imixs.workflow.wopi.WopiTemplateAdapter* a office document template can be imported form the local filesystem or a textblock entity into a workitem.
 
 The adapter can be configured by the workflow result:
 
 
-	<office-template name="source-path">./invoice-template.odt/</office-template>
-	<office-template name="target-name">invoice-2020.odt</office-template>
+	<wopi-template name="source-path">./invoice-template.odt/</wopi-template>
+	<wopi-template name="target-name">invoice-2020.odt</wopi-template>
 
 The tag 'source-path' specifies the location of the office template document in the servers local file system. 
 
 The tag 'target-name' is the name of the file to be attached to the current workitem. The name can be computed by <itemvalue> tags. For example:
 
-	<office-template name="target-name">invoice-<itemvalue>invoice.number</itemvalue>.odt</office-template>
+	<wopi-template name="target-name">invoice-<itemvalue>invoice.number</itemvalue>.odt</wopi-template>
 
 ### Loading Templates from a Textblock
 
 A template can optionally be loaded from a Imixs-Office-Workflow textblock attachment.
 
-	<office-template name="source-path"><textblock>invoice template</textblock></office-template>
+	<wopi-template name="source-path"><textblock>invoice template</textblock></wopi-template>
 
 In this case the adapter will load the first attachment from the textblock with the name 'inoice template'.
 
@@ -299,7 +299,7 @@ In this case the adapter will load the first attachment from the textblock with 
 
 With the optional flag 
 
-	<office-template name="auto-open">true</office-template>
+	<wopi-template name="auto-open">true</wopi-template>
 
 The adapter class will set the item "wopi.auto.open". This flag can be used by a frontend implementation to automaitically open the Wopi Editor on load. This feature is implemented in Imixs-Office-Workflow.
 
@@ -309,5 +309,33 @@ The WopiController will automatically clean the flag before processing.
 
 In a Kubernetes environment the office templates can be provided in a ConfigMap object
 
+
+
+      
+       
+## The Wopi Document Converter Adapter
+
+With the adapter class *org.imixs.workflow.wopi.WopiDocumentConverterAdapter* a office document can be converted into PDF or other file formats.
+
+The Adapter simply calls a build in RestAPI of Collabora to convert documents based on the [JODConverter](https://github.com/sbraconnier/jodconverter).  There is no need to implement the libraries in case a Collabora instance is up and running. In this case the rest API endpoint *'lool/convert-to/'* provides a convenience function. See details [here](https://www.collaboraoffice.com/de/document-conversion/)
+
+Documents can be converted into different formats by calling the corresponding endpoint.
+
+ - https://localhost:9980/lool/convert-to/pdf for pdf
+ - https://localhost:9980/lool/convert-to/png for png
+
+The rest service automatically detects the input document format. You can test the Rest API if you have a running instance of Collaboar with a curl command:
+
+	curl -F "data=@test.txt" https://localhost:9980/lool/convert-to/pdf > out.pdf
+	
+### Configuration 
+
+The adapter simply posts a given document to the service endpoint. The adapter can be configured by the BPMN event workflow result:
+
+    <wopi-converter name="api-endpoint">https://localhost:9980/lool/convert-to/</wopi-converter>
+    <wopi-converter name="filename">......</wopi-converter>
+    <wopi-converter name="convert-to">pdf</wopi-converter>
+
+The Collabora API endpoint must point to a collabora instance. The 'filename' is the file attached to the current workitem. The option 'convert-to' is optional and default value is 'pdf'
 
 

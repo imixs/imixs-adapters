@@ -46,6 +46,11 @@
 			<scope>compile</scope>
 		</dependency>
 		
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-archive-api</artifactId>
+		</dependency>
+		
 		<!-- JSON Parser -->
 		<dependency>
 			<groupId>javax.json</groupId>
