@@ -55,15 +55,15 @@ import org.imixs.workflow.util.XMLParser;
  * technology.
  * <p>
  * The Adapter class can be configured through the model by defining a workflow
- * result tag named 'office-template'.
+ * result tag named 'wopi-template'.
  * <p>
  * Example:
  * 
  * <pre>
  * {@code
-<office-template name=
-"source-path">./my-templates/invoice-template.odt</office-template>
-<office-template name="target-name">invoice-2020.odt</office-template>
+ *
+ *    <wopi-template name="source-path">./my-templates/invoice-template.odt</wopi-template>
+       <wopi-template name="target-name">invoice-2020.odt</wopi-template>
  * }
  * </pre>
  * <p>
@@ -71,8 +71,7 @@ import org.imixs.workflow.util.XMLParser;
  * 
  * <pre>
  * {@code
-<office-template name=
-"source-path"><textblock>invoice template</textblock></office-template>
+      <wopi-template name="source-path"><textblock>invoice template</textblock></office-template>
  * }
  * </pre>
  * 
@@ -85,12 +84,12 @@ import org.imixs.workflow.util.XMLParser;
  *
  */
 
-public class OfficeTemplateAdapter implements SignalAdapter {
+public class WopiTemplateAdapter implements SignalAdapter {
 
     public static final String API_ERROR = "API_ERROR";
     public static String SNAPSHOTID = "$snapshotid";
 
-    private static Logger logger = Logger.getLogger(OfficeTemplateAdapter.class.getName());
+    private static Logger logger = Logger.getLogger(WopiTemplateAdapter.class.getName());
 
     @Inject
     @ConfigProperty(name = "wopi.templates", defaultValue = "/tmp/wopi/templates/") // default template directory
@@ -103,7 +102,7 @@ public class OfficeTemplateAdapter implements SignalAdapter {
     TextBlockService textBlockService;
 
     /**
-     * This method imports a office-template into the current workitem.
+     * This method imports a office document template into the current workitem.
      */
     public ItemCollection execute(ItemCollection document, ItemCollection event) throws AdapterException {
 
@@ -111,7 +110,7 @@ public class OfficeTemplateAdapter implements SignalAdapter {
 
         // read optional configuration form the model or imixs.properties....
         try {
-            ItemCollection officeTemplateConfig = workflowService.evalWorkflowResult(event, "office-template", document,
+            ItemCollection officeTemplateConfig = workflowService.evalWorkflowResult(event, "wopi-template", document,
                     false);
 
             String sourcePath = officeTemplateConfig.getItemValueString("source-path");
@@ -119,11 +118,11 @@ public class OfficeTemplateAdapter implements SignalAdapter {
             boolean autoOpen = officeTemplateConfig.getItemValueBoolean("auto-open");
 
             if (sourcePath.isEmpty()) {
-                throw new ProcessingErrorException(OfficeTemplateAdapter.class.getSimpleName(), API_ERROR,
+                throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "missing source-path definition!");
             }
             if (targetName.isEmpty()) {
-                throw new ProcessingErrorException(OfficeTemplateAdapter.class.getSimpleName(), API_ERROR,
+                throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "missing target-name definition!");
             } else {
                 // adapt text....
@@ -157,7 +156,7 @@ public class OfficeTemplateAdapter implements SignalAdapter {
             }
 
         } catch (PluginException e) {
-            logger.warning("Unable to parse item definitions for 'office-template', verify model - " + e.getMessage());
+            logger.warning("Unable to parse item definitions for 'wopi-template', verify model - " + e.getMessage());
         }
 
         return document;
@@ -189,7 +188,7 @@ public class OfficeTemplateAdapter implements SignalAdapter {
             return fileData;
         } catch (IOException e) {
             // no file was found
-            throw new ProcessingErrorException(OfficeTemplateAdapter.class.getSimpleName(), API_ERROR,
+            throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                     "...no file found in template path: " + filepath);
         }
     }
@@ -212,7 +211,7 @@ public class OfficeTemplateAdapter implements SignalAdapter {
             if (textBlockDocument != null) {
                 if (!"FILE".equals(textBlockDocument.getItemValueString("txtmode"))) {
                     // no file was found
-                    throw new ProcessingErrorException(OfficeTemplateAdapter.class.getSimpleName(), API_ERROR,
+                    throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                             "textblock '" + textblockName + "' is not defined as type FILE!");
 
                 }
@@ -230,7 +229,7 @@ public class OfficeTemplateAdapter implements SignalAdapter {
                 }
 
             } else {
-                throw new ProcessingErrorException(OfficeTemplateAdapter.class.getSimpleName(), API_ERROR,
+                throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "textblock '" + textblockName + "' not found!");
             }
         }
