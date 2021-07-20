@@ -156,10 +156,10 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     }
 
     /**
-     * This helper method updates the content of a given FileData obejc twith a
+     * This helper method updates the content of a given FileData object with a
      * replaceDevList
      * <p>
-     * The method verifies if the conent of the file need to be loaded from the
+     * The method verifies if the content of the file need to be loaded from the
      * snapshot
      * 
      * @throws IOException
