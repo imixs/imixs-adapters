@@ -14,9 +14,14 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.PositionInParagraph;
+import org.apache.poi.xwpf.usermodel.TextSegment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.imixs.archive.core.SnapshotService;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
@@ -113,14 +118,14 @@ public class POIFindReplaceAdapter implements SignalAdapter {
 
             // First we test if the fileName is unique. If not found we test regular
             // expressions...
-            boolean foundFile=false;
+            boolean foundFile = false;
             FileData fileData = document.getFileData(fileName);
             if (fileData != null) {
-                   // file data found - so we can updated it....
-                foundFile=true;
+                // file data found - so we can updated it....
+                foundFile = true;
                 updateFileData(fileData, document, replaceDevList);
             } else {
-                // not found, we can  test regular expressions...
+                // not found, we can test regular expressions...
                 List<String> fileNames = document.getFileNames();
                 Pattern pattern = Pattern.compile(fileName);
                 // get all fileNames....
@@ -131,21 +136,19 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                         fileData = document.getFileData(aFileName);
                         if (fileData != null) {
                             // file data found - so we can updated it....
-                            foundFile=true;
-                         updateFileData(fileData, document, replaceDevList);
+                            foundFile = true;
+                            updateFileData(fileData, document, replaceDevList);
                         }
-                        
+
                     }
                 }
             }
 
-            //  did we found at least one file
-            if (foundFile==false) {
+            // did we found at least one file
+            if (foundFile == false) {
                 throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
                         "wrong poi configuration - no file found matching '" + fileName + "' !");
             }
-
-          
 
         } catch (IOException e) {
             throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), DOCUMENT_ERROR,
@@ -191,7 +194,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                     find = workflowService.adaptText(find, document);
                     String replace = entityData.getItemValueString("replace");
                     replace = workflowService.adaptText(replace, document);
-                    replaceParagraphs(doc, find, replace);
+                    replaceXWPFDocument(doc, find, replace);
                 }
             }
 
@@ -219,21 +222,17 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                     String find = entityData.getItemValueString("find");
                     String replace = entityData.getItemValueString("replace");
                     replace = workflowService.adaptText(replace, document);
-                    replaceCell(sheet, find, replace);
-
+                    replaceXSSFSheet(sheet, find, replace);
                 }
             }
-
             logger.fine("findreplace completed");
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             doc.write(byteArrayOutputStream);
             doc.close();
             newContent = byteArrayOutputStream.toByteArray();
-
         }
 
         FileData fileDataNew = new FileData(fileData.getName(), newContent, fileData.getContentType(), null);
-
         // update the fileData
         document.addFileData(fileDataNew);
         logger.fine("new document added");
@@ -244,7 +243,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * 
      * @throws PluginException
      */
-    private void replaceCell(XSSFSheet sheet, String find, String replace) throws PluginException {
+    private void replaceXSSFSheet(XSSFSheet sheet, String find, String replace) throws PluginException {
         logger.finest("update cell " + find);
         // this must bei a Cell definition! A:1
         if (find.indexOf(":") == -1) {
@@ -254,24 +253,52 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         String[] cellPos = find.split(":");
         XSSFRow row = sheet.getRow(Integer.parseInt(cellPos[1]) - 1);
         XSSFCell cell = row.getCell(cellColumnToNumber(cellPos[0]));
-    
         cell.setCellValue(replace);
     }
 
     /**
      * Helph method replaces a given text in a XWPFDocument
      */
-    private void replaceParagraphs(XWPFDocument doc, String find, String replace) {
+    private void replaceXWPFDocument(XWPFDocument doc, String find, String replace) {
+
         for (XWPFParagraph p : doc.getParagraphs()) {
-            List<XWPFRun> runs = p.getRuns();
-            if (runs != null) {
-                for (XWPFRun r : runs) {
-                    String text = r.getText(0);
-                    if (text != null && text.contains(find)) {
-                        text = text.replace(find, replace);
-                        logger.fine("..replace " + find + " with  " + replace);
-                        r.setText(text, 0);
+            replaceParagraph(p, find, replace);
+        }
+
+        // Now check vor Tables
+        for (XWPFTable t : doc.getTables()) {
+            List<XWPFTableRow> rows = t.getRows();
+            for (XWPFTableRow row : rows) {
+                List<XWPFTableCell> cells = row.getTableCells();
+                for (XWPFTableCell cell : cells) {
+
+                    // check all paragraphs within the cell
+                    for (XWPFParagraph p : cell.getParagraphs()) {
+                        replaceParagraph(p, find, replace);
                     }
+
+                }
+            }
+        }
+
+    }
+
+    /**
+     * helper method replacees a text within a single paragraph
+     * 
+     * @param p
+     * @param find
+     * @param replace
+     */
+    void replaceParagraph(XWPFParagraph p, String find, String replace) {
+        List<XWPFRun> runs = p.getRuns();
+        if (runs != null) {
+            for (XWPFRun r : runs) {
+                String text = r.getText(0);
+                if (text != null && text.contains(find)) {
+                    text = text.replace(find, replace);
+                    logger.fine("..replace " + find + " with  " + replace);
+                    r.setText(text, 0);
                 }
             }
         }
