@@ -339,3 +339,10 @@ The adapter simply posts a given document to the service endpoint. The adapter c
 The Collabora API endpoint must point to a collabora instance. The 'filename' is the file attached to the current workitem. The option 'convert-to' is optional and default value is 'pdf'
 
 
+### Regular Expressions
+
+You can also define the filename as a pattern including regulare expressins. See the following example:
+
+	<wopi-converter name="filename">.*<itemvalue>numsequencenumber</itemvalue>\.docx</wopi-converter>
+
+This expression will match all files ending with the sequence number and the file extension '.docx'

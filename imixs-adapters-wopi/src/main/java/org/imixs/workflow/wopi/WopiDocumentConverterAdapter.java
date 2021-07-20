@@ -10,7 +10,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
@@ -56,8 +58,8 @@ import org.imixs.workflow.exceptions.PluginException;
  * </pre>
  * <p>
  * The Collabora API endpoint must point to a collabora instance. The 'filename'
- * is the file attached to the current workitem. The option 'convert-to' is
- * optional and default value is 'pdf'
+ * is the file attached to the current workitem. This can also be a regular
+ * expression. The option 'convert-to' is optional and default value is 'pdf'
  * 
  * 
  * @author rsoika
@@ -111,14 +113,54 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
 
         logger.info("WopiDocumentConverter: " + fileName + " => " + uri);
 
-        // load the document content
-        // test if first file hast a content
+        // test all file matching the filename or regular expression
         FileData fileData = document.getFileData(fileName);
+        if (fileData != null) {
+            // file data found by name directly - so we can convert it....
+            convertFile(fileData, document, uri);
+        } else {
+            // not found, we can test regular expressions...
+            List<String> fileNames = document.getFileNames();
+            Pattern pattern = Pattern.compile(fileName);
+            // get all fileNames....
+            for (String aFileName : fileNames) {
+                // test if aFilename matches the pattern or the pattern is null
+                if (pattern.matcher(aFileName).find()) {
+                    // fetch the file
+                    fileData = document.getFileData(aFileName);
+                    if (fileData != null) {
+                        // file data found - so we can updated it....
+                        convertFile(fileData, document, uri);
+                    }
+
+                }
+            }
+        }
+
+        return document;
+    }
+
+    /**
+     * 
+     * This helper method converts the content of a given FileData obejct
+     * <p>
+     * The method verifies if the content of the file need to be loaded from the
+     * snapshot
+     * 
+     * @param fileData
+     * @param document
+     * @param uri
+     * @throws PluginException
+     */
+    void convertFile(FileData fileData, ItemCollection document, String uri) throws PluginException {
+
         if (fileData == null) {
             throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), CONFIG_ERROR,
-                    "Converter Error: " + fileName + " not found in current workitem!");
+                    "Converter Error: invalid filedata!");
 
         }
+        String fileName = fileData.getName();
+
         if (fileData.getContent() == null || fileData.getContent().length < 3) {
             // load the snapshot
             fileData = snapshotService.getWorkItemFile(document.getUniqueID(), fileName);
@@ -132,8 +174,6 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
             throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), DOCUMENT_ERROR,
                     "WopiDocumentConverter Error - failed to post document data: " + e.getMessage());
         }
-
-        return document;
     }
 
     /**
@@ -151,7 +191,7 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
         logger.finest("post " + fileData.getName() + " " + fileData.getContent().length + " bytes....");
 
         String fileName = fileData.getName();
-    
+
         String boundary = Long.toHexString(System.currentTimeMillis());
         String CRLF = "\r\n";
 
@@ -175,7 +215,7 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
         writer.append("--" + boundary + "--").append(CRLF).flush();
 
         HttpURLConnection httpConnection = (HttpURLConnection) connection;
-        
+
         // read response
         int responseCode = httpConnection.getResponseCode();
         logger.finest("response code=" + responseCode);
@@ -192,9 +232,9 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
         return resultFileData;
     }
 
-    
     /**
      * Helper method to read from a inputStream into a byte array.
+     * 
      * @param inputStream
      * @return
      * @throws IOException
