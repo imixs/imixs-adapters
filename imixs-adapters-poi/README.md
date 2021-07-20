@@ -69,6 +69,15 @@ If you have a Excel Sheet than you can replace cell values be specifying the cel
 		</poi-update>
 
 
+
+### Regular Expressions
+
+You can also define the filename as a pattern including regulare expressins. See the following example:
+
+	<poi-update name="filename">.*<itemvalue>numsequencenumber</itemvalue>\.docx</poi-update>
+
+This expression will match all files ending with the sequence number and the file extension '.docx'
+
 # Development
 
 ## Maven

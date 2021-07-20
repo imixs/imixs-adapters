@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
@@ -86,8 +87,6 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     public ItemCollection execute(ItemCollection document, ItemCollection event)
             throws AdapterException, PluginException {
 
-        byte[] newContent = null;
-
         // read the config
         ItemCollection poiConfig = workflowService.evalWorkflowResult(event, "poi-update", document, false);
         if (poiConfig == null || !poiConfig.hasItem("findreplace")) {
@@ -112,75 +111,41 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         // XWPFDocument doc = null;
         try {
 
-            // test if first file hast a content
+            // First we test if the fileName is unique. If not found we test regular
+            // expressions...
+            boolean foundFile=false;
             FileData fileData = document.getFileData(fileName);
-            if (fileData.getContent() == null || fileData.getContent().length < 3) {
-                // load the snapshot
-                fileData = snapshotService.getWorkItemFile(document.getUniqueID(), fileName);
-            }
-            InputStream imputStream = new ByteArrayInputStream(fileData.getContent());
-
-            // docx files....
-            if (fileName.toLowerCase().endsWith(".docx")) {
-                XWPFDocument doc = new XWPFDocument(imputStream);
-              
-
-                logger.fine("XWPFDocument loaded");
-
-                for (String entityDev : replaceDevList) {
-                    ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
-
-                    if (entityData != null) {
-                        String find = entityData.getItemValueString("find");
-                        find = workflowService.adaptText(find, document);
-                        String replace = entityData.getItemValueString("replace");
-                        replace = workflowService.adaptText(replace, document);
-                        replaceParagraphs(doc, find, replace);
+            if (fileData != null) {
+                   // file data found - so we can updated it....
+                foundFile=true;
+                updateFileData(fileData, document, replaceDevList);
+            } else {
+                // not found, we can  test regular expressions...
+                List<String> fileNames = document.getFileNames();
+                Pattern pattern = Pattern.compile(fileName);
+                // get all fileNames....
+                for (String aFileName : fileNames) {
+                    // test if aFilename matches the pattern or the pattern is null
+                    if (pattern.matcher(aFileName).find()) {
+                        // fetch the file
+                        fileData = document.getFileData(aFileName);
+                        if (fileData != null) {
+                            // file data found - so we can updated it....
+                            foundFile=true;
+                         updateFileData(fileData, document, replaceDevList);
+                        }
+                        
                     }
                 }
-
-                logger.fine("findreplace completed");
-
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                doc.write(byteArrayOutputStream);
-                doc.close();
-                newContent = byteArrayOutputStream.toByteArray();
-
             }
 
-            // xlsx files....
-            if (fileName.toLowerCase().endsWith(".xls") || fileName.toLowerCase().endsWith(".xlsx")) {
-                XSSFWorkbook doc = new XSSFWorkbook(imputStream);
-               
-
-                logger.fine("XSSFWorkbook loaded");
-                // NOTE: we only take the first sheet !
-                XSSFSheet sheet = doc.getSheetAt(0);
-
-                for (String entityDev : replaceDevList) {
-                    ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
-
-                    if (entityData != null) {
-                        String find = entityData.getItemValueString("find");
-                        String replace = entityData.getItemValueString("replace");
-                        replace = workflowService.adaptText(replace, document);
-                        replaceCell(sheet, find, replace);
-
-                    }
-                }
-
-                logger.fine("findreplace completed");
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                doc.write(byteArrayOutputStream);
-                doc.close();
-                newContent = byteArrayOutputStream.toByteArray();
-
+            //  did we found at least one file
+            if (foundFile==false) {
+                throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+                        "wrong poi configuration - no file found matching '" + fileName + "' !");
             }
 
-            FileData fileDataNew = new FileData(fileData.getName(), newContent, fileData.getContentType(), null);
-
-            document.addFileData(fileDataNew);
-            logger.fine("new document added");
+          
 
         } catch (IOException e) {
             throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), DOCUMENT_ERROR,
@@ -191,21 +156,105 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     }
 
     /**
+     * This helper method updates the content of a given FileData obejc twith a
+     * replaceDevList
+     * <p>
+     * The method verifies if the conent of the file need to be loaded from the
+     * snapshot
+     * 
+     * @throws IOException
+     * @throws PluginException
+     * 
+     */
+    void updateFileData(FileData fileData, ItemCollection document, List<String> replaceDevList)
+            throws IOException, PluginException {
+        byte[] newContent = null;
+
+        String fileName = fileData.getName();
+        if (fileData.getContent() == null || fileData.getContent().length < 3) {
+            // load the snapshot
+            fileData = snapshotService.getWorkItemFile(document.getUniqueID(), fileName);
+        }
+        InputStream imputStream = new ByteArrayInputStream(fileData.getContent());
+
+        // docx files....
+        if (fileName.toLowerCase().endsWith(".docx")) {
+            XWPFDocument doc = new XWPFDocument(imputStream);
+
+            logger.fine("XWPFDocument loaded");
+
+            for (String entityDev : replaceDevList) {
+                ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
+
+                if (entityData != null) {
+                    String find = entityData.getItemValueString("find");
+                    find = workflowService.adaptText(find, document);
+                    String replace = entityData.getItemValueString("replace");
+                    replace = workflowService.adaptText(replace, document);
+                    replaceParagraphs(doc, find, replace);
+                }
+            }
+
+            logger.fine("findreplace completed");
+
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            doc.write(byteArrayOutputStream);
+            doc.close();
+            newContent = byteArrayOutputStream.toByteArray();
+
+        }
+
+        // xlsx files....
+        if (fileName.toLowerCase().endsWith(".xls") || fileName.toLowerCase().endsWith(".xlsx")) {
+            XSSFWorkbook doc = new XSSFWorkbook(imputStream);
+
+            logger.fine("XSSFWorkbook loaded");
+            // NOTE: we only take the first sheet !
+            XSSFSheet sheet = doc.getSheetAt(0);
+
+            for (String entityDev : replaceDevList) {
+                ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
+
+                if (entityData != null) {
+                    String find = entityData.getItemValueString("find");
+                    String replace = entityData.getItemValueString("replace");
+                    replace = workflowService.adaptText(replace, document);
+                    replaceCell(sheet, find, replace);
+
+                }
+            }
+
+            logger.fine("findreplace completed");
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            doc.write(byteArrayOutputStream);
+            doc.close();
+            newContent = byteArrayOutputStream.toByteArray();
+
+        }
+
+        FileData fileDataNew = new FileData(fileData.getName(), newContent, fileData.getContentType(), null);
+
+        // update the fileData
+        document.addFileData(fileDataNew);
+        logger.fine("new document added");
+    }
+
+    /**
      * Helph method replaces a given cell of a XSSFSheet
-     * @throws PluginException 
+     * 
+     * @throws PluginException
      */
     private void replaceCell(XSSFSheet sheet, String find, String replace) throws PluginException {
         logger.finest("update cell " + find);
         // this must bei a Cell definition! A:1
-        if (find.indexOf(":")==-1) {
+        if (find.indexOf(":") == -1) {
             throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
                     "wrong replacemet configuration - cell position is expected in format 'A:1'!");
         }
         String[] cellPos = find.split(":");
-
-        XSSFRow row = sheet.getRow(new Integer(cellPos[1]) - 1);
+        XSSFRow row = sheet.getRow(Integer.parseInt(cellPos[1]) - 1);
         XSSFCell cell = row.getCell(cellColumnToNumber(cellPos[0]));
-
+    
         cell.setCellValue(replace);
     }
 
@@ -228,14 +277,13 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         }
     }
 
-
     /**
      * Converts a Excel column string to row number startng with 0
      * 
      * @param name
      * @return
      */
-    public static int cellColumnToNumber(String name) {
+    static int cellColumnToNumber(String name) {
         name = name.toUpperCase();
         int number = 0;
         for (int i = 0; i < name.length(); i++) {
