@@ -346,3 +346,11 @@ You can also define the filename as a pattern including regulare expressins. See
 	<wopi-converter name="filename">.*<itemvalue>numsequencenumber</itemvalue>\.docx</wopi-converter>
 
 This expression will match all files ending with the sequence number and the file extension '.docx'
+
+
+# Open Issues
+
+## Hide Sidebar
+
+To hide the default sidebar follow the discussion [here](https://forum.collaboraonline.com/t/postmessage-to-change-the-sidbar-status/394/6) and [Issue 113](https://github.com/imixs/imixs-adapters/issues/113).
+
