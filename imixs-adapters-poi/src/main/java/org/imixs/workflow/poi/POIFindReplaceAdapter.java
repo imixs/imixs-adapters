@@ -10,12 +10,12 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.poi.xwpf.usermodel.PositionInParagraph;
-import org.apache.poi.xwpf.usermodel.TextSegment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -107,6 +107,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                     "Only .docx, .xls and .xlsx files are supported!");
         }
         List<String> replaceDevList = poiConfig.getItemValue("findreplace");
+        String eval = poiConfig.getItemValueString("eval");
         if (replaceDevList.size() == 0) {
             throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
                     "wrong poi configuration");
@@ -123,7 +124,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
             if (fileData != null) {
                 // file data found - so we can updated it....
                 foundFile = true;
-                updateFileData(fileData, document, replaceDevList);
+                updateFileData(fileData, document, replaceDevList,eval);
             } else {
                 // not found, we can test regular expressions...
                 List<String> fileNames = document.getFileNames();
@@ -137,7 +138,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                         if (fileData != null) {
                             // file data found - so we can updated it....
                             foundFile = true;
-                            updateFileData(fileData, document, replaceDevList);
+                            updateFileData(fileData, document, replaceDevList,eval);
                         }
 
                     }
@@ -164,12 +165,17 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * <p>
      * The method verifies if the content of the file need to be loaded from the
      * snapshot
+     * <p>
      * 
+     * @param fileData       - the fileData object containing the text or calc file
+     * @param replaceDevList - list of text markers or cell positions to be replaced
+     * @param eval           - optional list of cell positions to be evaluated after
+     *                       update (this is for XSSFWorkbooks only)
      * @throws IOException
      * @throws PluginException
      * 
      */
-    void updateFileData(FileData fileData, ItemCollection document, List<String> replaceDevList)
+    void updateFileData(FileData fileData, ItemCollection document, List<String> replaceDevList, String eval)
             throws IOException, PluginException {
         byte[] newContent = null;
 
@@ -226,6 +232,19 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                 }
             }
             logger.fine("findreplace completed");
+            // recalculate formulas
+            if (eval!=null && !eval.isEmpty()) {
+                // iterate over all cells to be evaluated
+                String[] cellPositions=eval.split(";");
+                for (String cellPos: cellPositions) {
+                    evalXSSFSheet(doc,sheet,cellPos);
+                }
+                logger.fine("formula evualtion completed");
+            }
+            // doc.setForceFormulaRecalculation(true);
+
+            //XSSFFormulaEvaluator.evaluateAllFormulaCells(doc);
+
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             doc.write(byteArrayOutputStream);
             doc.close();
@@ -253,7 +272,45 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         String[] cellPos = find.split(":");
         XSSFRow row = sheet.getRow(Integer.parseInt(cellPos[1]) - 1);
         XSSFCell cell = row.getCell(cellColumnToNumber(cellPos[0]));
-        cell.setCellValue(replace);
+        
+        try {
+            float f=Float.parseFloat(replace);
+            cell.setCellValue(f);
+        } catch (Exception e) {
+            cell.setCellValue(replace);
+            
+        }
+    }
+    
+    
+    /**
+     * Evaluates a given list of cells in a given XSWorkbook
+     * @param doc
+     * @param sheet
+     * @param cell
+     * @throws PluginException
+     */
+    private void evalXSSFSheet(XSSFWorkbook doc,XSSFSheet sheet, String cell) throws PluginException {
+        FormulaEvaluator evaluator = doc.getCreationHelper().createFormulaEvaluator();      
+        // this must bei a Cell definition! A:1
+        if (cell.indexOf(":") == -1) {
+            throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+                    "wrong eval configuration - cell position is expected in format 'A:1'!");
+        }
+        String[] cellPos = cell.split(":");
+        XSSFRow row = sheet.getRow(Integer.parseInt(cellPos[1]) - 1);
+        XSSFCell c = row.getCell(cellColumnToNumber(cellPos[0]));
+        if (c.getCellType() == CellType.FORMULA) {
+            logger.finest("...eval cell " + cell);
+            try {
+            CellType evalResult = evaluator.evaluateFormulaCell(c);
+            if (evalResult== CellType.ERROR ) {
+                logger.warning("...unable to evaluate cell " + cell);
+            }
+            } catch (Exception poie) {
+                logger.warning("...failed to evaluate cell " + cell + " : "+poie.getMessage());
+            }
+        }
     }
 
     /**
