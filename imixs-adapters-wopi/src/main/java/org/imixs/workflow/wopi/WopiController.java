@@ -63,14 +63,14 @@ public class WopiController implements Serializable {
     private static Logger logger = Logger.getLogger(WopiController.class.getName());
 
     public static final String ITEM_WOPI_AUTO_OPEN = "wopi.auto.open";
-    
+
     public static final String WOPI_CONFIRM_CHANGES = "WOPI_CONFIRM_CHANGES";
 
     private String accessToken = null;
     private boolean enabled = false;
 
     @Inject
-    @ConfigProperty(name = "wopi.host.endpoint", defaultValue = "")
+    @ConfigProperty(name = "wopi.host.endpoint", defaultValue = "none")
     String wopiHostEndpoint;
 
     @Inject
@@ -92,7 +92,7 @@ public class WopiController implements Serializable {
      */
     @PostConstruct
     void init() {
-        if (wopiHostEndpoint != null && !wopiHostEndpoint.isEmpty()) {
+        if (wopiHostEndpoint != null && !"none".equals(ITEM_WOPI_AUTO_OPEN)) {
             enabled = true;
         }
     }
