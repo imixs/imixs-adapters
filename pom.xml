@@ -53,8 +53,8 @@
 	</developers>
 
 	<scm>
-		<connection>scm:git:https://github.com/imixs/imixs-adapters.git</connection>
-		<developerConnection>scm:git:https://github.com/imixs/imixs-adapters.git</developerConnection>
+		<connection>scm:git:git@github.com:imixs/imixs-adapters.git</connection>
+		<developerConnection>scm:git:git@github.com:imixs/imixs-adapters.git</developerConnection>
 		<url>https://github.com/imixs/imixs-adapters/</url>
 		<tag>HEAD</tag>
 	</scm>
