@@ -78,6 +78,31 @@ You can also define the filename as a pattern including regulare expressins. See
 
 This expression will match all files ending with the sequence number and the file extension '.docx'
 
+## POI CopyContent Adapter
+
+With the adapter class *org.imixs.workflow.poi.POICopyContentAdapter* it is possible to update the workitem items with cell values from Excel documents (.xls, .xlsx).
+The adapter can copy values form a cell. 
+
+The following example searches for an attachment with the name 'Invoice-????.xlsx' and copies the cell F:26  into the item 'invoice.total'
+
+
+	<poi-copy name="filename">Invoice-<itemvalue>numsequencenumber</itemvalue>.xlsx</poi-copy>
+	<poi-copy name="copy">
+	       <find>F:26</find>
+	      <item>invoice.total</item>
+	      <type>number</type>
+	</poi-copy>
+     
+You can convert the value into different types
+
+ - date - Java Date object
+ - number - Java Double 
+ - text - String
+
+
+
+
+
 # Development
 
 ## Maven

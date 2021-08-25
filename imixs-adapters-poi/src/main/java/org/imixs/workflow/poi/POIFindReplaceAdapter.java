@@ -34,7 +34,7 @@ import org.imixs.workflow.util.XMLParser;
 
 /**
  * This POIFindReplaceAdapter can be used to find and replace text fragements in
- * a MS Word (docx) document.
+ * a MS Word (docx) or MS Excel (xlsx) document.
  * <p>
  * The adapter can be configured by the event workflow result:
  * <p>
@@ -58,8 +58,15 @@ import org.imixs.workflow.util.XMLParser;
        </poi-update>
    }
  * </pre>
- * 
- * 
+ * For Excel you can replace cell content:
+ * <pre>
+ * {@code
+ * <poi-update name="findreplace">
+       <find>F:4</find>
+       <replace><itemvalue>numsequencenumber</itemvalue></replace>
+   </poi-update>
+   }
+ * </pre>
  * 
  * 
  * 
