@@ -12,6 +12,7 @@ import javax.inject.Inject;
 
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -58,11 +59,13 @@ import org.imixs.workflow.util.XMLParser;
        </poi-update>
    }
  * </pre>
+ * 
  * For Excel you can replace cell content:
+ * 
  * <pre>
  * {@code
  * <poi-update name="findreplace">
-       <find>F:4</find>
+       <find>F4</find>
        <replace><itemvalue>numsequencenumber</itemvalue></replace>
    </poi-update>
    }
@@ -131,7 +134,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
             if (fileData != null) {
                 // file data found - so we can updated it....
                 foundFile = true;
-                updateFileData(fileData, document, replaceDevList,eval);
+                updateFileData(fileData, document, replaceDevList, eval);
             } else {
                 // not found, we can test regular expressions...
                 List<String> fileNames = document.getFileNames();
@@ -145,7 +148,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                         if (fileData != null) {
                             // file data found - so we can updated it....
                             foundFile = true;
-                            updateFileData(fileData, document, replaceDevList,eval);
+                            updateFileData(fileData, document, replaceDevList, eval);
                         }
 
                     }
@@ -240,17 +243,17 @@ public class POIFindReplaceAdapter implements SignalAdapter {
             }
             logger.fine("findreplace completed");
             // recalculate formulas
-            if (eval!=null && !eval.isEmpty()) {
+            if (eval != null && !eval.isEmpty()) {
                 // iterate over all cells to be evaluated
-                String[] cellPositions=eval.split(";");
-                for (String cellPos: cellPositions) {
-                    evalXSSFSheet(doc,sheet,cellPos);
+                String[] cellPositions = eval.split(";");
+                for (String cellPos : cellPositions) {
+                    evalXSSFSheet(doc, sheet, cellPos);
                 }
                 logger.fine("formula evualtion completed");
             }
             // doc.setForceFormulaRecalculation(true);
 
-            //XSSFFormulaEvaluator.evaluateAllFormulaCells(doc);
+            // XSSFFormulaEvaluator.evaluateAllFormulaCells(doc);
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             doc.write(byteArrayOutputStream);
@@ -271,64 +274,64 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      */
     private void replaceXSSFSheet(XSSFSheet sheet, String find, String replace) throws PluginException {
         logger.finest("update cell " + find);
-        // this must bei a Cell definition! A:1
-        if (find.indexOf(":") == -1) {
-            throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-                    "wrong replacemet configuration - cell position is expected in format 'A:1'!");
-        }
-        String[] cellPos = find.split(":");
-        XSSFRow row = sheet.getRow(Integer.parseInt(cellPos[1]) - 1);
-        XSSFCell cell = row.getCell(cellColumnToNumber(cellPos[0]));
-        
+        XSSFCell cell = getCellByRef(sheet, find);
         try {
-            float f=Float.parseFloat(replace);
+            // we try to set first as float value if possible
+            float f = Float.parseFloat(replace);
             cell.setCellValue(f);
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
+            // set value as string
             cell.setCellValue(replace);
-            
         }
     }
-    
-    
+
+    /**
+     * Returns a Cell by name or an optional absolute cell postion
+     * <p>
+     * Examples for refs are 'A1', 'AB3', 'MyCell' where 'MyCell' is a named cell.
+     * <p>
+     * 
+     */
+    public static XSSFCell getCellByRef(XSSFSheet sheet, String cellReference) {
+        XSSFCell cell = null;
+        CellReference cr = new CellReference(cellReference);
+        XSSFRow row = sheet.getRow(cr.getRow());
+        cell = row.getCell(cr.getCol());
+        return cell;
+    }
+
     /**
      * Evaluates a given list of cells in a given XSWorkbook
+     * 
      * @param doc
      * @param sheet
      * @param cell
      * @throws PluginException
      */
-    private void evalXSSFSheet(XSSFWorkbook doc,XSSFSheet sheet, String cell) throws PluginException {
-        FormulaEvaluator evaluator = doc.getCreationHelper().createFormulaEvaluator();      
-        // this must bei a Cell definition! A:1
-        if (cell.indexOf(":") == -1) {
-            throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-                    "wrong eval configuration - cell position is expected in format 'A:1'!");
-        }
-        String[] cellPos = cell.split(":");
-        XSSFRow row = sheet.getRow(Integer.parseInt(cellPos[1]) - 1);
-        XSSFCell c = row.getCell(cellColumnToNumber(cellPos[0]));
+    private void evalXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cell) throws PluginException {
+        FormulaEvaluator evaluator = doc.getCreationHelper().createFormulaEvaluator();
+        XSSFCell c = getCellByRef(sheet, cell);
         if (c.getCellType() == CellType.FORMULA) {
             logger.finest("...eval cell " + cell);
             try {
-            CellType evalResult = evaluator.evaluateFormulaCell(c);
-            if (evalResult== CellType.ERROR ) {
-                logger.warning("...unable to evaluate cell " + cell);
-            }
+                CellType evalResult = evaluator.evaluateFormulaCell(c);
+                if (evalResult == CellType.ERROR) {
+                    logger.warning("...unable to evaluate cell " + cell);
+                }
             } catch (Exception poie) {
-                logger.warning("...failed to evaluate cell " + cell + " : "+poie.getMessage());
+                logger.warning("...failed to evaluate cell " + cell + " : " + poie.getMessage());
             }
         }
     }
 
     /**
-     * Helph method replaces a given text in a XWPFDocument
+     * Helper method replaces a given text in a XWPFDocument
      */
     private void replaceXWPFDocument(XWPFDocument doc, String find, String replace) {
 
         for (XWPFParagraph p : doc.getParagraphs()) {
             replaceParagraph(p, find, replace);
         }
-
         // Now check vor Tables
         for (XWPFTable t : doc.getTables()) {
             List<XWPFTableRow> rows = t.getRows();
@@ -340,11 +343,9 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                     for (XWPFParagraph p : cell.getParagraphs()) {
                         replaceParagraph(p, find, replace);
                     }
-
                 }
             }
         }
-
     }
 
     /**

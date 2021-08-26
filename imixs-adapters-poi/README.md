@@ -37,42 +37,49 @@ The contentType and the processing instrcutions (XSL) of a  report definition wi
 ## POI FindReplace Adapter
 
 With the adapter class *org.imixs.workflow.poi.POIFindReplaceAdapter* it is possible to update Word documents (.docx) or Excel documents (.xls, .xlsx).
-The adapter can replace text fragments in a paragraph.
 
-The adapter uses the method XWPFRun.setText(String) and goes through the file until it finds the corresponding paragraph. The result document is saved in the current workitem.
+
+### Word Documents
+
+The adapter can replace text fragments in a paragraph of a MS Word document. The adapter uses the method XWPFRun.setText(String) and goes through the file until it finds the corresponding paragraph. The result document is saved in the current workitem.
 
 The following example searches for an attachment with the name 'Agreement-????.docx' and replaces the text fragments *[company.name]*, *[company.country]* and *[contract.startdate]* with the corresponding item values.
 
-      <poi-update name=
-        "filename">Agreement-<itemvalue>numsequencenumber</itemvalue>.docx</poi-update>
-        <poi-update name="findreplace">
-               <find>[company.name]</find>
-               <replace><itemvalue>company.name</itemvalue></replace>
-        </poi-update>
-        <poi-update name="findreplace">
-               <find>[company.country]</find>
-               <replace><itemvalue>company.country</itemvalue></replace>
-        </poi-update>
-        <poi-update name="findreplace">
-               <find>[contract.startdate]</find>
-               <replace><itemvalue format=
-        "EEE, MMM d, yyyy">contract.start</itemvalue></replace>
-       </poi-update>
+    <poi-update name=
+       "filename">Agreement-<itemvalue>numsequencenumber</itemvalue>.docx</poi-update>
+    <poi-update name="findreplace">
+         <find>[company.name]</find>
+         <replace><itemvalue>company.name</itemvalue></replace>
+    </poi-update>
+    <poi-update name="findreplace">
+         <find>[company.country]</find>
+         <replace><itemvalue>company.country</itemvalue></replace>
+    </poi-update>
+    <poi-update name="findreplace">
+         <find>[contract.startdate]</find>
+         <replace><itemvalue format="EEE, MMM d, yyyy">contract.start</itemvalue></replace>
+    </poi-update>
 
 
-If you have a Excel Sheet than you can replace cell values be specifying the cell position:
+### Excel Documents
 
-		<poi-update name="filename">Invoice-<itemvalue>numsequencenumber</itemvalue>.xlsx</poi-update>
-		<poi-update name="findreplace">
-		       <find>A:10</find>
-		       <replace> <itemvalue>company.name</itemvalue></replace>
-		</poi-update>
+If you have a Excel Sheet than you can replace cell values be specifying the cell position or the cell name (cell reference):
 
+	<poi-update name="filename">Invoice-<itemvalue>numsequencenumber</itemvalue>.xlsx</poi-update>
+	<poi-update name="findreplace">
+	       <find>A10</find>
+	       <replace><itemvalue>company.name</itemvalue></replace>
+	</poi-update>
+	<poi-update name="findreplace">
+	       <find>TOTAL_SUM</find>
+	       <replace><itemvalue>invoice.total</itemvalue></replace>
+	</poi-update>
 
+The cell 'A10' is selected by row/column position, the cell 'TOTAL_SUM' by a cell reference which is a fixed name. 
 
-### Regular Expressions
+### Regular Expressions for Document Name
 
-You can also define the filename as a pattern including regulare expressins. See the following example:
+You can also define the filename as a pattern including regular expressions. See the following example:
 
 	<poi-update name="filename">.*<itemvalue>numsequencenumber</itemvalue>\.docx</poi-update>
 
@@ -80,24 +87,37 @@ This expression will match all files ending with the sequence number and the fil
 
 ## POI CopyContent Adapter
 
-With the adapter class *org.imixs.workflow.poi.POICopyContentAdapter* it is possible to update the workitem items with cell values from Excel documents (.xls, .xlsx).
-The adapter can copy values form a cell. 
+With the adapter class *org.imixs.workflow.poi.POICopyContentAdapter* it is possible to update the items of a workitem with cell values from Excel documents (.xls, .xlsx). The adapter can copy values form a cell. 
 
-The following example searches for an attachment with the name 'Invoice-????.xlsx' and copies the cell F:26  into the item 'invoice.total'
+The following example searches for an attachment with the name 'Invoice-????.xlsx' and copies the cell F26  into the item 'company.name' and the cell with the name 'TOTAL_SUM' into the item 'invoice.total'
 
 
 	<poi-copy name="filename">Invoice-<itemvalue>numsequencenumber</itemvalue>.xlsx</poi-copy>
 	<poi-copy name="copy">
-	       <find>F:26</find>
-	      <item>invoice.total</item>
-	      <type>number</type>
+	    <find>F26</find>
+	    <item>company.name</item>
+	    <type>text</type>
 	</poi-copy>
-     
-You can convert the value into different types
+	<poi-copy name="copy">
+	    <find>TOTAL_SUM</find>
+	    <item>invoice.total</item>
+	    <type>number</type>
+	</poi-copy>     
+	
+A cell name can also be specified in extended expression:
+
+	Sheet1!$F$26	
+
+**Note:** To select a cell independent from newly inserted rows and columns you should name the cell and select the Cell by a named reference. 
+
+### Value Types
+	
+Optional the value can be converted into one of the following object types:
 
  - date - Java Date object
  - number - Java Double 
  - text - String
+
 
 
 

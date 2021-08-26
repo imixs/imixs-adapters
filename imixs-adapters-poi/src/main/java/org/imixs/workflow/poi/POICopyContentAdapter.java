@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.imixs.archive.core.SnapshotService;
@@ -82,7 +82,8 @@ public class POICopyContentAdapter implements SignalAdapter {
         // read the config
         ItemCollection poiConfig = workflowService.evalWorkflowResult(event, "poi-copy", document, false);
         if (poiConfig == null || !poiConfig.hasItem("copy")) {
-            throw new PluginException(POICopyContentAdapter.class.getSimpleName(), CONFIG_ERROR, "wrong poi configuration");
+            throw new PluginException(POICopyContentAdapter.class.getSimpleName(), CONFIG_ERROR,
+                    "wrong poi configuration");
         }
         String fileName = poiConfig.getItemValueString("filename");
         fileName = workflowService.adaptText(fileName, document);
@@ -146,12 +147,12 @@ public class POICopyContentAdapter implements SignalAdapter {
     }
 
     /**
-     * This helper method copy  the content of a given excel document object with a
+     * This helper method copy the content of a given excel document object with a
      * given itemList
      * <p>
      * 
      * 
-     * @param fileData       - the fileData object containing the text or calc file
+     * @param fileData - the fileData object containing the text or calc file
      * @param itemList - list of text markers or cell positions to be replaced
      * @throws IOException
      * @throws PluginException
@@ -159,7 +160,7 @@ public class POICopyContentAdapter implements SignalAdapter {
      */
     void copyFileData(FileData fileData, ItemCollection document, List<String> itemList)
             throws IOException, PluginException {
-       
+
         String fileName = fileData.getName();
         if (fileData.getContent() == null || fileData.getContent().length < 3) {
             // load the snapshot
@@ -170,21 +171,16 @@ public class POICopyContentAdapter implements SignalAdapter {
         // xlsx files....
         if (fileName.toLowerCase().endsWith(".xls") || fileName.toLowerCase().endsWith(".xlsx")) {
             XSSFWorkbook doc = new XSSFWorkbook(imputStream);
-
-            logger.fine("XSSFWorkbook loaded");
+            logger.info("XSSFWorkbook loaded");
             // NOTE: we only take the first sheet !
             XSSFSheet sheet = doc.getSheetAt(0);
-            
-
             for (String entityDev : itemList) {
                 ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
-
                 if (entityData != null) {
                     String find = entityData.getItemValueString("find");
                     String item = entityData.getItemValueString("item");
                     String type = entityData.getItemValueString("type");
-
-                    Object o=findCellValueXSSFSheet(sheet, find,type);
+                    Object o = findCellValueXSSFSheet(doc, sheet, find, type);
                     document.setItemValue(item, o);
                 }
             }
@@ -198,37 +194,41 @@ public class POICopyContentAdapter implements SignalAdapter {
      * 
      * @throws PluginException
      */
-    private Object findCellValueXSSFSheet(XSSFSheet sheet, String find, String type) throws PluginException {
-        
-        logger.finest("find cell " + find);
-        // this must bei a Cell definition! A:1
-        if (find.indexOf(":") == -1) {
-            throw new PluginException(POICopyContentAdapter.class.getSimpleName(), CONFIG_ERROR,
-                    "wrong copy configuration - cell position is expected in format 'A:1'!");
+    private Object findCellValueXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cellName, String type)
+            throws PluginException {
+
+        logger.finest("find cell " + cellName);
+        // first we test if the cellName is a named cell
+        Name aNamedCell = doc.getName(cellName);
+        if (aNamedCell != null) {
+            // yes its a named cell so we need to get the referrer Formula
+            logger.info("...resolving named cell = " + aNamedCell.getNameName());
+            cellName = aNamedCell.getRefersToFormula();
+            logger.info("...cell = " + cellName);
+            // now we can find the cell by its ref
         }
-        String[] cellPos = find.split(":");
-        XSSFRow row = sheet.getRow(Integer.parseInt(cellPos[1]) - 1);
-        XSSFCell cell = row.getCell(POIFindReplaceAdapter.cellColumnToNumber(cellPos[0]));
-        try {
-            Object cellValue;
-            if ("date".equalsIgnoreCase(type)) {
-                cellValue = cell.getDateCellValue();
 
-            } else if ("number".equalsIgnoreCase(type)) {
-                cellValue = cell.getNumericCellValue();
-            } else {
-                cellValue = cell.getStringCellValue();
+        XSSFCell cell = POIFindReplaceAdapter.getCellByRef(sheet, cellName);
+        if (cell != null) {
+            try {
+                Object cellValue;
+                if ("date".equalsIgnoreCase(type)) {
+                    cellValue = cell.getDateCellValue();
+
+                } else if ("number".equalsIgnoreCase(type)) {
+                    cellValue = cell.getNumericCellValue();
+                } else {
+                    cellValue = cell.getStringCellValue();
+                }
+                return cellValue;
+
+            } catch (Exception e) {
+                logger.warning("failed to read cell value: " + e.getMessage());
             }
-            return cellValue;
-
-        } catch (Exception e) {
-            logger.warning("failed to read cell value: " + e.getMessage());
+        } else {
+            logger.warning("......cell " + cellName + " not found! Please check your configuration.");
         }
         return null;
-
     }
 
-   
-
-   
 }
