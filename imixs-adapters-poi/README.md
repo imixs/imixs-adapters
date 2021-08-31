@@ -95,12 +95,12 @@ The following example searches for an attachment with the name 'Invoice-????.xls
 	<poi-copy name="filename">Invoice-<itemvalue>numsequencenumber</itemvalue>.xlsx</poi-copy>
 	<poi-copy name="copy">
 	    <find>F26</find>
-	    <item>company.name</item>
+	    <itemname>company.name</itemname>
 	    <type>text</type>
 	</poi-copy>
 	<poi-copy name="copy">
 	    <find>TOTAL_SUM</find>
-	    <item>invoice.total</item>
+	    <itemname>invoice.total</itemname>
 	    <type>number</type>
 	</poi-copy>     
 	

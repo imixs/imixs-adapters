@@ -178,7 +178,7 @@ public class POICopyContentAdapter implements SignalAdapter {
                 ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
                 if (entityData != null) {
                     String find = entityData.getItemValueString("find");
-                    String item = entityData.getItemValueString("item");
+                    String item = entityData.getItemValueString("itemname");
                     String type = entityData.getItemValueString("type");
                     Object o = findCellValueXSSFSheet(doc, sheet, find, type);
                     document.setItemValue(item, o);
