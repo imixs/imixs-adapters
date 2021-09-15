@@ -33,9 +33,11 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.ejb.EJB;
+import javax.inject.Inject;
 import javax.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Model;
@@ -66,9 +68,7 @@ import org.imixs.workflow.exceptions.QueryException;
  * 
  */
 public class SepaScheduler implements Scheduler {
-
-    public static final int MAX_COUNT = 999;
-
+   
     @EJB
     DocumentService documentService;
 
@@ -84,6 +84,12 @@ public class SepaScheduler implements Scheduler {
     @EJB
     ReportService reportService;
 
+    @Inject
+    @ConfigProperty(name = "sepa.invoices.maxcount", defaultValue = "100") // maximum 100 invoices in one run
+    int invoicesMaxCount; // default = 100
+
+    
+    
     private static Logger logger = Logger.getLogger(SepaScheduler.class.getName());
 
     /**
@@ -98,10 +104,7 @@ public class SepaScheduler implements Scheduler {
     public ItemCollection run(ItemCollection configuration) throws SchedulerException {
         String reportName = "";
         ItemCollection sepaExport = null;
-        int maxCount = configuration.getItemValueInteger("_maxcount");
-        if (maxCount == 0) {
-            maxCount = -1;
-        }
+       
         try {
 
             String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
@@ -122,7 +125,7 @@ public class SepaScheduler implements Scheduler {
             }
 
             // get the data source based on the report definition....
-            List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
+            List<ItemCollection> masterDataSet = reportService.getDataSource(report, invoicesMaxCount, 0, "$created", false,
                     null);
 
             sepaWorkflowService.logMessage("...SEPA export started....", configuration, null);

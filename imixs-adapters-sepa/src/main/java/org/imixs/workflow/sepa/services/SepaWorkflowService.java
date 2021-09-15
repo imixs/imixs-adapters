@@ -38,8 +38,6 @@ import javax.annotation.security.RunAs;
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.engine.WorkflowService;
@@ -123,7 +121,7 @@ public class SepaWorkflowService {
 	 * @throws PluginException
 	 * @throws ModelException
 	 */
-	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+	// @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW) - Disabled see Issue #115
 	@SuppressWarnings("unchecked")
 	public void processInvoices(ItemCollection sepaExport, List<ItemCollection> invoices, final ItemCollection event,
 			ItemCollection configuration)

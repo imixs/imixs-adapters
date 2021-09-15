@@ -115,8 +115,13 @@ In the sepa model the event *init* contains an "sepa invoice_update" definition 
 The SepaScheduler automatically link the invoices with the SEPA export Workitem.
 This definition is equals to the SplitAndJoin "subprocess_update" except with the item tag which is not supported for SEPA. 	
 
+### Maximum Invoices to be Processed
 
+The *SepaScheduler* has an upper limit to process open invoices within one run. This limit is set to 100 invoices. You can overwrite this limit with the environment setting '*sepa.invoices.maxcount*'. The property can be set either in the imixs.properties or provided as an environment variable:
 
+	SEPA_INVOICES_MAXCOUNT=200
+
+In case you are running in timeouts you should lower the *sepa.invoices.maxcount*.
 
 ## XSL Transformation
 
