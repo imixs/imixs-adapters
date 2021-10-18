@@ -37,10 +37,10 @@ import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.jwt.JWTException;
-import org.imixs.marty.util.ResourceBundleHandler;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.faces.data.WorkflowEvent;
 import org.imixs.workflow.faces.fileupload.FileUploadController;
+import org.imixs.workflow.faces.util.ResourceBundleHandler;
 
 /**
  * The WopiController is a front end controller providing the access endpoint

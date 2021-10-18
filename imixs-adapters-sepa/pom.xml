@@ -19,16 +19,18 @@
 			<groupId>org.imixs.workflow</groupId>
 			<artifactId>imixs-workflow-engine</artifactId>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-workflow-faces</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.imixs.marty</groupId>
 			<artifactId>imixs-marty-ejb</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.imixs.marty</groupId>
-			<artifactId>imixs-marty-util</artifactId>
-		</dependency>
+	
 
 		<!-- tiny java lib for iban/bic validation -->
 		<dependency>
