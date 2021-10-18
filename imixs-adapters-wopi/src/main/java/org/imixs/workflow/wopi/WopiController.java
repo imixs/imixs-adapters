@@ -52,7 +52,7 @@ import org.imixs.workflow.faces.util.ResourceBundleHandler;
  * The controller also listens on the WorklfowEvent to update modified file
  * content into the workItem before processing.
  * 
- * @author rsoika
+ * @author rsoika 
  * 
  */
 @Named

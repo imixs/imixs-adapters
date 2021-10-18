@@ -27,8 +27,8 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 
-import org.imixs.marty.ejb.ProfileEvent;
-import org.imixs.marty.ejb.ProfileService;
+import org.imixs.marty.profile.ProfileEvent;
+import org.imixs.marty.profile.ProfileService;
 import org.imixs.workflow.ItemCollection;
 
 /**

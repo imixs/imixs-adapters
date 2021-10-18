@@ -35,11 +35,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.ejb.EJB;
 import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.imixs.marty.ejb.TextBlockService;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
@@ -47,6 +45,7 @@ import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
+import org.imixs.workflow.office.config.TextBlockService;
 import org.imixs.workflow.util.XMLParser;
 
 /**
@@ -88,7 +87,8 @@ public class WopiTemplateAdapter implements SignalAdapter {
 
     public static final String API_ERROR = "API_ERROR";
     public static String SNAPSHOTID = "$snapshotid";
-
+    final String TYPE_TEXTBLOCK = "textblock";
+    
     private static Logger logger = Logger.getLogger(WopiTemplateAdapter.class.getName());
 
     @Inject
@@ -97,11 +97,12 @@ public class WopiTemplateAdapter implements SignalAdapter {
 
     @Inject
     private WorkflowService workflowService;
+    
+    @Inject
+    private TextBlockService textBlockService;
+    //private DocumentService documentService;
 
-    @EJB
-    TextBlockService textBlockService;
-
-    /**
+ /**
      * This method imports a office document template into the current workitem.
      */
     public ItemCollection execute(ItemCollection document, ItemCollection event) throws AdapterException {
@@ -241,4 +242,51 @@ public class WopiTemplateAdapter implements SignalAdapter {
 
         return null;
     }
+    
+    
+    
+    
+    /**
+     * Helper method returns a text-block ItemCollection for a specified name or id.
+     * If no text-block is found for this name the Method creates an empty
+     * text-block object. 
+     * 
+     * @param name         in attribute txtname
+     */
+    /*
+    private ItemCollection loadTextBlock(String name) {
+        ItemCollection textBlockItemCollection = null;
+        // check cache...
+
+            // try to load by ID....
+            textBlockItemCollection = documentService.load(name);
+            if (textBlockItemCollection == null) {
+                // not found by ID so lets try to load it by txtname.....
+                // load text-block....
+                String sQuery = "(type:\"" + TYPE_TEXTBLOCK + "\" AND txtname:\"" + name + "\")";
+                Collection<ItemCollection> col;
+                try {
+                    col = documentService.find(sQuery, 1, 0);
+
+                    if (col.size() > 0) {
+                        textBlockItemCollection = col.iterator().next();
+                    } else {
+                        logger.warning("Missing text-block : '" + name + "'");
+                    }
+                } catch (QueryException e) {
+                    logger.warning("getTextBlock - invalid query: " + e.getMessage());
+                }
+
+            }
+
+            if (textBlockItemCollection == null) {
+                // create default values
+                textBlockItemCollection = new ItemCollection();
+                textBlockItemCollection.replaceItemValue("type", TYPE_TEXTBLOCK);
+                textBlockItemCollection.replaceItemValue("txtname", name);
+            }
+           
+        return textBlockItemCollection;
+    }
+    */
 }
