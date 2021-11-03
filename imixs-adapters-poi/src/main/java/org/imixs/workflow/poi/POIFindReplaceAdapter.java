@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -67,10 +68,22 @@ import org.imixs.workflow.util.XMLParser;
  * <poi-update name="findreplace">
        <find>F4</find>
        <replace><itemvalue>numsequencenumber</itemvalue></replace>
+       <type>text</type>
    </poi-update>
    }
  * </pre>
+ * <p>
+ * Another option for Excel sheets is a typed item value. In this case the tag
+ * 'itemname' defindes the item and 'type' defines the type which will be set
+ * into the excel sheet
  * 
+ * <pre>
+ * {@code
+ * <poi-update name="findreplace">
+       <find>F4</find>
+       <itemname>invoice.date</itemname>
+   </poi-update>
+   }
  * 
  * 
  * @version 1.0
@@ -238,7 +251,21 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                     String find = entityData.getItemValueString("find");
                     String replace = entityData.getItemValueString("replace");
                     replace = workflowService.adaptText(replace, document);
-                    replaceXSSFSheet(sheet, find, replace);
+                    // optional itename
+                    String itemname = entityData.getItemValueString("itemname");
+
+                    // replace with item value?
+                    if (!itemname.isEmpty()) {
+                        List<?> valueList = document.getItemValue(itemname);
+                        if (valueList.size() > 0) {
+                            // provide the first value only
+                            replaceXSSFSheetItemValue(sheet, find, valueList.get(0));
+                        }
+                    } else {
+                        replaceXSSFSheetStringValue(sheet, find, replace);
+
+                    }
+
                 }
             }
             logger.fine("findreplace completed");
@@ -268,11 +295,11 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     }
 
     /**
-     * Helph method replaces a given cell of a XSSFSheet
+     * Helper method replaces a given cell of a XSSFSheet with a string value
      * 
      * @throws PluginException
      */
-    private void replaceXSSFSheet(XSSFSheet sheet, String find, String replace) throws PluginException {
+    private void replaceXSSFSheetStringValue(XSSFSheet sheet, String find, String replace) throws PluginException {
         logger.finest("update cell " + find);
         XSSFCell cell = getCellByRef(sheet, find);
         try {
@@ -282,6 +309,24 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         } catch (NumberFormatException e) {
             // set value as string
             cell.setCellValue(replace);
+        }
+    }
+
+    /**
+     * Helper method replaces a given cell of a XSSFSheet with a typed item value
+     * 
+     * @throws PluginException
+     */
+    private void replaceXSSFSheetItemValue(XSSFSheet sheet, String find, Object itemValue) throws PluginException {
+        logger.finest("update cell " + find);
+        XSSFCell cell = getCellByRef(sheet, find);
+        if (itemValue instanceof Date) {
+            cell.setCellValue((Date) itemValue);
+        } else if (itemValue instanceof Double) {
+            cell.setCellValue((Double) itemValue);
+        } else {
+            // default to text
+            cell.setCellValue(itemValue.toString());
         }
     }
 

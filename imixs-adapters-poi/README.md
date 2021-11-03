@@ -77,6 +77,17 @@ If you have a Excel Sheet than you can replace cell values be specifying the cel
 
 The cell 'A10' is selected by row/column position, the cell 'TOTAL_SUM' by a cell reference which is a fixed name. 
 
+#### Replace a Cell with a typed Item Value
+
+Optional it is possible to replace a cell value with the first value of an Item. In this case the tag 'itemname' contains the item name in the current document holding the value. The cell will be replaced with the same object type as provided by the item. In this way it is possible for example to set a Date value into a cell value of type 'Date'.
+
+	<poi-update name="findreplace">
+	       <find>TOTAL_SUM</find>
+	       <itemname>invoice.date</itemname>
+	</poi-update>
+
+**Note:** This feature currently only supports the item types Date and Double. All other types will be converted into text. 
+
 ### Regular Expressions for Document Name
 
 You can also define the filename as a pattern including regular expressions. See the following example:
