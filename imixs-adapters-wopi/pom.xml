@@ -33,13 +33,6 @@
 			<artifactId>imixs-marty</artifactId>
 		</dependency>
 		
-		
-		<dependency>
-			<groupId>org.imixs.workflow</groupId>
-			<artifactId>imixs-office-workflow-util</artifactId>
-		</dependency>
-		
-		
 		<dependency>
 			<groupId>org.imixs.jwt</groupId>
 			<artifactId>imixs-jwt</artifactId>

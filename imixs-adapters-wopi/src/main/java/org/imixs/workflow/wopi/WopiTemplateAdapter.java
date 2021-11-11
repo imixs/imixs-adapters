@@ -45,7 +45,7 @@ import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
-import org.imixs.workflow.office.config.TextBlockService;
+
 import org.imixs.workflow.util.XMLParser;
 
 /**
@@ -99,8 +99,7 @@ public class WopiTemplateAdapter implements SignalAdapter {
     private WorkflowService workflowService;
     
     @Inject
-    private TextBlockService textBlockService;
-    //private DocumentService documentService;
+    private TextBlockHelperService textBlockHelperService;
 
  /**
      * This method imports a office document template into the current workitem.
@@ -212,7 +211,7 @@ public class WopiTemplateAdapter implements SignalAdapter {
         // extract the textbock name
         String textblockName = XMLParser.findTagValue(sourcePath, "textblock");
         if (textblockName != null && !textblockName.isEmpty()) {
-            ItemCollection textBlockDocument = textBlockService.loadTextBlock(textblockName);
+            ItemCollection textBlockDocument = textBlockHelperService.loadTextBlock(textblockName);
 
             if (textBlockDocument != null) {
                 if (!"FILE".equals(textBlockDocument.getItemValueString("txtmode"))) {
