@@ -17,7 +17,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.imixs.workflow.version>5.2.13-SNAPSHOT</org.imixs.workflow.version>
+		<org.imixs.workflow.version>5.2.13</org.imixs.workflow.version>
 		<org.imixs.marty.version>4.1.14-SNAPSHOT</org.imixs.marty.version>
 		<org.imixs.archive.version>2.2.11</org.imixs.archive.version>
 		<jakarta.version>8.0</jakarta.version>
