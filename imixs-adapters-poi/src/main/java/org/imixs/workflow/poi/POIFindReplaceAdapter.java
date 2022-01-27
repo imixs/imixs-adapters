@@ -13,6 +13,7 @@ import javax.inject.Inject;
 
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -198,7 +199,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * @throws PluginException
      * 
      */
-    void updateFileData(FileData fileData, ItemCollection document, List<String> replaceDevList, String eval)
+    public void updateFileData(FileData fileData, ItemCollection document, List<String> replaceDevList, String eval)
             throws IOException, PluginException {
         byte[] newContent = null;
 
@@ -259,11 +260,10 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                         List<?> valueList = document.getItemValue(itemname);
                         if (valueList.size() > 0) {
                             // provide the first value only
-                            replaceXSSFSheetItemValue(sheet, find, valueList.get(0));
+                            replaceXSSFSheetItemValue(doc, sheet, find, valueList.get(0));
                         }
                     } else {
-                        replaceXSSFSheetStringValue(sheet, find, replace);
-
+                        replaceXSSFSheetStringValue(doc, sheet, find, replace);
                     }
 
                 }
@@ -299,9 +299,9 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * 
      * @throws PluginException
      */
-    private void replaceXSSFSheetStringValue(XSSFSheet sheet, String find, String replace) throws PluginException {
+    private void replaceXSSFSheetStringValue(XSSFWorkbook doc, XSSFSheet sheet, String find, String replace) throws PluginException {
         logger.finest("update cell " + find);
-        XSSFCell cell = getCellByRef(sheet, find);
+        XSSFCell cell = getCellByRef(doc, sheet, find);
         try {
             // we try to set first as float value if possible
             float f = Float.parseFloat(replace);
@@ -317,9 +317,9 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * 
      * @throws PluginException
      */
-    private void replaceXSSFSheetItemValue(XSSFSheet sheet, String find, Object itemValue) throws PluginException {
+    private void replaceXSSFSheetItemValue(XSSFWorkbook doc, XSSFSheet sheet, String find, Object itemValue) throws PluginException {
         logger.finest("update cell " + find);
-        XSSFCell cell = getCellByRef(sheet, find);
+        XSSFCell cell = getCellByRef(doc, sheet, find);
         if (itemValue instanceof Date) {
             cell.setCellValue((Date) itemValue);
         } else if (itemValue instanceof Double) {
@@ -337,10 +337,24 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * <p>
      * 
      */
-    public static XSSFCell getCellByRef(XSSFSheet sheet, String cellReference) {
+    public static XSSFCell getCellByRef(XSSFWorkbook doc, XSSFSheet sheet, String cellReference) {
         XSSFCell cell = null;
+        
+        // first we test if the cellName is a named cell
+        Name aNamedCell = doc.getName(cellReference);
+        if (aNamedCell != null) {
+            // yes its a named cell so we need to get the referrer Formula
+            logger.finest("...resolving named cell = " + aNamedCell.getNameName());
+            cellReference = aNamedCell.getRefersToFormula();
+            // now we can find the cell by its ref
+        }
+        
         CellReference cr = new CellReference(cellReference);
         XSSFRow row = sheet.getRow(cr.getRow());
+        if (row==null) {
+            logger.severe("Unable to resolve cell ref '" + cellReference + "'!");
+            return null;
+        }
         cell = row.getCell(cr.getCol());
         return cell;
     }
@@ -353,9 +367,9 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * @param cell
      * @throws PluginException
      */
-    private void evalXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cell) throws PluginException {
+    public void evalXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cell) throws PluginException {
         FormulaEvaluator evaluator = doc.getCreationHelper().createFormulaEvaluator();
-        XSSFCell c = getCellByRef(sheet, cell);
+        XSSFCell c = getCellByRef(doc, sheet, cell);
         if (c.getCellType() == CellType.FORMULA) {
             logger.finest("...eval cell " + cell);
             try {

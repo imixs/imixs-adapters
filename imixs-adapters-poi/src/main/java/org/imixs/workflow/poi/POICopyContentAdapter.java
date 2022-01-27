@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
-import org.apache.poi.ss.usermodel.Name;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -197,18 +196,7 @@ public class POICopyContentAdapter implements SignalAdapter {
     private Object findCellValueXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cellName, String type)
             throws PluginException {
 
-        logger.finest("find cell " + cellName);
-        // first we test if the cellName is a named cell
-        Name aNamedCell = doc.getName(cellName);
-        if (aNamedCell != null) {
-            // yes its a named cell so we need to get the referrer Formula
-            logger.info("...resolving named cell = " + aNamedCell.getNameName());
-            cellName = aNamedCell.getRefersToFormula();
-            logger.info("...cell = " + cellName);
-            // now we can find the cell by its ref
-        }
-
-        XSSFCell cell = POIFindReplaceAdapter.getCellByRef(sheet, cellName);
+        XSSFCell cell = POIFindReplaceAdapter.getCellByRef(doc, sheet, cellName);
         if (cell != null) {
             try {
                 Object cellValue;
