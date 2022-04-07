@@ -33,6 +33,8 @@ To validate user access the imixs-adapter-wopi module provides an JWT implementa
 
 The Imixs-WOPI Adapter provides services and a JavaScript library for  a  tightly coupling with the Imixs Workflow Engine. The following section shows how to integrate the Imixs-WOPI Adapter into a application. A prerequisite is that an instance of a WOPI client (e.g. LibreOffice Online) is running. 
 
+Information about how to run LibreOffice Online (Collabora) in a Docker Container can be found [here](https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html#).
+
 ## Environment 
 
 To setup the Imixs-WOPI Adapter the following environment variables must be set:
