@@ -52,7 +52,7 @@ import org.imixs.workflow.faces.util.ResourceBundleHandler;
  * The controller also listens on the WorklfowEvent to update modified file
  * content into the workItem before processing.
  * 
- * @author rsoika 
+ * @author rsoika
  * 
  */
 @Named
@@ -185,7 +185,7 @@ public class WopiController implements Serializable {
         }
 
         String token = generateAccessToken(userid, username);
-        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token=" + token;
+        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "&access_token=" + token;
         if (baseURL.startsWith("http://")) {
             logger.fine("...WOPI Client is running without SSL - this is not recommended for production!");
         }

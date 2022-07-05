@@ -97,23 +97,21 @@ public class WopiAccessHandler {
     void init() {
         jwtPassword = WorkflowKernel.generateUniqueID();
 
-        if (wopiPublicEndpoint == null || !wopiPublicEndpoint.isPresent() || wopiPublicEndpoint.get().isEmpty()) {
-            // no public wopi endpoint was defined. In this case the wopi endpoints are
-            // resolved by parsing the wopi discovery endpoint
-            if (wopiDiscoveryEndpoint != null && wopiDiscoveryEndpoint.isPresent()
-                    && !wopiDiscoveryEndpoint.get().isEmpty()) {
-                try {
-                    parseDiscoveryURL(wopiDiscoveryEndpoint.get());
-                } catch (SAXException | IOException | ParserConfigurationException e) {
-                    logger.severe("Failed to parse discovery endpoint '" + wopiDiscoveryEndpoint.get() + "' Error: "
-                            + e.getMessage());
-                    e.printStackTrace();
-                    extensions = null;
-                    mimeTypes = null;
-                }
-            } else {
-                logger.warning("...unable to parse discovery endpoint - parameter ' not provided!");
+        // no public wopi endpoint was defined. In this case the wopi endpoints are
+        // resolved by parsing the wopi discovery endpoint
+        if (wopiDiscoveryEndpoint != null && wopiDiscoveryEndpoint.isPresent()
+                && !wopiDiscoveryEndpoint.get().isEmpty()) {
+            try {
+                parseDiscoveryURL(wopiDiscoveryEndpoint.get());
+            } catch (SAXException | IOException | ParserConfigurationException e) {
+                logger.severe("Failed to parse discovery endpoint '" + wopiDiscoveryEndpoint.get() + "' Error: "
+                        + e.getMessage());
+                e.printStackTrace();
+                extensions = null;
+                mimeTypes = null;
             }
+        } else {
+            logger.warning("...unable to parse discovery endpoint - parameter ' not provided!");
         }
 
     }
@@ -123,7 +121,7 @@ public class WopiAccessHandler {
      * cached fileData is identified by the accesstoken+filename (with a hash
      * value).
      * <p>
-     * The method also deletes outdated cached files. 
+     * The method also deletes outdated cached files.
      * 
      * @param jsessionid
      * @param file
@@ -132,7 +130,7 @@ public class WopiAccessHandler {
     public void cacheFileData(String accessToken, FileData fileData) throws IOException {
         // test cache folder existence....
         if (!Files.exists(Paths.get(wopiFileCache))) {
-            logger.info("...creating wopi cache folder '" + wopiFileCache + "'...");
+            logger.finest("...creating wopi cache folder '" + wopiFileCache + "'...");
             Files.createDirectories(Paths.get(wopiFileCache));
         }
         Path filepath = getCacheFilePath(accessToken, fileData.getName());
@@ -177,7 +175,7 @@ public class WopiAccessHandler {
      */
     public List<FileData> getAllFileData(String accessToken) {
         List<FileData> result = new ArrayList<FileData>();
-        if (accessToken==null || accessToken.isEmpty()) {
+        if (accessToken == null || accessToken.isEmpty()) {
             // no data
             return result;
         }
@@ -192,18 +190,18 @@ public class WopiAccessHandler {
                     return name.startsWith(prafix);
                 }
             });
-            
+
             // if no files found then exit
-            if (foundFiles==null) {
+            if (foundFiles == null) {
                 return result;
             }
 
             // Process files
             for (File file : foundFiles) {
                 byte[] content = Files.readAllBytes(Paths.get(wopiFileCache + file.getName()));
-                String filename=file.getName();
+                String filename = file.getName();
                 // cut prefix
-                filename=filename.substring(prafix.length()+1);
+                filename = filename.substring(prafix.length() + 1);
                 logger.finest("......found cached file : " + filename);
                 FileData fileData = new FileData(filename, content, null, null);
                 result.add(fileData);
@@ -216,14 +214,14 @@ public class WopiAccessHandler {
         return result;
     }
 
-    
     /**
      * Deletes all existing files cached for a given token.
+     * 
      * @param accessToken
      */
     public void clearFileCache(String accessToken) {
 
-        if (accessToken==null || accessToken.isEmpty()) {
+        if (accessToken == null || accessToken.isEmpty()) {
             // no data
             return;
         }
@@ -237,7 +235,7 @@ public class WopiAccessHandler {
                     return name.startsWith(prafix);
                 }
             });
-            if (foundFiles!=null) {
+            if (foundFiles != null) {
                 // delete files...
                 for (File file : foundFiles) {
                     Files.delete(Paths.get(wopiFileCache + file.getName()));
@@ -247,7 +245,7 @@ public class WopiAccessHandler {
             logger.severe("..failed to delete file: " + e.getMessage());
         }
     }
-    
+
     /**
      * Generates a new access token
      * 
@@ -346,25 +344,19 @@ public class WopiAccessHandler {
      * @return
      */
     public String getClientEndpointByFilename(String filename) {
-
-        // do we have a public wopi client endpoint?
-        if (wopiPublicEndpoint != null || wopiPublicEndpoint.isPresent() && !wopiPublicEndpoint.get().isEmpty()) {
-            return wopiPublicEndpoint.get();
-        }
-
+        String result = null;
         // resolving endpoint by discovery url.....
         if (extensions == null) {
             // lazy initalizing...
             init();
         }
-
         if (extensions != null && filename.contains(".")) {
             String ext = filename.substring(filename.lastIndexOf('.') + 1);
-            return extensions.get(ext);
+            result = extensions.get(ext);
         }
 
-        logger.warning("...no wopi client endpoint could be resolved!");
-        return null;
+        // finally we replace the host name with the publicEndpoint
+        return resolvePublicEndpoint(result);
     }
 
     /**
@@ -377,11 +369,7 @@ public class WopiAccessHandler {
      * @return
      */
     public String getClientEndpointByMimeType(String mimeType) {
-        // do we have a public wopi client endpoint?
-        if (wopiPublicEndpoint != null || wopiPublicEndpoint.isPresent() && !wopiPublicEndpoint.get().isEmpty()) {
-            return wopiPublicEndpoint.get();
-        }
-
+        String result = null;
         // resolving endpoint by discovery url.....
         if (extensions == null) {
             // lazy initalizing...
@@ -389,11 +377,45 @@ public class WopiAccessHandler {
         }
 
         if (mimeTypes != null) {
-            return mimeTypes.get(mimeType);
+            result = mimeTypes.get(mimeType);
+        }
+        // finally we replace the host name with the publicEndpoint
+        return resolvePublicEndpoint(result);
+    }
+
+    /**
+     * Helper Method to replace the internal host name with the public endpoint
+     * 
+     * @param uri
+     * @return
+     */
+    private String resolvePublicEndpoint(String uri) {
+        String result = null;
+        if (wopiPublicEndpoint != null && wopiPublicEndpoint.isPresent() && !wopiPublicEndpoint.get().isEmpty()) {
+
+            try {
+                URL internalURL = new URL(uri);
+
+                String internalFile = internalURL.getFile();
+
+                String publicEndpoint = wopiPublicEndpoint.get();
+                if (publicEndpoint.endsWith("/")) {
+                    publicEndpoint = publicEndpoint.substring(0, publicEndpoint.length() - 1);
+                }
+                result = publicEndpoint + internalFile;
+
+                logger.info("resolved public Endpint: " + result);
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            logger.warning("...wopi.public.endpoint is not set - check configuration!");
+
         }
 
-        logger.warning("...no wopi client endpoint could be resolved!");
-        return null;
+        return result;
     }
 
     /**
@@ -429,7 +451,7 @@ public class WopiAccessHandler {
             if (appNode.getNodeType() == Node.ELEMENT_NODE) {
                 Element eElement = (Element) appNode;
                 String appName = eElement.getAttribute("name");
-                logger.info("...app=" + appName);
+                logger.finest("...app=" + appName);
                 // now get all action urls...
                 NodeList actionElements = eElement.getElementsByTagName("action");
                 for (int j = 0; j < actionElements.getLength(); j++) {
@@ -442,12 +464,12 @@ public class WopiAccessHandler {
 
                         if (actionExt != null && !actionExt.isEmpty()) {
                             extensions.put(actionExt, actionurlsrc);
-                            logger.info("...ext=" + actionExt + " -> " + actionurlsrc);
+                            logger.finest("...ext=" + actionExt + " -> " + actionurlsrc);
                         } else {
                             // this can be a mimetype...
                             if (appName.contains("/")) {
                                 mimeTypes.put(appName, actionurlsrc);
-                                logger.info("...mimetype=" + appName + " -> " + actionurlsrc);
+                                logger.finest("...mimetype=" + appName + " -> " + actionurlsrc);
                             }
                         }
                     }

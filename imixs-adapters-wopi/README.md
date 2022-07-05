@@ -26,14 +26,14 @@ The WOPI API endpoints /wopi/ must not be protected because LibreOffice has no m
 
 To validate user access the imixs-adapter-wopi module provides an JWT implementation to generate and to validate an access token. The endpoint uri to access the HOST looks like this:
 
-	https://localhost:9980/{libreoffice-editor}.html?WOPISrc=http://wopi-app:8080/api/wopi/files/{your-file}?access_token={JWT} 
+	https://localhost:9980/{libreoffice-editor}.html?WOPISrc=http://wopi-app:8080/api/wopi/files/{your-file}&access_token={JWT} 
 
 
 # Integration
 
-The Imixs-WOPI Adapter provides services and a JavaScript library for  a  tightly coupling with the Imixs Workflow Engine. The following section shows how to integrate the Imixs-WOPI Adapter into a application. A prerequisite is that an instance of a WOPI client (e.g. LibreOffice Online) is running. 
+The Imixs-WOPI Adapter provides services and a JavaScript library for  a  tightly coupling with the Imixs Workflow Engine. The following section shows how to integrate the Imixs-WOPI Adapter into a application. A prerequisite is that an instance of a WOPI client (e.g. OnlyOffice or Collabora Online) is running. 
 
-Information about how to run LibreOffice Online (Collabora) in a Docker Container can be found [here](https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html#).
+Information about how to run LibreOffice Online (Collabora) in a Docker Container can be found [here](https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html#). Information about OnlyOffice can be found [here](https://api.onlyoffice.com/editors/wopi/). 
 
 ## Environment 
 
@@ -49,28 +49,42 @@ To setup the Imixs-WOPI Adapter the following environment variables must be set:
 | WOPI_FILE_CACHE        | file path to cache wopi files temporarily on the wop host | default: /tmp/wopi/
 | WOPI_POSTMESSAGEORIGIN | Optional postMessageOrigin  | e.g. http://application.foo.com:8080
      
-The following example shows a setup for in a Docker Compose file running in a local dev environment:
+The following example shows a setup for in a Docker Compose file running in a local dev environment on Collaboara:
 
 	....
 	  my-app:
 	    image: imixs/imixs-office-workflow
 	    environment:
 	      ....
-	      WOPI_PUBLIC_ENDPOINT: "http://localhost:9980/loleaflet/6a844e4/loleaflet.html?"
+	      WOPI_PUBLIC_ENDPOINT: "http://localhost:9980"
+	      WOPI_DISCOVERY_ENDPOINT: "http://collabora-app:9980/hosting/discovery"
 	      WOPI_HOST_ENDPOINT: "http://my-app:8080/api/wopi/"    
 	    ....
 	    ports:
 	      - "8080:8080"
 	....	      
 
-In a productive environment, the WOPI_PUBLIC_ENDPOINT should be set to a SSL encrypted Internet domain name:
+The corresponding OnlyOffice setup looks like this:
 
 	....
 	  my-app:
 	    image: imixs/imixs-office-workflow
 	    environment:
 	      ....
-	      WOPI_PUBLIC_ENDPOINT: "https://libreoffice.foo.com/loleaflet/6a844e4/loleaflet.html?"
+	      WOPI_PUBLIC_ENDPOINT: "http://localhost:80"
+	      WOPI_DISCOVERY_ENDPOINT: "http://onlyoffice-app:80/hosting/discovery"
+	      WOPI_HOST_ENDPOINT: "http://my-app:8080/api/wopi/"
+
+
+In a productive environment, the WOPI_PUBLIC_ENDPOINT should be always be set to a SSL encrypted Internet domain name. The Host Endpoint and the Discovery Endpoint should point to the internal host names. :
+
+	....
+	  my-app:
+	    image: imixs/imixs-office-workflow
+	    environment:
+	      ....
+	      WOPI_PUBLIC_ENDPOINT: "https://libreoffice.foo.com"
+	      WOPI_DISCOVERY_ENDPOINT: "http://collabora-app:9980/hosting/discovery"
 	      WOPI_HOST_ENDPOINT: "http://my-app:8080/api/wopi/"    
 	    ....
 	    ports:
