@@ -403,9 +403,7 @@ public class WopiAccessHandler {
                     publicEndpoint = publicEndpoint.substring(0, publicEndpoint.length() - 1);
                 }
                 result = publicEndpoint + internalFile;
-
-                logger.info("resolved public Endpint: " + result);
-
+                logger.fine("resolved public Endpint: " + result);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }

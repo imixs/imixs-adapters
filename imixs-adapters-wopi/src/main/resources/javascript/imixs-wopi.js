@@ -163,10 +163,10 @@ IMIXS.org.imixs.workflow.wopi = (function() {
 	        // extract token from uri
 	        var tokenPos=actionuri.indexOf('access_token=');
 	        var access_token=actionuri.substring(tokenPos+13);
-	        console.log(' actionuri='+actionuri);	        
-	        console.log(' access_token='+access_token);	     
+	        // console.log(' actionuri='+actionuri);	        
+	        // console.log(' access_token='+access_token);	     
 	        actionuri=actionuri.substring(0,tokenPos);   
-			console.log(' short actionuri='+actionuri);	        
+			// console.log(' short actionuri='+actionuri);	        
 			
 			
 			/* Old Construction */
@@ -180,7 +180,6 @@ IMIXS.org.imixs.workflow.wopi = (function() {
 			var uiModeCollabora = '<input name="ui_defaults" value="TextSidebar=false;SpreadsheetSidebar=false" type="hidden"/>';
 			iframe.document.write('<html><body><form action="'+actionuri+'" enctype="multipart/form-data" method="post" id="libreoffice-form" style="display:none;">' +uiHiddenFields+ uiModeCollabora + '<input type="submit" value="Load..." /></form></body></html>');
 			iframe.document.close();
-			
 		},
 
 		// close the office viewer and show the form part again
