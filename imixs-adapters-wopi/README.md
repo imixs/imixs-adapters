@@ -123,9 +123,8 @@ In this example we are calling the JavaScript method to open the viewer componen
 ## JavaScript
 
 The Imixs-WOPI Adapter provides a JavaScript library to open and control the Wopi Editor (Wopi Client).
-The Integration of the Wopi Client into your application is done by a iframe. This necessary to isolate the editor form your surrounding application. 
-To display the editor in a iframe the script library *imixs-wopi.js* provides a method imixsWopi.openViewer. The method expects a DIV element in your existing web page and the access URL to place the iframe with the editor. 
-
+The Integration of the Wopi Client into your application is done by a iframe. This is necessary to isolate the editor form your surrounding application. 
+To display the editor in a iframe the script library *imixs-wopi.js* provides a method `imixsWopi.openViewer`. The method expects a DIV element in your existing web page to place the iframe with the editor and the access URL to load the document. 
 
 
 	<script type="text/javascript" src="/js/imixs-core.js"></script>
@@ -143,7 +142,7 @@ To display the editor in a iframe the script library *imixs-wopi.js* provides a 
 
 	....
 	...........
-	<!-- LibreOffice Editor -->
+	<!-- Office Editor -->
 	<div id="wopi_controlls">
 		<button onclick="imixsWopi.save(); return false;">Update</button><button onclick="imixsWopi.closeViewer(); return false;">Close</button>
 		<hr />
@@ -153,11 +152,11 @@ To display the editor in a iframe the script library *imixs-wopi.js* provides a 
 
 ## UI Controls
 
-The control of closing the editor or saving the content is in this concept part of your application. So in the example above the application shows two buttons to save the content and to close the editor. 
+The control of closing the editor or saving the content in this concept is part of your application. So in the example above the application shows two buttons to save the content and to close the editor. 
 
 ## Updating the File Content by Callback method
 
-When a file was saved by LibreOffice Online, the data is posted to the WOPI Host endpoint '/wopi/files/{name}/contents'. The file content is not directly stored. It is cached into the local wopi file cache on the Wopi Host. An application can provide a saveCallback method to be triggered after a file was updated. 
+When a file was saved by the Office interface, the data is posted to the WOPI Host endpoint '/wopi/files/{name}/contents'. The file content is not directly stored. It is cached into the local wopi file cache on the Wopi Host. An application can provide a saveCallback method to be triggered after a file was updated. 
 
 	// define save callback when a file was updated....
 	imixsWopi.saveCallback = uiSaveCallback;

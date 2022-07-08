@@ -255,7 +255,7 @@ public class WopiHostService {
      * <p>
      * The method expects a $uniqueID and filename
      * <p>
-     * <code> /wopi/xxxxxxx-0000-0000-0000-yyyy/files/{FILENAME}</code>
+     * <code> /wopi/xxxxxxx-0000-0000-0000-yyyy/files/{FILENAME}/contents</code>
      * <p>
      * The method returns a json file info object
      * <p>
@@ -269,19 +269,18 @@ public class WopiHostService {
     public Response postFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             InputStream contentStream, @QueryParam("access_token") String accessToken, @Context UriInfo info) {
         
+        logger.info("...... POST postFileContents: " + uniqueid + "/" + file);
         // analyze header X-LOOL-WOPI-Timestamp, X-LOOL-WOPI-IsAutosave, X-LOOL-WOPI-IsExitSave
         // We do ignroe the X-LOOL-WOPI-IsExitSave event
         String wopiHeader=servletRequest.getHeader("X-LOOL-WOPI-IsExitSave");
         if (wopiHeader!=null && "true".equalsIgnoreCase(wopiHeader)) {
-            logger.fine("...ignroe X-LOOL-WOPI-IsExitSave = " + wopiHeader);
+            logger.info("...ignore X-LOOL-WOPI-IsExitSave = " + wopiHeader);
             return  Response.ok().build();
         }
         
-        logger.info("...updating file content...");
-        
         // clean unexpected query params
         accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
-        logger.finest("...... POST postFileContents: " + uniqueid + "/" + file);
+        
 
         // validate access_token
         JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);

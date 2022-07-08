@@ -390,7 +390,7 @@ public class WopiAccessHandler {
      * @return
      */
     private String resolvePublicEndpoint(String uri) {
-        String result = null;
+        String result = uri;
         if (wopiPublicEndpoint != null && wopiPublicEndpoint.isPresent() && !wopiPublicEndpoint.get().isEmpty()) {
 
             try {

@@ -161,6 +161,11 @@ public class WopiController implements Serializable {
             logger.warning("...no wopi client endpoint found!");
             return null;
         }
+        
+        // cut onlyoffice hints
+        if (baseURL.indexOf("&<rs=")>-1) {
+            baseURL=baseURL.substring(0,baseURL.indexOf("&<rs="));
+        }
 
         // test file extension
         String[] extensions = wopiFileExtensions.split(",");
@@ -185,11 +190,12 @@ public class WopiController implements Serializable {
         }
 
         String token = generateAccessToken(userid, username);
-        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "&access_token=" + token;
+        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token=" + token;
         if (baseURL.startsWith("http://")) {
             logger.fine("...WOPI Client is running without SSL - this is not recommended for production!");
         }
 
+        logger.info("WOP Access URL=" + baseURL);
         return baseURL;
     }
 
