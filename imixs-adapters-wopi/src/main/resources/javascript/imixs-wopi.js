@@ -76,7 +76,7 @@ IMIXS.org.imixs.workflow.wopi = (function() {
 			
 			if (msg.MessageId == 'App_LoadingStatus') {
 				if (msg.Values) {
-					if (msg.Values.Status == 'Document_Loaded') {
+					if (msg.Values.Status && msg.Values.Status == 'Document_Loaded') {
 						//console.log('==== Document loaded ...init viewer...');
 						initViewer();
 						imixsWopi.isModified=false;
