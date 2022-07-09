@@ -78,6 +78,10 @@ public class WopiController implements Serializable {
     String wopiFileExtensions;
 
     @Inject
+    @ConfigProperty(name = "wopi.options", defaultValue = "none")
+    String wopiOptions;
+    
+    @Inject
     WopiAccessHandler wopiAccessHandler;
 
     @Inject
@@ -166,6 +170,12 @@ public class WopiController implements Serializable {
         if (baseURL.indexOf("&<rs=")>-1) {
             baseURL=baseURL.substring(0,baseURL.indexOf("&<rs="));
         }
+        
+        // add optional WOPI Params (e.g. thm=2
+        if (wopiOptions != null && !"none".equals(wopiOptions)) {
+            baseURL=baseURL+"&"+wopiOptions;
+        }
+
 
         // test file extension
         String[] extensions = wopiFileExtensions.split(",");
@@ -190,12 +200,9 @@ public class WopiController implements Serializable {
         }
 
         String token = generateAccessToken(userid, username);
-        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "?access_token=" + token;
-        if (baseURL.startsWith("http://")) {
-            logger.fine("...WOPI Client is running without SSL - this is not recommended for production!");
-        }
-
-        logger.info("WOP Access URL=" + baseURL);
+        baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "&access_token=" + token;
+       
+        logger.fine("WOP Access URL=" + baseURL);
         return baseURL;
     }
 

@@ -106,7 +106,7 @@ public class WopiAccessHandler {
             } catch (SAXException | IOException | ParserConfigurationException e) {
                 logger.severe("Failed to parse discovery endpoint '" + wopiDiscoveryEndpoint.get() + "' Error: "
                         + e.getMessage());
-                e.printStackTrace();
+                // e.printStackTrace();
                 extensions = null;
                 mimeTypes = null;
             }
@@ -405,7 +405,7 @@ public class WopiAccessHandler {
                 result = publicEndpoint + internalFile;
                 logger.fine("resolved public Endpint: " + result);
             } catch (MalformedURLException e) {
-                e.printStackTrace();
+                // e.printStackTrace();
             }
 
         } else {
@@ -433,47 +433,55 @@ public class WopiAccessHandler {
 
         logger.info("...parsing wopi.discovery.endpoint: " + endpoint);
 
+        if (endpoint.startsWith("http://")) {
+            logger.fine("...WOPI Client is running without SSL - this is not recommended for production!");
+        }
+
         extensions = new HashMap<String, String>();
         mimeTypes = new HashMap<String, String>();
 
-        // parse the discovery URL
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document doc = db.parse(new URL(endpoint).openStream());
+        try {
+            // parse the discovery URL
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(new URL(endpoint).openStream());
 
-        // parse all <app> nodes
-        NodeList appList = doc.getElementsByTagName("app");
-        for (int i = 0; i < appList.getLength(); i++) {
-            Node appNode = appList.item(i);
+            // parse all <app> nodes
+            NodeList appList = doc.getElementsByTagName("app");
+            for (int i = 0; i < appList.getLength(); i++) {
+                Node appNode = appList.item(i);
 
-            if (appNode.getNodeType() == Node.ELEMENT_NODE) {
-                Element eElement = (Element) appNode;
-                String appName = eElement.getAttribute("name");
-                logger.finest("...app=" + appName);
-                // now get all action urls...
-                NodeList actionElements = eElement.getElementsByTagName("action");
-                for (int j = 0; j < actionElements.getLength(); j++) {
-                    Node actionNode = actionElements.item(j);
-                    if (actionNode.getNodeType() == Node.ELEMENT_NODE) {
-                        Element eActionElement = (Element) actionNode;
-                        String actionExt = eActionElement.getAttribute("ext");
-                        String actionName = eActionElement.getAttribute("name");
-                        String actionurlsrc = eActionElement.getAttribute("urlsrc");
+                if (appNode.getNodeType() == Node.ELEMENT_NODE) {
+                    Element eElement = (Element) appNode;
+                    String appName = eElement.getAttribute("name");
+                    logger.finest("...app=" + appName);
+                    // now get all action urls...
+                    NodeList actionElements = eElement.getElementsByTagName("action");
+                    for (int j = 0; j < actionElements.getLength(); j++) {
+                        Node actionNode = actionElements.item(j);
+                        if (actionNode.getNodeType() == Node.ELEMENT_NODE) {
+                            Element eActionElement = (Element) actionNode;
+                            String actionExt = eActionElement.getAttribute("ext");
+                            String actionName = eActionElement.getAttribute("name");
+                            String actionurlsrc = eActionElement.getAttribute("urlsrc");
 
-                        if (actionExt != null && !actionExt.isEmpty()) {
-                            extensions.put(actionExt, actionurlsrc);
-                            logger.finest("...ext=" + actionExt + " -> " + actionurlsrc);
-                        } else {
-                            // this can be a mimetype...
-                            if (appName.contains("/")) {
-                                mimeTypes.put(appName, actionurlsrc);
-                                logger.finest("...mimetype=" + appName + " -> " + actionurlsrc);
+                            if (actionExt != null && !actionExt.isEmpty()) {
+                                extensions.put(actionExt, actionurlsrc);
+                                logger.finest("...ext=" + actionExt + " -> " + actionurlsrc);
+                            } else {
+                                // this can be a mimetype...
+                                if (appName.contains("/")) {
+                                    mimeTypes.put(appName, actionurlsrc);
+                                    logger.finest("...mimetype=" + appName + " -> " + actionurlsrc);
+                                }
                             }
                         }
                     }
-                }
 
+                }
             }
+        } catch (java.net.MalformedURLException e) {
+            logger.warning(e.getMessage());
         }
 
     }

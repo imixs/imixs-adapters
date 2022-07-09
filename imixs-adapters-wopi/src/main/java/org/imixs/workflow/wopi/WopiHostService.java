@@ -180,7 +180,7 @@ public class WopiHostService {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         
-        logger.info("...... GET getFileInfo: " + uniqueid + "/" + file);
+        logger.info("......GET getFileInfo: " + uniqueid + "/" + file);
 
 
         // create the json object
@@ -227,7 +227,7 @@ public class WopiHostService {
         }
 
         // load the FileData
-        logger.info("...... GET getFileContents: " + uniqueid + "/" + file);
+        logger.info("......GET getFileContents: " + uniqueid + "/" + file);
         FileData fileData = loadFileData(uniqueid, file, accessToken);
         if (fileData == null) {
             logger.warning("no file data found '" + uniqueid + "'!");
@@ -269,7 +269,7 @@ public class WopiHostService {
     public Response postFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             InputStream contentStream, @QueryParam("access_token") String accessToken, @Context UriInfo info) {
         
-        logger.info("...... POST postFileContents: " + uniqueid + "/" + file);
+        logger.info("......POST postFileContents: " + uniqueid + "/" + file);
         // analyze header X-LOOL-WOPI-Timestamp, X-LOOL-WOPI-IsAutosave, X-LOOL-WOPI-IsExitSave
         // We do ignroe the X-LOOL-WOPI-IsExitSave event
         String wopiHeader=servletRequest.getHeader("X-LOOL-WOPI-IsExitSave");
