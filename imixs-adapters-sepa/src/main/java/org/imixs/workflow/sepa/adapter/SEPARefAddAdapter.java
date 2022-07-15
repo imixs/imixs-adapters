@@ -67,6 +67,30 @@ public class SEPARefAddAdapter implements SignalAdapter {
     @SuppressWarnings("unchecked")
     private void appendInvoice(ItemCollection invoice) throws PluginException {
 
+        // test if invoice has a _dbtr_iban and _dbtr_bic
+        if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()
+                || invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {
+            // overtake _dbtr_iban from sepa configuration...
+            String paymentType = invoice.getItemValueString("payment.type");
+            ItemCollection dbtrOption = sepaWorkflowService.findDbtrOptionByPaymentType(paymentType,
+                    sepaWorkflowService.loadConfiguration());
+            if (dbtrOption != null) {
+                invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
+                        dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
+                invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
+                        dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+                invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
+                        dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+
+                // set optional SEPA report definition
+                invoice.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
+                        dbtrOption.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
+            } else {
+                logger.warning(
+                        "...Warning: payment.type '" + paymentType + "' not found in SEPA configuration");
+            }
+        }
+        
         String key = sepaWorkflowService.computeKey(invoice);
 
         logger.info("......Update SEPA export for: '" + key + "'...");
