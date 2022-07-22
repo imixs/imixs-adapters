@@ -73,7 +73,6 @@ public class SepaWorkflowService {
     public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
     public static final String ERROR_MISSING_DATA = "MISSING_DATA";
 
-
     public static final int EVENT_START = 100;
     public static final int EVENT_SUCCESS = 200;
     public static final int EVENT_FAILED = 300;
@@ -106,8 +105,7 @@ public class SepaWorkflowService {
 
     @Inject
     DocumentService documentService;
-    
-  
+
     private static Logger logger = Logger.getLogger(SepaWorkflowService.class.getName());
 
     /**
@@ -263,15 +261,14 @@ public class SepaWorkflowService {
         return null;
     }
 
-    
-
     /**
      * Helper Method to compute the grouping key from a workitem - "dbtr.iban"
      * <p>
-     * The method throws a PluginException if the given invoice did not provide a dbtr.iban item.
+     * The method throws a PluginException if the given invoice did not provide a
+     * dbtr.iban item.
      * 
      * @return
-     * @throws PluginException 
+     * @throws PluginException
      */
     public String computeKey(ItemCollection invoice) throws PluginException {
         String key = invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN);
@@ -281,7 +278,7 @@ public class SepaWorkflowService {
         }
         return key;
     }
-    
+
     /**
      * Helper method to create a new SEPA Export workitem
      * 
@@ -291,25 +288,32 @@ public class SepaWorkflowService {
      * @throws ModelException
      * @throws PluginException
      */
-    public ItemCollection createNewSEPAExport(String key, ItemCollection invoice)
+    public ItemCollection createNewSEPAExport(String key, ItemCollection invoice, ItemCollection event)
             throws ModelException, PluginException {
-        ItemCollection configuration = loadConfiguration();
-        if (configuration == null) {
-            throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                    "Unable to load sepa configuration!");
+        String modelVersion = null;
+        int taskID = -1;
 
+        // test if the event provides a sepa export configuration
+        ItemCollection sepaConfig = workflowService.evalWorkflowResult(event, "sepa-export", invoice, true);
+        if (sepaConfig != null && sepaConfig.hasItem("modelversion")&& sepaConfig.hasItem("task")) {
+            logger.fine("read model information from event");
+            modelVersion = sepaConfig.getItemValueString("modelVersion");
+            taskID = sepaConfig.getItemValueInteger("task");
+        } else {
+            logger.fine("read model information from configuration");
+            ItemCollection configuration = loadConfiguration();
+            if (configuration == null) {
+                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+                        "Unable to load sepa configuration!");
+            }
+            modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
+            taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
         }
-        // first load the configuration to find out the meta data for the export
-        // Itemcolleciton
-        String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
-        int taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
-
-        // fetch the initial event
-        Model model = modelService.getModel(modelVersion);
-        ItemCollection task = model.getTask(taskID);
+     
 
         // build the sepa export workitem....
         ItemCollection sepaExport = new ItemCollection().model(modelVersion).task(taskID);
+        sepaExport.replaceItemValue("name", key);
         sepaExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
         sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
         // set unqiueid, needed for xslt
@@ -319,7 +323,6 @@ public class SepaWorkflowService {
         sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN, key);
 
         // set additional data (e.g _dbtr_name) from first invoice...
-
         if (invoice.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
             sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
                     invoice.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
@@ -341,6 +344,8 @@ public class SepaWorkflowService {
         }
 
         // set workflow group name from the Task Element to identify document in xslt
+        Model model = modelService.getModel(modelVersion);
+        ItemCollection task = model.getTask(taskID);
         String modelTaskGroupName = task.getItemValueString("txtworkflowgroup"); // DO NOT CHANGE!
         sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, modelTaskGroupName);
 
@@ -348,38 +353,37 @@ public class SepaWorkflowService {
 
         return sepaExport;
     }
-    
-    
 
     /**
-     * Helper method verifies all open SEPA exports and returns the latest for the given key name.
-     * If no open SEPA export exists the method returns null.
+     * Helper method verifies all open SEPA exports and returns the latest for the
+     * given key name. If no open SEPA export exists the method returns null.
      * 
-     * @param datevClientID
+     * @param key
      * @return
      * @throws QueryException
      */
     public ItemCollection findSEPAExport(String key) throws QueryException {
-        String query = "(type:workitem) AND ($taskid:1000) AND ($modelversion:sepa-export-manual*) AND (name:"+key + ")";
+        String query = "(type:workitem) AND ($taskid:1000) AND ($modelversion:sepa-export-manual*) AND (name:" + key
+                + ")";
         List<ItemCollection> resultList = workflowService.getDocumentService().find(query, 1, 0, "$modified", true);
 
-        if (resultList.size()>0) {
+        if (resultList.size() > 0) {
             return resultList.get(0);
         }
-        // no datev export found
+        // no sepa export found
         return null;
     }
-    
+
     /**
-     * Helper method to load the SEPA scheduler configuration entity. The method returns null if
-     * no scheduler configuration exits.
+     * Helper method to load the SEPA scheduler configuration entity. The method
+     * returns null if no scheduler configuration exits.
      * 
      * @return
      */
     public ItemCollection loadConfiguration() {
         try {
             // support deprecated txtname attribure
-            String sQuery = "(type:\"scheduler\" AND (name:\"sepa\" ) )";
+            String sQuery = "(type:\"scheduler\" AND (name:\"" + SepaWorkflowService.SEPA_CONFIGURATION + "\" ) )";
             Collection<ItemCollection> col = documentService.find(sQuery, 1, 0);
             // check if we found a scheduler configuration
             if (col.size() > 0) {

@@ -65,8 +65,6 @@ import org.imixs.workflow.sepa.services.SepaWorkflowService;
 @ViewScoped
 public class SepaController extends SchedulerController {
 
-    public static final String SEPA_CONFIGURATION = "SEPA_CONFIGURATION";
-
     private static final long serialVersionUID = 1L;
 
     protected List<ItemCollection> dbtrList = null;
@@ -93,7 +91,7 @@ public class SepaController extends SchedulerController {
 
     @Override
     public String getName() {
-        return SEPA_CONFIGURATION;
+        return SepaWorkflowService.SEPA_CONFIGURATION;
     }
 
     /**

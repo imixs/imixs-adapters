@@ -35,37 +35,21 @@ public class SEPARefAddAdapter implements SignalAdapter {
     public static final String ERROR_CONFIG = "CONFIG_ERROR";
 
     @Inject
-    @ConfigProperty(name = "datev.defaultkonto", defaultValue = "1370")
-    private String datevDefaultKonto;
-
-    @Inject
     WorkflowService workflowService;
 
     @Inject
     SepaWorkflowService sepaWorkflowService;
 
     /**
-     * This method finds or create the Datev Export and adds a reference
+     * This method finds or create the SEPA Export and adds a reference
      * ($workitemref) to the current invoice.
      * 
      * @throws PluginException
      */
-    @Override
-    public ItemCollection execute(ItemCollection document, ItemCollection event)
-            throws AdapterException, PluginException {
-
-        appendInvoice(document);
-        return document;
-    }
-
-    /**
-     * Diese method hängt eine referenz der aktuellen Rechnung an den DATEV Export
-     * 
-     * @param invoice
-     * @throws PluginException
-     */
     @SuppressWarnings("unchecked")
-    private void appendInvoice(ItemCollection invoice) throws PluginException {
+    @Override
+    public ItemCollection execute(ItemCollection invoice, ItemCollection event)
+            throws AdapterException, PluginException {
 
         // test if invoice has a _dbtr_iban and _dbtr_bic
         if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()
@@ -99,7 +83,7 @@ public class SEPARefAddAdapter implements SignalAdapter {
             sepaExport = sepaWorkflowService.findSEPAExport(key);
             if (sepaExport == null) {
                 // create a new one
-                sepaExport = sepaWorkflowService.createNewSEPAExport(key, invoice);
+                sepaExport = sepaWorkflowService.createNewSEPAExport(key, invoice,event);
             }
 
             // add Invoice to SEPA export
@@ -115,6 +99,8 @@ public class SEPARefAddAdapter implements SignalAdapter {
             throw new PluginException(PluginException.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
                     "Unable to add Invoice to SEPA Export: " + e1.getMessage());
         }
+        
+        return invoice;
     }
 
 }

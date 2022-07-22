@@ -1,0 +1,86 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:i="http://java.sun.com/jsf/composite/imixs"
+	xmlns:marty="http://java.sun.com/jsf/composite/marty">
+
+
+	<div class="imixs-form-section-2">
+		<dl>
+			<dt>IBAN</dt>
+			<dd>
+				<h:outputText value="#{workitem.item['dbtr.iban']}" />
+			</dd>
+		</dl>
+
+
+		<dl>
+			<dt>BIC</dt>
+			<dd>
+				<h:outputText value="#{workitem.item['dbtr.bic']}" />
+			</dd>
+
+		</dl>
+	</div>
+
+
+	<div class="imixs-form-section">
+		<h3>Invoices</h3>
+		<table class="">
+			<tr>
+				<th style="">#{custom.creditor_name}</th>
+				<th style="">#{custom.invoicenumber}</th>
+				<th style="">#{custom.invoicedate}</th>
+				<th style="">#{custom.amount}</th>
+				<th style=""></th>
+				<th style="">IBAN</th>
+				<th style="">BIC</th>
+			</tr>
+			<c:forEach items="#{workitem.itemList['$workitemref']}" var="id">
+				<!--  load inovice data by documentController:   #{documentController.load(id)} -->
+				<ui:param name="invoice" value="#{documentController.getDocument()}"></ui:param>
+				
+				<tr>
+					<td><h:link outcome="/pages/workitems/workitem">
+					         #{invoice.item['_kreditor']}
+					         <f:param name="id" value="#{invoice.item['$uniqueid']}" />
+						</h:link> 
+					</td>
+					
+					
+					<td>#{invoice.item['_invoicenumber']}</td>
+					<td><h:outputText value="#{invoice.item['_invoicedate']}">
+							<f:convertDateTime pattern="#{message.datePatternShort}"
+								timeZone="#{message.timeZone}" />
+						</h:outputText></td>
+					<td style="text-align: right;"><h:outputText
+							value="#{invoice.item['_amount_brutto']}">
+							<f:convertNumber minFractionDigits="2" locale="de" />
+						</h:outputText></td>
+
+					<td>#{invoice.item['_currency']}</td>
+					<td>#{invoice.item ['cdtr.iban']}</td>
+					<td>#{invoice.item['cdtr.bic']}</td>
+				</tr>
+			</c:forEach>
+
+			<tr style="border-top: 1px solid #ccc;">
+				<td />
+				<td />
+				<td><strong>Summary</strong></td>
+				<td style="text-align: right;"><strong><h:outputText
+							value="#{sepaController.calculateSum(workitem.itemList['$workitemref'], '_amount_brutto')}">
+							<f:convertNumber minFractionDigits="2" locale="de" />
+						</h:outputText></strong></td>
+				<td><strong>#{invoice.item['_currency']}</strong></td>
+				<td />
+				<td />
+			</tr>
+		</table>
+	</div>
+
+
+</ui:composition>
+

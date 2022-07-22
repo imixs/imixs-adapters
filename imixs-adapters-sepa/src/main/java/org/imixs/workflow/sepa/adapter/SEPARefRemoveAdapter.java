@@ -44,21 +44,10 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
      * @throws PluginException
      */
     @Override
-    public ItemCollection execute(ItemCollection document, ItemCollection event)
+    @SuppressWarnings("unchecked")
+    public ItemCollection execute(ItemCollection invoice, ItemCollection event)
             throws AdapterException, PluginException {
 
-        removeInvoice(document);
-        return document;
-    }
-
-    /**
-     * This method removes an existing workitem reference 
-     * 
-     * @param invoice
-     * @throws PluginException
-     */
-    @SuppressWarnings("unchecked")
-    private void removeInvoice(ItemCollection invoice) throws PluginException {
         String key = sepaWorkflowService.computeKey(invoice);
 
         logger.info("......Update SEPA export for: '" + key + "'...");
@@ -66,7 +55,7 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
         try {
             sepaExport = sepaWorkflowService.findSEPAExport(key);
             if (sepaExport != null) {
-                // Invoice wieder aus dem DATEV Export heruasnehmen
+                // remove invoice from SePA export
                 List<String> refList = sepaExport.getItemValue("$workitemref");
                 if (refList.contains(invoice.getUniqueID())) {
                     refList.remove(invoice.getUniqueID());
@@ -76,13 +65,12 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
                     workflowService.processWorkItem(sepaExport);
                 }
             }
-
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
             throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                    "Es konnte kein DATEV Export zugewiesen werden: " + e1.getMessage());
-
+                    "SEPA Export not found: " + e1.getMessage());
         }
-    }
 
+        return invoice;
+    }
 
 }
