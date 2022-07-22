@@ -5,7 +5,6 @@ import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.engine.WorkflowService;
@@ -96,7 +95,7 @@ public class SEPARefAddAdapter implements SignalAdapter {
             }
 
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
-            throw new PluginException(PluginException.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
+            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
                     "Unable to add Invoice to SEPA Export: " + e1.getMessage());
         }
         

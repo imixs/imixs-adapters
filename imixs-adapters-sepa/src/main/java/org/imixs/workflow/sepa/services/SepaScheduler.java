@@ -217,8 +217,8 @@ public class SepaScheduler implements Scheduler {
                         sepaExport.appendItemValue("txtworkitemref", invoice.getUniqueID());
 
                         // avoid unsupported characters in sepa fields
-                        invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_CDTR_NAME);
-                        invoice = harmonizeItem(invoice, SepaWorkflowService.ITEM_DBTR_NAME);
+                        invoice = sepaWorkflowService.harmonizeSEPAItem(invoice, SepaWorkflowService.ITEM_CDTR_NAME);
+                        invoice = sepaWorkflowService.harmonizeSEPAItem(invoice, SepaWorkflowService.ITEM_DBTR_NAME);
                         logger.finest("......Invoice: " + invoice.getUniqueID() + " added. ");
                     }
 
@@ -348,21 +348,6 @@ public class SepaScheduler implements Scheduler {
         return result;
     }
 
-    /**
-     * Remove characters like '&', '<' and '>' form sepa fields
-     * 
-     * @param invoice
-     * @return
-     */
-    private ItemCollection harmonizeItem(ItemCollection invoice, String itemName) {
-        String value = null;
-        value = invoice.getItemValueString(itemName);
-        value = value.replace("&", " ");
-        value = value.replace(">", " ");
-        value = value.replace("<", " ");
-        invoice.replaceItemValue(itemName, value);
-        return invoice;
-
-    }
+   
 
 }

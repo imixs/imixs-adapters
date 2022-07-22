@@ -373,6 +373,23 @@ public class SepaWorkflowService {
         // no sepa export found
         return null;
     }
+    
+    /**
+     * Remove characters like '&', '<' and '>' form sepa fields
+     * 
+     * @param invoice
+     * @return
+     */
+    public ItemCollection harmonizeSEPAItem(ItemCollection invoice, String itemName) {
+        String value = null;
+        value = invoice.getItemValueString(itemName);
+        value = value.replace("&", " ");
+        value = value.replace(">", " ");
+        value = value.replace("<", " ");
+        invoice.replaceItemValue(itemName, value);
+        return invoice;
+
+    }
 
     /**
      * Helper method to load the SEPA scheduler configuration entity. The method

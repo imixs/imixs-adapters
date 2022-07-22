@@ -77,6 +77,12 @@ To remove a linked invoice the RemoveAdapter can be used.
 
     org.imixs.workflow.sepa.adapter.SEPARefRemoveAdapter
 
+
+To execute a SEPA Export the ExecuteAdatper can be used
+
+    org.imixs.workflow.sepa.adapter.SEPAExecuteAdapter
+
+
 ### Configuration
 
 The SignalAdaper need the model-version and task-id to create a new SEPA export. This can either be configured in the basic configuration.
