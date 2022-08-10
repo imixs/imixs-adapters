@@ -355,6 +355,20 @@ public class SepaWorkflowService {
     }
 
     /**
+     * Helper method to process a SEPA Exprot with on manager access level.
+     * 
+     * @param datevExport
+     * @return
+     * @throws ModelException 
+     * @throws PluginException 
+     * @throws ProcessingErrorException 
+     * @throws AccessDeniedException 
+     */
+    public ItemCollection processSEPAExport(ItemCollection datevExport) throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
+        return workflowService.processWorkItem(datevExport);
+    }
+
+    /**
      * Helper method verifies all open SEPA exports and returns the latest for the
      * given key name. If no open SEPA export exists the method returns null.
      * 
@@ -412,5 +426,15 @@ public class SepaWorkflowService {
             e1.printStackTrace();
         }
         return null;
+    }
+    
+    /**
+     * Helper method to find and load a invoice on manager access level.
+     * 
+     * @param ref
+     * @return
+     */
+    public ItemCollection loadInvoice(String ref) {
+        return documentService.load(ref);
     }
 }

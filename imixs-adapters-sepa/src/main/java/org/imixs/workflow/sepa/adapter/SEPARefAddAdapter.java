@@ -33,9 +33,7 @@ public class SEPARefAddAdapter implements SignalAdapter {
 
     public static final String ERROR_CONFIG = "CONFIG_ERROR";
 
-    @Inject
-    WorkflowService workflowService;
-
+ 
     @Inject
     SepaWorkflowService sepaWorkflowService;
 
@@ -91,7 +89,7 @@ public class SEPARefAddAdapter implements SignalAdapter {
                 sepaExport.appendItemValueUnique("$workitemref", invoice.getUniqueID());
                 // set event 100
                 sepaExport.event(100);
-                workflowService.processWorkItem(sepaExport);
+                sepaWorkflowService.processSEPAExport(sepaExport);
             }
 
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {

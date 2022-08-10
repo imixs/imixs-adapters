@@ -16,7 +16,6 @@ import javax.xml.transform.TransformerException;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
-import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
@@ -35,9 +34,6 @@ public class SEPAExportAdapter implements SignalAdapter {
 
     public static final String ERROR_CONFIG = "CONFIG_ERROR";
     public static final String ERROR_MISSING_INVOICE = "ERROR_MISSING_INVOICE";
-
-    @Inject
-    DocumentService documentService;
 
     @EJB
     ReportService reportService;
@@ -74,7 +70,7 @@ public class SEPAExportAdapter implements SignalAdapter {
 
         for (String ref : refList) {
             // load invoice
-            ItemCollection invoice = documentService.load(ref);
+            ItemCollection invoice = sepaWorkflowService.loadInvoice(ref);
             if (invoice == null) {
                 logger.warning("Invoice '" + ref + "' not found! SEPA Export can not be executed");
                 continue;

@@ -7,7 +7,6 @@ import javax.inject.Inject;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
-import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.ModelException;
@@ -34,9 +33,6 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
     @Inject
     SepaWorkflowService sepaWorkflowService;
 
-    @Inject
-    WorkflowService workflowService;
-
     /**
      * This method finds the SEPA export and removes a reference ($workitemref) to
      * the current invoice.
@@ -62,7 +58,7 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
                     sepaExport.setItemValue("$workitemref", refList);
                     // set event 100
                     sepaExport.event(100);
-                    workflowService.processWorkItem(sepaExport);
+                    sepaWorkflowService.processSEPAExport(sepaExport);
                 }
             }
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
