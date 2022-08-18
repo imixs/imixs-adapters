@@ -1,4 +1,4 @@
-package org.imixs.workflow.datev.services;
+package org.imixs.workflow.datev.imports;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,6 +21,7 @@ import javax.ejb.TransactionAttributeType;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
+import org.imixs.workflow.datev.export.DatevExportService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.index.SchemaService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -53,7 +54,7 @@ import org.imixs.workflow.exceptions.QueryException;
  * client. NOTE: the item _datev_client_id must be part of the property
  * lucence.indexFieldListNoAnalyze to use this feature.
  * 
- * @see DatevWorkflowService to import datev data and assign the data to a
+ * @see DatevImportService to import datev data and assign the data to a
  *      workflow model.
  * 
  * 
@@ -67,12 +68,13 @@ import org.imixs.workflow.exceptions.QueryException;
 		"org.imixs.ACCESSLEVEL.AUTHORACCESS", "org.imixs.ACCESSLEVEL.EDITORACCESS",
 		"org.imixs.ACCESSLEVEL.MANAGERACCESS" })
 @Stateless
-@LocalBean
+@LocalBean 
 public class DatevImportService {
 
 	public static final String DATEN_FEHLER = "DATEN_FEHLER";
 	public static final String IMPORT_ERROR = "IMPORT_ERROR";
 	public static final int MAX_SEARCH_RESULT = 100;
+
 
 	@EJB
 	DocumentService documentService;
@@ -429,8 +431,8 @@ public class DatevImportService {
 		// add type...
 		aWorkitem.replaceItemValue("type", type);
 		// add client and consult id...
-		aWorkitem.replaceItemValue(DatevWorkflowService.ITEM_DATEV_CLIENT_ID, clientID);
-		aWorkitem.replaceItemValue(DatevWorkflowService.ITEM_DATEV_CONSULTANT_ID, consultenID);
+		aWorkitem.replaceItemValue(DatevExportService.ITEM_DATEV_CLIENT_ID, clientID);
+		aWorkitem.replaceItemValue(DatevExportService.ITEM_DATEV_CONSULTANT_ID, consultenID);
 
 		documentService.save(aWorkitem);
 	}

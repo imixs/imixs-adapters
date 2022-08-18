@@ -28,8 +28,7 @@ import java.util.logging.Logger;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 
-import org.imixs.workflow.datev.services.DatevSchedulerCSV;
-import org.imixs.workflow.datev.services.DatevSchedulerXML;
+import org.imixs.workflow.datev.imports.DatevImportScheduler;
 import org.imixs.workflow.engine.scheduler.SchedulerController;
 
 /**
@@ -74,15 +73,7 @@ public class DatevController extends SchedulerController {
 	 */
 	@Override
 	public String getSchedulerClass() {
-
-		String schedulerClass = null;
-		if ("xml".equals(this.getConfiguration().getItemValueString("_export_type"))) {
-			schedulerClass = DatevSchedulerXML.class.getName();
-		} else {
-			// default is CSV
-			schedulerClass = DatevSchedulerCSV.class.getName();
-		}
-
+		String schedulerClass = DatevImportScheduler.class.getName();
 		logger.finest("......datev scheduler: " + schedulerClass);
 		return schedulerClass;
 	}

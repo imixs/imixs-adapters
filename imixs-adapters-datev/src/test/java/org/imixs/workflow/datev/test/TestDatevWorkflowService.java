@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.datev.services.DatevWorkflowService;
+import org.imixs.workflow.datev.services.DatevImportService;
 import org.imixs.workflow.exceptions.PluginException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,7 +29,7 @@ import org.mockito.Spy;
 public class TestDatevWorkflowService {
 
 	@Spy 
-	private DatevWorkflowService datevService;
+	private DatevImportService datevService;
 
 	@Before
 	public void setup() throws PluginException {
@@ -110,7 +110,7 @@ public class TestDatevWorkflowService {
 			// test date field
 			Date date = entity.getItemValueDate("_datev_datum");
 			Assert.assertNotNull(date);
-			DateFormat df = new SimpleDateFormat(DatevWorkflowService.ISO8601_FORMAT_DATETIME);
+			DateFormat df = new SimpleDateFormat(DatevImportService.ISO8601_FORMAT_DATETIME);
 			String isoDateString = df.format(date);
 			Assert.assertTrue(isoDateString.startsWith("2016-10-24T08:39:49.288"));
 
@@ -123,7 +123,7 @@ public class TestDatevWorkflowService {
 			// test date field
 			date = entity.getItemValueDate("_datev_datum");
 			Assert.assertNotNull(date);
-			df = new SimpleDateFormat(DatevWorkflowService.ISO8601_FORMAT_DATE);
+			df = new SimpleDateFormat(DatevImportService.ISO8601_FORMAT_DATE);
 			isoDateString = df.format(date);
 			Assert.assertEquals("2016-10-24", isoDateString);
 
