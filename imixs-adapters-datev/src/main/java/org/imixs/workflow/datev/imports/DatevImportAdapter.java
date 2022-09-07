@@ -97,7 +97,7 @@ public class DatevImportAdapter implements SignalAdapter {
             header1 = in.readLine();
             String[] header1List = header1.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
 
-            if (header1List.length<6) {
+            if (header1List.length<13) {
                 throw new PluginException(DatevImportAdapter.class.getName(), DATEV_IMPORT_ERROR, "Invalid header-1!");
             }
             
@@ -107,7 +107,9 @@ public class DatevImportAdapter implements SignalAdapter {
             workitem.setItemValue("datev.Versionsnummer", csvVal(header1List[1]));
             workitem.setItemValue("datev.Datenkategorie", csvVal(header1List[2]));
             workitem.setItemValue("datev.Formatname", csvVal(header1List[3]));
-            workitem.setItemValue("datev.Erzeugt.am", csvVal(header1List[5]));
+            workitem.setItemValue("datev.Erzeugt_am", csvVal(header1List[5]));
+            workitem.setItemValue("datev.WJ-Beginn", csvVal(header1List[12]));
+            
 
         } catch (IOException e) {
             throw new PluginException(DatevImportAdapter.class.getName(), DATEV_IMPORT_ERROR, "Unable to read file",e);
