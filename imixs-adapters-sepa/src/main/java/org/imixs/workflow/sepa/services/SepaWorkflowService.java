@@ -377,8 +377,8 @@ public class SepaWorkflowService {
      * @throws QueryException
      */
     public ItemCollection findSEPAExport(String key) throws QueryException {
-        String query = "(type:workitem) AND ($taskid:1000) AND ($modelversion:sepa-export-manual*) AND (name:" + key
-                + ")";
+        String query = "(type:workitem) AND ($taskid:1000) AND ($modelversion:sepa-export-manual*) AND (name:\"" + key
+                + "\")";
         List<ItemCollection> resultList = workflowService.getDocumentService().find(query, 1, 0, "$modified", true);
 
         if (resultList.size() > 0) {
