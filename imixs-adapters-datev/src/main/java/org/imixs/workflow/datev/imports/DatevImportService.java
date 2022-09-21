@@ -74,7 +74,8 @@ public class DatevImportService {
 	public static final String DATEN_FEHLER = "DATEN_FEHLER";
 	public static final String IMPORT_ERROR = "IMPORT_ERROR";
 	public static final int MAX_SEARCH_RESULT = 100;
-
+	public final static String ISO8601_FORMAT_DATETIME = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+	public final static String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
 
 	@EJB
 	DocumentService documentService;

@@ -1,4 +1,4 @@
-package org.imixs.workflow.datev.services;
+package org.imixs.workflow.datev;
 
 import org.imixs.workflow.exceptions.PluginException;
 
