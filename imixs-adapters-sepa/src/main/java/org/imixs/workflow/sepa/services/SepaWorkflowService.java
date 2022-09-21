@@ -339,7 +339,8 @@ public class SepaWorkflowService {
         sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
 
         // copy dbtr_iban
-        sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN, key);
+        sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
+                invoice.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
 
         // set additional data (e.g _dbtr_name) from first invoice...
         if (invoice.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
