@@ -262,7 +262,18 @@ public class SepaWorkflowService {
     }
 
     /**
-     * Helper Method to compute the grouping key from a workitem - "dbtr.iban"
+     * Helper Method to compute the grouping key from a workitem. The default key is
+     * the item "dbtr.iban". Optional the key can be overwritten by the model with a
+     * itemvalue expression provided in the event.
+     * <p>
+     * Example:
+     * 
+     * <pre>
+     * {@code
+     <sepa-export name="key">
+        <itemvalue>dbtr.iban</itemvalue>-<itemvalue>currency</itemvalue>
+     </sepa-export>
+    }</pre>
      * <p>
      * The method throws a PluginException if the given invoice did not provide a
      * dbtr.iban item.
@@ -270,11 +281,20 @@ public class SepaWorkflowService {
      * @return
      * @throws PluginException
      */
-    public String computeKey(ItemCollection invoice) throws PluginException {
-        String key = invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN);
+    public String computeKey(ItemCollection invoice, ItemCollection event) throws PluginException {
+        String key = null;
+        // test if we have a key definition in the provided event
+        ItemCollection sepaConfig = workflowService.evalWorkflowResult(event, "sepa-export", invoice, true);
+        if (sepaConfig != null && sepaConfig.hasItem("key")) {
+            logger.fine("read key information from event");
+            key = sepaConfig.getItemValueString("key");
+        } else {
+            // take the default key
+            key = invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN);
+        }
         if (key.isEmpty()) {
             throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                    "Invalid Data - item 'dbtr.iban' is missing or empty!");
+                    "Invalid Data - item 'dbtr.iban' is missing or key definition is empty!");
         }
         return key;
     }
@@ -295,7 +315,7 @@ public class SepaWorkflowService {
 
         // test if the event provides a sepa export configuration
         ItemCollection sepaConfig = workflowService.evalWorkflowResult(event, "sepa-export", invoice, true);
-        if (sepaConfig != null && sepaConfig.hasItem("modelversion")&& sepaConfig.hasItem("task")) {
+        if (sepaConfig != null && sepaConfig.hasItem("modelversion") && sepaConfig.hasItem("task")) {
             logger.fine("read model information from event");
             modelVersion = sepaConfig.getItemValueString("modelVersion");
             taskID = sepaConfig.getItemValueInteger("task");
@@ -309,7 +329,6 @@ public class SepaWorkflowService {
             modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
             taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
         }
-     
 
         // build the sepa export workitem....
         ItemCollection sepaExport = new ItemCollection().model(modelVersion).task(taskID);
@@ -359,12 +378,13 @@ public class SepaWorkflowService {
      * 
      * @param datevExport
      * @return
-     * @throws ModelException 
-     * @throws PluginException 
-     * @throws ProcessingErrorException 
-     * @throws AccessDeniedException 
+     * @throws ModelException
+     * @throws PluginException
+     * @throws ProcessingErrorException
+     * @throws AccessDeniedException
      */
-    public ItemCollection processSEPAExport(ItemCollection datevExport) throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
+    public ItemCollection processSEPAExport(ItemCollection datevExport)
+            throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
         return workflowService.processWorkItem(datevExport);
     }
 
@@ -387,7 +407,7 @@ public class SepaWorkflowService {
         // no sepa export found
         return null;
     }
-    
+
     /**
      * Remove characters like '&', '<' and '>' form sepa fields
      * 
@@ -427,7 +447,7 @@ public class SepaWorkflowService {
         }
         return null;
     }
-    
+
     /**
      * Helper method to find and load a invoice on manager access level.
      * 

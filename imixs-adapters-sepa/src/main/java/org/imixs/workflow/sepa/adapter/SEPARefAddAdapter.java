@@ -71,7 +71,7 @@ public class SEPARefAddAdapter implements SignalAdapter {
             }
         }
         
-        String key = sepaWorkflowService.computeKey(invoice);
+        String key = sepaWorkflowService.computeKey(invoice,event);
 
         logger.info("......Update SEPA export for: '" + key + "'...");
         ItemCollection sepaExport;

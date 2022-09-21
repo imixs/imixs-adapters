@@ -44,7 +44,7 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
     public ItemCollection execute(ItemCollection invoice, ItemCollection event)
             throws AdapterException, PluginException {
 
-        String key = sepaWorkflowService.computeKey(invoice);
+        String key = sepaWorkflowService.computeKey(invoice, event);
 
         logger.info("......Update SEPA export for: '" + key + "'...");
         ItemCollection sepaExport;
