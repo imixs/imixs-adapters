@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.List;
 
-import org.imixs.workflow.datev.services.DatevImportService;
+import org.imixs.workflow.datev.imports.DatevImportService;
 import org.imixs.workflow.exceptions.PluginException;
 import org.junit.Assert;
 import org.junit.Before;
