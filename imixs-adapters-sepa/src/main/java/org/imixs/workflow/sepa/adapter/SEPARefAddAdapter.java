@@ -87,7 +87,7 @@ public class SEPARefAddAdapter implements SignalAdapter {
             if (!refList.contains(invoice.getUniqueID())) {
                 sepaExport.appendItemValueUnique("$workitemref", invoice.getUniqueID());
                 // set event 100
-                sepaExport.event(100);
+                sepaExport.event(SepaWorkflowService.EVENT_ADD_REF);
                 sepaWorkflowService.processSEPAExport(sepaExport);
             }
 

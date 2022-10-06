@@ -76,6 +76,9 @@ public class SepaWorkflowService {
     public static final int EVENT_START = 100;
     public static final int EVENT_SUCCESS = 200;
     public static final int EVENT_FAILED = 300;
+    public static final int EVENT_ADD_REF=100;
+    public static final int EVENT_REMOVE_REF=200;
+    
     public static final String INVOICE_UPDATE = "invoice_update";
     public static final String LINK_PROPERTY = "$workitemref";
 
@@ -398,7 +401,7 @@ public class SepaWorkflowService {
      * @throws QueryException
      */
     public ItemCollection findSEPAExport(String key) throws QueryException {
-        String query = "(type:workitem) AND ($taskid:1000) AND ($modelversion:sepa-export-manual*) AND (name:\"" + key
+        String query = "(type:workitem) AND ($modelversion:sepa-export-manual*) AND (name:\"" + key
                 + "\")";
         List<ItemCollection> resultList = workflowService.getDocumentService().find(query, 1, 0, "$modified", true);
 

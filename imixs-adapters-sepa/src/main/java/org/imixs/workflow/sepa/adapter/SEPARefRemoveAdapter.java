@@ -30,6 +30,7 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
     public static final String ERROR_MISSING_DATA = "MISSING_DATA";
     public static final String ERROR_CONFIG = "CONFIG_ERROR";
 
+
     @Inject
     SepaWorkflowService sepaWorkflowService;
 
@@ -56,8 +57,8 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
                 if (refList.contains(invoice.getUniqueID())) {
                     refList.remove(invoice.getUniqueID());
                     sepaExport.setItemValue("$workitemref", refList);
-                    // set event 100
-                    sepaExport.event(100);
+                    // set event 200
+                    sepaExport.event(SepaWorkflowService.EVENT_REMOVE_REF);
                     sepaWorkflowService.processSEPAExport(sepaExport);
                 }
             }
