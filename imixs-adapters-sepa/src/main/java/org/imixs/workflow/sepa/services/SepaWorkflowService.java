@@ -76,9 +76,9 @@ public class SepaWorkflowService {
     public static final int EVENT_START = 100;
     public static final int EVENT_SUCCESS = 200;
     public static final int EVENT_FAILED = 300;
-    public static final int EVENT_ADD_REF=100;
-    public static final int EVENT_REMOVE_REF=200;
-    
+    public static final int EVENT_ADD_REF = 100;
+    public static final int EVENT_REMOVE_REF = 200;
+
     public static final String INVOICE_UPDATE = "invoice_update";
     public static final String LINK_PROPERTY = "$workitemref";
 
@@ -397,12 +397,20 @@ public class SepaWorkflowService {
      * given key name. If no open SEPA export exists the method returns null.
      * 
      * @param key
+     * @param taskID - optional can be used to restrict the lookup for a specific
+     *               task
      * @return
      * @throws QueryException
      */
-    public ItemCollection findSEPAExport(String key) throws QueryException {
-        String query = "(type:workitem) AND ($modelversion:sepa-export-manual*) AND (name:\"" + key
-                + "\")";
+    public ItemCollection findSEPAExportByTask(String key, int taskID) throws QueryException {
+        String query = "";
+        if (taskID <= 0) {
+            query = "(type:workitem) AND ($modelversion:sepa-export-manual*) AND (name:\"" + key + "\")";
+        } else {
+            query = "(type:workitem) AND ($taskid:" + taskID + ") AND ($modelversion:sepa-export-manual*) AND (name:\""
+                    + key + "\")";
+        }
+
         List<ItemCollection> resultList = workflowService.getDocumentService().find(query, 1, 0, "$modified", true);
 
         if (resultList.size() > 0) {
@@ -410,6 +418,23 @@ public class SepaWorkflowService {
         }
         // no sepa export found
         return null;
+    }
+
+    /**
+     * Helper method verifies all open SEPA exports and returns the latest for the
+     * given key name. If no open SEPA export exists the method returns null.
+     * <p>
+     * This method does not restrict the lookup for a specific taskID. This is used
+     * for removal
+     * 
+     * @param key
+     * @param taskID - optional can be used to restrict the lookup for a specific
+     *               task
+     * @return
+     * @throws QueryException
+     */
+    public ItemCollection findSEPAExport(String key) throws QueryException {
+        return findSEPAExportByTask(key, -1);
     }
 
     /**

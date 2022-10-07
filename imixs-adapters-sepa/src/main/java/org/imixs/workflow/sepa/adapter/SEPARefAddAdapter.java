@@ -76,7 +76,7 @@ public class SEPARefAddAdapter implements SignalAdapter {
         logger.info("......Update SEPA export for: '" + key + "'...");
         ItemCollection sepaExport;
         try {
-            sepaExport = sepaWorkflowService.findSEPAExport(key);
+            sepaExport = sepaWorkflowService.findSEPAExportByTask(key,1000);
             if (sepaExport == null) {
                 // create a new one
                 sepaExport = sepaWorkflowService.createNewSEPAExport(key, invoice,event);
