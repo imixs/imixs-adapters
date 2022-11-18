@@ -452,16 +452,15 @@ public class DatevImportService {
 		int iCol = 0;
 		// @see
 		// http://stackoverflow.com/questions/2241758/regarding-java-split-command-parsing-csv-file
-		String[] valuList = data.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
+		String[] valuList = data.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 999);
 		valuList = normalizeValueList(valuList);
 		for (String itemValue : valuList) {
 			// test if the token has content
 			itemValue = itemValue.trim();
 			if (itemValue != null && !itemValue.isEmpty()) {
+				// logger.info("...col " + iCol + " name=" +fieldnames.get(iCol) +" value=" + itemValue);
 				// create a itemvalue with the corresponding fieldname
-
 				result.replaceItemValue(fieldnames.get(iCol), itemValue);
-				// searchstring += itemValue + " ";
 			} else {
 				// empty value
 				result.replaceItemValue(fieldnames.get(iCol), "");

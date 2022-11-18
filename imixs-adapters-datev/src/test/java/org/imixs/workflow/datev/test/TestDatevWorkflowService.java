@@ -103,12 +103,12 @@ public class TestDatevWorkflowService {
 			// read first line
 			ItemCollection entity = datevService.readEntity(br.readLine(), fieldList);
 			Assert.assertNotNull(entity);
-			Assert.assertEquals("22222", entity.getItemValueString("_datev_konto"));
-			Assert.assertEquals("Muster GmbH 1", entity.getItemValueString("_datev_Name_(Adressattyp_Unternehmen)"));
-			Assert.assertEquals("2", entity.getItemValueString("_datev_Adressattyp"));
+			Assert.assertEquals("22222", entity.getItemValueString("_konto"));
+			Assert.assertEquals("Muster GmbH 1", entity.getItemValueString("_Name_(Adressattyp_Unternehmen)"));
+			Assert.assertEquals("2", entity.getItemValueString("_Adressattyp"));
 
 			// test date field
-			Date date = entity.getItemValueDate("_datev_datum");
+			Date date = entity.getItemValueDate("_datum");
 			Assert.assertNotNull(date);
 			DateFormat df = new SimpleDateFormat(DatevImportService.ISO8601_FORMAT_DATETIME);
 			String isoDateString = df.format(date);
@@ -117,11 +117,11 @@ public class TestDatevWorkflowService {
 			// read second line
 			entity = datevService.readEntity(br.readLine(), fieldList);
 			Assert.assertNotNull(entity);
-			Assert.assertEquals("33333", entity.getItemValueString("_datev_konto"));
-			Assert.assertEquals("Muster GmbH 2", entity.getItemValueString("_datev_Name_(Adressattyp_Unternehmen)"));
+			Assert.assertEquals("33333", entity.getItemValueString("_konto"));
+			Assert.assertEquals("Muster GmbH 2", entity.getItemValueString("_Name_(Adressattyp_Unternehmen)"));
 
 			// test date field
-			date = entity.getItemValueDate("_datev_datum");
+			date = entity.getItemValueDate("_datum");
 			Assert.assertNotNull(date);
 			df = new SimpleDateFormat(DatevImportService.ISO8601_FORMAT_DATE);
 			isoDateString = df.format(date);
