@@ -108,9 +108,11 @@ public class TestDatevWorkflowService {
 			Assert.assertEquals("2", entity.getItemValueString("_Adressattyp"));
 
 			// test date field
-			Date date = entity.getItemValueDate("_datum");
-			Assert.assertNotNull(date);
+			String sDate = entity.getItemValueString("_datum");
+			Assert.assertNotNull(sDate);
 			DateFormat df = new SimpleDateFormat(DatevImportService.ISO8601_FORMAT_DATETIME);
+			Date date=df.parse(sDate);
+			Assert.assertNotNull(date);
 			String isoDateString = df.format(date);
 			Assert.assertTrue(isoDateString.startsWith("2016-10-24T08:39:49.288"));
 
@@ -121,9 +123,11 @@ public class TestDatevWorkflowService {
 			Assert.assertEquals("Muster GmbH 2", entity.getItemValueString("_Name_(Adressattyp_Unternehmen)"));
 
 			// test date field
-			date = entity.getItemValueDate("_datum");
-			Assert.assertNotNull(date);
+			sDate = entity.getItemValueString("_datum");
+			Assert.assertNotNull(sDate);
 			df = new SimpleDateFormat(DatevImportService.ISO8601_FORMAT_DATE);
+			date=df.parse(sDate);
+			Assert.assertNotNull(date);
 			isoDateString = df.format(date);
 			Assert.assertEquals("2016-10-24", isoDateString);
 
