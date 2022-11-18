@@ -156,6 +156,8 @@ public class WopiHostService {
     public Response getFileInfo(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             @QueryParam("access_token") String accessToken) {
 
+        logger.info("......GET getFileInfo: " + uniqueid + "/" + file);
+
         // clean unexpected query params
         accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
 
@@ -180,8 +182,7 @@ public class WopiHostService {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         
-        logger.info("......GET getFileInfo: " + uniqueid + "/" + file);
-
+    
 
         // create the json object
         JsonObjectBuilder builder = null;
@@ -215,7 +216,7 @@ public class WopiHostService {
     @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}/contents")
     public Response getFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             @QueryParam("access_token") String accessToken) {
-
+        logger.info("......GET getFileContents: " + uniqueid + "/" + file);
         // clean unexpected query params
         accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
 
@@ -227,7 +228,7 @@ public class WopiHostService {
         }
 
         // load the FileData
-        logger.info("......GET getFileContents: " + uniqueid + "/" + file);
+
         FileData fileData = loadFileData(uniqueid, file, accessToken);
         if (fileData == null) {
             logger.warning("no file data found '" + uniqueid + "'!");
