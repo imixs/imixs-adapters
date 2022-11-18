@@ -13,6 +13,7 @@
 		<module>imixs-adapters-kafka</module>
 		<module>imixs-adapters-poi</module>
 		<module>imixs-adapters-wopi</module>
+		<module>imixs-adapters-odf</module>
 	</modules>
 
 	<properties>
