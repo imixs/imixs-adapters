@@ -35,7 +35,7 @@ import org.odftoolkit.odfdom.incubator.search.TextSelection;
  * <pre>
  * {@code
       <odf-update name=
-        "filename">PLA Membership Agreement-<itemvalue>numsequencenumber</itemvalue>.odf</odf-update>
+        "filename">PLA Membership Agreement-<itemvalue>numsequencenumber</itemvalue>.odt</odf-update>
         <odf-update name="findreplace">
                <find>[company.name]</find>
                <replace><itemvalue>company.name</itemvalue></replace>
@@ -102,7 +102,7 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 					"wrong odf configuration");
 		}
 
-		logger.info("......starting update file: " + fileName + "...");
+		logger.info("...starting update file: " + fileName + "...");
 
 		// First we test if the fileName is unique. If not found we test regular
 		// expressions...
@@ -160,6 +160,8 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	public void updateFileData(FileData fileData, ItemCollection document, List<String> replaceDevList, String eval)
 			throws PluginException {
 		byte[] newContent = null;
+		
+		logger.info("....updateFileData - file="+fileData.getName());
 
 		String fileName = fileData.getName();
 		if (fileData.getContent() == null || fileData.getContent().length < 3) {
@@ -168,7 +170,7 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 		}
 
 		// odf files....
-		if (fileName.toLowerCase().endsWith(".odf")) {
+		if (fileName.toLowerCase().endsWith(".odt")) {
 
 			try (InputStream inputStream = new ByteArrayInputStream(fileData.getContent())) {
 
