@@ -176,7 +176,7 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 
 				OdfTextDocument doc = (OdfTextDocument) OdfDocument.loadDocument(inputStream);
 
-				logger.info("OdfDocument loaded");
+				logger.fine("OdfDocument loaded");
 
 				for (String entityDev : replaceDevList) {
 					ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
@@ -190,7 +190,7 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 					}
 				}
 
-				logger.info("findreplace completed");
+				logger.fine("findreplace completed");
 
 				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 				doc.save(byteArrayOutputStream);
@@ -206,7 +206,7 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 			FileData fileDataNew = new FileData(fileData.getName(), newContent, fileData.getContentType(), null);
 			// update the fileData
 			document.addFileData(fileDataNew);
-			logger.info("new document added");
+			logger.fine("new document added");
 		}
 	}
 
@@ -220,13 +220,8 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 
 		TextNavigation searchPattern = new TextNavigation(pattern, doc);
 		while (searchPattern.hasNext()) {
-			logger.info("..found match!");
-
+			logger.fine("..found match!");
 			TextSelection textSelection = (TextSelection) searchPattern.getCurrentItem();
-
-			logger.info("...Position=" + textSelection.getIndex());
-			logger.info("...Text=" + textSelection.getText());
-
 			textSelection.replaceWith(replace);
 		}
 
