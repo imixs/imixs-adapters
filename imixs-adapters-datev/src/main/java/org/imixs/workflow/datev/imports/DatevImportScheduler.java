@@ -42,6 +42,7 @@ import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Model;
 import org.imixs.workflow.WorkflowKernel;
+import org.imixs.workflow.datev.DatevHelper;
 import org.imixs.workflow.datev.export.DatevExportService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
@@ -135,8 +136,8 @@ public class DatevImportScheduler implements Scheduler {
             List<ItemCollection> masterDataSet = reportService.getDataSource(report, MAX_COUNT, 0, "$created", false,
                     null);
 
-            DatevExportService.logMessage("...DATEV csv export started....", configuration, null);
-            DatevExportService.logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
+            DatevHelper.logMessage("...DATEV csv export started....", configuration, null);
+            DatevHelper.logMessage("...found " + masterDataSet.size() + " invoices...", configuration, null);
 
             // update the invoices with optional datev_client_id if not provided
             // link the invoices with the datev workitem.
@@ -177,15 +178,15 @@ public class DatevImportScheduler implements Scheduler {
                             configuration.getItemValue(DatevExportService.ITEM_DATEV_CONSULTANT_ID));
                     datevExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, task.getItemValue("txtworkflowgroup"));
 
-                    DatevExportService.logMessage("...starting DATEV export for ClientID=" + key + "...", configuration,
+                    DatevHelper.logMessage("...starting DATEV export for ClientID=" + key + "...", configuration,
                             datevExport);
 
                     // link invoices with export workitem....
                     for (ItemCollection invoice : data) {
                         datevExport.appendItemValue(LINK_PROPERTY, invoice.getUniqueID());
                         // write log
-                        DatevExportService.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ",
-                                configuration, datevExport);
+                        DatevHelper.logMessage("......Invoice: " + invoice.getUniqueID() + " added. ", configuration,
+                                datevExport);
                     }
 
                     // finally we add the datev export document to the data collection
@@ -205,18 +206,15 @@ public class DatevImportScheduler implements Scheduler {
                     processInvoices(datevExport, data, event, configuration);
 
                     // write log
-                    DatevExportService.logMessage("...DATEV export ClientID=" + key + "  finished.", configuration,
+                    DatevHelper.logMessage("...DATEV export ClientID=" + key + "  finished.", configuration,
                             datevExport);
-                    DatevExportService.logMessage("..." + groupCount + " invoices exported. ", configuration,
-                            datevExport);
+                    DatevHelper.logMessage("..." + groupCount + " invoices exported. ", configuration, datevExport);
 
                     // finish by proessing the datev export workitem....
                     datevExport.event(EVENT_START).event(EVENT_SUCCESS);
                     workflowService.processWorkItem(datevExport);
-
                 }
-
-                DatevExportService.logMessage("...DATEV export completed", configuration, null);
+                DatevHelper.logMessage("...DATEV export completed", configuration, null);
 
             } else {
                 // no invoices found - so we terminate
@@ -229,7 +227,7 @@ public class DatevImportScheduler implements Scheduler {
             try {
                 if (datevExport != null) {
                     // execute datev workflow with EVENT_FAILED
-                    DatevExportService.logMessage("Failed: " + e.getMessage(), configuration, datevExport);
+                    DatevHelper.logMessage("Failed: " + e.getMessage(), configuration, datevExport);
                     datevExport.event(EVENT_FAILED);
                     workflowService.processWorkItem(datevExport);
                 }
@@ -312,7 +310,7 @@ public class DatevImportScheduler implements Scheduler {
 
         List<String> subProcessDefinitions = null;
         // test for items with name subprocess_update definition.
-        ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, datevExport, false);
+        ItemCollection evalItemCollection = workflowService.evalWorkflowResult(event, "item", datevExport, false);
 
         subProcessDefinitions = evalItemCollection.getItemValue(INVOICE_UPDATE);
 
@@ -366,7 +364,7 @@ public class DatevImportScheduler implements Scheduler {
                             }
                             // process the exisitng subprocess...
                             invoice = workflowService.processWorkItem(invoice);
-                            DatevExportService.logMessage("...invoice " + _invoice.getUniqueID() + " processed.",
+                            DatevHelper.logMessage("...invoice " + _invoice.getUniqueID() + " processed.",
                                     configuration, null);
                         }
                     }

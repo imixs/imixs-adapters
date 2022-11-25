@@ -57,10 +57,10 @@ import org.apache.commons.net.ftp.FTPSClient;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.WorkflowKernel;
+import org.imixs.workflow.datev.DatevHelper;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.engine.WorkflowService;
-import org.imixs.workflow.engine.scheduler.Scheduler;
 import org.imixs.workflow.engine.scheduler.SchedulerException;
 import org.imixs.workflow.engine.scheduler.SchedulerService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -206,7 +206,7 @@ public class DatevExportService {
         ZipOutputStream datevZip = null;
         ByteArrayOutputStream zipOutputStream = null;
  
-        logMessage(
+        DatevHelper.logMessage(
                 "... Document export started (ClientID="
                         + datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID) + ") ...",
                 configuration, datevExport);
@@ -259,11 +259,11 @@ public class DatevExportService {
                         datevZip.closeEntry();
                         documentCount++;
                         // write log
-                        logMessage("......." + fileData.getName() + " added. ", configuration,
+                        DatevHelper.logMessage("......." + fileData.getName() + " added. ", configuration,
                                 datevExport);
                     } catch (java.util.zip.ZipException ezip) {
                         // Date konnte nicht hinzugefügt werden!
-                        logMessage(
+                        DatevHelper.logMessage(
                                 ".......WARNING : " + ezip.getClass().getSimpleName() + " -> " + ezip.getMessage(),
                                 configuration, datevExport);
                     }
@@ -345,7 +345,7 @@ public class DatevExportService {
 
         }
 
-        logMessage("... Document export completed (ClientID="
+        DatevHelper.logMessage("... Document export completed (ClientID="
                 + datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID) + ", " + documentCount
                 + " documents)", configuration, datevExport);
 
@@ -361,7 +361,7 @@ public class DatevExportService {
     public void buildCSVFile(ItemCollection datevExport, List<ItemCollection> data, String key,
             ItemCollection configuration) throws SchedulerException {
         String clientID=datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID);
-        logMessage(
+        DatevHelper.logMessage(
                 "... CSV export started (ClientID="
                         + clientID + ") ...",
                 configuration, datevExport);
@@ -443,7 +443,7 @@ public class DatevExportService {
         datevExport.addFileData(filedata);
 
         // write log
-        logMessage("... CSV export completed (ClientID="
+        DatevHelper.logMessage("... CSV export completed (ClientID="
                 + datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID) + ", " + data.size()
                 + " invoices)", configuration, datevExport);
 
@@ -543,7 +543,7 @@ public class DatevExportService {
             result = ftpClient.storeFile(ftpPathReports + fileData.getName(), writer);
 
             if (result == true) {
-                logMessage(
+                DatevHelper.logMessage(
                         "...FTP file transfer '" + ftpPathReports + fileData.getName() + "' successfull", configuration,
                         datevExport);
             } else {
@@ -784,26 +784,6 @@ public class DatevExportService {
 
         // no file found!
         return null;
-    }
-    
-    
-    /**
-     * Creates a new log entry stored in the item _scheduler_log. The log can be
-     * writen optional to the configuraiton and the workitem
-     * 
-     * @param message
-     * @param configuration
-     */
-    public static void logMessage(String message, ItemCollection configuration, ItemCollection workitem) {
-        if (configuration != null) {
-            configuration.appendItemValue(Scheduler.ITEM_LOGMESSAGE, message);
-        }
-        if (workitem != null) {
-            workitem.appendItemValue(Scheduler.ITEM_LOGMESSAGE, message);
-        }
-
-        logger.info(message);
-
     }
     
 }
