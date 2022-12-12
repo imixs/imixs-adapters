@@ -68,6 +68,7 @@ public class SepaController extends SchedulerController {
     private static final long serialVersionUID = 1L;
 
     protected List<ItemCollection> dbtrList = null;
+    protected List<ItemCollection> cdtrList = null;
 
     @EJB
     SchedulerService schedulerService;
@@ -186,6 +187,10 @@ public class SepaController extends SchedulerController {
         return dbtrList;
     }
 
+    public List<ItemCollection> getCdtrList() {
+        return cdtrList;
+    }
+    
     /**
      * Adds a new dbtr object.
      */
@@ -196,7 +201,15 @@ public class SepaController extends SchedulerController {
         ItemCollection source = new ItemCollection();
         dbtrList.add(source);
     }
+    public void addCdtr() {
+        if (cdtrList == null) {
+            cdtrList = new ArrayList<ItemCollection>();
+        }
+        ItemCollection source = new ItemCollection();
+        cdtrList.add(source);
+    }
 
+    
     /**
      * Removes an dbtr item from the list
      * 
@@ -207,6 +220,17 @@ public class SepaController extends SchedulerController {
             for (ItemCollection dbtr : dbtrList) {
                 if (name.equals(dbtr.getItemValueString("name"))) {
                     dbtrList.remove(dbtr);
+                    break;
+                }
+            }
+        }
+    }
+    
+    public void removeCdtr(String name) {
+        if (name != null && cdtrList != null) {
+            for (ItemCollection cdtr : cdtrList) {
+                if (name.equals(cdtr.getItemValueString("name"))) {
+                    cdtrList.remove(cdtr);
                     break;
                 }
             }

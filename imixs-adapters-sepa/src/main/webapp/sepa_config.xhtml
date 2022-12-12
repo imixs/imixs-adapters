@@ -10,9 +10,7 @@
 
 	<ui:define name="content">
 		<f:view>
-
-
-
+		
 			<script type="text/javascript">
 				/*<![CDATA[*/
 
@@ -40,7 +38,8 @@
 				// This method refreshs the layout 
 				function updateSepaList(data) {
 					if (data.status === 'success') {	
-						$('[id$=oderlist]').imixsLayout();				
+						$('[id$=dbtrlist]').imixsLayout();
+						$('[id$=cdtrlist]').imixsLayout();	
 					}
 				}				
 
@@ -52,65 +51,19 @@
 				<!-- ########## Error ########## -->
 				<ui:include src="/pages/error_message.xhtml" />
 
-
-
-
 				<div class="imixs-form">
 					<div class="imixs-header">
 						<h1>SEPA</h1>
 					</div>
 
-
-
 					<div class="imixs-body">
 						<!-- **** General info ***** -->
-
-						<div class="imixs-form-panel">
-							<h1>Model Configuration</h1>
-							
-							
-							<div class="imixs-form-section-2">
-								<dl>
-									<dt>SEPA Model Version</dt>
-									<dd>
-										<h:inputText required="false"
-											value="#{sepaController.configuration.item['_model_version']}">
-										</h:inputText>
-									</dd>
-								</dl>
-
-
-								<dl>
-									<dt>SEPA Initial Task</dt>
-									<dd>
-										<h:inputText required="false"
-											value="#{sepaController.configuration.item['_initial_task']}">
-										</h:inputText>
-									</dd>
-								</dl>
-
-							</div>
-
-
-							<div class="imixs-form-section">
-								<p>
-									<span class="typcn typcn-lightbulb"></span> The initial task
-									must define a report containing the query and style sheet
-									information. Invoices will be automatically grouped by the
-									attribute "_sepa_iban". If this attribute is not set, the
-									default sepa_iban will be assigned to the invoice before
-									processed. The SEPA workflow may optional include a
-									"invoice_update" item definition.
-								</p>
-							</div>
-
-							
-
+						<div class="imixs-form-panel">							
 							<h:panelGroup layout="block" styleClass="imixs-form-section"
-								id="oderlist" binding="#{orderlistContainer}">
-								<h1>Debitor Options</h1>
+								id="dbtrlist" binding="#{dbtrlistContainer}">
+								<h1>Debitor IBAN/BIC</h1>
 
-								<f:ajax render="oderlist" onevent="updateSepaList">
+								<f:ajax render="dbtrlist" onevent="updateSepaList">
 									<table class="imixsdatatable imixs-orderitems">
 										<tr>
 											<th style="width: 140px">ID</th>
@@ -151,7 +104,7 @@
 												<td><h:commandLink
 														actionListener="#{sepaController.removeDbtr(dbtr.item['name'])}">
 														<span class="typcn typcn-trash imixs-state-info"></span>
-														<f:ajax render="#{orderlistContainer.clientId}"
+														<f:ajax render="#{dbtrlistContainer.clientId}"
 															onevent="updateSepaList" />
 													</h:commandLink></td>
 											</tr>
@@ -167,11 +120,111 @@
 									</h:commandButton>
 								</f:ajax>
 							</h:panelGroup>
+							
+							
+							<h:panelGroup layout="block" styleClass="imixs-form-section"
+								id="cdtrlist" binding="#{cdtrlistContainer}">
+								<h1>Kreditor IBAN/BIC</h1>
+
+								<f:ajax render="cdtrlist" onevent="updateSepaList">
+									<table class="imixsdatatable imixs-orderitems">
+										<tr>
+											<th style="width: 140px">ID</th>
+											<th style="">Company<span class="imixs-required">
+													*</span></th>
+											<th style="width: 250px;">IBAN</th>
+											<th style="width: 150px;">BIC</th>
+											<th style="width: 150px;">Report (optional)</th>
+											<th style="width: 50px">
+												<!-- delete -->
+											</th>
+										</tr>
+
+										<ui:repeat var="cdtr"
+											value="#{sepaController.cdtrList}">
+											<tr>
+												<!-- ID -->
+												<td><h:inputText value="#{cdtr.item['name']}"
+														style="width:100%;" /></td>
+
+												<!-- cdtr.name -->
+												<td><h:inputText value="#{cdtr.item['cdtr.name']}"
+														style="width:100%;" /></td>
+
+												<!-- cdtr.iban -->
+												<td><h:inputText value="#{cdtr.item['cdtr.iban']}"
+														style="width:100%;" /></td>
+
+												<!-- cdtr.bic -->
+												<td><h:inputText value="#{cdtr.item['cdtr.bic']}"
+														style="width:100%;" /></td>
+														
+												<!-- cdtr.report -->
+												<td><h:inputText value="#{cdtr.item['report']}"
+														style="width:100%;" /></td>
+
+												
+												<td><h:commandLink
+														actionListener="#{sepaController.removeCdtr(cdtr.item['name'])}">
+														<span class="typcn typcn-trash imixs-state-info"></span>
+														<f:ajax render="#{cdtrlistContainer.clientId}"
+															onevent="updateSepaList" />
+													</h:commandLink></td>
+											</tr>
+										</ui:repeat>
+
+									</table>
+									
+
+									<!-- add button -->
+									<h:commandButton value="#{message.add}"
+										a:data-id="addposbutton_id"
+										actionListener="#{sepaController.addCdtr}">
+									</h:commandButton>
+								</f:ajax>
+							</h:panelGroup>
+							
+														
+					
+							<hr />
+							<h1>Model Configuration</h1>
+							<div class="imixs-form-section">
+								<p>
+									<span class="typcn typcn-lightbulb"></span> The initial task
+									must define a report containing the query and style sheet
+									information. Invoices will be automatically grouped by the
+									attribute "_sepa_iban". If this attribute is not set, the
+									default sepa_iban will be assigned to the invoice before
+									processed. The SEPA workflow may optional include a
+									"invoice_update" item definition.
+								</p>
+							</div>
+							<div class="imixs-form-section-2">
+								<dl>
+									<dt>SEPA Model Version</dt>
+									<dd>
+										<h:inputText required="false"
+											value="#{sepaController.configuration.item['_model_version']}">
+										</h:inputText>
+									</dd>
+								</dl>
+
+
+								<dl>
+									<dt>SEPA Initial Task</dt>
+									<dd>
+										<h:inputText required="false"
+											value="#{sepaController.configuration.item['_initial_task']}">
+										</h:inputText>
+									</dd>
+								</dl>
+
+							</div>
+
+
 						</div>
 
 						<!-- include timer control -->
-						<h1>Scheduler</h1>
-
 						<ui:include src="sub_scheduler_control.xhtml">
 							<ui:param name="schedulerController" value="#{sepaController}" />
 						</ui:include>
