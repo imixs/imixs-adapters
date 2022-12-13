@@ -87,7 +87,7 @@ public class SepaController extends SchedulerController {
     public void init() {
         super.init();
         // load sepa dbtr list from configuration
-        loadDbtrListFromConfiguration();
+        loadDbtrCdtrListFromConfiguration();
     }
 
     @Override
@@ -127,12 +127,12 @@ public class SepaController extends SchedulerController {
     }
 
     /**
-     * This method returns a list of ItemCollection objects representing the sources
+     * This method loads the dbtr.config and cdtr.config into a list of ItemCollection objects representing the sources
      * defined in a Importer configuration.
      *
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public void loadDbtrListFromConfiguration() {
+    public void loadDbtrCdtrListFromConfiguration() {
         // load dbtr list from configuration
         dbtrList = new ArrayList<ItemCollection>();
         List<Object> mapItems = this.getConfiguration().getItemValue(SepaWorkflowService.ITEM_DBTR_CONFIG);
@@ -163,21 +163,44 @@ public class SepaController extends SchedulerController {
                 this.getConfiguration().removeItem("_dbtr_bic");
             }
         }
+        
+        
+        // load cdtr list from configuration
+        cdtrList = new ArrayList<ItemCollection>();
+        mapItems = this.getConfiguration().getItemValue(SepaWorkflowService.ITEM_CDTR_CONFIG);
+        for (Object mapOderItem : mapItems) {
+            if (mapOderItem instanceof Map) {
+                ItemCollection itemCol = new ItemCollection((Map) mapOderItem);
+                cdtrList.add(itemCol);
+            }
+        }
+
     }
 
     @SuppressWarnings("rawtypes")
     @Override
     public void saveConfiguration() {
         ItemCollection config = getConfiguration();
-        List<Map> mapItemList = new ArrayList<Map>();
+        
         // convert the option ItemCollection elements into a List of Map
         if (dbtrList != null) {
+            List<Map> mapItemList = new ArrayList<Map>();
             logger.fine("Convert option items into Map...");
             // iterate over all items..
             for (ItemCollection dbtrItem : dbtrList) {
                 mapItemList.add(dbtrItem.getAllItems());
             }
             config.replaceItemValue(SepaWorkflowService.ITEM_DBTR_CONFIG, mapItemList);
+        }
+        // convert the option ItemCollection elements into a List of Map
+        if (cdtrList != null) {
+            List<Map> mapItemList = new ArrayList<Map>();
+            logger.fine("Convert option items into Map...");
+            // iterate over all items..
+            for (ItemCollection cdtrItem : cdtrList) {
+                mapItemList.add(cdtrItem.getAllItems());
+            }
+            config.replaceItemValue(SepaWorkflowService.ITEM_CDTR_CONFIG, mapItemList);
         }
 
         super.saveConfiguration();

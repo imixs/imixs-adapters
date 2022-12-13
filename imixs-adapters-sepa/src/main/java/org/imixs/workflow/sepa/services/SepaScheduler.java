@@ -68,7 +68,7 @@ import org.imixs.workflow.exceptions.QueryException;
  * 
  */
 public class SepaScheduler implements Scheduler {
-   
+
     @EJB
     DocumentService documentService;
 
@@ -88,8 +88,6 @@ public class SepaScheduler implements Scheduler {
     @ConfigProperty(name = "sepa.invoices.maxcount", defaultValue = "100") // maximum 100 invoices in one run
     int invoicesMaxCount; // default = 100
 
-    
-    
     private static Logger logger = Logger.getLogger(SepaScheduler.class.getName());
 
     /**
@@ -104,7 +102,7 @@ public class SepaScheduler implements Scheduler {
     public ItemCollection run(ItemCollection configuration) throws SchedulerException {
         String reportName = "";
         ItemCollection sepaExport = null;
-       
+
         try {
 
             String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
@@ -125,8 +123,8 @@ public class SepaScheduler implements Scheduler {
             }
 
             // get the data source based on the report definition....
-            List<ItemCollection> masterDataSet = reportService.getDataSource(report, invoicesMaxCount, 0, "$created", false,
-                    null);
+            List<ItemCollection> masterDataSet = reportService.getDataSource(report, invoicesMaxCount, 0, "$created",
+                    false, null);
 
             sepaWorkflowService.logMessage("...SEPA export started....", configuration, null);
             sepaWorkflowService.logMessage("...found " + masterDataSet.size() + " new invoices...", configuration,
@@ -136,29 +134,8 @@ public class SepaScheduler implements Scheduler {
             if (masterDataSet.size() > 0) {
                 // if ITEM_DBTR_IBAN is missing, then we take the default form the configuration
                 for (ItemCollection invoice : masterDataSet) {
-                    // test if invoice has a _dbtr_iban and _dbtr_bic
-                    if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()) {
-                        // overtake _dbtr_iban from sepa configuration...
-                        String paymentType = invoice.getItemValueString("payment.type");
-                        ItemCollection dbtrOption = sepaWorkflowService.findDbtrOptionByPaymentType(paymentType,
-                                configuration);
-                        if (dbtrOption != null) {
-                            invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
-                                    dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
-                            invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
-                                    dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
-                            invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
-                                    dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
-
-                            // set optional SEPA report definition
-                            invoice.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
-                                    dbtrOption.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
-                        } else {
-                            sepaWorkflowService.logMessage(
-                                    "...Warning: payment.type '" + paymentType + "' not found in SEPA configuration",
-                                    configuration, null);
-                        }
-                    }
+                    // overtake _dbtr default data if not configured...
+                    sepaWorkflowService.updateDbtrDefaultData(invoice);
                 }
 
                 // group all invoices by the IBAN number
@@ -253,9 +230,8 @@ public class SepaScheduler implements Scheduler {
                                 configuration, sepaExport);
                     } else {
                         if (!optionalSepaReport.isEmpty()) {
-                            sepaWorkflowService.logMessage(
-                                    "...WARNING - SEPA export report " + optionalSepaReport + " not found! Default report will be used.",
-                                    configuration, sepaExport);
+                            sepaWorkflowService.logMessage("...WARNING - SEPA export report " + optionalSepaReport
+                                    + " not found! Default report will be used.", configuration, sepaExport);
                         }
                         // use the default report
                         filedata = reportService.transformDataSource(report, data, sepaFileName);
@@ -347,7 +323,5 @@ public class SepaScheduler implements Scheduler {
 
         return result;
     }
-
-   
 
 }

@@ -97,6 +97,7 @@ public class SepaWorkflowService {
     public static final String ITEM_CDTR_NAME = "cdtr.name";
 
     public static final String ITEM_DBTR_CONFIG = "dbtr.config";
+    public static final String ITEM_CDTR_CONFIG = "cdtr.config";
 
     public static final String REPORT_ERROR = "REPORT_ERROR";
 
@@ -235,30 +236,32 @@ public class SepaWorkflowService {
     }
 
     /**
-     * This method returns a ItemColleciton containing the items
-     * ITEM_DBTR_IBAN,ITEM_DBTR_BIC,ITEM_DBTR_NAME.
+     * This method returns a ItemColleciton containing the bank data (Name/IBAN/BIC) for a given configuration type (dbtr|cdtr)
      * 
-     * @param paymentType
+     * @param paymentType   - name of the payment
+     * @param configuration - the sepa configuration document
+     * @param configType    - the config type (ITEM_DBTR_CONFIG | ITEM_CDTR_CONFIG)
      * @return
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ItemCollection findDbtrOptionByPaymentType(String paymentType, ItemCollection configuration) {
+    public ItemCollection findBankDataByPaymentType(String paymentType, ItemCollection configuration,
+            String configType) {
         if (paymentType == null) {
             return null;
         }
         // load dbtr list from configuration
-        ArrayList<ItemCollection> dbtrList = new ArrayList<ItemCollection>();
-        List<Object> mapItems = configuration.getItemValue(ITEM_DBTR_CONFIG);
+        ArrayList<ItemCollection> bankDataList = new ArrayList<ItemCollection>();
+        List<Object> mapItems = configuration.getItemValue(configType);
         for (Object mapOderItem : mapItems) {
             if (mapOderItem instanceof Map) {
                 ItemCollection itemCol = new ItemCollection((Map) mapOderItem);
-                dbtrList.add(itemCol);
+                bankDataList.add(itemCol);
             }
         }
         // test for maching dbtr option by name...
-        for (ItemCollection dbtr : dbtrList) {
-            if (paymentType.equals(dbtr.getItemValueString("name"))) {
-                return dbtr;
+        for (ItemCollection data : bankDataList) {
+            if (paymentType.equals(data.getItemValueString("name"))) {
+                return data;
             }
         }
         return null;
@@ -306,18 +309,18 @@ public class SepaWorkflowService {
      * Helper method to create a new SEPA Export workitem
      * 
      * @param key
-     * @param invoice
+     * @param workitem
      * @return
      * @throws ModelException
      * @throws PluginException
      */
-    public ItemCollection createNewSEPAExport(String key, ItemCollection invoice, ItemCollection event)
+    public ItemCollection createNewSEPAExport(String key, ItemCollection workitem, ItemCollection event)
             throws ModelException, PluginException {
         String modelVersion = null;
         int taskID = -1;
 
         // test if the event provides a sepa export configuration
-        ItemCollection sepaConfig = workflowService.evalWorkflowResult(event, "sepa-export", invoice, true);
+        ItemCollection sepaConfig = workflowService.evalWorkflowResult(event, "sepa-export", workitem, true);
         if (sepaConfig != null && sepaConfig.hasItem("modelversion") && sepaConfig.hasItem("task")) {
             logger.fine("read model information from event");
             modelVersion = sepaConfig.getItemValueString("modelVersion");
@@ -343,27 +346,27 @@ public class SepaWorkflowService {
 
         // copy dbtr_iban
         sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
-                invoice.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
+                workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
 
         // set additional data (e.g _dbtr_name) from first invoice...
-        if (invoice.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
+        if (workitem.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
             sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
-                    invoice.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+                    workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
         }
         // set _dbtr_bic from first invoice if available...
-        if (invoice.hasItem(SepaWorkflowService.ITEM_DBTR_BIC)) {
+        if (workitem.hasItem(SepaWorkflowService.ITEM_DBTR_BIC)) {
             sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
-                    invoice.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+                    workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
         }
         // set payment.type from first invoice if available...
-        if (invoice.hasItem(SepaWorkflowService.ITEM_PAYMENT_TYPE)) {
+        if (workitem.hasItem(SepaWorkflowService.ITEM_PAYMENT_TYPE)) {
             sepaExport.setItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE,
-                    invoice.getItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE));
+                    workitem.getItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE));
         }
         // set sepa.report from first invoice if available...
-        if (invoice.hasItem(SepaWorkflowService.ITEM_SEPA_REPORT)) {
+        if (workitem.hasItem(SepaWorkflowService.ITEM_SEPA_REPORT)) {
             sepaExport.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
-                    invoice.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
+                    workitem.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
         }
 
         // set workflow group name from the Task Element to identify document in xslt
@@ -418,6 +421,102 @@ public class SepaWorkflowService {
         }
         // no sepa export found
         return null;
+    }
+
+    /**
+     * This method adds the DBTR default information to a workitem if the workitem
+     * did not yet provide any debitor data. The data it read form the configuration
+     * dbtr list and the payment.type stored in the workitem.
+     * <p>
+     * As payment can be distinguished between in and out. The method first test if
+     * the worktiem contains a item <code>payment.out.type</code>. If not the item
+     * <code>payment.type</code> is taken. In this way a workitem can provide
+     * different payment types for outgoing payments and incoming payments (direct
+     * debit).
+     * <p>
+     * The method throws a PluginException in case not dbtr data is available
+     * 
+     * @param workitem
+     * @throws PluginException - if dbtr data is missing
+     */
+    public void updateDbtrDefaultData(ItemCollection workitem) throws PluginException {
+
+        // check payment type
+        String paymentType = workitem.getItemValueString("payment.out.type");
+        if (paymentType.isEmpty()) {
+            // test default payment type
+            paymentType = workitem.getItemValueString("payment.type");
+        }
+
+        // test if the workitem has a dbtr.iban / dbtr.bic or a cdtr.iban / cdtr.bic
+        if (!paymentType.isEmpty() && (workitem.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()
+                || workitem.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty())) {
+            // overtake dbtr.iban from sepa configuration...
+            ItemCollection bankData = findBankDataByPaymentType(paymentType, loadConfiguration(), ITEM_DBTR_CONFIG);
+            if (bankData != null) {
+                workitem.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
+                        bankData.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
+                workitem.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
+                        bankData.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+                workitem.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
+                        bankData.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+
+                // set optional SEPA report definition
+                workitem.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
+                        bankData.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
+            } else {
+                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+                        "No dbtr information found for '" + paymentType + "' in SEPA configuration!");
+            }
+        }
+    }
+
+    /**
+     * This method adds the CDTR default information to a workitem if the workitem
+     * did not yet provide any creditor data. The data it read form the
+     * configuration cdtr list and the payment.type stored in the workitem.
+     * <p>
+     * As payment can be distinguished between in and out. The method first test if
+     * the worktiem contains a item <code>payment.in.type</code>. If not the item
+     * <code>payment.type</code> is taken. In this way a workitem can provide
+     * different payment types for outgoing payments and incoming payments (direct
+     * debit).
+     * 
+     * 
+     * 
+     * @param workitem
+     * @throws PluginException - if cdtr data is missing
+     */
+    public void updateCdtrDefaultData(ItemCollection workitem) throws PluginException {
+
+        // check payment type
+        String paymentType = workitem.getItemValueString("payment.in.type");
+        if (paymentType.isEmpty()) {
+            // test default payment type
+            paymentType = workitem.getItemValueString("payment.type");
+        }
+
+        // test if the workitem has a dbtr.iban / dbtr.bic or a cdtr.iban / cdtr.bic
+        if (!paymentType.isEmpty() && (workitem.getItemValueString(SepaWorkflowService.ITEM_CDTR_IBAN).isEmpty()
+                || workitem.getItemValueString(SepaWorkflowService.ITEM_CDTR_BIC).isEmpty())) {
+            // overtake dbtr.iban from sepa configuration...
+            ItemCollection bankData = findBankDataByPaymentType(paymentType, loadConfiguration(), ITEM_CDTR_CONFIG);
+            if (bankData != null) {
+                workitem.setItemValue(SepaWorkflowService.ITEM_CDTR_IBAN,
+                        bankData.getItemValue(SepaWorkflowService.ITEM_CDTR_IBAN));
+                workitem.setItemValue(SepaWorkflowService.ITEM_CDTR_BIC,
+                        bankData.getItemValue(SepaWorkflowService.ITEM_CDTR_BIC));
+                workitem.setItemValue(SepaWorkflowService.ITEM_CDTR_NAME,
+                        bankData.getItemValue(SepaWorkflowService.ITEM_CDTR_NAME));
+
+                // set optional SEPA report definition
+                workitem.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
+                        bankData.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
+            } else {
+                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+                        "No cdtr information found for '" + paymentType + "' in SEPA configuration!");
+            }
+        }
     }
 
     /**

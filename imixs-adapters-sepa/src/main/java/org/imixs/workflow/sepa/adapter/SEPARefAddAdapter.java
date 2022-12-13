@@ -16,12 +16,28 @@ import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.sepa.services.SepaWorkflowService;
 
 /**
- * The SEPARefAddAdapter links an invoice with a SEPA Export for the dbtr.iban
- * item . If there is currently no open SEPA Export for this key, the adapter
+ * The SEPARefAddAdapter is used for linking a workitem with a SEPA Export. For
+ * payment advises the dbtr.iban/bic items are resolved. For direct debit the
+ * adapter uses the cdtr.iban/bic item.
+ * <p>
+ * Depending on the information stored in a workitem the adapter automatically
+ * resolves the dbtr/cdtr information form the SEPA configuration document.
+ * <p>
+ * SEPA Export workitems are grouped by an individual key defined in the model.
+ * If there is currently no open SEPA Export for a given key, the adapter
  * automatically creates a new process instance.
  * <p>
- * If the invoice has already been linked to a SEPA Export, nothing happens.
+ * Event Configuration:
  * <p>
+ * 
+ * <pre>
+ * {@code
+ * <sepa-export name="modelversion">sepa-export-manual-de-3.0</sepa-export>
+   <sepa-export name="task">1000</sepa-export>
+   <sepa-export name="key">SEPA Lastschriftverfahren</sepa-export> 
+   }</pre>
+ * <p>
+ * If a workitem is already been linked to a SEPA Export, nothing happens.
  * 
  * @version 1.0
  * @author rsoika
@@ -32,60 +48,41 @@ public class SEPARefAddAdapter implements SignalAdapter {
 
     public static final String ERROR_CONFIG = "CONFIG_ERROR";
 
- 
     @Inject
     SepaWorkflowService sepaWorkflowService;
 
     /**
      * This method finds or create the SEPA Export and adds a reference
-     * ($workitemref) to the current invoice.
+     * ($workitemref) to the current workitem.
      * 
      * @throws PluginException
      */
     @SuppressWarnings("unchecked")
     @Override
-    public ItemCollection execute(ItemCollection invoice, ItemCollection event)
+    public ItemCollection execute(ItemCollection workitem, ItemCollection event)
             throws AdapterException, PluginException {
 
-        // test if invoice has a _dbtr_iban and _dbtr_bic
-        if (invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()
-                || invoice.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {
-            // overtake _dbtr_iban from sepa configuration...
-            String paymentType = invoice.getItemValueString("payment.type");
-            ItemCollection dbtrOption = sepaWorkflowService.findDbtrOptionByPaymentType(paymentType,
-                    sepaWorkflowService.loadConfiguration());
-            if (dbtrOption != null) {
-                invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
-                        dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
-                invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
-                        dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
-                invoice.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
-                        dbtrOption.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
-
-                // set optional SEPA report definition
-                invoice.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
-                        dbtrOption.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
-            } else {
-                logger.warning(
-                        "...Warning: payment.type '" + paymentType + "' not found in SEPA configuration");
-            }
-        }
         
-        String key = sepaWorkflowService.computeKey(invoice,event);
+        // test if the workitem has a dbtr.iban / dbtr.bic or a cdtr.iban / cdtr.bic
+        sepaWorkflowService.updateDbtrDefaultData(workitem);
+        sepaWorkflowService.updateCdtrDefaultData(workitem);
+       
+
+        String key = sepaWorkflowService.computeKey(workitem, event);
 
         logger.info("......Update SEPA export for: '" + key + "'...");
         ItemCollection sepaExport;
         try {
-            sepaExport = sepaWorkflowService.findSEPAExportByTask(key,1000);
+            sepaExport = sepaWorkflowService.findSEPAExportByTask(key, 1000);
             if (sepaExport == null) {
                 // create a new one
-                sepaExport = sepaWorkflowService.createNewSEPAExport(key, invoice,event);
+                sepaExport = sepaWorkflowService.createNewSEPAExport(key, workitem, event);
             }
 
             // add Invoice to SEPA export
             List<String> refList = sepaExport.getItemValue("$workitemref");
-            if (!refList.contains(invoice.getUniqueID())) {
-                sepaExport.appendItemValueUnique("$workitemref", invoice.getUniqueID());
+            if (!refList.contains(workitem.getUniqueID())) {
+                sepaExport.appendItemValueUnique("$workitemref", workitem.getUniqueID());
                 // set event 100
                 sepaExport.event(SepaWorkflowService.EVENT_ADD_REF);
                 sepaWorkflowService.processSEPAExport(sepaExport);
@@ -95,8 +92,8 @@ public class SEPARefAddAdapter implements SignalAdapter {
             throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
                     "Unable to add Invoice to SEPA Export: " + e1.getMessage());
         }
-        
-        return invoice;
+
+        return workitem;
     }
 
 }

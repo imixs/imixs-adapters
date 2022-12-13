@@ -23,7 +23,7 @@ import org.imixs.workflow.sepa.services.SepaWorkflowService;
 
 /**
  * The SEPAExportAdapter executes the SEPA export and generates a SEPA XML file
- * from all referred invoice workitems.
+ * from all referred workitems.
  * 
  * @version 1.0
  * @author rsoika
@@ -85,7 +85,7 @@ public class SEPAExportAdapter implements SignalAdapter {
         data.add(sepaExport);
 
         // create the attachment based on the report definition
-        // write a file to workitem
+        // attach a file to the current workitem
         // create a harmonized debitor name for the filename.....
         String sDepName = sepaExport.getItemValueString(SepaWorkflowService.ITEM_DBTR_NAME);
         sDepName = sDepName.replace("&", "_");

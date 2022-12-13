@@ -62,12 +62,15 @@
 							<h:panelGroup layout="block" styleClass="imixs-form-section"
 								id="dbtrlist" binding="#{dbtrlistContainer}">
 								<h1>Debitor IBAN/BIC</h1>
-
+								<p>
+									<span class="typcn typcn-lightbulb"></span> The Debitor IBAN/BIC configuration list
+									can be used for SEPA payments.
+								</p>
 								<f:ajax render="dbtrlist" onevent="updateSepaList">
 									<table class="imixsdatatable imixs-orderitems">
 										<tr>
 											<th style="width: 140px">ID</th>
-											<th style="">Company<span class="imixs-required">
+											<th style="">Bank<span class="imixs-required">
 													*</span></th>
 											<th style="width: 250px;">IBAN</th>
 											<th style="width: 150px;">BIC</th>
@@ -124,13 +127,16 @@
 							
 							<h:panelGroup layout="block" styleClass="imixs-form-section"
 								id="cdtrlist" binding="#{cdtrlistContainer}">
-								<h1>Kreditor IBAN/BIC</h1>
-
+								<h1>Creditor IBAN/BIC</h1>
+								<p>
+									<span class="typcn typcn-lightbulb"></span> The Creditor IBAN/BIC configuration list
+									can be used for SEPA Direct Debit.
+								</p>
 								<f:ajax render="cdtrlist" onevent="updateSepaList">
 									<table class="imixsdatatable imixs-orderitems">
 										<tr>
 											<th style="width: 140px">ID</th>
-											<th style="">Company<span class="imixs-required">
+											<th style="">Bank<span class="imixs-required">
 													*</span></th>
 											<th style="width: 250px;">IBAN</th>
 											<th style="width: 150px;">BIC</th>
