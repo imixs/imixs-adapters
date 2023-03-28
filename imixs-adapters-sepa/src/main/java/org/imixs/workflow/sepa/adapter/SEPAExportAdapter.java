@@ -104,9 +104,7 @@ public class SEPAExportAdapter implements SignalAdapter {
             ItemCollection reportOptional = reportService.findReport(optionalSepaReport);
             if (reportOptional != null) {
                 // use optional report
-
                 filedata = reportService.transformDataSource(reportOptional, data, sepaFileName);
-
                 sepaWorkflowService.logMessage(
                         "...SEPA export report=" + sepaExport.getItemValueString(SepaWorkflowService.ITEM_SEPA_REPORT),
                         configuration, sepaExport);
@@ -117,15 +115,13 @@ public class SEPAExportAdapter implements SignalAdapter {
                 }
                 // use the default report
                 filedata = reportService.transformDataSource(report, data, sepaFileName);
-                // attach the file
-                sepaExport.addFileData(filedata);
             }
+            // attach the file
+            sepaExport.addFileData(filedata);
         } catch (JAXBException| IOException | TransformerException e) {
             throw new PluginException(SEPAExportAdapter.class.getName(), SepaWorkflowService.REPORT_ERROR,
                     "Failed to generate SEPA File:" + e.getMessage());
         }
-
-     
 
         // write log
         logger.info("...SEPA export " + key + "  finished.");
