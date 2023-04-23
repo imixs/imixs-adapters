@@ -29,8 +29,8 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.EJB;
-import javax.faces.view.ViewScoped;
+import jakarta.ejb.EJB;
+import jakarta.faces.view.ViewScoped;
 import javax.inject.Named;
 
 import org.imixs.workflow.ItemCollection;

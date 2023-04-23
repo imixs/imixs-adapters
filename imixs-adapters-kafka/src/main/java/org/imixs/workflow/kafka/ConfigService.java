@@ -3,7 +3,7 @@ package org.imixs.workflow.kafka;
 import java.io.Serializable;
 import java.util.logging.Logger;
 
-import javax.ejb.Stateless;
+import jakarta.ejb.Stateless;
 
 /**
  * The ConfigService is used to provide static String and environment access methods.

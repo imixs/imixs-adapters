@@ -37,9 +37,9 @@ import java.util.regex.Pattern;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RunAs;
-import javax.ejb.EJB;
-import javax.ejb.LocalBean;
-import javax.ejb.Stateless;
+import jakarta.ejb.EJB;
+import jakarta.ejb.LocalBean;
+import jakarta.ejb.Stateless;
 import javax.inject.Inject;
 
 import org.imixs.workflow.ItemCollection;

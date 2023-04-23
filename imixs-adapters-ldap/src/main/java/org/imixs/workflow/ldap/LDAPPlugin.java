@@ -27,7 +27,7 @@
 
 package org.imixs.workflow.ldap;
 
-import javax.ejb.EJB;
+import jakarta.ejb.EJB;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;

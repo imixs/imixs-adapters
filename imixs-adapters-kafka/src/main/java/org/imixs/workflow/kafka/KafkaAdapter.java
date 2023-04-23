@@ -29,7 +29,7 @@ package org.imixs.workflow.kafka;
 
 import java.util.logging.Logger;
 
-import javax.ejb.EJB;
+import jakarta.ejb.EJB;
 
 import org.imixs.workflow.Adapter;
 import org.imixs.workflow.ItemCollection;
