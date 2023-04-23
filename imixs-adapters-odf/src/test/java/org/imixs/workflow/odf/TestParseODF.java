@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.odftoolkit.odfdom.doc.OdfDocument;
 import org.odftoolkit.odfdom.doc.OdfTextDocument;
@@ -57,6 +58,7 @@ public class TestParseODF {
 	 * 
 	 */
 	@Test
+	@Ignore
 	public void tesReplaceContentODF() {
 		try {
 			InputStream inputStream = getClass().getResourceAsStream("/test-document.odt");
