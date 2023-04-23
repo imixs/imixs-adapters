@@ -302,6 +302,10 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     private void replaceXSSFSheetStringValue(XSSFWorkbook doc, XSSFSheet sheet, String find, String replace) throws PluginException {
         logger.finest("update cell " + find);
         XSSFCell cell = getCellByRef(doc, sheet, find);
+        if (cell==null ) {
+            logger.warning("Cell "  + find + " not found.");
+            return;
+        }
         try {
             // we try to set first as float value if possible
             float f = Float.parseFloat(replace);
@@ -320,6 +324,10 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     private void replaceXSSFSheetItemValue(XSSFWorkbook doc, XSSFSheet sheet, String find, Object itemValue) throws PluginException {
         logger.finest("update cell " + find);
         XSSFCell cell = getCellByRef(doc, sheet, find);
+        if (cell==null ) {
+            logger.warning("Cell "  + find + " not found.");
+            return;
+        }
         if (itemValue instanceof Date) {
             cell.setCellValue((Date) itemValue);
         } else if (itemValue instanceof Double) {
@@ -370,6 +378,10 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     public void evalXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cell) throws PluginException {
         FormulaEvaluator evaluator = doc.getCreationHelper().createFormulaEvaluator();
         XSSFCell c = getCellByRef(doc, sheet, cell);
+        if (c==null ) {
+            logger.warning("Cell "  + cell + " not found.");
+            return;
+        }
         if (c.getCellType() == CellType.FORMULA) {
             logger.finest("...eval cell " + cell);
             try {
