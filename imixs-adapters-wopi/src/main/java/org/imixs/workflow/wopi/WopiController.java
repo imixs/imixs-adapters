@@ -29,11 +29,11 @@ import java.util.List;
 
 import java.util.logging.Logger;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ConversationScoped;
-import javax.enterprise.event.Observes;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ConversationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.jwt.JWTException;

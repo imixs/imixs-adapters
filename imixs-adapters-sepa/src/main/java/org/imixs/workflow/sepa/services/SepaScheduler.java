@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import jakarta.ejb.EJB;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import jakarta.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 

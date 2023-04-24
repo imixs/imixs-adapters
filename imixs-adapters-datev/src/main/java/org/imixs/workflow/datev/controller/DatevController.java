@@ -25,8 +25,8 @@ package org.imixs.workflow.datev.controller;
 
 import java.util.logging.Logger;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Named;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Named;
 
 import org.imixs.workflow.datev.imports.DatevImportScheduler;
 import org.imixs.workflow.engine.scheduler.SchedulerController;

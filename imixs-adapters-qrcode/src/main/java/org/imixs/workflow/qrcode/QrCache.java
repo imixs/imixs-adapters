@@ -5,8 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Cache service to cache qr-codes

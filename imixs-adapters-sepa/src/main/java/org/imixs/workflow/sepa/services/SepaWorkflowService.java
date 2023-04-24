@@ -35,12 +35,12 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import javax.annotation.security.DeclareRoles;
-import javax.annotation.security.RunAs;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RunAs;
 import jakarta.ejb.EJB;
 import jakarta.ejb.LocalBean;
 import jakarta.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Model;

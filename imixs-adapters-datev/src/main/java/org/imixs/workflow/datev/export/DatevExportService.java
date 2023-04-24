@@ -43,11 +43,11 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.annotation.security.DeclareRoles;
-import javax.annotation.security.RunAs;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RunAs;
 import jakarta.ejb.LocalBean;
 import jakarta.ejb.Stateless;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import jakarta.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.imixs.archive.core.SnapshotService;
 import org.imixs.workflow.FileData;

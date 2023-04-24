@@ -2,11 +2,11 @@ package org.imixs.workflow.ldap;
 
 import java.util.logging.Logger;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import jakarta.ejb.EJB;
 import jakarta.ejb.SessionContext;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.InvocationContext;
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.InvocationContext;
 
 import org.imixs.workflow.engine.DocumentService;
 

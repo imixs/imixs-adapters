@@ -105,7 +105,7 @@ import org.imixs.workflow.engine.DocumentService;
 @Produces({ MediaType.APPLICATION_JSON })
 public class WopiHostService {
 
-    @javax.ws.rs.core.Context
+    @jakarta.ws.rs.core.Context
     private HttpServletRequest servletRequest;
 
     private static Logger logger = Logger.getLogger(WopiHostService.class.getName());
