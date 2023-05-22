@@ -103,15 +103,14 @@ public class LDAPLookupService {
             configurationProperties = new Properties();
             // first test if a custom location for the ldap.properties file is defined. If
             // no we default to the imixs.properties
-
             String ldapLookupConfig = System.getenv("LDAP_LOOKUP_CONFIG");
             if (ldapLookupConfig != null && !ldapLookupConfig.isEmpty()) {
                 logger.info("Read LDAP Lookup Configuration from: " + ldapLookupConfig);
-                try (InputStream input = new FileInputStream("path/to/config.properties")) {
+                try (InputStream input = new FileInputStream(ldapLookupConfig)) {
                     // load a properties file
                     configurationProperties.load(input);
                 } catch (IOException ex) {
-                    ex.printStackTrace();
+                    logger.severe("Failed to Read LDAP Lookup Configuration: " + ex.getMessage());
                 }
             } else {
                 // default to imixs.properties
