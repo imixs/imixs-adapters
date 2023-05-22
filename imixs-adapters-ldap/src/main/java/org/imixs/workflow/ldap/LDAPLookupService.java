@@ -1,5 +1,8 @@
 package org.imixs.workflow.ldap;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -9,13 +12,6 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Logger;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.ejb.EJB;
-import jakarta.ejb.LocalBean;
-import jakarta.ejb.Stateless;
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingEnumeration;
@@ -30,6 +26,14 @@ import javax.naming.ldap.LdapContext;
 import org.imixs.marty.profile.ProfileEvent;
 import org.imixs.marty.profile.ProfileService;
 import org.imixs.workflow.ItemCollection;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
+import jakarta.ejb.LocalBean;
+import jakarta.ejb.Stateless;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 /**
  * This EJB provides a ldap lookup service for user informations
@@ -68,6 +72,7 @@ public class LDAPLookupService {
     public static final String LDAP_USER_ATTRIBUTES = "ldap.user-attributes";
 
     private boolean enabled = false;
+    private boolean initializedDirContextFailed = false;
     private Properties configurationProperties = null;
 
     private String _dnSearchFilter = null;
@@ -93,18 +98,33 @@ public class LDAPLookupService {
     void init() {
         try {
             logger.finest("......init lookup service");
-            // load confiugration entity
 
-            // Disabled because of conflict with LDAPGroupInterceptor
-            // configurationProperties = propertyService.getProperties();
+            // load configuration entity
             configurationProperties = new Properties();
-            try {
-                configurationProperties.load(
-                        Thread.currentThread().getContextClassLoader().getResource("imixs.properties").openStream());
-            } catch (Exception e) {
-                logger.warning("LDAPLookupService unable to find imixs.properties in current classpath");
-                e.printStackTrace();
+            // first test if a custom location for the ldap.properties file is defined. If
+            // no we default to the imixs.properties
+
+            String ldapLookupConfig = System.getenv("LDAP_LOOKUP_CONFIG");
+            if (ldapLookupConfig != null && !ldapLookupConfig.isEmpty()) {
+                logger.info("Read LDAP Lookup Configuration from: " + ldapLookupConfig);
+                try (InputStream input = new FileInputStream("path/to/config.properties")) {
+                    // load a properties file
+                    configurationProperties.load(input);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            } else {
+                // default to imixs.properties
+                try {
+                    configurationProperties.load(
+                            Thread.currentThread().getContextClassLoader().getResource("imixs.properties")
+                                    .openStream());
+                } catch (Exception e) {
+                    logger.warning("LDAPLookupService unable to find imixs.properties in current classpath");
+                    e.printStackTrace();
+                }
             }
+
             // skip if no configuration
             if (configurationProperties == null) {
                 logger.severe("Missing imixs.properties!");
@@ -884,16 +904,14 @@ public class LDAPLookupService {
         long l = System.currentTimeMillis();
 
         // test if configuration is available
-        if (configurationProperties == null) {
+        if (configurationProperties == null || initializedDirContextFailed == true) {
             return null;
         }
 
         // try to load dirContext...
-
         Context initCtx;
         try {
             initCtx = new InitialContext();
-
             // test if manually ldap context should be build
             String sDisabled = configurationProperties.getProperty("ldap.disable-jndi");
 
@@ -911,11 +929,9 @@ public class LDAPLookupService {
                         env.put(sKey, configurationProperties.getProperty(sKey));
                         logger.finest("......Set env key: " + sKey + "=" + configurationProperties.getProperty(sKey));
                     }
-
                 }
 
                 // set default params...
-
                 env.put("java.naming.factory.initial", configurationProperties
                         .getProperty("java.naming.factory.initial", "com.sun.jndi.ldap.LdapCtxFactory"));
                 env.put("java.naming.security.authentication",
@@ -928,16 +944,16 @@ public class LDAPLookupService {
                 // read GlassFish ldap_jndiName from configuration
                 ldapJndiName = configurationProperties.getProperty("ldap.jndi-name");
                 if ("".equals(ldapJndiName))
-                    ldapJndiName = "org.imixs.office.ldap";
+                    ldapJndiName = "org.imixs.ldap.directory";
                 logger.finest("......lookup LDAP Ctx from pool '" + ldapJndiName + "' .....");
                 ldapCtx = (LdapContext) initCtx.lookup(ldapJndiName);
-
             }
 
             logger.fine("......LdapContext initialized in " + (System.currentTimeMillis() - l) + " ms");
 
-        } catch (NamingException e) {
-            logger.severe("Failed to open ldap conntext: " + e.getMessage());
+        } catch (NamingException | RuntimeException e) {
+            logger.severe("Failed to open ldap context: " + e.getMessage());
+            initializedDirContextFailed = true;
             if (logger.isLoggable(java.util.logging.Level.FINE))
                 e.printStackTrace();
         }
