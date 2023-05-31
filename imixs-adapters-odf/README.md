@@ -17,7 +17,7 @@ The adapter can replace text fragments in a paragraph of a ODF document. The ada
 The following example searches for an attachment with the name `Agreement-????.odf` and replaces the text fragments `[company.name]`, `[company.country]` and `[contract_startdate]` with the corresponding item values.
 
     <poi-update name=
-       "filename">Agreement-<itemvalue>numsequencenumber</itemvalue>.docx</poi-update>
+       "filename">Agreement-<itemvalue>numsequencenumber</itemvalue>.odf</poi-update>
     <poi-update name="findreplace">
          <find>\[company\.name\]</find>
          <replace><itemvalue>company.name</itemvalue></replace>
@@ -38,7 +38,7 @@ You can also define the filename as a pattern including regular expressions. See
 
 	<poi-update name="filename">.*<itemvalue>numsequencenumber</itemvalue>\.odf</poi-update>
 
-This expression will match all files ending with the sequence number and the file extension '.docx'
+This expression will match all files ending with the sequence number and the file extension '.odf'
 
 
 

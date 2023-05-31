@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Inject;
-
 import org.imixs.archive.core.SnapshotService;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
@@ -24,6 +22,8 @@ import org.odftoolkit.odfdom.doc.OdfTextDocument;
 import org.odftoolkit.odfdom.incubator.search.InvalidNavigationException;
 import org.odftoolkit.odfdom.incubator.search.TextNavigation;
 import org.odftoolkit.odfdom.incubator.search.TextSelection;
+
+import jakarta.inject.Inject;
 
 /**
  * This ODFDOMFindReplaceAdapter can be used to find and replace text fragements
@@ -86,7 +86,7 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 		ItemCollection odfConfig = workflowService.evalWorkflowResult(event, "odf-update", document, false);
 		if (odfConfig == null || !odfConfig.hasItem("findreplace")) {
 			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-					"wrong odf configuration");
+					"Missing odf configuration");
 		}
 		String fileName = odfConfig.getItemValueString("filename");
 		fileName = workflowService.adaptText(fileName, document);
@@ -99,7 +99,7 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 		String eval = odfConfig.getItemValueString("eval");
 		if (replaceDevList.size() == 0) {
 			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-					"wrong odf configuration");
+					"Wrong odf configuration");
 		}
 
 		logger.info("...starting update file: " + fileName + "...");
