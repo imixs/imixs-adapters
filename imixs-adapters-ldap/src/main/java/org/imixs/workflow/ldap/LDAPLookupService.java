@@ -553,7 +553,7 @@ public class LDAPLookupService {
     @SuppressWarnings("unchecked")
     public void updateProfileLDAPData(String userID, ItemCollection profile) {
         // compare attributes....
-        ItemCollection ldapUser = findUser(userID);
+        ItemCollection ldapUser =  findUser(userID, true);
         boolean bUpdate = false;
         if (ldapUser != null) {
             logger.finest("......ldap entry found, verifing attributes...");
@@ -575,15 +575,14 @@ public class LDAPLookupService {
 
                 Object value = entry.getValue();
                 logger.finest(" ...... " + key + "=" + value);
-
                 if (!profile.getItemValue(key).equals(ldapUser.getItemValue(key))) {
                     profile.replaceItemValue(key, ldapUser.getItemValue(key));
                     bUpdate = true;
                 }
             }
-            // save profile?
+            // update profile?
             if (bUpdate) {
-                logger.fine("Updating user profile '" + userID + "' with new ldap attributes....");
+                logger.info("LDAP attributes updated for user profile '" + userID + "'.");
             }
         } else {
             logger.warning("userid " + userID + " not found!");

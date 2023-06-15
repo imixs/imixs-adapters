@@ -27,19 +27,19 @@
 
 package org.imixs.workflow.ldap;
 
-import jakarta.ejb.EJB;
-
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.engine.plugins.AbstractPlugin;
 import org.imixs.workflow.exceptions.PluginException;
 
+import jakarta.ejb.EJB;
+
 /**
  * This Plugin runs on Profile Entities. The plugin makes a ldap lookup to
- * update the properties
+ * update the properties like
  * 
  * txtUserName, txtEmail
  * 
- * The ldap property attribute-names are read from the imixs.propries file
+ * The ldap property attribute-names are read from the imixs.properties file
  * 
  * @author rsoika
  * 
