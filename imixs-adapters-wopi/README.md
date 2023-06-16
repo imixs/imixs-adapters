@@ -222,69 +222,6 @@ Find more details about the Post Message in Collaboara [here](https://sdk.collab
 
 You can find a full demo integration in the 'wopi-host' branch of the [Imixs-Process-Manager project](https://github.com/imixs/imixs-process-manager/tree/wopi-host).
 
-
-## Working with different domains
-
-Because of a [bug in Collboara](https://github.com/CollaboraOnline/online/issues/2380) you can integrate collabora and imixs-workflow only if both services share the same toplevel domain (e.g. 'libreoffice.foo.com' and  'workflow.foo.com').
-
-In addition you have to tweak some settings. In the following example we assume you have the domains:
-
-	libreoffice.foo.com   - for LibreOffice Online/Collabora
-	workflow.foo.com   - for Imixs-Office-Workflow
-
-
-**1. The Docker Container Settings**
-
-First in the deployment of the Collabora container you need to set the environment variable 'domain' pointing to your imixs workflow application:
-
-        - name: domain
-          value: workflow.foo.com 
-
-The value can contain also a regular expression to add multiple host names.
-
-
-**2. The 'frame_ancestors' in loolwsd.xml**
-
-Next you need to set the tag 'frame_ancestors' in the loolwsd.xml file. You need to add all domain names from applications to be allowed to embed the editor.
-
-	....
-	<frame_ancestors>workflow.foo.com</frame_ancestors>
-	
-The [frame-ancestors](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors) is an official security policy. You can separate multiple hosts by space and you can also use wildcards like in the following example:
-
-	<frame_ancestors>*.foo.com</frame_ancestors>
-
-
-Find more details [here](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors).
-
-**3. Allow wopi storage in loolwsd.xml**
-
-In the section storage/wop of the loolwsd.xml file you also need to add the host names for your worklfow applications. 
-
-	....
-    <storage desc="Backend storage">
-        <filesystem allow="false" />
-        <wopi desc="Allow/deny wopi storage. Mutually exclusive with webdav." allow="true">
-            <host desc="Regex pattern of hostname to allow or deny." allow="true">workflow.foo.com</host>
-	....
-	
-Here you can use again regexepression.
-
-**4. Using the WOPI_HOST_ENDPOINT in Kubernetes**
-
-Running in Kubernetes you should not use internal host names from the internal Kubernetes Proxy Network. For the "WOPI\_HOST\_ENDPOINT" use the public Internet domain instead:
-
-	...
-    spec:
-      containers:
-      - name: imixs-documents
-        image: imixs/imixs-documents:latest
-        env:	
-        ...
-        - name: WOPI_HOST_ENDPOINT
-          value: "https://workflow.foo.com/api/wopi/"
-       ...
-       
        
        
 ## The Wopi Template Adapter
@@ -363,6 +300,64 @@ You can also define the filename as a pattern including regulare expressins. See
 
 This expression will match all files ending with the sequence number and the file extension '.docx'
 
+
+
+
+# Docker, Docker-Compose
+
+The following shows a Docker-Compose example how to configure Imixs-Office-Workflow with Collabora. 
+
+	version: "3.6"
+	services:
+	
+	# PostgreSQL
+	  db:
+	    image: postgres:9.6.1
+	    environment:
+	      POSTGRES_PASSWORD: adminadmin
+	      POSTGRES_DB: office
+	    volumes: 
+	      - dbdata:/var/lib/postgresql/data
+	
+	# Imixs-Documents
+	  app:
+	    image: imixs/imixs-documents:latest
+	    depends_on:
+	      - db
+	    environment:
+	      JAVA_OPTS: "-Dnashorn.args=--no-deprecation-warning"
+	      POSTGRES_USER: "postgres"
+	      POSTGRES_PASSWORD: "adminadmin"
+	      POSTGRES_CONNECTION: "jdbc:postgresql://db/office"      
+	      TZ: "Europe/Berlin"
+	      LANG: "en_US.UTF-8"
+	      MAILGATEWAY: "localhost"
+	      # Collabora integration
+	      WOPI_PUBLIC_ENDPOINT: "http://localhost:9980"
+		  WOPI_DISCOVERY_ENDPOINT: "http://collabora:9980/hosting/discovery"
+	      WOPI_HOST_ENDPOINT: "http://app:8080/api/wopi/"                
+	    ports:
+	      - "8080:8080"
+	      - "9990:9990"
+	    volumes:
+	      - ./deployments:/opt/jboss/wildfly/standalone/deployments/
+	
+	# Collabora 
+	  collabora:
+		image: collabora/code:23.05.0.5.1
+		container_name: collabora
+		expose:
+		- 9980
+		ports:
+		- "9980:9980"
+		environment:
+		- username=admin
+		- password=adminadmin
+		- extra_params=--o:ssl.enable=false
+		- aliasgroup1=http://app:8080:443
+
+
+General information about the Docker Image from Collabora can be found in the [Official Integration Guide](https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html).
 
 # Open Issues
 
