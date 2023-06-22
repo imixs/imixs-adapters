@@ -17,6 +17,7 @@ import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.util.XMLParser;
+import org.odftoolkit.odfdom.changes.TextContainingElement;
 import org.odftoolkit.odfdom.doc.OdfDocument;
 import org.odftoolkit.odfdom.doc.OdfSpreadsheetDocument;
 import org.odftoolkit.odfdom.doc.OdfTextDocument;
@@ -24,7 +25,7 @@ import org.odftoolkit.odfdom.doc.table.OdfTable;
 import org.odftoolkit.odfdom.doc.table.OdfTableCell;
 import org.odftoolkit.odfdom.incubator.search.InvalidNavigationException;
 import org.odftoolkit.odfdom.incubator.search.TextNavigation;
-import org.odftoolkit.odfdom.incubator.search.TextSelection;
+import org.odftoolkit.odfdom.pkg.OdfElement;
 
 import jakarta.inject.Inject;
 
@@ -249,11 +250,48 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	private void replaceODFTextFragment(OdfTextDocument doc, String pattern, String replace)
 			throws InvalidNavigationException {
 
+		try {
+			TextNavigator textNav=new TextNavigator(doc, pattern);
+			while (textNav.hasNext()) {
+				TextContainingElement paragraph = textNav.next();
+				String text=paragraph.getTextContent();
+				//logger.info("...found: " + text);
+				text=text.replace(pattern, replace);
+				paragraph.setTextContent(text);
+			}
+ 
+
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	
+
+	}
+
+
+
+	/**
+	 * Helper method replaces a given text in a OdfTextDocument
+	 * 
+	 * @throws InvalidNavigationException
+	 */
+	private void replaceODFTextFragmentOld(OdfTextDocument doc, String pattern, String replace)
+			throws InvalidNavigationException {
+		
 		TextNavigation searchPattern = new TextNavigation(pattern, doc);
+	
 		while (searchPattern.hasNext()) {
-			logger.fine("..found match!");
-			TextSelection textSelection = (TextSelection) searchPattern.getCurrentItem();
-			textSelection.replaceWith(replace);
+			logger.info("..found match "+pattern    + "    -----1> Replace: "+replace);
+			  org.odftoolkit.odfdom.incubator.search.Selection textSelection = searchPattern.getCurrentItem();
+			 OdfElement dingens= textSelection.getElement();
+			dingens.setTextContent(replace);
+
+
+			searchPattern.getNextMatchElement(dingens);
+			break;
 		}
 
 	}
