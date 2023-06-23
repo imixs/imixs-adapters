@@ -17,7 +17,6 @@ import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.util.XMLParser;
-import org.odftoolkit.odfdom.changes.TextContainingElement;
 import org.odftoolkit.odfdom.doc.OdfDocument;
 import org.odftoolkit.odfdom.doc.OdfSpreadsheetDocument;
 import org.odftoolkit.odfdom.doc.OdfTextDocument;
@@ -106,8 +105,6 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 					"Wrong odf configuration");
 		}
 
-		logger.info("...starting update file: " + fileName + "...");
-
 		// First we test if the fileName is unique. If not found we test regular
 		// expressions...
 		boolean foundFile = false;
@@ -166,7 +163,6 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 		byte[] newContent = null;
 		
 		logger.info("....updateFileData - file="+fileData.getName());
-
 		String fileName = fileData.getName();
 		if (fileData.getContent() == null || fileData.getContent().length < 3) {
 			// load the snapshot
@@ -177,16 +173,10 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 		if (fileName.toLowerCase().endsWith(".odt")  || fileName.toLowerCase().endsWith(".ods")) {
 
 			try (InputStream inputStream = new ByteArrayInputStream(fileData.getContent())) {
-				OdfDocument odfDoc = OdfDocument.loadDocument(inputStream);
-
-			
+				OdfDocument odfDoc = OdfDocument.loadDocument(inputStream);			
 				logger.fine("OdfTextDocument loaded");
 				updateODFDocument(odfDoc,workitem,replaceDevList);
-
-			
-
 				logger.fine("findreplace completed");
-
 				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 				odfDoc.save(byteArrayOutputStream);
 				odfDoc.close();
@@ -203,10 +193,6 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 			workitem.addFileData(fileDataNew);
 			logger.fine("new document added");
 		}
-
-
-
-		
 	}
 
 	/**
@@ -240,62 +226,22 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 		}
 	}
 
-
-
 	/**
 	 * Helper method replaces a given text in a OdfTextDocument
 	 * 
 	 * @throws InvalidNavigationException
 	 */
 	private void replaceODFTextFragment(OdfTextDocument doc, String pattern, String replace)
-			throws InvalidNavigationException {
-
-		try {
-			TextNavigator textNav=new TextNavigator(doc, pattern);
-			while (textNav.hasNext()) {
-				TextContainingElement paragraph = textNav.next();
-				String text=paragraph.getTextContent();
-				//logger.info("...found: " + text);
-				text=text.replace(pattern, replace);
-				paragraph.setTextContent(text);
-			}
- 
-
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	
-
-	}
-
-
-
-	/**
-	 * Helper method replaces a given text in a OdfTextDocument
-	 * 
-	 * @throws InvalidNavigationException
-	 */
-	private void replaceODFTextFragmentOld(OdfTextDocument doc, String pattern, String replace)
-			throws InvalidNavigationException {
-		
+			throws InvalidNavigationException {		
+		logger.finest("..test for pattern:  "+pattern    + "    ---> Replace: "+replace);
 		TextNavigation searchPattern = new TextNavigation(pattern, doc);
-	
 		while (searchPattern.hasNext()) {
-			logger.info("..found match "+pattern    + "    -----1> Replace: "+replace);
-			  org.odftoolkit.odfdom.incubator.search.Selection textSelection = searchPattern.getCurrentItem();
-			 OdfElement dingens= textSelection.getElement();
-			dingens.setTextContent(replace);
-
-
-			searchPattern.getNextMatchElement(dingens);
-			break;
+			OdfElement element = searchPattern.next();
+			String text=element.getTextContent();
+			text=text.replace(pattern, replace);
+			element.setTextContent(text);
 		}
-
 	}
-
 
 	/**
 	 * Helper method replaces a given text in a OdfTextDocument

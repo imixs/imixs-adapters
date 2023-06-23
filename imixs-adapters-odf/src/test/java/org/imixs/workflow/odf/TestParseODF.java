@@ -4,6 +4,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -38,7 +40,7 @@ public class TestParseODF {
 			while (search1.hasNext()) {
 				logger.info("..found match!");
 
-				TextSelection item1 = (TextSelection) search1.getCurrentItem();
+				TextSelection item1 = (TextSelection) search1.getSelection();
 
 				logger.info("...Position=" + item1.getIndex());
 				logger.info("...Text=" + item1.getText());
@@ -53,7 +55,25 @@ public class TestParseODF {
 			Assert.fail();
 		}
 	}
-	
+
+	/**
+	 * Just a test for a matching problem....
+	 */
+	@Test
+	public void tesMatcher() {
+		 Pattern mPattern = Pattern.compile("\\[company\\.name\\]");
+		Matcher matcher = mPattern.matcher("Imixs GmbH");
+
+		int index=0;
+
+		// // start from the end index of the selected item
+		// if (matcher.find(index + selected.getText().length())) {
+		// 	// here just consider \n\r\t occupy one char
+		// 	nextIndex = matcher.start();
+		// 	int eIndex = matcher.end();
+		// 	mCurrentText = content.substring(nextIndex, eIndex);
+		// }
+	}
 	/**
 	 * 
 	 */
@@ -71,7 +91,7 @@ public class TestParseODF {
 			while (search1.hasNext()) {
 				logger.info("..found match!");
 
-				TextSelection item1 = (TextSelection) search1.getCurrentItem();
+				TextSelection item1 = (TextSelection) search1.getSelection();
 
 				logger.info("...Position=" + item1.getIndex());
 				logger.info("...Text=" + item1.getText());
