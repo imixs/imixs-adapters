@@ -14,6 +14,8 @@ import org.odftoolkit.odfdom.doc.OdfDocument;
 import org.odftoolkit.odfdom.doc.OdfTextDocument;
 import org.odftoolkit.odfdom.incubator.search.TextNavigation;
 import org.odftoolkit.odfdom.incubator.search.TextSelection;
+import org.odftoolkit.odfdom.pkg.OdfElement;
+
 
 /**
  * Simple test class just to evaluate the ODF library
@@ -74,34 +76,124 @@ public class TestParseODF {
 		// 	mCurrentText = content.substring(nextIndex, eIndex);
 		// }
 	}
+
 	/**
 	 * 
 	 */
 	@Test
-	@Ignore
-	public void tesReplaceContentODF() {
+	public void testFindReplaceParagraph() {
 		try {
 			InputStream inputStream = getClass().getResourceAsStream("/test-document.odt");
 
 			OdfTextDocument odt = (OdfTextDocument) OdfDocument.loadDocument(inputStream);
 
-			TextNavigation search1;
-
-			search1 = new TextNavigation("content|some", odt);
-			while (search1.hasNext()) {
+			TextNavigation textNav;
+			int count=0;
+			textNav = new TextNavigation("content|some", odt);
+			while (textNav.hasNext()) {
 				logger.info("..found match!");
 
-				TextSelection item1 = (TextSelection) search1.getSelection();
+				OdfElement paragraph = textNav.next();
+				String content=paragraph.getTextContent();
 
-				logger.info("...Position=" + item1.getIndex());
-				logger.info("...Text=" + item1.getText());
+				Assert.assertTrue(content.contains("This is a simple Test Document"));
+
+				paragraph.setTextContent("Just a Example");
 				
-				if ("some".equals(item1.getText())) {
-					Assert.assertEquals(36, item1.getIndex());
-					
-					item1.replaceWith("more");
+				count++;
+			}
+
+			// total count of paragraphs
+			Assert.assertEquals(1,count);
+			// write result back...
+			  try (FileOutputStream output = new FileOutputStream("src/test/resources/output/test-document-output.odt")) {
+				  
+				  odt.save(output);
+				  
+		        } catch ( IOException e) {
+		            e.printStackTrace();
+		        }
+			  
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+	}
+
+	@Test
+	@Ignore
+	public void testFindAndDeleteParagraph() {
+		try {
+			InputStream inputStream = getClass().getResourceAsStream("/test-document.odt");
+
+			OdfTextDocument odt = (OdfTextDocument) OdfDocument.loadDocument(inputStream);
+
+			TextNavigation textNav;
+			int count=0;
+			textNav = new TextNavigation("content|some", odt);
+			while (textNav.hasNext()) {
+				logger.info("..found match!");
+
+				OdfElement paragraph = textNav.next();
+				paragraph.removeContent();
+				
+				count++;
+			}
+
+			// total count of paragraphs
+			Assert.assertEquals(1,count);
+			// write result back...
+			  try (FileOutputStream output = new FileOutputStream("src/test/resources/output/test-document-output.odt")) {
+				  
+				  odt.save(output);
+				  
+		        } catch ( IOException e) {
+		            e.printStackTrace();
+		        }
+			  
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+	}
+
+
+	@Test
+	public void tesFindTextRegex() {
+		try {
+			InputStream inputStream = getClass().getResourceAsStream("/test-document.odt");
+
+			OdfTextDocument odt = (OdfTextDocument) OdfDocument.loadDocument(inputStream);
+			TextNavigation textNav;
+
+			int count=0;
+			textNav = new TextNavigation("content|some", odt);
+			while (textNav.hasNext()) {
+				logger.info("..found match!");
+				count++;
+
+				TextSelection selection = (TextSelection) textNav.getSelection();
+
+				logger.info("...Position=" + selection.getIndex());
+				logger.info("...Text=" + selection.getText());
+				
+				if ("some".equals(selection.getText())) {
+					Assert.assertEquals(36, selection.getIndex());					
+					selection.replaceWith("more");
+				}
+
+				if ("content".equals(selection.getText())) {
+					Assert.assertEquals(41, selection.getIndex());					
+					selection.replaceWith("text");
 				}
 			}
+
+			// total count
+			Assert.assertEquals(2,count);
 
 			// write result back...
 			  try (FileOutputStream output = new FileOutputStream("src/test/resources/output/test-document-output.odt")) {
@@ -121,3 +213,4 @@ public class TestParseODF {
 	}
 
 }
+
