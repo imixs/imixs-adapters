@@ -24,7 +24,7 @@ import org.odftoolkit.odfdom.doc.table.OdfTable;
 import org.odftoolkit.odfdom.doc.table.OdfTableCell;
 import org.odftoolkit.odfdom.incubator.search.InvalidNavigationException;
 import org.odftoolkit.odfdom.incubator.search.TextNavigation;
-import org.odftoolkit.odfdom.pkg.OdfElement;
+import org.odftoolkit.odfdom.incubator.search.TextSelection;
 
 import jakarta.inject.Inject;
 
@@ -234,12 +234,11 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	private void replaceODFTextFragment(OdfTextDocument doc, String pattern, String replace)
 			throws InvalidNavigationException {		
 		logger.finest("..test for pattern:  "+pattern    + "    ---> Replace: "+replace);
-		TextNavigation searchPattern = new TextNavigation(pattern, doc);
-		while (searchPattern.hasNext()) {
-			OdfElement element = searchPattern.next();
-			String text=element.getTextContent();
-			text=text.replace(pattern, replace);
-			element.setTextContent(text);
+		TextNavigation textNavigator = new TextNavigation(pattern, doc);
+		while (textNavigator.hasNext()) {
+
+			TextSelection selection = textNavigator.next();
+			selection.replaceWith(replace);
 		}
 	}
 
@@ -250,9 +249,8 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	 */
 	private void replaceODFCell(OdfSpreadsheetDocument doc, String address, String replace)
 			throws InvalidNavigationException {
-
 		// get first table sheet...
-		OdfTable tbl = doc.getTableList().get(0);
+		OdfTable tbl = doc.getTableList(true).get(0);
 		OdfTableCell cell = tbl.getCellByPosition(address);
 		cell.setStringValue(replace);
 
