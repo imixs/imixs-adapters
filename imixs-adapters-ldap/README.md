@@ -124,7 +124,7 @@ The event type 'ON_PROFILE_LOOKUP' is send by the ProfileService in case a local
 
 ### ON_PROFILE_CREATE
 
-The event type 'ON_PROFILE_CREATE' is send immediately before a profile object is created. The attributes of the profile are updated by LDAPLookupService with the defined user attribures.
+The event type 'ON_PROFILE_CREATE' is send immediately before a profile object is created. The attributes of the profile are updated by LDAPLookupService with the defined user attributes.
 
 ## The LDAPPlugin
 
