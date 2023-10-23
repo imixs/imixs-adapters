@@ -35,8 +35,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import jakarta.inject.Inject;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
@@ -45,8 +43,9 @@ import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
-
 import org.imixs.workflow.util.XMLParser;
+
+import jakarta.inject.Inject;
 
 /**
  * This adapter class is used to import a office document template from the
@@ -125,7 +124,14 @@ public class WopiTemplateAdapter implements SignalAdapter {
             if (sourcePath.isEmpty()) {
                 throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "missing source-path definition!");
+            } else {
+                // adapt text but skip the textblock adapter itself....  
+                // See issue #138            
+                sourcePath = sourcePath.replace("textblock>", "textblockignore>");
+                sourcePath = workflowService.adaptText(sourcePath, document);    
+                sourcePath = sourcePath.replace("textblockignore>", "textblock>");
             }
+            
             if (targetName.isEmpty()) {
                 throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "missing target-name definition!");
