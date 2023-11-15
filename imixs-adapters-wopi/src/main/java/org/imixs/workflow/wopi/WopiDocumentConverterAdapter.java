@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Inject;
-
 import org.imixs.archive.core.SnapshotService;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
@@ -23,6 +21,8 @@ import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
+
+import jakarta.inject.Inject;
 
 /**
  * The WopiDocumentConverterAdapter can be used to convert office documents into
@@ -88,7 +88,7 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
             throws AdapterException, PluginException {
 
         ItemCollection wopiConverterConfig = workflowService.evalWorkflowResult(event, "wopi-converter", document,
-                false);
+                true);
         if (wopiConverterConfig == null || !wopiConverterConfig.hasItem("api-endpoint")) {
             throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), CONFIG_ERROR,
                     "Converter Error: 'api-endpoint' is not defined in current BPMN configuration");
