@@ -3,10 +3,9 @@ package org.imixs.workflow.sepa.adapter;
 import java.util.List;
 import java.util.logging.Logger;
 
-import jakarta.inject.Inject;
-
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
+import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.ModelException;
@@ -14,6 +13,8 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.sepa.services.SepaWorkflowService;
+
+import jakarta.inject.Inject;
 
 /**
  * The SEPARefAddAdapter is used for linking a workitem with a SEPA Export. For
@@ -51,6 +52,10 @@ public class SEPARefAddAdapter implements SignalAdapter {
     @Inject
     SepaWorkflowService sepaWorkflowService;
 
+    @Inject
+    WorkflowService workflowService;
+
+
     /**
      * This method finds or create the SEPA Export and adds a reference
      * ($workitemref) to the current workitem.
@@ -62,10 +67,25 @@ public class SEPARefAddAdapter implements SignalAdapter {
     public ItemCollection execute(ItemCollection workitem, ItemCollection event)
             throws AdapterException, PluginException {
 
+
+        // We test the config item "type". If it is set to OUT than a
+        // 
         
         // test if the workitem has a dbtr.iban / dbtr.bic or a cdtr.iban / cdtr.bic
-        sepaWorkflowService.updateDbtrDefaultData(workitem);
-        sepaWorkflowService.updateCdtrDefaultData(workitem);
+        ItemCollection sepaConfig = workflowService.evalWorkflowResult(event, "sepa-export", workitem, true);
+        String type= "OUT"; // default 
+        if (sepaConfig!=null && !sepaConfig.isItemEmpty("type")) {
+            type=sepaConfig.getItemValueString("type");
+        }
+        if ("OUT".equalsIgnoreCase(type)) {
+            sepaWorkflowService.updateDbtrDefaultData(workitem);
+            // validate workitem
+            sepaWorkflowService.validateCdtrData(workitem);
+        } else {
+            sepaWorkflowService.updateCdtrDefaultData(workitem);
+            // validate workitem
+            sepaWorkflowService.validateDbtrData(workitem);
+        }
        
 
         String key = sepaWorkflowService.computeKey(workitem, event);

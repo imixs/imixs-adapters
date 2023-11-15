@@ -35,13 +35,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import jakarta.annotation.security.DeclareRoles;
-import jakarta.annotation.security.RunAs;
-import jakarta.ejb.EJB;
-import jakarta.ejb.LocalBean;
-import jakarta.ejb.Stateless;
-import jakarta.inject.Inject;
-
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.Model;
 import org.imixs.workflow.WorkflowKernel;
@@ -55,6 +48,13 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.util.XMLParser;
+
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RunAs;
+import jakarta.ejb.EJB;
+import jakarta.ejb.LocalBean;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 
 /**
  * This EJB provides methods to process invoiced during a sepa run.
@@ -429,7 +429,7 @@ public class SepaWorkflowService {
      * dbtr list and the payment.type stored in the workitem.
      * <p>
      * As payment can be distinguished between in and out. The method first test if
-     * the worktiem contains a item <code>payment.out.type</code>. If not the item
+     * the workitem contains a item <code>payment.out.type</code>. If not the item
      * <code>payment.type</code> is taken. In this way a workitem can provide
      * different payment types for outgoing payments and incoming payments (direct
      * debit).
@@ -466,10 +466,30 @@ public class SepaWorkflowService {
                         bankData.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
             } else {
                 throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                        "No dbtr information found for '" + paymentType + "' in SEPA configuration!");
+                        "No debitor information found for '" + paymentType + "' in SEPA configuration!");
             }
         }
     }
+
+    /**
+     * This method validates if the current workitem has cdtr data. If not a exception is thrown.
+     * @param workitem
+     * @throws PluginException
+     */
+    public void validateCdtrData(ItemCollection workitem) throws PluginException {
+
+        // test if the workitem has a dbtr.iban / dbtr.bic or a cdtr.iban / cdtr.bic
+        if (workitem.getItemValueString(SepaWorkflowService.ITEM_CDTR_IBAN).isEmpty()
+                || workitem.getItemValueString(SepaWorkflowService.ITEM_CDTR_BIC).isEmpty()) {    
+                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+                        "No creditor information found for this transaction!");
+        }
+        
+    }
+
+
+
+
 
     /**
      * This method adds the CDTR default information to a workitem if the workitem
@@ -514,10 +534,28 @@ public class SepaWorkflowService {
                         bankData.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
             } else {
                 throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                        "No cdtr information found for '" + paymentType + "' in SEPA configuration!");
+                        "No creditor information found for '" + paymentType + "' in SEPA configuration!");
             }
         }
     }
+
+
+    /**
+     * This method validates if the current workitem has cdtr data. If not a exception is thrown.
+     * @param workitem
+     * @throws PluginException
+     */
+    public void validateDbtrData(ItemCollection workitem) throws PluginException {
+
+        // test if the workitem has a dbtr.iban / dbtr.bic or a cdtr.iban / cdtr.bic
+        if (workitem.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()
+                || workitem.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {    
+                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+                        "No debitor information found for this transaction!");
+        }
+        
+    }
+
 
     /**
      * Helper method verifies all open SEPA exports and returns the latest for the
