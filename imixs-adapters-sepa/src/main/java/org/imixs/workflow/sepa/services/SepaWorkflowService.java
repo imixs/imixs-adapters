@@ -466,7 +466,7 @@ public class SepaWorkflowService {
                         bankData.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
             } else {
                 throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                        "No dbtr information found for '" + paymentType + "' in SEPA configuration!");
+                        "No dbtr information found in '" + workitem.getUniqueID() + "' for payment.out.type='" + paymentType + "'. Missing SEPA configuration!");
             }
         }
     }

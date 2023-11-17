@@ -107,6 +107,10 @@ public class SepaScheduler implements Scheduler {
 
             String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
             int taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
+            // build the sepa export workitem....
+            sepaExport = new ItemCollection().model(modelVersion).task(taskID);
+            sepaExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
+            sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
 
             // fetch the initial event
             Model model = modelService.getModel(modelVersion);
@@ -148,10 +152,7 @@ public class SepaScheduler implements Scheduler {
 
                     List<ItemCollection> data = invoiceGroups.get(key);
                     int groupCount = data.size();
-                    // build the sepa export workitem....
-                    sepaExport = new ItemCollection().model(modelVersion).task(taskID);
-                    sepaExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
-                    sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
+
                     // set unqiueid, needed for xslt
                     sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
 
