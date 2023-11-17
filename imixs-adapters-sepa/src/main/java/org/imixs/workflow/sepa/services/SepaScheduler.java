@@ -32,9 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import jakarta.ejb.EJB;
-import jakarta.inject.Inject;
-import jakarta.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -54,6 +51,10 @@ import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
+
+import jakarta.ejb.EJB;
+import jakarta.inject.Inject;
+import jakarta.xml.bind.JAXBException;
 
 /**
  * The SepaScheduler implementation exports workflow invoice data into a SEPA
@@ -102,17 +103,14 @@ public class SepaScheduler implements Scheduler {
     public ItemCollection run(ItemCollection configuration) throws SchedulerException {
         String reportName = "";
         ItemCollection sepaExport = null;
-
+        String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
+        int taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
         try {
-
-            String modelVersion = configuration.getItemValueString(SepaWorkflowService.ITEM_MODEL_VERSION);
-            int taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
-
             // fetch the initial event
             Model model = modelService.getModel(modelVersion);
             ItemCollection event = model.getEvent(taskID, SepaWorkflowService.EVENT_START);
             ItemCollection task = model.getTask(taskID);
-
+            
             // load the report
             ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));
             if (report == null) {
@@ -266,12 +264,17 @@ public class SepaScheduler implements Scheduler {
             // In case of a plugin exeption we continue the scheduler and mark the export as
             // failed
             try {
-                if (sepaExport != null) {
-                    // execute sepa workflow with EVENT_FAILED
-                    sepaWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
-                    sepaExport.event(SepaWorkflowService.EVENT_FAILED);
-                    workflowService.processWorkItem(sepaExport);
+                if (sepaExport == null) {
+                    // build the sepa export workitem....
+                    sepaExport = new ItemCollection().model(modelVersion).task(taskID);
+                    sepaExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
+                    sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
                 }
+                // execute sepa workflow with EVENT_FAILED
+                sepaWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
+                sepaExport.event(SepaWorkflowService.EVENT_FAILED);
+                workflowService.processWorkItem(sepaExport);
+                
             } catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
                 throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
                         "Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
@@ -280,12 +283,17 @@ public class SepaScheduler implements Scheduler {
                 | ProcessingErrorException | QueryException e) {
             // in all other cases we stop the processing
             try {
-                if (sepaExport != null) {
-                    // execute sepa workflow with EVENT_FAILED
-                    sepaWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
-                    sepaExport.event(SepaWorkflowService.EVENT_FAILED);
-                    workflowService.processWorkItem(sepaExport);
+                if (sepaExport == null) {
+                     // build the sepa export workitem....
+                    sepaExport = new ItemCollection().model(modelVersion).task(taskID);
+                    sepaExport.replaceItemValue(WorkflowKernel.CREATED, new Date());
+                    sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
                 }
+                // execute sepa workflow with EVENT_FAILED
+                sepaWorkflowService.logMessage("Failed: " + e.getMessage(), configuration, sepaExport);
+                sepaExport.event(SepaWorkflowService.EVENT_FAILED);
+                workflowService.processWorkItem(sepaExport);
+            
             } catch (AccessDeniedException | ProcessingErrorException | PluginException | ModelException e1) {
                 throw new SchedulerException(SepaWorkflowService.REPORT_ERROR,
                         "Failed to execute sepa report '" + reportName + "' : " + e.getMessage(), e);
