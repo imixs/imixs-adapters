@@ -161,26 +161,49 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	public void updateFileData(FileData fileData, ItemCollection workitem, List<String> replaceDevList, String eval)
 			throws PluginException {
 		byte[] newContent = null;
-		
-		logger.info("....updateFileData - file="+fileData.getName());
+
+		logger.info("....updateFileData - file=" + fileData.getName());
 		String fileName = fileData.getName();
 		if (fileData.getContent() == null || fileData.getContent().length < 3) {
 			// load the snapshot
 			fileData = snapshotService.getWorkItemFile(workitem.getUniqueID(), fileName);
 		}
 
-		// odt files....
-		if (fileName.toLowerCase().endsWith(".odt")  || fileName.toLowerCase().endsWith(".ods")) {
+		OdfDocument odfDoc = loadODFDocument(fileData);
+		// odt/ods files....
+
+		logger.fine("OdfTextDocument loaded");
+		try {
+			updateODFDocument(odfDoc, workitem, replaceDevList);
+			logger.fine("findreplace completed");
+			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+			odfDoc.save(byteArrayOutputStream);
+			odfDoc.close();
+			newContent = byteArrayOutputStream.toByteArray();
+			FileData fileDataNew = new FileData(fileData.getName(), newContent, fileData.getContentType(), null);
+			// update the fileData
+			workitem.addFileData(fileDataNew);
+			logger.fine("new document added");
+		} catch (Exception e) {
+			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), DOCUMENT_ERROR,
+					"unable to updated document '" + fileName + "' : " + e.getMessage());
+		}
+
+	}
+
+	public OdfDocument loadODFDocument(FileData fileData) throws PluginException {
+		String fileName = fileData.getName();
+		if (fileData.getContent() == null || fileData.getContent().length < 5) {
+			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), DOCUMENT_ERROR,
+					"unable to load document '" + fileName + "' - no file content found!");
+		}
+		// odt/ods files....
+		if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
 
 			try (InputStream inputStream = new ByteArrayInputStream(fileData.getContent())) {
-				OdfDocument odfDoc = OdfDocument.loadDocument(inputStream);			
+				OdfDocument odfDoc = OdfDocument.loadDocument(inputStream);
 				logger.fine("OdfTextDocument loaded");
-				updateODFDocument(odfDoc,workitem,replaceDevList);
-				logger.fine("findreplace completed");
-				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-				odfDoc.save(byteArrayOutputStream);
-				odfDoc.close();
-				newContent = byteArrayOutputStream.toByteArray();
+				return odfDoc;
 
 			} catch (Exception e) {
 				logger.warning("Failed to convert document: " + e.getMessage());
@@ -188,22 +211,24 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 						"unable to update document '" + fileName + "': " + e.getMessage());
 			}
 
-			FileData fileDataNew = new FileData(fileData.getName(), newContent, fileData.getContentType(), null);
-			// update the fileData
-			workitem.addFileData(fileDataNew);
-			logger.fine("new document added");
+		} else {
+			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), DOCUMENT_ERROR,
+					"unsupported file format (.odt or .ods expected)!");
 		}
 	}
 
 	/**
-	 * Updates a Text Document
+	 * Updates a ODF Document. TextWriter and Calc are supported.
+	 * The method can be overwritten by subclasses to add additional logic
+	 * 
 	 * @param odfDoc
 	 * @param workitem
 	 * @param replaceDevList
 	 * @throws PluginException
 	 * @throws InvalidNavigationException
 	 */
-	public void updateODFDocument(OdfDocument odfDoc, ItemCollection workitem, List<String> replaceDevList) throws PluginException, InvalidNavigationException {
+	public void updateODFDocument(OdfDocument odfDoc, ItemCollection workitem, List<String> replaceDevList)
+			throws PluginException, InvalidNavigationException {
 		logger.fine("OdfTextDocument loaded");
 
 		for (String entityDev : replaceDevList) {
@@ -219,9 +244,11 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 					replaceODFTextFragment((OdfTextDocument) odfDoc, find, replace);
 				}
 				if (odfDoc instanceof OdfSpreadsheetDocument) {
-					replaceODFCell((OdfSpreadsheetDocument) odfDoc, find, replace);
+					// get first table sheet...
+					OdfTable table = odfDoc.getTableList(true).get(0);
+					replaceODFCell((OdfSpreadsheetDocument) odfDoc, table, find, replace);
 				}
-				
+
 			}
 		}
 	}
@@ -232,8 +259,8 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	 * @throws InvalidNavigationException
 	 */
 	private void replaceODFTextFragment(OdfTextDocument doc, String pattern, String replace)
-			throws InvalidNavigationException {		
-		logger.finest("..test for pattern:  "+pattern    + "    ---> Replace: "+replace);
+			throws InvalidNavigationException {
+		logger.finest("..test for pattern:  " + pattern + "    ---> Replace: " + replace);
 		TextNavigation textNavigator = new TextNavigation(pattern, doc);
 		while (textNavigator.hasNext()) {
 
@@ -247,11 +274,10 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	 * 
 	 * @throws InvalidNavigationException
 	 */
-	private void replaceODFCell(OdfSpreadsheetDocument doc, String address, String replace)
+	private void replaceODFCell(OdfSpreadsheetDocument doc, OdfTable table, String address, String replace)
 			throws InvalidNavigationException {
-		// get first table sheet...
-		OdfTable tbl = doc.getTableList(true).get(0);
-		OdfTableCell cell = tbl.getCellByPosition(address);
+
+		OdfTableCell cell = table.getCellByPosition(address);
 		cell.setStringValue(replace);
 
 	}
