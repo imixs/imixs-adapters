@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Inject;
-
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Name;
@@ -34,6 +32,8 @@ import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.util.XMLParser;
+
+import jakarta.inject.Inject;
 
 /**
  * This POIFindReplaceAdapter can be used to find and replace text fragements in
@@ -213,21 +213,9 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         // docx files....
         if (fileName.toLowerCase().endsWith(".docx")) {
             XWPFDocument doc = new XWPFDocument(imputStream);
-
             logger.fine("XWPFDocument loaded");
 
-            for (String entityDev : replaceDevList) {
-                ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
-
-                if (entityData != null) {
-                    String find = entityData.getItemValueString("find");
-                    find = workflowService.adaptText(find, document);
-                    String replace = entityData.getItemValueString("replace");
-                    replace = workflowService.adaptText(replace, document);
-                    replaceXWPFDocument(doc, find, replace);
-                }
-            }
-
+            updateXWPFDocument(doc, document, replaceDevList);
             logger.fine("findreplace completed");
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -239,52 +227,28 @@ public class POIFindReplaceAdapter implements SignalAdapter {
 
         // xlsx files....
         if (fileName.toLowerCase().endsWith(".xls") || fileName.toLowerCase().endsWith(".xlsx")) {
-            XSSFWorkbook doc = new XSSFWorkbook(imputStream);
+            XSSFWorkbook workbook = new XSSFWorkbook(imputStream);
 
             logger.fine("XSSFWorkbook loaded");
-            // NOTE: we only take the first sheet !
-            XSSFSheet sheet = doc.getSheetAt(0);
+            updateXSSFWorkbook(workbook, document, replaceDevList);
 
-            for (String entityDev : replaceDevList) {
-                ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
-
-                if (entityData != null) {
-                    String find = entityData.getItemValueString("find");
-                    String replace = entityData.getItemValueString("replace");
-                    replace = workflowService.adaptText(replace, document);
-                    // optional itename
-                    String itemname = entityData.getItemValueString("itemname");
-
-                    // replace with item value?
-                    if (!itemname.isEmpty()) {
-                        List<?> valueList = document.getItemValue(itemname);
-                        if (valueList.size() > 0) {
-                            // provide the first value only
-                            replaceXSSFSheetItemValue(doc, sheet, find, valueList.get(0));
-                        }
-                    } else {
-                        replaceXSSFSheetStringValue(doc, sheet, find, replace);
-                    }
-
-                }
-            }
             logger.fine("findreplace completed");
             // recalculate formulas
+            XSSFSheet sheet = workbook.getSheetAt(0);
             if (eval != null && !eval.isEmpty()) {
                 // iterate over all cells to be evaluated
                 String[] cellPositions = eval.split(";");
                 for (String cellPos : cellPositions) {
-                    evalXSSFSheet(doc, sheet, cellPos);
+                    evalXSSFSheet(workbook, sheet, cellPos);
                 }
                 logger.fine("formula evualtion completed");
             }
             // doc.setForceFormulaRecalculation(true);
-
             // XSSFFormulaEvaluator.evaluateAllFormulaCells(doc);
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            doc.write(byteArrayOutputStream);
-            doc.close();
+            workbook.write(byteArrayOutputStream);
+            workbook.close();
             newContent = byteArrayOutputStream.toByteArray();
         }
 
@@ -295,15 +259,83 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     }
 
     /**
+     * This method updates the XWPFDocument document. The method can be overwritten
+     * by subclasses to add additional logic
+     * 
+     * @param doc
+     * @param workitem
+     * @param replaceDevList
+     * @throws PluginException
+     */
+    public void updateXWPFDocument(XWPFDocument document, ItemCollection workitem, List<String> replaceDevList)
+            throws PluginException {
+
+        for (String entityDev : replaceDevList) {
+            ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
+
+            if (entityData != null) {
+                String find = entityData.getItemValueString("find");
+                find = workflowService.adaptText(find, workitem);
+                String replace = entityData.getItemValueString("replace");
+                replace = workflowService.adaptText(replace, workitem);
+                replaceXWPFDocument(document, find, replace);
+            }
+        }
+
+    }
+
+    /**
+     * This method updates the XSSFWorkbook document. The method can be overwritten
+     * by subclasses to add additional logic
+     * 
+     * @param workbook
+     * @param workitem
+     * @param replaceDevList
+     * @throws PluginException
+     */
+    public void updateXSSFWorkbook(XSSFWorkbook workbook, ItemCollection workitem, List<String> replaceDevList)
+            throws PluginException {
+
+        logger.fine("XSSFWorkbook loaded");
+        // NOTE: we only take the first sheet !
+        XSSFSheet sheet = workbook.getSheetAt(0);
+
+        for (String entityDev : replaceDevList) {
+            ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
+
+            if (entityData != null) {
+                String find = entityData.getItemValueString("find");
+                String replace = entityData.getItemValueString("replace");
+                replace = workflowService.adaptText(replace, workitem);
+                // optional itename
+                String itemname = entityData.getItemValueString("itemname");
+
+                // replace with item value?
+                if (!itemname.isEmpty()) {
+                    List<?> valueList = workitem.getItemValue(itemname);
+                    if (valueList.size() > 0) {
+                        // provide the first value only
+                        replaceXSSFSheetItemValue(workbook, sheet, find, valueList.get(0));
+                    }
+                } else {
+                    replaceXSSFSheetStringValue(workbook, sheet, find, replace);
+                }
+
+            }
+        }
+    }
+
+    /**
      * Helper method replaces a given cell of a XSSFSheet with a string value
      * 
      * @throws PluginException
      */
-    private void replaceXSSFSheetStringValue(XSSFWorkbook doc, XSSFSheet sheet, String find, String replace) throws PluginException {
+    private void replaceXSSFSheetStringValue(XSSFWorkbook doc, XSSFSheet sheet, String find, String replace)
+            throws PluginException {
         logger.finest("update cell " + find);
         XSSFCell cell = getCellByRef(doc, sheet, find);
-        if (cell==null ) {
-            logger.warning("Cell "  + find + " not found.");
+        if (cell == null) {
+            logger.warning("Cell " + find + " not found.");
             return;
         }
         try {
@@ -321,11 +353,12 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * 
      * @throws PluginException
      */
-    private void replaceXSSFSheetItemValue(XSSFWorkbook doc, XSSFSheet sheet, String find, Object itemValue) throws PluginException {
+    public void replaceXSSFSheetItemValue(XSSFWorkbook doc, XSSFSheet sheet, String find, Object itemValue)
+            throws PluginException {
         logger.finest("update cell " + find);
         XSSFCell cell = getCellByRef(doc, sheet, find);
-        if (cell==null ) {
-            logger.warning("Cell "  + find + " not found.");
+        if (cell == null) {
+            logger.warning("Cell " + find + " not found.");
             return;
         }
         if (itemValue instanceof Date) {
@@ -347,7 +380,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      */
     public static XSSFCell getCellByRef(XSSFWorkbook doc, XSSFSheet sheet, String cellReference) {
         XSSFCell cell = null;
-        
+
         // first we test if the cellName is a named cell
         Name aNamedCell = doc.getName(cellReference);
         if (aNamedCell != null) {
@@ -356,10 +389,10 @@ public class POIFindReplaceAdapter implements SignalAdapter {
             cellReference = aNamedCell.getRefersToFormula();
             // now we can find the cell by its ref
         }
-        
+
         CellReference cr = new CellReference(cellReference);
         XSSFRow row = sheet.getRow(cr.getRow());
-        if (row==null) {
+        if (row == null) {
             logger.severe("Unable to resolve cell ref '" + cellReference + "'!");
             return null;
         }
@@ -378,8 +411,8 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     public void evalXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cell) throws PluginException {
         FormulaEvaluator evaluator = doc.getCreationHelper().createFormulaEvaluator();
         XSSFCell c = getCellByRef(doc, sheet, cell);
-        if (c==null ) {
-            logger.warning("Cell "  + cell + " not found.");
+        if (c == null) {
+            logger.warning("Cell " + cell + " not found.");
             return;
         }
         if (c.getCellType() == CellType.FORMULA) {
@@ -398,7 +431,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     /**
      * Helper method replaces a given text in a XWPFDocument
      */
-    private void replaceXWPFDocument(XWPFDocument doc, String find, String replace) {
+    public void replaceXWPFDocument(XWPFDocument doc, String find, String replace) {
 
         for (XWPFParagraph p : doc.getParagraphs()) {
             replaceParagraph(p, find, replace);
