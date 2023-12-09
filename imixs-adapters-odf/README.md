@@ -1,7 +1,7 @@
 # Imixs ODF Adapter
 
 This adapter module provides services to update the content of a ODF document. The implementation is based on
-[LibreOFfice ODF Toolkit](https://odftoolkit.org/). 
+[LibreOffice ODF Toolkit](https://odftoolkit.org/). 
 
 ## ODF FindReplace Adapter
 
@@ -80,7 +80,7 @@ This example updates a text, a date and a number value.
 
 The Imixs-Adapter-ODF Project is based on the [ODF Toolkit](https://odftoolkit.org/) which is a lightweight Java library to create, read and update the data of ODF documents. Unlike other approaches, which rely on runtime manipulation of heavy-weight editors via an automation interface, you can only update the content of the (xml)document. But you have no access to any application interface like LibreOffice. 
 
-So there is now API to recompute cell values by a formula. But you can calculate the results of your changes manually and update the corresponding cell. The ODFToolkit keeps your original formulas intact. In this way changes, made later in an editor like LibreOffice or Collabora, are automatically recalculated by your origin formulas.
+So there is no API to recompute cell values based on a formula. But you can calculate the results of your changes manually and update the corresponding cell. The ODFToolkit keeps your original formulas intact. In this way changes, made later in an editor like LibreOffice or Collabora, are automatically recalculated by your origin formulas.
 
 
 # Development

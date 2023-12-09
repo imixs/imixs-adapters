@@ -60,7 +60,8 @@ import jakarta.inject.Inject;
  * <pre>
  * {@code
  *
- *    <wopi-template name="source-path">./my-templates/invoice-template.odt</wopi-template>
+ *    <wopi-template name=
+"source-path">./my-templates/invoice-template.odt</wopi-template>
        <wopi-template name="target-name">invoice-2020.odt</wopi-template>
  * }
  * </pre>
@@ -69,7 +70,8 @@ import jakarta.inject.Inject;
  * 
  * <pre>
  * {@code
-      <wopi-template name="source-path"><textblock>invoice template</textblock></office-template>
+      <wopi-template name=
+"source-path"><textblock>invoice template</textblock></office-template>
  * }
  * </pre>
  * 
@@ -87,7 +89,7 @@ public class WopiTemplateAdapter implements SignalAdapter {
     public static final String API_ERROR = "API_ERROR";
     public static String SNAPSHOTID = "$snapshotid";
     final String TYPE_TEXTBLOCK = "textblock";
-    
+
     private static Logger logger = Logger.getLogger(WopiTemplateAdapter.class.getName());
 
     @Inject
@@ -96,11 +98,11 @@ public class WopiTemplateAdapter implements SignalAdapter {
 
     @Inject
     private WorkflowService workflowService;
-    
+
     @Inject
     private TextBlockHelperService textBlockHelperService;
 
- /**
+    /**
      * This method imports a office document template into the current workitem.
      */
     public ItemCollection execute(ItemCollection document, ItemCollection event) throws AdapterException {
@@ -112,11 +114,11 @@ public class WopiTemplateAdapter implements SignalAdapter {
             ItemCollection officeTemplateConfig = workflowService.evalWorkflowResult(event, "wopi-template", document,
                     false);
 
-            if (officeTemplateConfig==null) {
+            if (officeTemplateConfig == null) {
                 throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "missing wopi-template configuraiton in BPMN event!");
             }
-            
+
             String sourcePath = officeTemplateConfig.getItemValueString("source-path");
             String targetName = officeTemplateConfig.getItemValueString("target-name");
             boolean autoOpen = officeTemplateConfig.getItemValueBoolean("auto-open");
@@ -125,13 +127,13 @@ public class WopiTemplateAdapter implements SignalAdapter {
                 throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "missing source-path definition!");
             } else {
-                // adapt text but skip the textblock adapter itself....  
-                // See issue #138            
+                // adapt text but skip the textblock adapter itself....
+                // See issue #138
                 sourcePath = sourcePath.replace("textblock>", "textblockignore>");
-                sourcePath = workflowService.adaptText(sourcePath, document);    
+                sourcePath = workflowService.adaptText(sourcePath, document);
                 sourcePath = sourcePath.replace("textblockignore>", "textblock>");
             }
-            
+
             if (targetName.isEmpty()) {
                 throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "missing target-name definition!");
@@ -157,6 +159,7 @@ public class WopiTemplateAdapter implements SignalAdapter {
                 fileData = readFromFilesystem(templatePath + sourcePath);
             }
             if (fileData != null) {
+                logger.info("...adding new fileData object: " + targetName);
                 fileData.setName(targetName);
                 document.addFileData(fileData);
 
@@ -193,9 +196,7 @@ public class WopiTemplateAdapter implements SignalAdapter {
             content = Files.readAllBytes(filepath);
             FileData fileData = new FileData(filepath.getFileName().toString(), content, null, null);
             // attache filedata
-            if (debug) {
-                logger.finest("......adding new fileData object: " + filepath.getFileName().toString());
-            }
+            logger.finest("...read from Filesystem: " + filepath.getFileName().toString());
             return fileData;
         } catch (IOException e) {
             // no file was found
@@ -236,7 +237,9 @@ public class WopiTemplateAdapter implements SignalAdapter {
                 // return the 1st fileData object
                 List<FileData> fileDataList = textBlockDocument.getFileData();
                 if (fileDataList != null && fileDataList.size() > 0) {
-                    return fileDataList.get(0);
+                    FileData fileData = fileDataList.get(0);
+                    logger.finest("...read from TextBlock: " + fileData.getName());
+                    return fileData;
                 }
 
             } else {
@@ -247,51 +250,5 @@ public class WopiTemplateAdapter implements SignalAdapter {
 
         return null;
     }
-    
-    
-    
-    
-    /**
-     * Helper method returns a text-block ItemCollection for a specified name or id.
-     * If no text-block is found for this name the Method creates an empty
-     * text-block object. 
-     * 
-     * @param name         in attribute txtname
-     */
-    /*
-    private ItemCollection loadTextBlock(String name) {
-        ItemCollection textBlockItemCollection = null;
-        // check cache...
 
-            // try to load by ID....
-            textBlockItemCollection = documentService.load(name);
-            if (textBlockItemCollection == null) {
-                // not found by ID so lets try to load it by txtname.....
-                // load text-block....
-                String sQuery = "(type:\"" + TYPE_TEXTBLOCK + "\" AND txtname:\"" + name + "\")";
-                Collection<ItemCollection> col;
-                try {
-                    col = documentService.find(sQuery, 1, 0);
-
-                    if (col.size() > 0) {
-                        textBlockItemCollection = col.iterator().next();
-                    } else {
-                        logger.warning("Missing text-block : '" + name + "'");
-                    }
-                } catch (QueryException e) {
-                    logger.warning("getTextBlock - invalid query: " + e.getMessage());
-                }
-
-            }
-
-            if (textBlockItemCollection == null) {
-                // create default values
-                textBlockItemCollection = new ItemCollection();
-                textBlockItemCollection.replaceItemValue("type", TYPE_TEXTBLOCK);
-                textBlockItemCollection.replaceItemValue("txtname", name);
-            }
-           
-        return textBlockItemCollection;
-    }
-    */
 }
