@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.imixs.workflow</groupId>
 	<artifactId>imixs-adapters</artifactId>
@@ -222,7 +224,6 @@
 	</profiles>
 
 
-	
 	<dependencyManagement>
 		<dependencies>
 			<!-- WORKFLOW -->
@@ -263,44 +264,44 @@
 				<scope>provided</scope>
 			</dependency>
 
-		
+
 			<dependency>
 				<groupId>org.imixs.jwt</groupId>
 				<artifactId>imixs-jwt</artifactId>
 				<version>${org.imixs.jwt.version}</version>
 				<scope>provided</scope>
-			</dependency>	
-			
+			</dependency>
+
 			<dependency>
 				<groupId>org.imixs.workflow</groupId>
 				<artifactId>imixs-archive-api</artifactId>
 				<version>${org.imixs.archive.version}</version>
 				<scope>provided</scope>
-			</dependency>	
+			</dependency>
 
 		</dependencies>
 	</dependencyManagement>
 	<dependencies>
 		<!-- Jakarta EE -->
 		<dependency>
-		    <groupId>jakarta.platform</groupId>
-		    <artifactId>jakarta.jakartaee-api</artifactId>
-		    <version>${jakarta.version}</version>
-		    <scope>provided</scope>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
+			<version>${jakarta.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<!-- JDK 11 - XML Bind -->
 		<dependency>
-		    <groupId>org.glassfish.jaxb</groupId>
-		    <artifactId>jaxb-runtime</artifactId>
-		    <version>3.0.0</version>
-		    <scope>test</scope>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>3.0.0</version>
+			<scope>test</scope>
 		</dependency>
-    	<dependency>
-	       <groupId>jakarta.xml.bind</groupId>
-	       <artifactId>jakarta.xml.bind-api</artifactId>
-	       <version>3.0.0</version>
-	       <scope>test</scope>
-	    </dependency>	
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>3.0.0</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.eclipse.parsson</groupId>
 			<artifactId>jakarta.json</artifactId>
@@ -322,14 +323,22 @@
 			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- 
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-all</artifactId>
 			<version>1.9.5</version>
 			<scope>test</scope>
 		</dependency>
+		-->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>5.8.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-	
+
 	<!-- Distribution Management oss.sonatype.org -->
 	<distributionManagement>
 		<snapshotRepository>
