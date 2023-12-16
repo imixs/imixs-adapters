@@ -236,7 +236,8 @@ public class SepaWorkflowService {
     }
 
     /**
-     * This method returns a ItemColleciton containing the bank data (Name/IBAN/BIC) for a given configuration type (dbtr|cdtr)
+     * This method returns a ItemColleciton containing the bank data (Name/IBAN/BIC)
+     * for a given configuration type (dbtr|cdtr)
      * 
      * @param paymentType   - name of the payment
      * @param configuration - the sepa configuration document
@@ -344,26 +345,41 @@ public class SepaWorkflowService {
         // set unqiueid, needed for xslt
         sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
 
-        // copy dbtr_iban
-        sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
-                workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
-
-        // set additional data (e.g _dbtr_name) from first invoice...
-        if (workitem.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
-            sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
-                    workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+        String type = "OUT"; // default
+        if (sepaConfig != null && !sepaConfig.isItemEmpty("type")) {
+            type = sepaConfig.getItemValueString("type");
         }
-        // set _dbtr_bic from first invoice if available...
-        if (workitem.hasItem(SepaWorkflowService.ITEM_DBTR_BIC)) {
-            sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
-                    workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+        // Invoice/Lastschrift?
+        if ("OUT".equalsIgnoreCase(type)) {
+            // copy dbtr data...
+            sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_IBAN,
+                    workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_IBAN));
+            if (workitem.hasItem(SepaWorkflowService.ITEM_DBTR_NAME)) {
+                sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_NAME,
+                        workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_NAME));
+            }
+            if (workitem.hasItem(SepaWorkflowService.ITEM_DBTR_BIC)) {
+                sepaExport.setItemValue(SepaWorkflowService.ITEM_DBTR_BIC,
+                        workitem.getItemValue(SepaWorkflowService.ITEM_DBTR_BIC));
+            }
+        } else {
+            // copy cdtr data...
+            sepaExport.setItemValue(SepaWorkflowService.ITEM_CDTR_IBAN,
+                    workitem.getItemValue(SepaWorkflowService.ITEM_CDTR_IBAN));
+            if (workitem.hasItem(SepaWorkflowService.ITEM_CDTR_NAME)) {
+                sepaExport.setItemValue(SepaWorkflowService.ITEM_CDTR_NAME,
+                        workitem.getItemValue(SepaWorkflowService.ITEM_CDTR_NAME));
+            }
+            if (workitem.hasItem(SepaWorkflowService.ITEM_CDTR_BIC)) {
+                sepaExport.setItemValue(SepaWorkflowService.ITEM_CDTR_BIC,
+                        workitem.getItemValue(SepaWorkflowService.ITEM_CDTR_BIC));
+            }
         }
-        // set payment.type from first invoice if available...
         if (workitem.hasItem(SepaWorkflowService.ITEM_PAYMENT_TYPE)) {
             sepaExport.setItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE,
                     workitem.getItemValue(SepaWorkflowService.ITEM_PAYMENT_TYPE));
         }
-        // set sepa.report from first invoice if available...
+        // set sepa.report from first ref if available...
         if (workitem.hasItem(SepaWorkflowService.ITEM_SEPA_REPORT)) {
             sepaExport.setItemValue(SepaWorkflowService.ITEM_SEPA_REPORT,
                     workitem.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
@@ -466,13 +482,16 @@ public class SepaWorkflowService {
                         bankData.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
             } else {
                 throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                        "No dbtr information found in '" + workitem.getUniqueID() + "' for payment.out.type='" + paymentType + "'. Missing SEPA configuration!");
+                        "No dbtr information found in '" + workitem.getUniqueID() + "' for payment.out.type='"
+                                + paymentType + "'. Missing SEPA configuration!");
             }
         }
     }
 
     /**
-     * This method validates if the current workitem has cdtr data. If not a exception is thrown.
+     * This method validates if the current workitem has cdtr data. If not a
+     * exception is thrown.
+     * 
      * @param workitem
      * @throws PluginException
      */
@@ -480,16 +499,12 @@ public class SepaWorkflowService {
 
         // test if the workitem has a dbtr.iban / dbtr.bic or a cdtr.iban / cdtr.bic
         if (workitem.getItemValueString(SepaWorkflowService.ITEM_CDTR_IBAN).isEmpty()
-                || workitem.getItemValueString(SepaWorkflowService.ITEM_CDTR_BIC).isEmpty()) {    
-                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                        "No creditor information found for this transaction!");
+                || workitem.getItemValueString(SepaWorkflowService.ITEM_CDTR_BIC).isEmpty()) {
+            throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+                    "No creditor information found for this transaction!");
         }
-        
+
     }
-
-
-
-
 
     /**
      * This method adds the CDTR default information to a workitem if the workitem
@@ -539,9 +554,10 @@ public class SepaWorkflowService {
         }
     }
 
-
     /**
-     * This method validates if the current workitem has cdtr data. If not a exception is thrown.
+     * This method validates if the current workitem has cdtr data. If not a
+     * exception is thrown.
+     * 
      * @param workitem
      * @throws PluginException
      */
@@ -549,13 +565,12 @@ public class SepaWorkflowService {
 
         // test if the workitem has a dbtr.iban / dbtr.bic or a cdtr.iban / cdtr.bic
         if (workitem.getItemValueString(SepaWorkflowService.ITEM_DBTR_IBAN).isEmpty()
-                || workitem.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {    
-                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                        "No debitor information found for this transaction!");
+                || workitem.getItemValueString(SepaWorkflowService.ITEM_DBTR_BIC).isEmpty()) {
+            throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+                    "No debitor information found for this transaction!");
         }
-        
-    }
 
+    }
 
     /**
      * Helper method verifies all open SEPA exports and returns the latest for the

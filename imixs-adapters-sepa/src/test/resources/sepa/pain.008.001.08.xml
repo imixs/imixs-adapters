@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mit XMLSpy v2022 rel. 2 sp2 (http://www.altova.com) im September 2023 von der SIZ GmbH (Wenzel)
+bearbeitet -->
+<!-- Änderungen gegenüber der Vorfassung: Namespace, strukturierte Debtoradresse im Fall Debotor
+Non-EWR-Land, Korrektur am 11.9.2023: Strasse und Hausnummer in den dafür vorgesehenen Subelementen -->
+<!-- Dieses Beispiel wurde mit dem DK TVS pain.008.001.08_GBIC_4 erstellt und validiert  -->
+<Document xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="urn:iso:std:iso:20022:tech:xsd:pain.008.001.08"
+    xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:pain.008.001.08 pain.008.001.08.xsd">
+    <CstmrDrctDbtInitn>
+        <GrpHdr>
+            <MsgId>Message-ID-4711</MsgId>
+            <CreDtTm>2023-12-01T09:30:47.000Z</CreDtTm>
+            <NbOfTxs>2</NbOfTxs>
+            <CtrlSum>6655.86</CtrlSum>
+            <InitgPty>
+                <Nm>Initiator Name</Nm>
+            </InitgPty>
+        </GrpHdr>
+        <PmtInf>
+            <PmtInfId>Payment-ID</PmtInfId>
+            <PmtMtd>DD</PmtMtd>
+            <NbOfTxs>2</NbOfTxs>
+            <CtrlSum>6655.86</CtrlSum>
+            <PmtTpInf>
+                <SvcLvl>
+                    <Cd>SEPA</Cd>
+                </SvcLvl>
+                <LclInstrm>
+                    <Cd>CORE</Cd>
+                </LclInstrm>
+                <SeqTp>FRST</SeqTp>
+            </PmtTpInf>
+            <ReqdColltnDt>2023-12-05</ReqdColltnDt>
+            <Cdtr>
+                <Nm>Creditor Name</Nm>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>DE87200500001234567890</IBAN>
+                </Id>
+            </CdtrAcct>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>BANKDEFFXXX</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <ChrgBr>SLEV</ChrgBr>
+            <CdtrSchmeId>
+                <Id>
+                    <PrvtId>
+                        <Othr>
+                            <Id>DE00ZZZ00099999999</Id>
+                            <SchmeNm>
+                                <Prtry>SEPA</Prtry>
+                            </SchmeNm>
+                        </Othr>
+                    </PrvtId>
+                </Id>
+            </CdtrSchmeId>
+            <DrctDbtTxInf>
+                <PmtId>
+                    <EndToEndId>OriginatorID1234</EndToEndId>
+                </PmtId>
+                <InstdAmt Ccy="EUR">6543.14</InstdAmt>
+                <DrctDbtTx>
+                    <MndtRltdInf>
+                        <MndtId>Mandate-Id</MndtId>
+                        <DtOfSgntr>2023-12-01</DtOfSgntr>
+                        <AmdmntInd>true</AmdmntInd>
+                        <AmdmntInfDtls>
+                            <OrgnlCdtrSchmeId>
+                                <Nm>Original Creditor Name</Nm>
+                                <Id>
+                                    <PrvtId>
+                                        <Othr>
+                                            <Id>AA00ZZZOriginalCreditorID</Id>
+                                            <SchmeNm>
+                                                <Prtry>SEPA</Prtry>
+                                            </SchmeNm>
+                                        </Othr>
+                                    </PrvtId>
+                                </Id>
+                            </OrgnlCdtrSchmeId>
+                        </AmdmntInfDtls>
+                    </MndtRltdInf>
+                </DrctDbtTx>
+                <DbtrAgt>
+                    <FinInstnId>
+                        <!-- Die Angabe einer BIC ist nicht verpflichtend, da die Ergänzungsrechner
+                        diese inzwischen auch für Nicht-EWR-SEPA-Land errechnen können -->
+                        <BICFI>RAIFCH22005</BICFI>
+                    </FinInstnId>
+                </DbtrAgt>
+                <Dbtr>
+                    <Nm>Debtor Name</Nm>
+                    <!-- Die Angabe einer strukturierten Adresse, mindestens Stadt/Land (d.h.
+                    <TwnNm> und <Ctry>), des Debtors ist im Falle einer aus einem
+                    Nicht-EWR-SEPA-Land gezogenen Lastschrift verpflichtend -->
+                    <PstlAdr>
+                        <StrtNm>Musterlandstraße 48</StrtNm>
+                        <PstCd>8005</PstCd>
+                        <TwnNm>Zuerich</TwnNm>
+                        <Ctry>CH</Ctry>
+                    </PstlAdr>
+                </Dbtr>
+                <DbtrAcct>
+                    <Id>
+                        <IBAN>CH7280005000088877766</IBAN>
+                    </Id>
+                </DbtrAcct>
+                <UltmtDbtr>
+                    <Nm>Ultimate Debtor Name</Nm>
+                </UltmtDbtr>
+                <RmtInf>
+                    <Ustrd>Unstructured Remittance Information</Ustrd>
+                </RmtInf>
+            </DrctDbtTxInf>
+            <DrctDbtTxInf>
+                <PmtId>
+                    <EndToEndId>OriginatorID1235</EndToEndId>
+                </PmtId>
+                <InstdAmt Ccy="EUR">112.72</InstdAmt>
+                <DrctDbtTx>
+                    <MndtRltdInf>
+                        <MndtId>Other-Mandate-Id</MndtId>
+                        <DtOfSgntr>2023-12-01</DtOfSgntr>
+                        <AmdmntInd>false</AmdmntInd>
+                    </MndtRltdInf>
+                </DrctDbtTx>
+                <DbtrAgt>
+                    <FinInstnId>
+                        <BICFI>SPUEDE2UXXX</BICFI>
+                    </FinInstnId>
+                </DbtrAgt>
+                <Dbtr>
+                    <Nm>Other Debtor Name</Nm>
+                </Dbtr>
+                <DbtrAcct>
+                    <Id>
+                        <IBAN>DE21500500001234567897</IBAN>
+                    </Id>
+                </DbtrAcct>
+                <UltmtDbtr>
+                    <Nm>Ultimate Debtor Name</Nm>
+                </UltmtDbtr>
+                <RmtInf>
+                    <Ustrd>Unstructured Remittance Information</Ustrd>
+                </RmtInf>
+            </DrctDbtTxInf>
+        </PmtInf>
+    </CstmrDrctDbtInitn>
+</Document>
