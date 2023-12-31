@@ -230,21 +230,36 @@ With the adapter class *org.imixs.workflow.wopi.WopiTemplateAdapter* a office do
 
 The adapter can be configured by the workflow result:
 
-
-	<wopi-template name="source-path">./invoice-template.odt/</wopi-template>
-	<wopi-template name="target-name">invoice-2020.odt</wopi-template>
+```xml
+	<wopi-template>
+	  <source-path>./invoice-template.odt/</source-path>
+	  <target-name>invoice-2020.odt</target-name>
+	</wopi-template>
+```
 
 The tag 'source-path' specifies the location of the office template document in the servers local file system. 
 
-The tag 'target-name' is the name of the file to be attached to the current workitem. The name can be computed by <itemvalue> tags. For example:
+The tag 'target-name' is the name of the file to be attached to the current workitem.  The name can be computed by <itemvalue> tags. For example:
 
-	<wopi-template name="target-name">invoice-<itemvalue>invoice.number</itemvalue>.odt</wopi-template>
+```xml
+	<wopi-template>
+	 <target-name>invoice-<itemvalue>invoice.number</itemvalue>.odt</target-name>
+	 ....
+	</wopi-template>
+```
+
+**Note:** You can specifiy multiple `wopi-template` tages to process multiple documents in one event.
 
 ### Loading Templates from a Textblock
 
 A template can optionally be loaded from a Imixs-Office-Workflow textblock attachment.
 
-	<wopi-template name="source-path"><textblock>invoice template</textblock></wopi-template>
+```xml
+	<wopi-template>
+	 <source-path><textblock>invoice template</textblock></source-path>
+	 ....
+	</wopi-template>
+```
 
 In this case the adapter will load the first attachment from the textblock with the name 'inoice template'.
 
@@ -252,7 +267,12 @@ In this case the adapter will load the first attachment from the textblock with 
 
 With the optional flag 
 
-	<wopi-template name="auto-open">true</wopi-template>
+```xml
+	<wopi-template>
+	  ....
+	  <auto-open>true</auto-open>
+	</wopi-template>
+```
 
 The adapter class will set the item "wopi.auto.open". This flag can be used by a frontend implementation to automaitically open the Wopi Editor on load. This feature is implemented in Imixs-Office-Workflow.
 

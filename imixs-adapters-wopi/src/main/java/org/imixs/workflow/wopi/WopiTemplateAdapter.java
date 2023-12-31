@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,9 +61,10 @@ import jakarta.inject.Inject;
  * <pre>
  * {@code
  *
- *    <wopi-template name=
-"source-path">./my-templates/invoice-template.odt</wopi-template>
-       <wopi-template name="target-name">invoice-2020.odt</wopi-template>
+ *    <wopi name="./my-templates/invoice-template.odt">
+          <target-name>invoice-2020.odt</target-name>
+          <auto-open>true</auto-open>
+      </wopi>
  * }
  * </pre>
  * <p>
@@ -70,8 +72,9 @@ import jakarta.inject.Inject;
  * 
  * <pre>
  * {@code
-      <wopi-template name=
-"source-path"><textblock>invoice template</textblock></office-template>
+      <wopi name="<textblock>invoice template</textblock>" >
+        .....
+      </wopi>
  * }
  * </pre>
  * 
@@ -106,66 +109,83 @@ public class WopiTemplateAdapter implements SignalAdapter {
      * This method imports a office document template into the current workitem.
      */
     public ItemCollection execute(ItemCollection document, ItemCollection event) throws AdapterException {
+        ItemCollection evalItemCollection = null;
+        List<ItemCollection> officeTemplateConfigList = null;
 
         logger.finest("...running api adapter...");
 
-        // read optional configuration form the model or imixs.properties....
+        // read mandatory configuration form the model....
         try {
-            ItemCollection officeTemplateConfig = workflowService.evalWorkflowResult(event, "wopi-template", document,
-                    false);
 
-            if (officeTemplateConfig == null) {
+            // test for deprecated configuration using the <item> tag....
+            if (isDeprecatedConfiguration(document, event)) {
+                logger.warning(
+                        "WopiTemplateAdapter is using deprecated configuration! Please use <wopi-template> instead of <wopi-tempalte name='source-path'>  - see documentation for details!");
+                evalItemCollection = workflowService.evalWorkflowResult(event, "wopi-template", document,
+                        false);
+                officeTemplateConfigList = new ArrayList<>();
+                officeTemplateConfigList.add(evalItemCollection);
+            } else {
+                String workflowResult = event.getItemValueString("txtActivityResult");
+                officeTemplateConfigList = XMLParser.parseTagList(workflowResult, "wopi-template");
+            }
+
+            if (officeTemplateConfigList == null || officeTemplateConfigList.size() == 0) {
                 throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
                         "missing wopi-template configuraiton in BPMN event!");
             }
 
-            String sourcePath = officeTemplateConfig.getItemValueString("source-path");
-            String targetName = officeTemplateConfig.getItemValueString("target-name");
-            boolean autoOpen = officeTemplateConfig.getItemValueBoolean("auto-open");
+            // iterate over all wopi-template configurations
+            for (ItemCollection officeTemplateConfig : officeTemplateConfigList) {
 
-            if (sourcePath.isEmpty()) {
-                throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
-                        "missing source-path definition!");
-            } else {
-                // adapt text but skip the textblock adapter itself....
-                // See issue #138
-                sourcePath = sourcePath.replace("textblock>", "textblockignore>");
-                sourcePath = workflowService.adaptText(sourcePath, document);
-                sourcePath = sourcePath.replace("textblockignore>", "textblock>");
-            }
+                String sourcePath = officeTemplateConfig.getItemValueString("source-path");
+                String targetName = officeTemplateConfig.getItemValueString("target-name");
+                boolean autoOpen = officeTemplateConfig.getItemValueBoolean("auto-open");
 
-            if (targetName.isEmpty()) {
-                throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
-                        "missing target-name definition!");
-            } else {
-                // adapt text....
-                targetName = workflowService.adaptText(targetName, document);
-            }
+                if (sourcePath.isEmpty()) {
+                    throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
+                            "missing source-path definition!");
+                } else {
+                    // adapt text but skip the textblock adapter itself....
+                    // See issue #138
+                    sourcePath = sourcePath.replace("textblock>", "textblockignore>");
+                    sourcePath = workflowService.adaptText(sourcePath, document);
+                    sourcePath = sourcePath.replace("textblockignore>", "textblock>");
+                }
 
-            if (!templatePath.endsWith("/")) {
-                templatePath = templatePath + "/";
-            }
-            if (sourcePath.startsWith("/")) {
-                sourcePath = sourcePath.substring(1);
-            }
+                if (targetName.isEmpty()) {
+                    throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), API_ERROR,
+                            "missing target-name definition!");
+                } else {
+                    // adapt text....
+                    targetName = workflowService.adaptText(targetName, document);
+                }
 
-            // we can either load the template form the filesystem or from a textblock
-            // entity
-            FileData fileData = null;
-            if (sourcePath.startsWith("<textblock>")) {
-                fileData = readFromTextblock(sourcePath);
-            } else {
-                // load template from filesystem....
-                fileData = readFromFilesystem(templatePath + sourcePath);
-            }
-            if (fileData != null) {
-                logger.info("...adding new fileData object: " + targetName);
-                fileData.setName(targetName);
-                document.addFileData(fileData);
+                if (!templatePath.endsWith("/")) {
+                    templatePath = templatePath + "/";
+                }
+                if (sourcePath.startsWith("/")) {
+                    sourcePath = sourcePath.substring(1);
+                }
 
-                // Set auto-open file?
-                if (autoOpen) {
-                    document.setItemValue(WopiController.ITEM_WOPI_AUTO_OPEN, targetName);
+                // we can either load the template form the filesystem or from a textblock
+                // entity
+                FileData fileData = null;
+                if (sourcePath.startsWith("<textblock>")) {
+                    fileData = readFromTextblock(sourcePath);
+                } else {
+                    // load template from filesystem....
+                    fileData = readFromFilesystem(templatePath + sourcePath);
+                }
+                if (fileData != null) {
+                    logger.info("...adding new fileData object: " + targetName);
+                    fileData.setName(targetName);
+                    document.addFileData(fileData);
+
+                    // Set auto-open file?
+                    if (autoOpen) {
+                        document.setItemValue(WopiController.ITEM_WOPI_AUTO_OPEN, targetName);
+                    }
                 }
             }
 
@@ -251,4 +271,26 @@ public class WopiTemplateAdapter implements SignalAdapter {
         return null;
     }
 
+    /**
+     * This method tests if the BPMN configuration is still using the deprecated tag
+     * 
+     * <wopi-template name="source-path">....
+     * 
+     * instead of the new
+     * 
+     * <wopi name="..">
+     * 
+     * @param event
+     * @return
+     * @throws PluginException
+     */
+    private boolean isDeprecatedConfiguration(ItemCollection workitem, ItemCollection event) throws PluginException {
+
+        String workflowResult = event.getItemValueString("txtActivityResult");
+        if (!workflowResult.contains("<wopi-template>")) {
+            return true;
+        }
+
+        return false;
+    }
 }
