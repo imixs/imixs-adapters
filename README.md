@@ -1,4 +1,7 @@
 # imixs-adapters
+[![Java CI with Maven](https://github.com/imixs/imixs-adapters/actions/workflows/maven.yml/badge.svg)](https://github.com/imixs/imixs-adapters/actions/workflows/maven.yml)
+[![Join a discussion](https://img.shields.io/badge/discuss-on%20github-4CB697)](https://github.com/imixs/imixs-workflow/discussions)
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/imixs/imixs-adapters/blob/master/LICENSE)
 
 Connect Imixs-Workflow with services and software platforms!
 
