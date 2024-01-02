@@ -15,19 +15,20 @@ The adapter can replace text fragments in a paragraph of a ODF document. The ada
 The following example searches for an attachment with the name `Agreement-????.odf` and replaces the text fragments `#:company.name:#`, `#:company.country:#` and `#:contract_startdate:#` with the corresponding item values provided by the workitem.
 
 ```xml
-<odf-update name=
-     "filename">Agreement-<itemvalue>numsequencenumber</itemvalue>.odf</odf-update>
-<odf-update name="findreplace">
-     <find>#:company.name:#</find>
-     <replace><itemvalue>company.name</itemvalue></replace>
-</odf-update>
-<odf-update name="findreplace">
-     <find>#:company\.country:#</find>
-     <replace><itemvalue>company.country</itemvalue></replace>
-</odf-update>
-<odf-update name="findreplace">
-     <find>#:contract\.startdate:#</find>
-     <replace><itemvalue format="EEE, MMM d, yyyy">contract.start</itemvalue></replace>
+<odf-update>
+   <filename>Agreement-<itemvalue>numsequencenumber</itemvalue>.odf</filename>
+   <replace>
+      <key>#:company.name:#</key>
+      <value><itemvalue>company.name</itemvalue></value>
+   </replace>
+   <replace>
+      <key>#:company\.country:#</key>
+      <value><itemvalue>company.country</itemvalue></value>
+   </replace>
+   <replace>
+      <key>#:contract\.startdate:#</key>
+      <value><itemvalue format="EEE, MMM d, yyyy">contract.start</itemvalue></value>
+   </replace>
 </odf-update>
 ```
 
@@ -35,7 +36,7 @@ The following example searches for an attachment with the name `Agreement-????.o
 
 You can also define the filename as a pattern including regular expressions. See the following example:
 
-	<odf-update name="filename">.*<itemvalue>numsequencenumber</itemvalue>\.odf</odf-update>
+	<filename>.*<itemvalue>numsequencenumber</itemvalue>\.odf</filename>
 
 This expression will match all files ending with the sequence number and the file extension '.odf'
 
@@ -45,9 +46,12 @@ This expression will match all files ending with the sequence number and the fil
 The find replace feature of the ODFToolkit supports regular expressions to search for content. For example
 
 ```xml
-<odf-update name="findreplace">
-   <find>(Order)\w+</find>
-   <replace><itemvalue>order.number</itemvalue></replace>
+<odf-update>
+   ...
+   <replace>
+      <key>(Order)\w+</find>
+      <value><itemvalue>order.number</itemvalue></value>
+   </replace>
 </odf-update>
 ```
 
@@ -58,18 +62,20 @@ will replace all words starting with 'Order' like 'OrderNumber' , or 'OrderName'
 To update a SpreadSheet cell (.ods files) you can simply specify the cell position. See the following Example:
 
 ```xml 
-<odf-update name="filename">order_<itemvalue>order.number</itemvalue>.ods</odf-update>
-<odf-update name="findreplace">
-   <find>A5</find>
-   <replace><itemvalue>company.name</itemvalue></replace>
-</odf-update>
-<odf-update name="findreplace">
-   <find>B18</find>
-   <replace><itemvalue>total</itemvalue></replace>
-</odf-update>
-<odf-update name="findreplace">
-   <find>C18</find>
-   <replace><itemvalue format="dd.MM.yyyy">$lasteventdate</itemvalue></replace>
+<odf-update>
+   <filename>order_<itemvalue>order.number</itemvalue>.ods</filename>
+   <replace>
+      <key>A5</key>
+      <value><itemvalue>company.name</itemvalue></value>
+   </replace>
+   <replace>
+      <key>B18</key>
+      <value><itemvalue>total</itemvalue></value>
+   </replace>
+   <replace>
+      <key>C18</key>
+      <value><itemvalue format="dd.MM.yyyy">$lasteventdate</itemvalue></value>
+   </replace>
 </odf-update>
 
 ```

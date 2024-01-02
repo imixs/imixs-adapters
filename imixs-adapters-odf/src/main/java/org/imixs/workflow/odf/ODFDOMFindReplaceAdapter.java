@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -16,6 +17,7 @@ import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
+import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.util.XMLParser;
 import org.odftoolkit.odfdom.doc.OdfDocument;
 import org.odftoolkit.odfdom.doc.OdfSpreadsheetDocument;
@@ -37,6 +39,16 @@ import jakarta.inject.Inject;
  * 
  * <pre>
  * {@code
+ * 
+	<odf-update>
+		<filename>file1.odf</filename>
+		<replace>
+			<key>\[contract\.start\]</key>
+			<value><itemvalue>contract.start</itemvalue></value>
+		</replace>
+	</odf-update>
+
+	OLD 
       <odf-update name=
         "filename">PLA Membership Agreement-<itemvalue>numsequencenumber</itemvalue>.odt</odf-update>
         <odf-update name="findreplace">
@@ -56,7 +68,7 @@ import jakarta.inject.Inject;
  * </pre>
  * 
  * 
- * @version 1.0
+ * @version 2.0
  * @author rsoika
  */
 public class ODFDOMFindReplaceAdapter implements SignalAdapter {
@@ -85,58 +97,85 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	public ItemCollection execute(ItemCollection workitem, ItemCollection event)
 			throws AdapterException, PluginException {
 
-		// read the config
-		ItemCollection odfConfig = workflowService.evalWorkflowResult(event, "odf-update", workitem, false);
-		if (odfConfig == null || !odfConfig.hasItem("findreplace")) {
-			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-					"Missing odf configuration");
-		}
-		String fileName = odfConfig.getItemValueString("filename");
-		fileName = workflowService.adaptText(fileName, workitem);
+		boolean isDeprecated = false;
+		ItemCollection evalItemCollection = null;
+		List<ItemCollection> odfUpdateConfigList = null;
 
-		if (!fileName.toLowerCase().endsWith(".odt") && !fileName.toLowerCase().endsWith(".ods")) {
-			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-					"Only .odt, .ods files are supported!");
-		}
-		List<String> replaceDevList = odfConfig.getItemValue("findreplace");
-		String eval = odfConfig.getItemValueString("eval");
-		if (replaceDevList.size() == 0) {
-			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-					"Wrong odf configuration");
-		}
-
-		// First we test if the fileName is unique. If not found we test regular
-		// expressions...
-		boolean foundFile = false;
-		FileData fileData = workitem.getFileData(fileName);
-		if (fileData != null) {
-			// file data found - so we can updated it....
-			foundFile = true;
-			updateFileData(fileData, workitem, replaceDevList, eval);
+		// read the mandatory config
+		// test for deprecated configuration using the <item> tag....
+		isDeprecated = isDeprecatedConfiguration(workitem, event);
+		if (isDeprecated) {
+			logger.warning(
+					"WopiTemplateAdapter is using deprecated configuration! Please use <odf-update> instead of <odf-update name='find-replace'>  - see documentation for details!");
+			evalItemCollection = workflowService.evalWorkflowResult(event, "odf-update", workitem,
+					false);
+			odfUpdateConfigList = new ArrayList<>();
+			odfUpdateConfigList.add(evalItemCollection);
 		} else {
-			// not found, we can test regular expressions...
-			List<String> fileNames = workitem.getFileNames();
-			Pattern pattern = Pattern.compile(fileName);
-			// get all fileNames....
-			for (String aFileName : fileNames) {
-				// test if aFilename matches the pattern or the pattern is null
-				if (pattern.matcher(aFileName).find()) {
-					// fetch the file
-					fileData = workitem.getFileData(aFileName);
-					if (fileData != null) {
-						// file data found - so we can updated it....
-						foundFile = true;
-						updateFileData(fileData, workitem, replaceDevList, eval);
-					}
+			String workflowResult = event.getItemValueString("txtActivityResult");
+			odfUpdateConfigList = XMLParser.parseTagList(workflowResult, "odf-update");
+		}
 
+		if (odfUpdateConfigList == null || odfUpdateConfigList.size() == 0) {
+			throw new ProcessingErrorException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+					"missing odf-update configuraiton in BPMN event!");
+		}
+
+		// iterate over all odf-udpate configurations
+		for (ItemCollection odfUpdateConfig : odfUpdateConfigList) {
+			String fileName = odfUpdateConfig.getItemValueString("filename");
+			fileName = workflowService.adaptText(fileName, workitem);
+			if (!fileName.toLowerCase().endsWith(".odt") && !fileName.toLowerCase().endsWith(".ods")) {
+				throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+						"Only .odt, .ods files are supported!");
+			}
+
+			List<String> replaceDevList = null;
+			// support deprecated config
+			if (isDeprecated) {
+				replaceDevList = odfUpdateConfig.getItemValue("findreplace");
+			} else {
+				// new tag
+				replaceDevList = odfUpdateConfig.getItemValue("replace");
+			}
+
+			if (replaceDevList.size() == 0) {
+				throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+						"Wrong odf configuration - missing <replace> tag! Verify BPMN event confiuration!");
+			}
+
+			// First we test if the fileName is unique. If not found we test regular
+			// expressions...
+			boolean foundFile = false;
+			FileData fileData = workitem.getFileData(fileName);
+			if (fileData != null) {
+				// file data found - so we can updated it....
+				foundFile = true;
+				updateFileData(fileData, workitem, replaceDevList);
+			} else {
+				// not found, we can test regular expressions...
+				List<String> fileNames = workitem.getFileNames();
+				Pattern pattern = Pattern.compile(fileName);
+				// get all fileNames....
+				for (String aFileName : fileNames) {
+					// test if aFilename matches the pattern or the pattern is null
+					if (pattern.matcher(aFileName).find()) {
+						// fetch the file
+						fileData = workitem.getFileData(aFileName);
+						if (fileData != null) {
+							// file data found - so we can updated it....
+							foundFile = true;
+							updateFileData(fileData, workitem, replaceDevList);
+						}
+					}
 				}
 			}
-		}
 
-		// did we found at least one file
-		if (foundFile == false) {
-			throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
-					"wrong odf configuration - no file found matching '" + fileName + "' !");
+			// did we found at least one file
+			if (foundFile == false) {
+				throw new PluginException(ODFDOMFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+						"wrong odf configuration - no file found matching '" + fileName + "' !");
+			}
 		}
 
 		return workitem;
@@ -152,13 +191,11 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 	 * 
 	 * @param fileData       - the fileData object containing the text or calc file
 	 * @param replaceDevList - list of text markers or cell positions to be replaced
-	 * @param eval           - optional list of cell positions to be evaluated after
-	 *                       update (this is for XSSFWorkbooks only)
 	 * @throws IOException
 	 * @throws PluginException
 	 * 
 	 */
-	public void updateFileData(FileData fileData, ItemCollection workitem, List<String> replaceDevList, String eval)
+	public void updateFileData(FileData fileData, ItemCollection workitem, List<String> replaceDevList)
 			throws PluginException {
 		byte[] newContent = null;
 
@@ -235,18 +272,32 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 			ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
 
 			if (entityData != null) {
-				String find = entityData.getItemValueString("find");
-				find = workflowService.adaptText(find, workitem);
-				String replace = entityData.getItemValueString("replace");
-				replace = workflowService.adaptText(replace, workitem);
+				String key = entityData.getItemValueString("key");
+				// support deprected config
+				if (entityData.hasItem("find")) {
+					key = entityData.getItemValueString("find");
+				}
+				String value = entityData.getItemValueString("value");
+				// support depecated config-key
+				if (entityData.hasItem("replace")) {
+					value = entityData.getItemValueString("replace");
+				}
+
+				// trim whitespace!
+				key = key.trim();
+				value = value.trim();
+
+				// adapt values...
+				key = workflowService.adaptText(key, workitem);
+				value = workflowService.adaptText(value, workitem);
 
 				if (odfDoc instanceof OdfTextDocument) {
-					replaceODFTextFragment((OdfTextDocument) odfDoc, find, replace);
+					replaceODFTextFragment((OdfTextDocument) odfDoc, key, value);
 				}
 				if (odfDoc instanceof OdfSpreadsheetDocument) {
 					// get first table sheet...
 					OdfTable table = odfDoc.getTableList(true).get(0);
-					replaceODFCell((OdfSpreadsheetDocument) odfDoc, table, find, replace);
+					replaceODFCell((OdfSpreadsheetDocument) odfDoc, table, key, value);
 				}
 
 			}
@@ -282,4 +333,26 @@ public class ODFDOMFindReplaceAdapter implements SignalAdapter {
 
 	}
 
+	/**
+	 * This method tests if the BPMN configuration is still using the deprecated tag
+	 * 
+	 * <odf-update name="findreplace">....
+	 * 
+	 * instead of the new
+	 * 
+	 * <odf-update>....
+	 * 
+	 * @param event
+	 * @return
+	 * @throws PluginException
+	 */
+	private boolean isDeprecatedConfiguration(ItemCollection workitem, ItemCollection event) throws PluginException {
+
+		String workflowResult = event.getItemValueString("txtActivityResult");
+		if (!workflowResult.contains("<odf-update>")) {
+			return true;
+		}
+
+		return false;
+	}
 }
