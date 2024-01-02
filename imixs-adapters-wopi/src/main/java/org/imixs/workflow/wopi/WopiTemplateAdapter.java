@@ -278,7 +278,7 @@ public class WopiTemplateAdapter implements SignalAdapter {
      * 
      * instead of the new
      * 
-     * <wopi name="..">
+     * <wopi-template>...
      * 
      * @param event
      * @return
