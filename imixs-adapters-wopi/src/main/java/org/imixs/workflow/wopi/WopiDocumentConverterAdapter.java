@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -21,6 +22,8 @@ import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
+import org.imixs.workflow.exceptions.ProcessingErrorException;
+import org.imixs.workflow.util.XMLParser;
 
 import jakarta.inject.Inject;
 
@@ -87,52 +90,77 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
     public ItemCollection execute(ItemCollection document, ItemCollection event)
             throws AdapterException, PluginException {
 
-        ItemCollection wopiConverterConfig = workflowService.evalWorkflowResult(event, "wopi-converter", document,
-                true);
-        if (wopiConverterConfig == null || !wopiConverterConfig.hasItem("api-endpoint")) {
-            throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), CONFIG_ERROR,
-                    "Converter Error: 'api-endpoint' is not defined in current BPMN configuration");
-        }
-        if (wopiConverterConfig == null || !wopiConverterConfig.hasItem("filename")) {
-            throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), CONFIG_ERROR,
-                    "Converter Error: 'filename' is not defined in current BPMN configuration");
-        }
+        ItemCollection evalItemCollection = null;
+        List<ItemCollection> wopiConverterConfigList = null;
 
-        String fileName = wopiConverterConfig.getItemValueString("filename");
-        fileName = workflowService.adaptText(fileName, document);
-
-        String apiEndpoint = wopiConverterConfig.getItemValueString("api-endpoint");
-        if (!apiEndpoint.endsWith("/")) {
-            apiEndpoint = apiEndpoint + "/";
-        }
-        String convertTo = wopiConverterConfig.getItemValueString("convert-to");
-        if (convertTo.isEmpty()) {
-            convertTo = "pdf";
-        }
-        String uri = apiEndpoint + convertTo;
-
-        logger.info("WopiDocumentConverter: " + fileName + " => " + uri);
-
-        // test all file matching the filename or regular expression
-        FileData fileData = document.getFileData(fileName);
-        if (fileData != null) {
-            // file data found by name directly - so we can convert it....
-            convertFile(fileData, document, uri);
+        // test for deprecated configuration using the <item> tag....
+        if (isDeprecatedConfiguration(document, event)) {
+            logger.warning(
+                    "WopiTemplateAdapter is using deprecated configuration! Please use <wopi-template> instead of <wopi-converter name='source-path'>  - see documentation for details!");
+            evalItemCollection = workflowService.evalWorkflowResult(event, "wopi-converter", document,
+                    true);
+            wopiConverterConfigList = new ArrayList<>();
+            wopiConverterConfigList.add(evalItemCollection);
         } else {
-            // not found, we can test regular expressions...
-            List<String> fileNames = document.getFileNames();
-            Pattern pattern = Pattern.compile(fileName);
-            // get all fileNames....
-            for (String aFileName : fileNames) {
-                // test if aFilename matches the pattern or the pattern is null
-                if (pattern.matcher(aFileName).find()) {
-                    // fetch the file
-                    fileData = document.getFileData(aFileName);
-                    if (fileData != null) {
-                        // file data found - so we can updated it....
-                        convertFile(fileData, document, uri);
-                    }
+            String workflowResult = event.getItemValueString("txtActivityResult");
+            wopiConverterConfigList = XMLParser.parseTagList(workflowResult, "wopi-converter");
+        }
 
+        if (wopiConverterConfigList == null || wopiConverterConfigList.size() == 0) {
+            throw new ProcessingErrorException(WopiTemplateAdapter.class.getSimpleName(), CONFIG_ERROR,
+                    "missing wopi-converter configuraiton in BPMN event!");
+        }
+
+        // iterate over all wopi-template configurations
+        for (ItemCollection wopiConverterConfig : wopiConverterConfigList) {
+
+            if (!wopiConverterConfig.hasItem("api-endpoint")) {
+                throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), CONFIG_ERROR,
+                        "Wopi-Converter Error: 'api-endpoint' is not defined in current BPMN configuration");
+            }
+            if (!wopiConverterConfig.hasItem("filename")) {
+                throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), CONFIG_ERROR,
+                        "Wopi-Converter Error: 'filename' is not defined in current BPMN configuration");
+            }
+
+            String apiEndpoint = wopiConverterConfig.getItemValueString("api-endpoint");
+            String fileName = wopiConverterConfig.getItemValueString("filename");
+            String convertTo = wopiConverterConfig.getItemValueString("convert-to");
+
+            fileName = workflowService.adaptText(fileName, document);
+
+            if (!apiEndpoint.endsWith("/")) {
+                apiEndpoint = apiEndpoint + "/";
+            }
+
+            if (convertTo.isEmpty()) {
+                convertTo = "pdf";
+            }
+            String uri = apiEndpoint + convertTo;
+
+            logger.info("WopiDocumentConverter: " + fileName + " => " + uri);
+
+            // test all file matching the filename or regular expression
+            FileData fileData = document.getFileData(fileName);
+            if (fileData != null) {
+                // file data found by name directly - so we can convert it....
+                convertFile(fileData, document, uri);
+            } else {
+                // not found, we can test regular expressions...
+                List<String> fileNames = document.getFileNames();
+                Pattern pattern = Pattern.compile(fileName);
+                // get all fileNames....
+                for (String aFileName : fileNames) {
+                    // test if aFilename matches the pattern or the pattern is null
+                    if (pattern.matcher(aFileName).find()) {
+                        // fetch the file
+                        fileData = document.getFileData(aFileName);
+                        if (fileData != null) {
+                            // file data found - so we can updated it....
+                            convertFile(fileData, document, uri);
+                        }
+
+                    }
                 }
             }
         }
@@ -267,4 +295,26 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
         }
     }
 
+    /**
+     * This method tests if the BPMN configuration is still using the deprecated tag
+     * 
+     * <wopi-template name="source-path">....
+     * 
+     * instead of the new
+     * 
+     * <wopi-template>...
+     * 
+     * @param event
+     * @return
+     * @throws PluginException
+     */
+    private boolean isDeprecatedConfiguration(ItemCollection workitem, ItemCollection event) throws PluginException {
+
+        String workflowResult = event.getItemValueString("txtActivityResult");
+        if (!workflowResult.contains("<wopi-converter>")) {
+            return true;
+        }
+
+        return false;
+    }
 }

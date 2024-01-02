@@ -114,10 +114,11 @@ Add the following maven dependency into a parent project:
 
 To open the LibreOffice Online Editor you need a access url including the Wopi Host Endpoint and the access token. The CDI Bean WopiController provides a convenient method to generate such a URL:
 
-
-	 <a href="javascript:void;"
-	    onclick="imixsWopi.openViewer('wopi_canvas','#{wopiController.getWopiAccessURL(uniqueID,filename,userid,username)}');">
-	    Edit</a>
+```html
+<a href="javascript:void;"
+	onclick="imixsWopi.openViewer('wopi_canvas','#{wopiController.getWopiAccessURL(uniqueID,filename,userid,username)}');">
+	Edit</a>
+```
 
 In this example we are calling the JavaScript method to open the viewer component in a iframe. See details in the following section.
 
@@ -128,28 +129,30 @@ The Integration of the Wopi Client into your application is done by a iframe. Th
 To display the editor in a iframe the script library *imixs-wopi.js* provides a method `imixsWopi.openViewer`. The method expects a DIV element in your existing web page to place the iframe with the editor and the access URL to load the document. 
 
 
-	<script type="text/javascript" src="/js/imixs-core.js"></script>
-	<script type="text/javascript" src="/js/imixs-wopi.js"></script>
-	<script>
-		// open the wopi viewer
-		function openWopiViewer(url) {
-			// open viewer...		
-			imixsWopi.openViewer('wopi_canvas', url);
-			// define an optional save callback method
-			//imixsWopi.saveCallback=closeWopiViewer;
-		}
-	</script>
+```html
+<script type="text/javascript" src="/js/imixs-core.js"></script>
+<script type="text/javascript" src="/js/imixs-wopi.js"></script>
+<script>
+	// open the wopi viewer
+	function openWopiViewer(url) {
+		// open viewer...		
+		imixsWopi.openViewer('wopi_canvas', url);
+		// define an optional save callback method
+		//imixsWopi.saveCallback=closeWopiViewer;
+	}
+</script>
 
 
-	....
-	...........
-	<!-- Office Editor -->
-	<div id="wopi_controlls">
-		<button onclick="imixsWopi.save(); return false;">Update</button><button onclick="imixsWopi.closeViewer(); return false;">Close</button>
-		<hr />
-	</div>
-	<div id="wopi_canvas" style="display: none;"></div>
-	....
+....
+...........
+<!-- Office Editor -->
+<div id="wopi_controlls">
+	<button onclick="imixsWopi.save(); return false;">Update</button><button onclick="imixsWopi.closeViewer(); return false;">Close</button>
+	<hr />
+</div>
+<div id="wopi_canvas" style="display: none;"></div>
+....
+```
 
 ## UI Controls
 
@@ -159,6 +162,7 @@ The control of closing the editor or saving the content in this concept is part 
 
 When a file was saved by the Office interface, the data is posted to the WOPI Host endpoint '/wopi/files/{name}/contents'. The file content is not directly stored. It is cached into the local wopi file cache on the Wopi Host. An application can provide a saveCallback method to be triggered after a file was updated. 
 
+```javascript
 	// define save callback when a file was updated....
 	imixsWopi.saveCallback = uiSaveCallback;
 	
@@ -181,7 +185,7 @@ When a file was saved by the Office interface, the data is posted to the WOPI Ho
 		// show workflow form
 		$('#imixs_workitem_form_id').show();
 	}
-
+```
 
 
 ## Reacting on PostMessage Events
@@ -189,7 +193,7 @@ When a file was saved by the Office interface, the data is posted to the WOPI Ho
 LibreOffice Online sends JavaScript general events each time an update of the content is performed by the user. 
 A javaScript can react on these events be registering a EventListner:
 
-
+```javascript
 	/**
 	 * Register a message listener
 	 */
@@ -204,9 +208,11 @@ A javaScript can react on these events be registering a EventListner:
 		console.log('==== framed.doc.html receiveMessage: ' + event.data);
 		... do something....
 	}
+```
 
 You can also send messages to the editor 
 
+```javascript
 	imixsWopi.postMessage({
 			"MessageId" : "Action_Save",
 			"Values" : {
@@ -215,6 +221,7 @@ You can also send messages to the editor
 				"Notify" : true
 			}
 		});
+```
 
 Find more details about the Post Message in Collaboara [here](https://sdk.collaboraonline.com/docs/postmessage_api.html).
 
@@ -283,9 +290,6 @@ The WopiController will automatically clean the flag before processing.
 In a Kubernetes environment the office templates can be provided in a ConfigMap object
 
 
-
-      
-       
 ## The Wopi Document Converter Adapter
 
 With the adapter class *org.imixs.workflow.wopi.WopiDocumentConverterAdapter* a office document can be converted into PDF or other file formats.
@@ -305,18 +309,28 @@ The rest service automatically detects the input document format. You can test t
 
 The adapter simply posts a given document to the service endpoint. The adapter can be configured by the BPMN event workflow result:
 
-    <wopi-converter name="api-endpoint">http://localhost:9980/lool/convert-to/</wopi-converter>
-    <wopi-converter name="filename">......</wopi-converter>
-    <wopi-converter name="convert-to">pdf</wopi-converter>
+```xml
+<wopi-converter>
+	<api-endpoint>http://localhost:9980/lool/convert-to/</api-endpoint>
+	<filename>......</filename>
+	<convert-to>pdf</convert-to>
+</wopi-converter>
+```
 
-The Collabora API endpoint must point to a collabora instance. The 'filename' is the file attached to the current workitem. The option 'convert-to' is optional and default value is 'pdf'
+The Collabora API endpoint must point to a collabora instance. The 'filename' is the file attached to the current workitem. The option 'convert-to' is optional and default value is 'pdf'. You can use multiple wopi-converter configurations in one event. 
 
 
 ### Regular Expressions
 
-You can also define the filename as a pattern including regulare expressins. See the following example:
+You can also define the filename as a pattern including regulare expressions. See the following example:
 
-	<wopi-converter name="filename">.*<itemvalue>numsequencenumber</itemvalue>\.docx</wopi-converter>
+```xml
+<wopi-converter>
+	...
+	<filename>.*<itemvalue>numsequencenumber</itemvalue>\.docx</filename>
+	...
+</wopi-converter>
+```
 
 This expression will match all files ending with the sequence number and the file extension '.docx'
 
