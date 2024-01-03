@@ -15,4 +15,4 @@ target/
 .metadata/
 
 # testing
-imixs-adapters-magento-ejb/src/test/resources/imixs.properties
+imixs-adapters-odf/src/test/resources/output/
