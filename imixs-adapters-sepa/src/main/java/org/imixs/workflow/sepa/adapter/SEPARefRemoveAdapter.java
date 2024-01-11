@@ -3,8 +3,6 @@ package org.imixs.workflow.sepa.adapter;
 import java.util.List;
 import java.util.logging.Logger;
 
-import jakarta.inject.Inject;
-
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -14,6 +12,8 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.sepa.services.SepaWorkflowService;
+
+import jakarta.inject.Inject;
 
 /**
  * The SEPARefRemoveAdapter removes the linking of an invoice with a SEPA export
@@ -29,7 +29,6 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
 
     public static final String ERROR_MISSING_DATA = "MISSING_DATA";
     public static final String ERROR_CONFIG = "CONFIG_ERROR";
-
 
     @Inject
     SepaWorkflowService sepaWorkflowService;
@@ -61,6 +60,9 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
                     sepaExport.event(SepaWorkflowService.EVENT_REMOVE_REF);
                     sepaWorkflowService.processSEPAExport(sepaExport);
                 }
+            } else {
+                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+                        "SEPA Export not found for key '" + key + "'");
             }
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
             throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
