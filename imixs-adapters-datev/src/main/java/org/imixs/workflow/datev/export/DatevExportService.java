@@ -43,12 +43,6 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import jakarta.annotation.security.DeclareRoles;
-import jakarta.annotation.security.RunAs;
-import jakarta.ejb.LocalBean;
-import jakarta.ejb.Stateless;
-import jakarta.inject.Inject;
-import jakarta.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -71,7 +65,12 @@ import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.xml.XMLDataCollectionAdapter;
 import org.imixs.workflow.xml.XSLHandler;
 
-
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RunAs;
+import jakarta.ejb.LocalBean;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
+import jakarta.xml.bind.JAXBException;
 
 /**
  * Der DatevExportService stellt methoden für den Datev export bereit
@@ -94,32 +93,32 @@ import org.imixs.workflow.xml.XSLHandler;
 @DeclareRoles({ "org.imixs.ACCESSLEVEL.MANAGERACCESS" })
 @Stateless
 @RunAs("org.imixs.ACCESSLEVEL.MANAGERACCESS")
-@LocalBean 
+@LocalBean
 public class DatevExportService {
 
-    public static final String ITEM_DATEV_KONTENLAENGE = "_datev_sachkontennummernlaenge";
-    
-    public static final String ITEM_FTP_HOST = "_datev_ftp_host";
-    public static final String ITEM_FTP_PORT = "_datev_ftp_port";
-    public static final String ITEM_FTP_USER = "_datev_ftp_userid";
-    public static final String ITEM_FTP_PASSWORD = "_datev_ftp_password";
-    public static final String ITEM_FTP_PATH_UPLOAD = "_datev_ftp_path_upload";
+    public static final String ITEM_DATEV_KONTENLAENGE = "datev.sachkontennummernlaenge";
+
+    public static final String ITEM_FTP_HOST = "datev.ftp.host";
+    public static final String ITEM_FTP_PORT = "datev.ftp.port";
+    public static final String ITEM_FTP_USER = "datev.ftp.userid";
+    public static final String ITEM_FTP_PASSWORD = "datev.ftp.password";
+    public static final String ITEM_FTP_PATH_UPLOAD = "_datev.ftp.path.upload";
     public static final String ITEM_FTP_ERROR = "_ftp_error";
 
-    public static final String ITEM_DATEV_CLIENT_ID = "_datev_client_id";
-    public static final String ITEM_DATEV_BOOKING_PERIOD = "_datev_booking_period";
-    public static final String ITEM_DATEV_CONSULTANT_ID = "_datev_consultant_id";
-    public static final String ITEM_DATEV_FISCAL_START = "_datev_fiscal_start";
-    
-    public static final String ITEM_DBTR_NAME = "_dbtr_name";
+    public static final String ITEM_DATEV_CLIENT_ID = "datev.client.id";
+    public static final String ITEM_DATEV_CLIENT_NAME = "datev.client.name";
+    public static final String ITEM_DATEV_BOOKING_PERIOD = "datev.booking_period";
+    public static final String ITEM_DATEV_CONSULTANT_ID = "datev.consultant.id";
+    public static final String ITEM_DATEV_FISCAL_START = "datev.fiscal_start";
+
+    // public static final String ITEM_DBTR_NAME = "dbtr.name";
+
+    public static final String DEFAULT_CONFIG_NAME = "DATEV_CONFIGURATION";
+
     public static final String CHILD_ITEM_PROPERTY = "_ChildItems";
-
-
-
 
     public static final String REPORT_ERROR = "REPORT_ERROR";
     public static final String MODEL_ERROR = "MODEL_ERROR";
-
 
     @Inject
     WorkflowService workflowService;
@@ -138,11 +137,7 @@ public class DatevExportService {
      * The datev client id is fetched from the first invoice of the invoice data
      * collection.
      * <p>
-     * Change 5.5.2022
      * 
-     * Die Beraternummer kann nun auch auf Corporate Ebene gepflegt werden. Ist das
-     * der Fall, dann gewinnt diese Nummer. Andernfalls wird weiterhin die
-     * Beraternummer aus der Zentralen DATEV Config genommen.
      * 
      * @param configuration
      * @param modelVersion
@@ -150,7 +145,8 @@ public class DatevExportService {
      * @param data
      * @return
      */
-    public ItemCollection updateExportWorkitem(ItemCollection datevExport, ItemCollection configuration,
+    public ItemCollection updateExportWorkitem(ItemCollection datevExport,
+            ItemCollection configuration,
             List<ItemCollection> data) {
 
         // set _datev_fiscal_start (date), clientID and Sachkontenlaenge from first
@@ -165,11 +161,6 @@ public class DatevExportService {
                 // copy sachkontenlaenge from first invoice..
                 datevExport.setItemValue(ITEM_DATEV_KONTENLAENGE,
                         firstInvoice.getItemValue(ITEM_DATEV_KONTENLAENGE));
-
-                // Copy Consultant ID if available (die nummber ist optional auf Corporate Ebene
-                // gepflegt)
-                datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
-                        firstInvoice.getItemValue(ITEM_DATEV_CONSULTANT_ID));
             }
         }
 
@@ -198,14 +189,14 @@ public class DatevExportService {
      * @param data
      * @return
      * @throws SchedulerException
-     * @throws PluginException 
+     * @throws PluginException
      */
     public void buildDocumentsZipFile(ItemCollection datevExport, List<ItemCollection> data, String key,
             ItemCollection configuration) throws SchedulerException, PluginException {
         int documentCount = 0;
         ZipOutputStream datevZip = null;
         ByteArrayOutputStream zipOutputStream = null;
- 
+
         DatevHelper.logMessage(
                 "... Document export started (ClientID="
                         + datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID) + ") ...",
@@ -360,7 +351,7 @@ public class DatevExportService {
      */
     public void buildCSVFile(ItemCollection datevExport, List<ItemCollection> data, String key,
             ItemCollection configuration) throws SchedulerException {
-        String clientID=datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID);
+        String clientID = datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID);
         DatevHelper.logMessage(
                 "... CSV export started (ClientID="
                         + clientID + ") ...",
@@ -368,13 +359,13 @@ public class DatevExportService {
 
         // load the report for CSV export
         String reportNameInvoices = configuration.getItemValueString("_report_invoices");
-        
-        // It is possible, that we have an optional report definition for this client ID 
+
+        // It is possible, that we have an optional report definition for this client ID
         // let's test this
-        ItemCollection invoiceReport=null;
-        invoiceReport = reportService.findReport(reportNameInvoices+"_" +clientID);
-        if (invoiceReport== null) {
-            // load default 
+        ItemCollection invoiceReport = null;
+        invoiceReport = reportService.findReport(reportNameInvoices + "_" + clientID);
+        if (invoiceReport == null) {
+            // load default
             invoiceReport = reportService.findReport(reportNameInvoices);
         }
         if (invoiceReport == null) {
@@ -663,24 +654,18 @@ public class DatevExportService {
      * 
      * @return
      */
-    public String computeKey(ItemCollection invoice) {
-        String datevClientID = invoice.getItemValueString(ITEM_DATEV_CLIENT_ID);
-        Date datInvoice = invoice.getItemValueDate("_invoicedate");
+    public String computeKey(ItemCollection invoice, String datevClientID) {
+
+        Date datInvoice = invoice.getItemValueDate("invoice.date");
 
         // Berechnung der Buchungsperiode
         DateFormat df = new SimpleDateFormat("yyyyMM");
         String keyPeriode = df.format(datInvoice);
-        // 9.6.2022: Rechnungen sollen nicht nach Buchungsperiode gruppiert werden
-        // wir haben das aber zurückgezogen, da es in DATEV probleme mit überlappenden
-        // Wirtschaftsjahren geben kann
-        // String key = datevClientID;
         String key = keyPeriode + "_" + datevClientID;
 
         return key;
     }
-    
-    
-    
+
     /**
      * Prüft alle offenen Datev Exporte und gibt den neuesten zur angegebenen Datev
      * Client ID zurück, oder null falls es keinen Offenen Datev Export gibt.
@@ -701,30 +686,26 @@ public class DatevExportService {
         // no datev export found
         return null;
     }
-    
-    
+
     /**
      * Aktualisiert den DATEV Export mit Manager Rechten
      * 
      * @param datevExport
      * @return
-     * @throws ModelException 
-     * @throws PluginException 
-     * @throws ProcessingErrorException 
-     * @throws AccessDeniedException 
+     * @throws ModelException
+     * @throws PluginException
+     * @throws ProcessingErrorException
+     * @throws AccessDeniedException
      */
-    public ItemCollection processDatevExport(ItemCollection datevExport) throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
+    public ItemCollection processDatevExport(ItemCollection datevExport)
+            throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
         return workflowService.processWorkItem(datevExport);
     }
-    
-    
-    
-    
-    
-    
+
     /**
      * This method first lookups the origin workItem from the given export
-     * data entity. Then the method returns the first PDF fileData from a snapshot by a
+     * data entity. Then the method returns the first PDF fileData from a snapshot
+     * by a
      * resolved invoice workItem.
      * <p>
      * If multiple files are attached, the method returns the latest FileData object
@@ -733,12 +714,10 @@ public class DatevExportService {
      * @param uniqueid
      * @param file     - file name
      * @return FileData object for the given filename.
-     * @throws PluginException 
+     * @throws PluginException
      */
     public FileData getWorkItemFileFromWorkitem(ItemCollection invoice) throws PluginException {
         String snapshotID;
-
-
 
         if (invoice != null) {
             // we found the corresponding invoice workitem!
@@ -779,11 +758,9 @@ public class DatevExportService {
             throw new PluginException(DatevExportService.class.getName(), MODEL_ERROR,
                     "Invoice Document not defined");
         }
-        
-        
 
         // no file found!
         return null;
     }
-    
+
 }

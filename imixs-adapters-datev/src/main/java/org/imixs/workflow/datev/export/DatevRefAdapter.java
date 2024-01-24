@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import jakarta.inject.Inject;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
@@ -21,6 +19,8 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 
+import jakarta.inject.Inject;
+
 /**
  * Der DATEVRefAdapter verknüpft eine Rechnung mit einem DATEV Export zum
  * aktuellen Kreiditor und der Buchungsperiode. Existiert aktuell kein offener
@@ -30,12 +30,7 @@ import org.imixs.workflow.exceptions.QueryException;
  * Wurde die Rechnugn bereits einem DATEV Export zugeordnet passiert nichts.
  * <p>
  * Existieren innerhalb der Rechnung noch keien Detailbuchugnssätze (ChildItems)
- * dann erzeugt der ADaper einen Default Buchungssatz . Zitat Herr Krieger: die
- * leeren Felder könnte man z.B. immer mit 1370 an 70000 im Standard befüllen,
- * dann weiß man welche Konten man in DATEV noch aufräumen muss?
- * <p>
- * 9.6.2022 Herr Krieger: Die Rechnungen sollen NICHT nach Buchunsperiode
- * zusammengefasst werden sonder nur anhand der Datev-client-id.
+ * dann erzeugt der Adaper einen Default Buchungssatz .
  * 
  * 
  * @version 1.0
@@ -48,14 +43,12 @@ public class DatevRefAdapter implements SignalAdapter {
 	public static final String ERROR_MISSING_DATA = "MISSING_DATA";
 	public static final String ERROR_CONFIG = "CONFIG_ERROR";
 
-
-
 	@Inject
 	@ConfigProperty(name = "datev.defaultkonto", defaultValue = "1370")
 	private String datevDefaultKonto;
-	
+
 	@Inject
-	DatevExportService kriegerDatevService;
+	DatevExportService datevExportService;
 
 	/**
 	 * This method finds or create the Datev Export and adds a reference
@@ -80,21 +73,27 @@ public class DatevRefAdapter implements SignalAdapter {
 	 */
 	@SuppressWarnings("unchecked")
 	private void appendInvoice(ItemCollection invoice) throws PluginException {
-		String datevClientID = invoice.getItemValueString(DatevExportService.ITEM_DATEV_CLIENT_ID);
+
+		ItemCollection datevConfig = datevExportService.loadConfiguration(DatevExportService.DEFAULT_CONFIG_NAME);
+		if (datevConfig == null) {
+			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+					"Datev Export kann nicht erzeugt werden da keine DATEV Konfiguration vorliegt.");
+		}
+
+		String datevClientID = datevConfig.getItemValueString(DatevExportService.ITEM_DATEV_CLIENT_ID);
 
 		if (datevClientID == null || datevClientID.isEmpty()) {
 			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-					"Datev Export kann nicht erzeugt werden da keine DATEV Client ID definiert wurde. Bitte prüfen Sie die Corporate Konfiguration.");
+					"Datev Export kann nicht erzeugt werden da keine DATEV Client ID definiert wurde. Bitte prüfen Sie die DATEV Konfiguration.");
 		}
 
-		Date datInvoice = invoice.getItemValueDate("_invoicedate");
-
+		Date datInvoice = invoice.getItemValueDate("invoice.date");
 		if (datInvoice == null) {
 			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
 					"Datev Export kann nicht erzeugt werden da kein Buchungsdatum angegeben wurde.");
 		}
-		
-		String key=kriegerDatevService.computeKey(invoice);
+
+		String key = datevExportService.computeKey(invoice, datevClientID);
 		// Optional - Berechnung der Buchungsperiode
 		DateFormat df = new SimpleDateFormat("yyyy/MM");
 		String keyPeriode = df.format(datInvoice);
@@ -102,13 +101,15 @@ public class DatevRefAdapter implements SignalAdapter {
 		logger.info("......Update DATEV export for: '" + key + "'...");
 		ItemCollection datevExport;
 		try {
-			datevExport = kriegerDatevService.findDatevExport(key);
+			datevExport = datevExportService.findDatevExport(key);
 			if (datevExport == null) {
 				// create a new one
 				datevExport = new ItemCollection().workflowGroup("DATEV-Export").task(1000);
 				// add cdtr.name
-				datevExport.setItemValue(DatevExportService.ITEM_DATEV_CLIENT_ID, invoice.getItemValue(DatevExportService.ITEM_DATEV_CLIENT_ID));
-				datevExport.setItemValue(DatevExportService.ITEM_DBTR_NAME, invoice.getItemValue(DatevExportService.ITEM_DBTR_NAME));
+				datevExport.setItemValue(DatevExportService.ITEM_DATEV_CLIENT_ID,
+						datevConfig.getItemValue(DatevExportService.ITEM_DATEV_CLIENT_ID));
+				datevExport.setItemValue(DatevExportService.ITEM_DATEV_CLIENT_NAME,
+						datevConfig.getItemValue(DatevExportService.ITEM_DATEV_CLIENT_NAME));
 				datevExport.setItemValue(DatevExportService.ITEM_DATEV_BOOKING_PERIOD, keyPeriode);
 				datevExport.setItemValue("name", key);
 			}
@@ -119,7 +120,7 @@ public class DatevRefAdapter implements SignalAdapter {
 				datevExport.appendItemValueUnique("$workitemref", invoice.getUniqueID());
 				// set event 100
 				datevExport.event(100);
-				kriegerDatevService.processDatevExport(datevExport);
+				datevExportService.processDatevExport(datevExport);
 			}
 
 		} catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
@@ -128,16 +129,12 @@ public class DatevRefAdapter implements SignalAdapter {
 
 		}
 	}
-	
-
 
 	/**
 	 * Diese Hilfsmethode erzeugt eine Default Buchung wenn bisher keine
 	 * Splitbuchungen bei der Vorkontierung eingetragen wurden.
 	 * <p>
-	 * Zitat Herr Krieger: die leeren Felder könnte man z.B. immer mit 1370 an 70000
-	 * im Standard befüllen, dann weiß man welche Konten man in DATEV noch aufräumen
-	 * muss?
+	 * 
 	 * 
 	 * @param invoice
 	 */
@@ -154,7 +151,7 @@ public class DatevRefAdapter implements SignalAdapter {
 				bookingItem = buchunssaetze.get(0);
 			}
 			bookingItem.setItemValue("_konto", datevDefaultKonto);
-			bookingItem.setItemValue("_amount", invoice.getItemValue("_amount_brutto"));
+			bookingItem.setItemValue("_amount", invoice.getItemValue("invoice.amount"));
 
 			if (buchunssaetze.size() == 1) {
 				buchunssaetze.remove(0);

@@ -29,13 +29,9 @@
 
 			<h:form id="import_form_id">
 
-
-
-
 				<div class="imixs-form">
 					<div class="imixs-header">
 						<h1>DATEV</h1>
-
 					</div>
 
 
@@ -105,13 +101,11 @@
 									<div class="ui-state-highlight ui-corner-all"
 										style="margin-bottom: 10px; padding: .5em;">
 										<h3>Export DATEV Buchungsstapel</h3>
-										<p>Definieren Sie hier den Export Workflow und das Export
-											Interval für den Buchunsstapel.</p>
+										<p>Definieren Sie hier den Export Workflow sowie die Reportdefinition.</p>
 									</div>
 
 									<h:panelGroup layout="block" id="report_selection"
 										styleClass="imixs-form-section-2">
-
 										<dl>
 											<dt>
 												DATEV Schnittstellen-Typ <span class="imixs-required">*</span>
@@ -134,7 +128,6 @@
 												DATEV Report Definitionen <span class="imixs-required">*</span>
 											</dt>
 											<dd>
-
 												Belegexport:
 												<h:inputText required="true"
 													value="#{datevController.configuration.item['_report_invoices']}">
@@ -177,22 +170,33 @@
 
 									</div>
 
-									<div class="imixs-form-section-2">
+									<div class="imixs-form-section-3">
+										
+										<dl>
+											<dt>DATEV Mandant Name</dt>
+											<dd>
+												<h:inputText required="false"
+													value="#{datevController.configuration.item['datev.client.name']}">
+												</h:inputText>
+											</dd>
+										</dl>
+
+										<dl>
+											<dt>DATEV Mandantennummer </dt>
+											<dd>
+												<h:inputText required="false"
+													value="#{datevController.configuration.item['datev.client.id']}">
+												</h:inputText>
+											</dd>
+										</dl>
+
 										<dl>
 											<dt>
 												DATEV Beraternummer <span class="imixs-required">*</span>
 											</dt>
 											<dd>
 												<h:inputText required="true"
-													value="#{datevController.configuration.item['_datev_consultant_id']}">
-												</h:inputText>
-											</dd>
-										</dl>
-										<dl>
-											<dt>DATEV Mandantennummer (optional)</dt>
-											<dd>
-												<h:inputText required="false"
-													value="#{datevController.configuration.item['_datev_client_id']}">
+													value="#{datevController.configuration.item['datev.consultant.id']}">
 												</h:inputText>
 											</dd>
 										</dl>
@@ -201,21 +205,13 @@
 
 									<div class="imixs-form-section">
 										<p>
-											<span class="typcn typcn-lightbulb"></span> The initial task
-											must define a report containing the query and style sheet
-											information. Invoices will be automatically grouped by the
-											optional attribute "_datev_client_id". The datev workflow may
-											optional include a "invoice_update" item definition.
+											<span class="typcn typcn-lightbulb"></span> Der Initaltask
+											muss einen Report definieren, der die Abfrage und das Stylesheet enthält. 
+											Die Rechnungen werden automatisch nach dem
+											 Attribut "datev.client.id" sowie der Buchungsperiode gruppiert.
 										</p>
 									</div>
 
-
-
-									<!-- include timer control -->
-									<ui:include src="sub_scheduler_control.xhtml">
-										<ui:param name="schedulerController"
-											value="#{datevController}" />
-									</ui:include>
 								</div>
 
 							</div>
