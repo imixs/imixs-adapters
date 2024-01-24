@@ -11,14 +11,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
-import jakarta.annotation.security.DeclareRoles;
-import jakarta.annotation.security.RolesAllowed;
-import jakarta.ejb.EJB;
-import jakarta.ejb.LocalBean;
-import jakarta.ejb.Stateless;
-import jakarta.ejb.TransactionAttribute;
-import jakarta.ejb.TransactionAttributeType;
-
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.datev.export.DatevExportService;
@@ -29,6 +21,14 @@ import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
+
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.ejb.EJB;
+import jakarta.ejb.LocalBean;
+import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 
 /**
  * This Service provides methods to import data from a DATEV file.
@@ -68,10 +68,10 @@ import org.imixs.workflow.exceptions.QueryException;
 		"org.imixs.ACCESSLEVEL.AUTHORACCESS", "org.imixs.ACCESSLEVEL.EDITORACCESS",
 		"org.imixs.ACCESSLEVEL.MANAGERACCESS" })
 @Stateless
-@LocalBean 
+@LocalBean
 public class DatevImportService {
 
-	public static final String DATEN_FEHLER = "DATEN_FEHLER";
+	public static final String DATA_ERROR = "DATA_ERROR";
 	public static final String IMPORT_ERROR = "IMPORT_ERROR";
 	public static final int MAX_SEARCH_RESULT = 100;
 	public final static String ISO8601_FORMAT_DATETIME = "yyyy-MM-dd'T'HH:mm:ss.SSS";
@@ -79,7 +79,7 @@ public class DatevImportService {
 
 	@EJB
 	DocumentService documentService;
-	
+
 	@EJB
 	SchemaService schemaService;
 
@@ -93,11 +93,12 @@ public class DatevImportService {
 	 * lucence.indexFieldListNoAnalyze.
 	 * 
 	 * @param key
-	 *            - name of the object (txtname)
+	 *                 - name of the object (txtname)
 	 * @param type
-	 *            - DATEV type of the object
+	 *                 - DATEV type of the object
 	 * @param clientID
-	 *            - optional restriction to a specific client id (_datev_client_id)
+	 *                 - optional restriction to a specific client id
+	 *                 (_datev_client_id)
 	 * 
 	 * @return DATEV entity or null if no entity with the given name exits
 	 */
@@ -136,11 +137,12 @@ public class DatevImportService {
 	 * lucence.indexFieldListNoAnalyze.
 	 * 
 	 * @param phrase
-	 *            - search phrase
+	 *                 - search phrase
 	 * @param type
-	 *            - DATEV type of the object
+	 *                 - DATEV type of the object
 	 * @param clientID
-	 *            - optional restriction to a specific client id (_datev_client_id)
+	 *                 - optional restriction to a specific client id
+	 *                 (_datev_client_id)
 	 * @return - list of matching profiles
 	 */
 	public List<ItemCollection> searchEntity(String phrase, String type, String clientID) {
@@ -286,6 +288,19 @@ public class DatevImportService {
 				// replace txtName by the key field
 				entity.replaceItemValue("txtname", entity.getItemValue(keyField));
 
+				// resolve name for debitor/kreditor
+				String name = entity.getItemValueString("_name_(adressattyp_unternehmen)");
+				if (name.isEmpty()) {
+					name = entity.getItemValueString("_name_(adressattyp_keine_angabe)");
+				}
+				if (name.isEmpty()) {
+					name = entity.getItemValueString("_name_(adressattyp_natürl_person)");
+				}
+				if (name.isEmpty()) {
+					name = entity.getItemValueString("_kurzbezeichnung");
+				}
+				entity.setItemValue("_name", name);
+
 				// store id into cache
 				idCache.add(entity.getItemValueString("txtname"));
 
@@ -320,7 +335,7 @@ public class DatevImportService {
 			workitemsFailed++;
 			String sError = "import error at line " + line + ": " + e + " Datensatz=" + dataLine;
 			logger.severe(sError);
-			throw new PluginException(DatevImportService.class.getName(), DATEN_FEHLER, sError, e);
+			throw new PluginException(DatevImportService.class.getName(), DATA_ERROR, sError, e);
 		}
 
 		finally {
@@ -356,7 +371,7 @@ public class DatevImportService {
 			// Catch Workflow Exceptions
 			String sError = "import error: unable to delete data";
 			logger.severe(sError);
-			throw new PluginException(DatevImportService.class.getName(), DATEN_FEHLER, sError, e);
+			throw new PluginException(DatevImportService.class.getName(), DATA_ERROR, sError, e);
 		}
 
 		log += workitemsTotal + " entries read \n" + workitemsImported + " new entries \n" + workitemsUpdated
@@ -458,7 +473,8 @@ public class DatevImportService {
 			// test if the token has content
 			itemValue = itemValue.trim();
 			if (itemValue != null && !itemValue.isEmpty()) {
-				// logger.info("...col " + iCol + " name=" +fieldnames.get(iCol) +" value=" + itemValue);
+				// logger.info("...col " + iCol + " name=" +fieldnames.get(iCol) +" value=" +
+				// itemValue);
 				// create a itemvalue with the corresponding fieldname
 				result.replaceItemValue(fieldnames.get(iCol), itemValue);
 			} else {
@@ -493,6 +509,11 @@ public class DatevImportService {
 			return false;
 		}
 
+		if (!entity.getItemValue("_name").equals(oldEntity.getItemValue("_name"))) {
+			// not equal
+			return false;
+		}
+
 		for (String itemName : fields) {
 			if (!entity.getItemValue(itemName).equals(oldEntity.getItemValue(itemName))) {
 				// not equal
@@ -501,5 +522,4 @@ public class DatevImportService {
 		}
 		return true;
 	}
-
 }
