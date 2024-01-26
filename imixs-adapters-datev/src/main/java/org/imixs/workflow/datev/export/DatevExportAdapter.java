@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-import jakarta.inject.Inject;
-
 import org.apache.commons.net.ftp.FTP;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
@@ -14,12 +12,13 @@ import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.WorkflowService;
-import org.imixs.workflow.engine.scheduler.SchedulerException;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
+
+import jakarta.inject.Inject;
 
 /**
  * Der DATEVExportAdapter erstellt einen DATEV Export zu allen im Datev-Export
@@ -153,7 +152,7 @@ public class DatevExportAdapter implements SignalAdapter {
 
 	@Inject
 	DatevExportService datevExportService;
-	
+
 	/**
 	 * This method finds or create the Zahlungsavis and adds a reference
 	 * ($workitemref) to the current invoice.
@@ -167,7 +166,7 @@ public class DatevExportAdapter implements SignalAdapter {
 
 		try {
 			ItemCollection configuration = datevExportService.loadConfiguration(DATEV_CONFIGURATION);
-			// get the data source based on the report definition....
+			// get the data source based on the $workitemref....
 			List<ItemCollection> masterDataSet = buildMasterDataSet(datevExport);
 
 			// first we need to extend the Export Workitem
@@ -178,13 +177,11 @@ public class DatevExportAdapter implements SignalAdapter {
 				// =====================================
 				// 2nd export buchungsstapel via CSV
 				// =====================================
-
 				datevExportService.buildCSVFile(datevExport, masterDataSet, datevClientID, configuration);
 
 				// =====================================
 				// 3nd create export workitem with attached zip file....
 				// =====================================
-
 				datevExportService.buildDocumentsZipFile(datevExport, masterDataSet, datevClientID, configuration);
 
 				// finally copy attachments via FTP...
@@ -207,7 +204,7 @@ public class DatevExportAdapter implements SignalAdapter {
 			// update and process invoices in new transaction to avoid partial updates...
 			processDatevExportEntities(datevExport, masterDataSet, event, configuration);
 
-		} catch (SchedulerException | AccessDeniedException | ProcessingErrorException | ModelException e) {
+		} catch (AccessDeniedException | ProcessingErrorException | ModelException e) {
 			throw new PluginException(DatevExportAdapter.class.getName(), DATEV_EXPORT_ERROR, e.getMessage(), e);
 		}
 
@@ -252,10 +249,10 @@ public class DatevExportAdapter implements SignalAdapter {
 
 		// process all invoices...
 		for (ItemCollection invoice : datevExportEntities) {
-		    if (invoice.getTaskID()!=5900) {
-		        invoice.event(EVENT_INVOICE_COMPLETED);
-			    workflowService.processWorkItem(invoice);
-		    }
+			if (invoice.getTaskID() != 5900) {
+				invoice.event(EVENT_INVOICE_COMPLETED);
+				workflowService.processWorkItem(invoice);
+			}
 		}
 		// write log
 		logger.info("..." + datevExportEntities.size() + " invoices exported. ");

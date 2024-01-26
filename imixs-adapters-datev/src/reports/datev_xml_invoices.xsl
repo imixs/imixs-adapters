@@ -12,11 +12,13 @@
 		<xsl:variable name="subject"
 			select="/data/document/item[@name='_subject']/value" />
 		<xsl:variable name="currency"
-			select="/data/document/item[@name='_currency']/value" />
-		<xsl:variable name="invoiceid"
-			select="/data/document/item[@name='_invoicenumber']/value" />
-		<xsl:variable name="gegenkonto"
-			select="/data/document/item[@name='_kreditor_konto']/value" />
+			select="/data/document/item[@name='invoice.currency']/value" />
+		<xsl:variable
+			name="invoiceid"
+			select="/data/document/item[@name='invoice.number']/value" />
+		<xsl:variable
+			name="gegenkonto"
+			select="/data/document/item[@name='cdtr.number']/value" />
 
 		<LedgerImport
 			xmlns="http://xml.datev.de/bedi/tps/ledger/v040"
@@ -28,14 +30,13 @@
 
 			<consolidate>
 				<xsl:attribute name="consolidatedAmount"><xsl:value-of
-					select="/data/document/item[@name='_amount_brutto']/value" /></xsl:attribute>
+						select="/data/document/item[@name='invoice.total']/value" /></xsl:attribute>
 				<xsl:attribute name="consolidatedDate"><xsl:value-of
-					select="format-dateTime($date, '[Y0001]-[M01]-[D01]')" /></xsl:attribute>
+						select="format-dateTime($date, '[Y0001]-[M01]-[D01]')" /></xsl:attribute>
 				<xsl:attribute name="consolidatedInvoiceId"><xsl:value-of
-					select="$invoiceid" /></xsl:attribute>
+						select="$invoiceid" /></xsl:attribute>
 				<xsl:attribute name="consolidatedCurrencyCode"><xsl:value-of
-					select="$currency" /></xsl:attribute>
-
+						select="$currency" /></xsl:attribute>
 
 
 				<xsl:for-each

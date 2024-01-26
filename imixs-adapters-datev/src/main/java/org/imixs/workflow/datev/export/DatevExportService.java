@@ -52,11 +52,10 @@ import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.WorkflowKernel;
 import org.imixs.workflow.datev.DatevHelper;
+import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.engine.WorkflowService;
-import org.imixs.workflow.engine.scheduler.SchedulerException;
-import org.imixs.workflow.engine.scheduler.SchedulerService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
@@ -188,11 +187,10 @@ public class DatevExportService {
      * 
      * @param data
      * @return
-     * @throws SchedulerException
      * @throws PluginException
      */
     public void buildDocumentsZipFile(ItemCollection datevExport, List<ItemCollection> data, String key,
-            ItemCollection configuration) throws SchedulerException, PluginException {
+            ItemCollection configuration) throws PluginException {
         int documentCount = 0;
         ZipOutputStream datevZip = null;
         ByteArrayOutputStream zipOutputStream = null;
@@ -203,10 +201,10 @@ public class DatevExportService {
                 configuration, datevExport);
 
         // load report configuration....
-        String reportNameDocuments = configuration.getItemValueString("_report_documents");
+        String reportNameDocuments = configuration.getItemValueString("report.documents");
         ItemCollection documentsReport = reportService.findReport(reportNameDocuments);
         if (documentsReport == null) {
-            throw new SchedulerException(REPORT_ERROR,
+            throw new PluginException(this.getClass().getClass().getName(), REPORT_ERROR,
                     "unable to load documents report definition '" + reportNameDocuments
                             + "'. Please check the configuration");
         }
@@ -218,8 +216,9 @@ public class DatevExportService {
 
             String xslDocuments = documentsReport.getItemValueString("XSL").trim();
             if (xslDocuments.isEmpty()) {
-                throw new SchedulerException(REPORT_ERROR, "Failed to build DATEV zip archive '"
-                        + documentsReport.getItemValueString("txtname") + " XSL content is missing.");
+                throw new PluginException(this.getClass().getClass().getName(), REPORT_ERROR,
+                        "Failed to build DATEV zip archive '"
+                                + documentsReport.getItemValueString("txtname") + " XSL content is missing.");
             }
 
             String encoding = documentsReport.getItemValueString("encoding");
@@ -302,8 +301,10 @@ public class DatevExportService {
                 datevZip.write(byteData);
                 datevZip.closeEntry();
             } catch (IOException | TransformerException | JAXBException e) {
-                throw new SchedulerException(REPORT_ERROR, "Failed to build DATEV zip archive '"
-                        + documentsReport.getItemValueString("txtname") + "' : " + e.getMessage(), e);
+                throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR,
+                        "Failed to build DATEV zip archive '"
+                                + documentsReport.getItemValueString("txtname") + "' : " + e.getMessage(),
+                        e);
             }
 
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HHmm");
@@ -316,7 +317,7 @@ public class DatevExportService {
             datevExport.addFileData(zipFileData);
 
         } catch (IOException e) {
-            throw new SchedulerException(REPORT_ERROR,
+            throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR,
                     "Failed to create Documents archive '" + documentsReport.getItemValueString("txtname") + "' : "
                             + e.getClass().getName() + " -> " + e.getMessage(),
                     e);
@@ -330,8 +331,10 @@ public class DatevExportService {
                     zipOutputStream.close();
                 }
             } catch (IOException e) {
-                throw new SchedulerException(REPORT_ERROR, "Failed to close DATEV archive '"
-                        + documentsReport.getItemValueString("txtname") + "' : " + e.getMessage(), e);
+                throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR,
+                        "Failed to close DATEV archive '"
+                                + documentsReport.getItemValueString("txtname") + "' : " + e.getMessage(),
+                        e);
             }
 
         }
@@ -347,41 +350,36 @@ public class DatevExportService {
      * 
      * @param data
      * @return
-     * @throws SchedulerException
+     * @throws PluginException
      */
     public void buildCSVFile(ItemCollection datevExport, List<ItemCollection> data, String key,
-            ItemCollection configuration) throws SchedulerException {
+            ItemCollection configuration) throws PluginException {
         String clientID = datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID);
-        DatevHelper.logMessage(
-                "... CSV export started (ClientID="
-                        + clientID + ") ...",
-                configuration, datevExport);
 
         // load the report for CSV export
-        String reportNameInvoices = configuration.getItemValueString("_report_invoices");
+        String reportNameInvoices = configuration.getItemValueString("report.invoices");
 
-        // It is possible, that we have an optional report definition for this client ID
-        // let's test this
+        DatevHelper.logMessage(
+                "... CSV export started (ClientID="
+                        + clientID + ") Report=" + reportNameInvoices + "...",
+                configuration, datevExport);
+
         ItemCollection invoiceReport = null;
-        invoiceReport = reportService.findReport(reportNameInvoices + "_" + clientID);
+        invoiceReport = reportService.findReport(reportNameInvoices);
         if (invoiceReport == null) {
-            // load default
-            invoiceReport = reportService.findReport(reportNameInvoices);
-        }
-        if (invoiceReport == null) {
-            throw new SchedulerException(REPORT_ERROR, "unable to load invoice report definition '"
-                    + reportNameInvoices + "'. Please check the configuration");
+            throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR,
+                    "unable to load invoice report definition '"
+                            + reportNameInvoices + "'. Please check the configuration");
         }
 
-        // link invoices with export workitem and find the earliest rechnugnsdatum
-        // (_invoicedate)....
+        // link invoices with export workitem and find the earliest invoice.date ...
         LocalDateTime stapelZeitraumStart = null;
         LocalDateTime stapelZeitraumEnde = null;
         for (ItemCollection invoice : data) {
-            Date baseDate = invoice.getItemValueDate("_accountingdate");
+            Date baseDate = invoice.getItemValueDate("accounting.date");
             if (baseDate == null) {
                 // fallback auf invoice date
-                baseDate = invoice.getItemValueDate("_invoicedate");
+                baseDate = invoice.getItemValueDate("invoice.date");
             }
             LocalDateTime invoiceDate = new Date(baseDate.getTime()).toInstant().atZone(ZoneId.systemDefault())
                     .toLocalDateTime();
@@ -391,9 +389,6 @@ public class DatevExportService {
             if (stapelZeitraumEnde == null || invoiceDate.isAfter(stapelZeitraumEnde)) {
                 stapelZeitraumEnde = invoiceDate;
             }
-
-            // here we link the origin invoice and not the data export Entity.
-
         }
         // update Stapelzeitruam begin und Ende
         if (stapelZeitraumStart != null) {
@@ -424,7 +419,7 @@ public class DatevExportService {
             // xsl transformation based on our tmp_data collection....
             filedata = reportService.transformDataSource(invoiceReport, tmp_data, datevFileName);
         } catch (JAXBException | TransformerException | IOException e) {
-            throw new SchedulerException(REPORT_ERROR, "Failed to execute CSV report '"
+            throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR, "Failed to execute CSV report '"
                     + invoiceReport.getItemValueString("txtname") + "' : " + e.getMessage(), e);
         }
 
@@ -450,7 +445,7 @@ public class DatevExportService {
      * @throws QueryException
      */
     public boolean putFileData(FileData fileData, ItemCollection configuration, String subDirectory,
-            ItemCollection datevExport, int ftpType) throws SchedulerException {
+            ItemCollection datevExport, int ftpType) throws PluginException {
 
         boolean result = false;
         String ftpServer = configuration.getItemValueString(ITEM_FTP_HOST);
@@ -500,7 +495,8 @@ public class DatevExportService {
             ftpClient.setControlEncoding("UTF-8");
             ftpClient.connect(ftpServer, Integer.parseInt(ftpPort));
             if (ftpClient.login(ftpUser, ftpPassword) == false) {
-                throw new SchedulerException(ITEM_FTP_ERROR, "FTP file transfer failed: login failed!");
+                throw new PluginException(DatevExportService.class.getName(), ITEM_FTP_ERROR,
+                        "FTP file transfer failed: login failed!");
             }
 
             ftpClient.enterLocalPassiveMode();
@@ -538,7 +534,7 @@ public class DatevExportService {
                         "...FTP file transfer '" + ftpPathReports + fileData.getName() + "' successfull", configuration,
                         datevExport);
             } else {
-                throw new SchedulerException(ITEM_FTP_ERROR,
+                throw new PluginException(DatevExportService.class.getName(), ITEM_FTP_ERROR,
                         "FTP file transfer failed: unable to write '" + ftpPathReports + fileData.getName() + "'");
             }
 
@@ -547,7 +543,7 @@ public class DatevExportService {
             int r = ftpClient.getReplyCode();
             logger.severe("FTP ReplyCode=" + r);
 
-            throw new SchedulerException(ITEM_FTP_ERROR,
+            throw new PluginException(DatevExportService.class.getName(), ITEM_FTP_ERROR,
                     "FTP file transfer failed (replyCode=" + r + ") : " + e.getMessage(), e);
         } finally {
             // do logout....
@@ -558,7 +554,8 @@ public class DatevExportService {
                 ftpClient.logout();
                 ftpClient.disconnect();
             } catch (IOException e) {
-                throw new SchedulerException(ITEM_FTP_ERROR, "FTP file transfer failed: " + e.getMessage(), e);
+                throw new PluginException(DatevExportService.class.getName(), ITEM_FTP_ERROR,
+                        "FTP file transfer failed: " + e.getMessage(), e);
             }
         }
 
@@ -633,7 +630,7 @@ public class DatevExportService {
     public ItemCollection loadConfiguration(String name) {
         try {
             // support deprecated txtname attribure
-            String sQuery = "(type:\"" + SchedulerService.DOCUMENT_TYPE + "\" AND (name:\"" + name + "\" OR txtname:\""
+            String sQuery = "(type:\"" + DatevService.DOCUMENT_TYPE + "\" AND (name:\"" + name + "\" OR txtname:\""
                     + name + "\" ) )";
             Collection<ItemCollection> col = documentService.find(sQuery, 1, 0);
             // check if we found a configuration
