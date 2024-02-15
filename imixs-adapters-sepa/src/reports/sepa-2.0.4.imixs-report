@@ -1,210 +1,169 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<document xmlns:xs="http://www.w3.org/2001/XMLSchema"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <item name="attributes">
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">$uniqueid</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">$modelversion</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">$workflowgroup</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">$taskid</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">$workflowsummary</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">invoice.number</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">invoice.date</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">invoice.total</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">invoice.currency</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">cdtr.name</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">cdtr.iban</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">cdtr.bic</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">dbtr.name</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">dbtr.iban</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">dbtr.bic</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-        <value xsi:type="xmlItem">
-            <value xsi:type="xs:string">payment.type</value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-            <value xsi:type="xs:string"></value>
-        </value>
-    </item>
-    <item name="contenttype">
-        <value xsi:type="xs:string"></value>
-    </item>
-    <item name="encoding">
-        <value xsi:type="xs:string">UTF-8</value>
-    </item>
-    <item name="txtdescription">
-        <value xsi:type="xs:string">SEPA export executed by the SepaScheduler. See the XSL
-            definition for details. </value>
-    </item>
-    <item name="txtname">
-        <value xsi:type="xs:string">sepa</value>
-    </item>
-    <item name="type">
-        <value xsi:type="xs:string">ReportEntity</value>
-    </item>
-    <item name="txtquery">
-        <value xsi:type="xs:string">type:"workitem" AND $taskid:5800 </value>
-    </item>
-    <item name="xsl">
-        <value xsi:type="xs:string">&lt;?xml version="1.0" encoding="UTF-8"
-            standalone="yes"?&gt;&lt;xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-            xmlns:xs="http://www.w3.org/2001/XMLSchema" version="2.0"&gt; &lt;xsl:strip-space
-            elements="*" /&gt; &lt;xsl:output method="xml" indent="yes" encoding="UTF-8"
-            standalone="yes" /&gt; &lt;xsl:template match="/"&gt; &lt;xsl:variable name="now"
-            select="current-dateTime()" /&gt; &lt;Document
-            xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03
-            pain.001.003.03.xsd"&gt; &lt;CstmrCdtTrfInitn&gt; &lt;!-- generate header info --&gt;
-            &lt;!-- compute count of invoices --&gt; &lt;xsl:variable name="count"
-            select="count(/data/document[starts-with(normalize-space(item[@name =
-            '$modelversion']/value),'rechnungseingang')]/item[@name='$uniqueid']/value)" /&gt;
-            &lt;!-- compute total amount --&gt; &lt;xsl:variable name="totalsum"
-            select="xs:decimal(sum(/data/document[starts-with(normalize-space(item[@name =
-            '$modelversion']/value),'rechnungseingang')]/item[@name='invoice.total']/value))" /&gt;
-            &lt;!-- round to 2 digits --&gt; &lt;xsl:variable name="total"
-            select="xs:decimal(round-half-to-even($totalsum, 2))" /&gt; &lt;!-- shortcut for the
-            sepa export document --&gt; &lt;xsl:variable name="exportWorkitem"
-            select="/data/document[normalize-space(item[@name = '$workflowgroup']/value) =
-            'SEPA-Export']" /&gt; &lt;GrpHdr&gt; &lt;MsgId&gt; &lt;xsl:value-of
-            select="replace($exportWorkitem/item[@name='$uniqueid']/value, '-', '')" /&gt;
-            &lt;/MsgId&gt; &lt;CreDtTm&gt;&lt;xsl:value-of select="format-dateTime($now,
-            '[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]')" /&gt;&lt;/CreDtTm&gt; &lt;NbOfTxs&gt;
-            &lt;xsl:value-of select="$count" /&gt; &lt;/NbOfTxs&gt; &lt;CtrlSum&gt; &lt;!-- round to
-            2 digits --&gt; &lt;xsl:value-of select="$total" /&gt; &lt;/CtrlSum&gt; &lt;InitgPty&gt;
-            &lt;Nm&gt; &lt;xsl:value-of select="$exportWorkitem/item[@name='dbtr.name']/value" /&gt;
-            &lt;/Nm&gt; &lt;/InitgPty&gt; &lt;/GrpHdr&gt; &lt;PmtInf&gt; &lt;PmtInfId&gt;
-            &lt;xsl:value-of select="replace($exportWorkitem/item[@name='$uniqueid']/value, '-',
-            '')" /&gt;&lt;xsl:text&gt;-1&lt;/xsl:text&gt; &lt;/PmtInfId&gt;
-            &lt;PmtMtd&gt;TRF&lt;/PmtMtd&gt; &lt;NbOfTxs&gt; &lt;xsl:value-of select="$count" /&gt;
-            &lt;/NbOfTxs&gt; &lt;CtrlSum&gt; &lt;!-- round to 2 digits --&gt; &lt;xsl:value-of
-            select="$total" /&gt; &lt;/CtrlSum&gt; &lt;PmtTpInf&gt; &lt;SvcLvl&gt;
-            &lt;Cd&gt;SEPA&lt;/Cd&gt; &lt;/SvcLvl&gt; &lt;/PmtTpInf&gt;
-            &lt;ReqdExctnDt&gt;&lt;xsl:value-of select="format-dateTime($now,
-            '[Y0001]-[M01]-[D01]')" /&gt;&lt;/ReqdExctnDt&gt; &lt;Dbtr&gt; &lt;Nm&gt;
-            &lt;xsl:value-of select="$exportWorkitem/item[@name='dbtr.name']/value" /&gt;
-            &lt;/Nm&gt; &lt;/Dbtr&gt; &lt;DbtrAcct&gt; &lt;Id&gt; &lt;IBAN&gt; &lt;xsl:value-of
-            select="replace($exportWorkitem/item[@name='dbtr.iban']/value, ' ', '')" /&gt;
-            &lt;/IBAN&gt; &lt;/Id&gt; &lt;/DbtrAcct&gt; &lt;DbtrAgt&gt; &lt;FinInstnId&gt;
-            &lt;BIC&gt; &lt;xsl:value-of
-            select="replace($exportWorkitem/item[@name='dbtr.bic']/value, ' ', '')" /&gt;
-            &lt;/BIC&gt; &lt;/FinInstnId&gt; &lt;/DbtrAgt&gt; &lt;ChrgBr&gt;SLEV&lt;/ChrgBr&gt;
-            &lt;!-- generate CdtTrfTxInf for each invoice --&gt; &lt;xsl:apply-templates
-            select="/data/document[starts-with(normalize-space(item[@name =
-            '$modelversion']/value),'rechnungseingang')]" /&gt; &lt;/PmtInf&gt;
-            &lt;/CstmrCdtTrfInitn&gt; &lt;/Document&gt; &lt;/xsl:template&gt; &lt;!-- This template
-            builds sepa header info --&gt; &lt;xsl:template
-            match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) =
-            'SEPA-Export']"&gt; &lt;!-- not in use --&gt; &lt;/xsl:template&gt; &lt;!-- This
-            template builds sepa payment info for each invoice --&gt; &lt;xsl:template
-            match="/data/document[starts-with(normalize-space(item[@name =
-            '$modelversion']/value),'rechnungseingang')]"&gt; &lt;CdtTrfTxInf
-            xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03"&gt; &lt;PmtId&gt;
-            &lt;EndToEndId&gt;NOTPROVIDED&lt;/EndToEndId&gt; &lt;/PmtId&gt; &lt;Amt&gt;
-            &lt;InstdAmt&gt; &lt;xsl:attribute name="Ccy"&gt;&lt;xsl:value-of
-            select="item[@name='invoice.currency']/value" /&gt;&lt;/xsl:attribute&gt;
-            &lt;xsl:value-of select="item[@name='invoice.total']/value" /&gt; &lt;/InstdAmt&gt;
-            &lt;/Amt&gt; &lt;CdtrAgt&gt; &lt;FinInstnId&gt; &lt;BIC&gt; &lt;xsl:value-of
-            select="replace(item[@name='cdtr.bic']/value, ' ', '')" /&gt; &lt;/BIC&gt;
-            &lt;/FinInstnId&gt; &lt;/CdtrAgt&gt; &lt;Cdtr&gt; &lt;!-- MAX70 --&gt; &lt;Nm&gt;
-            &lt;xsl:value-of select="substring(item[@name='cdtr.name']/value, 1, 70)" /&gt;
-            &lt;/Nm&gt; &lt;/Cdtr&gt; &lt;CdtrAcct&gt; &lt;Id&gt; &lt;IBAN&gt; &lt;xsl:value-of
-            select="replace(item[@name='cdtr.iban']/value, ' ', '')" /&gt; &lt;/IBAN&gt; &lt;/Id&gt;
-            &lt;/CdtrAcct&gt; &lt;RmtInf&gt; &lt;!-- Max140Text --&gt; &lt;Ustrd&gt;
-            &lt;xsl:value-of select="substring(item[@name='$workflowsummary']/value, 1, 140)" /&gt;
-            &lt;/Ustrd&gt; &lt;/RmtInf&gt; &lt;/CdtTrfTxInf&gt;
-            &lt;/xsl:template&gt;&lt;/xsl:stylesheet&gt;</value>
-    </item>
-    <item name="xslresource">
-        <value xsi:type="xs:string">/imixs-adapters-sepa/src/reports/sepa-2.0.3.xsl</value>
-    </item>
-</document>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?><document xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><item name="$created"><value xsi:type="xs:dateTime">2023-12-20T21:05:07.773Z</value></item><item name="$file"><value xsi:nil="true"/></item><item name="$isauthor"><value xsi:type="xs:boolean">true</value></item><item name="$modified"><value xsi:type="xs:dateTime">2024-02-15T11:06:51.128Z</value></item><item name="$snapshot.overwritefilecontent"><value xsi:type="xs:string"></value></item><item name="$snapshotid"><value xsi:type="xs:string">2e0e80cc-2aab-49a9-a5ca-6cab43bdb45a-1707995211129</value></item><item name="$uniqueid"><value xsi:type="xs:string">2e0e80cc-2aab-49a9-a5ca-6cab43bdb45a</value></item><item name="$version"><value xsi:type="xs:int">3</value></item><item name="attributes"><value xsi:type="xmlItem"><value xsi:type="xs:string">$uniqueid</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">$modelversion</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">$workflowgroup</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">$taskid</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">$workflowsummary</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">invoice.number</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">invoice.date</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">invoice.total</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">invoice.currency</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">cdtr.name</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">cdtr.iban</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">cdtr.bic</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">dbtr.name</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">dbtr.iban</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">dbtr.bic</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value><value xsi:type="xmlItem"><value xsi:type="xs:string">payment.type</value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value><value xsi:type="xs:string"></value></value></item><item name="contenttype"><value xsi:type="xs:string"></value></item><item name="encoding"><value xsi:type="xs:string">UTF-8</value></item><item name="txtdescription"><value xsi:type="xs:string">SEPA export executed by the SepaScheduler. See the XSL
+            definition for details. </value></item><item name="txtname"><value xsi:type="xs:string">sepa</value></item><item name="txtquery"><value xsi:type="xs:string">type:"workitem" AND $taskid:5800 </value></item><item name="type"><value xsi:type="xs:string">ReportEntity</value></item><item name="xsl"><value xsi:type="xs:string">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&#13;
+&lt;xsl:stylesheet&#13;
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"&#13;
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"&#13;
+	version="2.0"&gt;&#13;
+	&lt;xsl:strip-space elements="*" /&gt;&#13;
+	&lt;xsl:output method="xml" indent="yes" encoding="UTF-8" standalone="yes" /&gt;&#13;
+&#13;
+	&lt;xsl:template match="/"&gt;&#13;
+&#13;
+		&lt;xsl:variable name="now" select="current-dateTime()" /&gt;&#13;
+	&#13;
+&#13;
+		&lt;Document&#13;
+			xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03"&#13;
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&#13;
+			xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03 pain.001.003.03.xsd"&gt;&#13;
+			&lt;CstmrCdtTrfInitn&gt;&#13;
+&#13;
+				&lt;!-- generate header info --&gt;&#13;
+				&lt;!-- compute count of invoices --&gt;&#13;
+				&lt;xsl:variable name="count"&#13;
+					select="count(/data/document[starts-with(normalize-space(item[@name = '$modelversion']/value),'rechnungseingang')]/item[@name='$uniqueid']/value)" /&gt;&#13;
+				&lt;!-- compute total amount --&gt;&#13;
+				&lt;xsl:variable name="totalsum"&#13;
+					select="xs:decimal(sum(/data/document[starts-with(normalize-space(item[@name = '$modelversion']/value),'rechnungseingang')]/item[@name='payment.total']/value))" /&gt;&#13;
+				&lt;!-- round to 2 digits --&gt;&#13;
+				&lt;xsl:variable name="total"&#13;
+					select="xs:decimal(round-half-to-even($totalsum, 2))" /&gt;&#13;
+&#13;
+				&lt;!-- shortcut for the sepa export document --&gt;&#13;
+				&lt;xsl:variable name="exportWorkitem"&#13;
+					select="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'SEPA-Export']" /&gt;&#13;
+&#13;
+				&lt;GrpHdr&gt;&#13;
+					&lt;MsgId&gt;&#13;
+						&lt;xsl:value-of&#13;
+							select="replace($exportWorkitem/item[@name='$uniqueid']/value, '-', '')" /&gt;&#13;
+					&lt;/MsgId&gt;&#13;
+					&lt;CreDtTm&gt;&#13;
+						&lt;xsl:value-of&#13;
+							select="format-dateTime($now, '[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]')" /&gt;&#13;
+					&lt;/CreDtTm&gt;&#13;
+					&lt;NbOfTxs&gt;&#13;
+						&lt;xsl:value-of select="$count" /&gt;&#13;
+					&lt;/NbOfTxs&gt;&#13;
+					&lt;CtrlSum&gt;&#13;
+						&lt;!-- round to 2 digits --&gt;&#13;
+						&lt;xsl:value-of select="$total" /&gt;&#13;
+					&lt;/CtrlSum&gt;&#13;
+					&lt;InitgPty&gt;&#13;
+						&lt;Nm&gt;&#13;
+							&lt;xsl:value-of&#13;
+								select="$exportWorkitem/item[@name='dbtr.name']/value" /&gt;&#13;
+						&lt;/Nm&gt;&#13;
+					&lt;/InitgPty&gt;&#13;
+				&lt;/GrpHdr&gt;&#13;
+&#13;
+				&lt;PmtInf&gt;&#13;
+					&lt;PmtInfId&gt;&#13;
+						&lt;xsl:value-of&#13;
+							select="replace($exportWorkitem/item[@name='$uniqueid']/value, '-', '')" /&gt;&#13;
+						&lt;xsl:text&gt;-1&lt;/xsl:text&gt;&#13;
+					&lt;/PmtInfId&gt;&#13;
+					&lt;PmtMtd&gt;TRF&lt;/PmtMtd&gt;&#13;
+					&lt;NbOfTxs&gt;&#13;
+						&lt;xsl:value-of select="$count" /&gt;&#13;
+					&lt;/NbOfTxs&gt;&#13;
+					&lt;CtrlSum&gt;&#13;
+						&lt;!-- round to 2 digits --&gt;&#13;
+						&lt;xsl:value-of select="$total" /&gt;&#13;
+					&lt;/CtrlSum&gt;&#13;
+					&lt;PmtTpInf&gt;&#13;
+						&lt;SvcLvl&gt;&#13;
+							&lt;Cd&gt;SEPA&lt;/Cd&gt;&#13;
+						&lt;/SvcLvl&gt;&#13;
+					&lt;/PmtTpInf&gt;&#13;
+					&lt;ReqdExctnDt&gt;&#13;
+						&lt;xsl:value-of&#13;
+							select="format-dateTime($now, '[Y0001]-[M01]-[D01]')" /&gt;&#13;
+					&lt;/ReqdExctnDt&gt;&#13;
+					&lt;Dbtr&gt;&#13;
+						&lt;Nm&gt;&#13;
+							&lt;xsl:value-of&#13;
+								select="$exportWorkitem/item[@name='dbtr.name']/value" /&gt;&#13;
+						&lt;/Nm&gt;&#13;
+					&lt;/Dbtr&gt;&#13;
+					&lt;DbtrAcct&gt;&#13;
+						&lt;Id&gt;&#13;
+							&lt;IBAN&gt;&#13;
+								&lt;xsl:value-of&#13;
+									select="replace($exportWorkitem/item[@name='dbtr.iban']/value, ' ', '')" /&gt;&#13;
+							&lt;/IBAN&gt;&#13;
+						&lt;/Id&gt;&#13;
+					&lt;/DbtrAcct&gt;&#13;
+					&lt;DbtrAgt&gt;&#13;
+						&lt;FinInstnId&gt;&#13;
+							&lt;BIC&gt;&#13;
+								&lt;xsl:value-of&#13;
+									select="replace($exportWorkitem/item[@name='dbtr.bic']/value, ' ', '')" /&gt;&#13;
+							&lt;/BIC&gt;&#13;
+						&lt;/FinInstnId&gt;&#13;
+					&lt;/DbtrAgt&gt;&#13;
+					&lt;ChrgBr&gt;SLEV&lt;/ChrgBr&gt;&#13;
+					&lt;!-- generate CdtTrfTxInf for each invoice --&gt;&#13;
+					&lt;xsl:apply-templates&#13;
+						select="/data/document[starts-with(normalize-space(item[@name = '$modelversion']/value),'rechnungseingang')]" /&gt;&#13;
+				&lt;/PmtInf&gt;&#13;
+			&lt;/CstmrCdtTrfInitn&gt;&#13;
+		&lt;/Document&gt;&#13;
+	&lt;/xsl:template&gt;&#13;
+&#13;
+&#13;
+	&lt;!-- This template builds sepa header info --&gt;&#13;
+	&lt;xsl:template&#13;
+		match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) = 'SEPA-Export']"&gt;&#13;
+		&lt;!-- not in use --&gt;&#13;
+	&lt;/xsl:template&gt;&#13;
+&#13;
+&#13;
+	&lt;!-- This template builds sepa payment info for each invoice --&gt;&#13;
+	&lt;xsl:template&#13;
+		match="/data/document[starts-with(normalize-space(item[@name = '$modelversion']/value),'rechnungseingang')]"&gt;&#13;
+&#13;
+&#13;
+		&lt;CdtTrfTxInf xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.003.03"&gt;&#13;
+			&lt;PmtId&gt;&#13;
+				&lt;EndToEndId&gt;NOTPROVIDED&lt;/EndToEndId&gt;&#13;
+			&lt;/PmtId&gt;&#13;
+			&lt;Amt&gt;&#13;
+				&lt;InstdAmt&gt;&#13;
+					&lt;xsl:attribute name="Ccy"&gt;&lt;xsl:value-of&#13;
+							select="item[@name='invoice.currency']/value" /&gt;&lt;/xsl:attribute&gt;&#13;
+					&lt;xsl:value-of&#13;
+						select="item[@name='payment.total']/value" /&gt;&#13;
+				&lt;/InstdAmt&gt;&#13;
+			&lt;/Amt&gt;&#13;
+			&lt;CdtrAgt&gt;&#13;
+				&lt;FinInstnId&gt;&#13;
+					&lt;BIC&gt;&#13;
+						&lt;xsl:value-of select="replace(item[@name='cdtr.bic']/value, ' ', '')" /&gt;&#13;
+					&lt;/BIC&gt;&#13;
+				&lt;/FinInstnId&gt;&#13;
+			&lt;/CdtrAgt&gt;&#13;
+			&lt;Cdtr&gt;&#13;
+				&lt;!-- MAX70 --&gt;&#13;
+				&lt;Nm&gt;&#13;
+					&lt;xsl:value-of select="substring(item[@name='cdtr.name']/value, 1, 70)" /&gt;&#13;
+				&lt;/Nm&gt;&#13;
+			&lt;/Cdtr&gt;&#13;
+			&lt;CdtrAcct&gt;&#13;
+				&lt;Id&gt;&#13;
+					&lt;IBAN&gt;&#13;
+						&lt;xsl:value-of select="replace(item[@name='cdtr.iban']/value, ' ', '')" /&gt;&#13;
+					&lt;/IBAN&gt;&#13;
+				&lt;/Id&gt;&#13;
+			&lt;/CdtrAcct&gt;&#13;
+			&lt;RmtInf&gt;&#13;
+				&lt;!-- Max140Text --&gt;&#13;
+				&lt;Ustrd&gt;&#13;
+					&lt;xsl:value-of select="substring(item[@name='$workflowsummary']/value, 1, 140)" /&gt;&#13;
+				&lt;/Ustrd&gt;&#13;
+			&lt;/RmtInf&gt;&#13;
+		&lt;/CdtTrfTxInf&gt;&#13;
+&#13;
+	&lt;/xsl:template&gt;&#13;
+&#13;
+&lt;/xsl:stylesheet&gt;</value></item><item name="xslresource"><value xsi:type="xs:string">/imixs-adapters-sepa/src/reports/sepa-2.0.3.xsl</value></item></document>

@@ -47,6 +47,7 @@
 		<table class="" style="width:100%;">
 			<tr>
 				<th style=""></th>
+				<th style="">Zahlbar bis</th>
 				<th style="">IBAN</th>
 				<th style="">BIC</th>
 				<th style="">Betrag EUR</th>
@@ -64,13 +65,20 @@
 							<f:param name="id" value="#{invoice.item['$uniqueid']}" />
 						</h:link>
 					</td>
+					<td>
+						<h:outputText value="#{invoice.item['payment.date']}">
+							<f:convertDateTime pattern="#{message.datePatternShort}" timeZone="#{message.timeZone}" />
+							a
+						</h:outputText>
+
+					</td>
 
 					<td>#{invoice.item['dbtr.iban']}</td>
 					<td>#{invoice.item['dbtr.bic']}</td>
 
 
 					<td style="text-align: right;">
-						<h:outputText value="#{invoice.item['invoice.total']}">
+						<h:outputText value="#{invoice.item['payment.total']}">
 							<f:convertNumber minFractionDigits="2" locale="de" />
 						</h:outputText>
 					</td>
@@ -81,10 +89,11 @@
 			<tr style="border-top: 1px solid #ccc;">
 				<td />
 				<td />
+				<td />
 				<td><strong>Summary</strong></td>
 				<td style="text-align: right;"><strong>
 						<h:outputText
-							value="#{sepaController.calculateSum(workitem.itemList['$workitemref'], 'invoice.total')}">
+							value="#{sepaController.calculateSum(workitem.itemList['$workitemref'], 'payment.total')}">
 							<f:convertNumber minFractionDigits="2" locale="de" />
 						</h:outputText>
 					</strong></td>
