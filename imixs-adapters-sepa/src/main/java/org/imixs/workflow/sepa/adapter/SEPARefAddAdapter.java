@@ -3,10 +3,13 @@ package org.imixs.workflow.sepa.adapter;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.ejb.EJB;
 import javax.inject.Inject;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
+import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.ModelException;
@@ -35,6 +38,8 @@ import org.imixs.workflow.sepa.services.SepaWorkflowService;
  * <sepa-export name="modelversion">sepa-export-manual-de-3.0</sepa-export>
    <sepa-export name="task">1000</sepa-export>
    <sepa-export name="key">SEPA Lastschriftverfahren</sepa-export> 
+   <sepa-export name="maxcount">100</sepa-export>
+   <sepa-export name="maxcount-event">20</sepa-export>
    }</pre>
  * <p>
  * If a workitem is already been linked to a SEPA Export, nothing happens.
@@ -50,6 +55,14 @@ public class SEPARefAddAdapter implements SignalAdapter {
 
     @Inject
     SepaWorkflowService sepaWorkflowService;
+
+
+    @Inject
+    WorkflowService workflowService;
+
+  
+    int invoicesMaxCount=0;
+    int invoicesMaxCountEvent=0;
 
     /**
      * This method finds or create the SEPA Export and adds a reference
@@ -67,6 +80,15 @@ public class SEPARefAddAdapter implements SignalAdapter {
         sepaWorkflowService.updateDbtrDefaultData(workitem);
         sepaWorkflowService.updateCdtrDefaultData(workitem);
        
+        // compute maxcount properties....
+        ItemCollection sepaConfig = workflowService.evalWorkflowResult(event, "sepa-export", workitem, true);
+        if (sepaConfig != null ) {
+            logger.fine("read max count configuration from event");
+            if (sepaConfig.getItemValueInteger("maxcount")>0) {
+                invoicesMaxCount = sepaConfig.getItemValueInteger("maxcount");
+                invoicesMaxCountEvent = sepaConfig.getItemValueInteger("maxcount-event");
+            }
+        }
 
         String key = sepaWorkflowService.computeKey(workitem, event);
 
@@ -86,6 +108,14 @@ public class SEPARefAddAdapter implements SignalAdapter {
                 // set event 100
                 sepaExport.event(SepaWorkflowService.EVENT_ADD_REF);
                 sepaWorkflowService.processSEPAExport(sepaExport);
+
+                // test if the max count was reached. 
+                if (invoicesMaxCount>0 && sepaExport.getItemValue("$workitemref").size()>=invoicesMaxCount) {
+                    logger.info("......Max Count of " + invoicesMaxCount + " invoices reached, executing maxcount-event="+invoicesMaxCountEvent);
+                    // process the maxcoutn event on the sepa export
+                    sepaExport.event(invoicesMaxCountEvent);
+                    sepaWorkflowService.processSEPAExport(sepaExport);
+                }
             }
 
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
