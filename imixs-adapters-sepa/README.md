@@ -100,8 +100,15 @@ Example:
 
 	<sepa-export name="key"><itemvalue>dbtr.iban</itemvalue>-<itemvalue>invoice.currency</itemvalue></sepa-export>
 
- 	
-	
+
+To restrict the max count of invoices collected in a single SEPA Export the optional event configuration `maxcount` and `maxcount-event` can be added.
+
+	<sepa-export name="maxcount">100</sepa-export>
+	<sepa-export name="maxcount-event">20</sepa-export>   
+
+In case and existing sepa export reaches the max count of collected invoices the max count event will be automatically executed. 
+
+
 ## Scheduler Mode	
 	
 In the scheduler mode the invoice workflow does not link an workitem to a SEPA Export. Instead a scheduler can be configured to collect invoices periodically.  The SEPA export is an implementation of the interface *org.imxis.workflow.scheduler.Scheduler*.
