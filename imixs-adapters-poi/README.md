@@ -88,6 +88,13 @@ Optional it is possible to replace a cell value with the first value of an Item.
 
 **Note:** This feature currently only supports the item types Date and Double. All other types will be converted into text. 
 
+#### Evaluate Formulas
+
+Optional you can add an `eval` expression with a list of cells to be recomputed after all updates are completed. See Example: 
+
+	<poi-update name="eval">F6;F25</poi-update>
+
+
 ### Regular Expressions for Document Name
 
 You can also define the filename as a pattern including regular expressions. See the following example:
