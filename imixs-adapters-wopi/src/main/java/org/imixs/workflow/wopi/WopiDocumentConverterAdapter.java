@@ -123,11 +123,14 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
                         "Wopi-Converter Error: 'filename' is not defined in current BPMN configuration");
             }
 
+            // read configuration params and adapt text
             String apiEndpoint = wopiConverterConfig.getItemValueString("api-endpoint");
             String fileName = wopiConverterConfig.getItemValueString("filename");
             String convertTo = wopiConverterConfig.getItemValueString("convert-to");
 
+            apiEndpoint = workflowService.adaptText(apiEndpoint, document);
             fileName = workflowService.adaptText(fileName, document);
+            convertTo = workflowService.adaptText(convertTo, document);
 
             if (!apiEndpoint.endsWith("/")) {
                 apiEndpoint = apiEndpoint + "/";
