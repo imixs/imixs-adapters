@@ -3,9 +3,8 @@ package org.imixs.workflow.einvoice.test;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
+import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.einvoice.UBLParser;
 import org.imixs.workflow.exceptions.PluginException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,16 +33,19 @@ public class TestUBLParser {
 	public void testDefault() throws IOException {
 		String PATH_XML = "xml/XRechnung-3.0.1.xml";
 		InputStream xmlInputStream = null;
+		ItemCollection workitem = new ItemCollection();
 		try {
 			// Use the class loader to load the XML file as a resource
 			ClassLoader classLoader = TestUBLParser.class.getClassLoader();
 			xmlInputStream = classLoader.getResourceAsStream(PATH_XML);
-			DocumentBuilder documentBuilder;
 
-			documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-			Document doc = documentBuilder.parse(xmlInputStream);
+			Document doc = UBLParser.parseInputStream(xmlInputStream);
 
 			Assert.assertNotNull(doc);
+
+			UBLParser.parseItems(doc, workitem);
+
+			Assert.assertEquals("RE-2024-03", workitem.getItemValueString("invoice.number"));
 
 		} catch (Exception e) {
 			Assert.fail();
