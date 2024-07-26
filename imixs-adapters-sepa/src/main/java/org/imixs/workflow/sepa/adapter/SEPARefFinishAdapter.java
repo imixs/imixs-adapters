@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import javax.inject.Inject;
-
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.engine.WorkflowService;
@@ -15,6 +13,8 @@ import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.sepa.services.SepaWorkflowService;
+
+import jakarta.inject.Inject;
 
 /**
  * The SEPARefFinishAdapter processes all invoices referred by this sepa export.
