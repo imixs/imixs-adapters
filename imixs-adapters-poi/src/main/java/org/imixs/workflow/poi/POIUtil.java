@@ -72,6 +72,12 @@ public class POIUtil {
             }
         }
 
+        logger.info("---- last  Column=" + lastColumn);
+        if (lastColumn > 1000) { // oder eine andere sinnvolle Grenze
+            logger.warning("Excel Template could be corrupted! - Unexpected last lastColumn: " + lastColumn);
+            // Eventuell alternative Strategie anwenden oder Warnung ausgeben
+        }
+
         // Store original column widths before shifting
         Map<Integer, Integer> columnWidths = new HashMap<>();
         for (int i = startColumn; i <= endColumn; i++) {
@@ -101,118 +107,6 @@ public class POIUtil {
                 if (refCell != null) {
                     XSSFCell newCell = ((XSSFRow) row).createCell(startColumn);
                     newCell.copyCellFrom(refCell, copyPolicy);
-                }
-            }
-        }
-    }
-
-    /**
-     * Insert a columns in a XSSFSheet from a given start column (beginning by 0).
-     * The end column defines the last column in the sheet to be shifted.
-     * 
-     * @param sheet
-     * @param cellReference
-     * @param numberOfColumns
-     */
-    public static void insertColumnSuperTolll(XSSFSheet sheet, int startColumn, int endColumn) {
-
-        // Convert cell reference to column index
-        // CellReference refCellStart = new CellReference(cellReferenceStart);
-        // CellReference refCellEnd = new CellReference(cellReferenceEnd);
-        // int startColumn = refCellStart.getCol();
-        // // int lastColumn = refCellEnd.getCol();
-
-        logger.info("---- start Column=" + startColumn);
-
-        // lastColumn = 16000;
-        // // Find the last column by checking all rows
-        int lastColumn = -1;
-        for (Row row : sheet) {
-            if (row.getLastCellNum() > lastColumn) {
-                lastColumn = row.getLastCellNum() - 1;
-            }
-        }
-
-        // lastColumn = 100;
-        // Only proceed if there are columns to shift
-        // if (lastColumn >= startColumn) {
-        // Shift columns to the right
-        sheet.shiftColumns(startColumn, lastColumn, 1);
-        // }
-
-        // Create CellCopyPolicy
-        CellCopyPolicy copyPolicy = new CellCopyPolicy.Builder()
-                .cellStyle(true)
-                .cellFormula(true)
-                .mergedRegions(false) // Merging is already handled by shiftColumns
-                .build();
-
-        // Copy formatting from reference column to new columns
-        // for (Row row : sheet) {
-        // if (row != null) {
-        // XSSFCell refCell = ((XSSFRow) row).getCell(startColumn + 1);
-        // if (refCell != null) {
-        // for (int i = startColumn; i < startColumn + 1; i++) {
-        // XSSFCell newCell = ((XSSFRow) row).createCell(i);
-        // newCell.copyCellFrom(refCell, copyPolicy);
-        // }
-        // }
-        // }
-        // }
-
-        for (Row row : sheet) {
-            if (row != null) {
-                XSSFCell refCell = ((XSSFRow) row).getCell(startColumn + 1);
-                if (refCell != null) {
-                    XSSFCell newCell = ((XSSFRow) row).createCell(startColumn);
-                    newCell.copyCellFrom(refCell, copyPolicy);
-                }
-            }
-        }
-    }
-
-    public static void insertColumnGehtNoch(XSSFSheet sheet, int startColumn, int endColumn) {
-
-        // Convert cell reference to column index
-        // CellReference refCellStart = new CellReference(cellReferenceStart);
-        // CellReference refCellEnd = new CellReference(cellReferenceEnd);
-        // int startColumn = refCellStart.getCol();
-        // // int lastColumn = refCellEnd.getCol();
-
-        logger.info("---- start Column=" + startColumn);
-
-        // lastColumn = 16000;
-        // // Find the last column by checking all rows
-        int lastColumn = -1;
-        for (Row row : sheet) {
-            if (row.getLastCellNum() > lastColumn) {
-                lastColumn = row.getLastCellNum() - 1;
-            }
-        }
-
-        // lastColumn = 100;
-        // Only proceed if there are columns to shift
-        // if (lastColumn >= startColumn) {
-        // Shift columns to the right
-        sheet.shiftColumns(startColumn, lastColumn, 1);
-        // }
-
-        // Create CellCopyPolicy
-        CellCopyPolicy copyPolicy = new CellCopyPolicy.Builder()
-                .cellStyle(true)
-                .cellFormula(true)
-                .mergedRegions(false) // Merging is already handled by shiftColumns
-                .build();
-
-        // Copy formatting from reference column to new columns
-        for (Row row : sheet) {
-            if (row != null) {
-                XSSFCell refCell = ((XSSFRow) row).getCell(startColumn + 1);
-                if (refCell != null) {
-                    for (int i = startColumn; i < startColumn + 1; i++) {
-                        XSSFCell newCell = ((XSSFRow) row).createCell(i);
-                        newCell.copyCellFrom(refCell, copyPolicy);
-                    }
                 }
             }
         }
