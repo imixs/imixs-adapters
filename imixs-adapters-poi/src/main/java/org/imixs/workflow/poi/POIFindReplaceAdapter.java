@@ -177,10 +177,45 @@ public class POIFindReplaceAdapter implements SignalAdapter {
 
         } catch (IOException e) {
             throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), DOCUMENT_ERROR,
-                    "doucment '" + fileName + "' not readable: " + e.getMessage());
+                    "document '" + fileName + "' not readable: " + e.getMessage());
         }
 
         return document;
+    }
+
+    /**
+     * This helper method processes all poi-update instructions for a given file
+     * attachment (.docx | .xlsx)
+     * 
+     * @param workitem
+     * @param event
+     * @param targetName
+     * @throws PluginException
+     */
+    public void processPOIUpdate(ItemCollection workitem, ItemCollection event, String targetName)
+            throws PluginException {
+        logger.fine("... loading poi configuration..");
+        // Process POI instructions
+        // read the config
+        ItemCollection poiConfig;
+
+        poiConfig = workflowService.evalWorkflowResult(event, "poi-update", workitem,
+                false);
+
+        if (poiConfig == null || !poiConfig.hasItem("findreplace")) {
+            throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), CONFIG_ERROR,
+                    "missing poi configuration");
+        }
+        List<String> replaceDevList = poiConfig.getItemValue("findreplace");
+        String eval = poiConfig.getItemValueString("eval");
+
+        logger.info("... update template with normal poi information..");
+        try {
+            this.updateFileData(workitem.getFileData(targetName), workitem, replaceDevList, eval);
+        } catch (IOException e) {
+            throw new PluginException(POIFindReplaceAdapter.class.getSimpleName(), DOCUMENT_ERROR,
+                    "document '" + targetName + "' not readable: " + e.getMessage());
+        }
     }
 
     /**
