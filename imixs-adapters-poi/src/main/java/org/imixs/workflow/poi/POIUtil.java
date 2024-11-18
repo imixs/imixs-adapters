@@ -111,4 +111,24 @@ public class POIUtil {
         }
     }
 
+    /**
+     * Resolves column and row number into a excel reference.
+     * 
+     * @param col
+     * @param row
+     * @return
+     */
+    public static String getCellReference(int col, int row) {
+        // convert column into letters
+        StringBuilder colRef = new StringBuilder();
+        int temp = col;
+        while (temp >= 0) {
+            int remainder = temp % 26;
+            colRef.insert(0, (char) (65 + remainder)); // 65 ASCII for 'A'
+            temp = (temp / 26) - 1;
+        }
+        // append row number starting at 1
+        return colRef.toString() + (row + 1);
+    }
+
 }
