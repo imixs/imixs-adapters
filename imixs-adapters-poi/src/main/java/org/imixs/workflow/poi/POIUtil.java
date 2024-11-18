@@ -35,7 +35,6 @@ public class POIUtil {
         XSSFRow refRow = sheet.getRow(refCell.getRow());
 
         int startRow = refRow.getRowNum();
-        // logger.info("---- start Row=" + startRow);
 
         // copy rows
         sheet.shiftRows(startRow, sheet.getLastRowNum(), numberOfRows, true, true);
@@ -62,7 +61,7 @@ public class POIUtil {
      */
     public static void insertColumn(XSSFSheet sheet, int startColumn, int endColumn) {
 
-        logger.info("---- start Column=" + startColumn);
+        logger.fine("start Column=" + startColumn);
 
         // // Find the last column by checking all rows
         int lastColumn = -1;
@@ -72,7 +71,7 @@ public class POIUtil {
             }
         }
 
-        logger.info("---- last  Column=" + lastColumn);
+        logger.fine("last  Column=" + lastColumn);
         if (lastColumn > 1000) { // oder eine andere sinnvolle Grenze
             logger.warning("Excel Template could be corrupted! - Unexpected last lastColumn: " + lastColumn);
             // Eventuell alternative Strategie anwenden oder Warnung ausgeben
@@ -82,7 +81,7 @@ public class POIUtil {
         Map<Integer, Integer> columnWidths = new HashMap<>();
         for (int i = startColumn; i <= endColumn; i++) {
             columnWidths.put(i, sheet.getColumnWidth(i));
-            logger.info("  column width " + i + " = " + sheet.getColumnWidth(i));
+            logger.fine("  column width " + i + " = " + sheet.getColumnWidth(i));
         }
 
         sheet.shiftColumns(startColumn, lastColumn, 1);
@@ -90,7 +89,7 @@ public class POIUtil {
         // Restore column widths for shifted columns
         for (int i = startColumn + 1; i <= endColumn + 1; i++) {
             Integer width = columnWidths.get(i - 1);
-            logger.info("  restore width " + i + " = " + width);
+            logger.fine("  restore width " + i + " = " + width);
             sheet.setColumnWidth(i, width);
         }
 
