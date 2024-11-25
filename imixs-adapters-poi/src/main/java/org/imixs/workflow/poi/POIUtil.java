@@ -31,6 +31,10 @@ public class POIUtil {
      */
     public static void insertRows(XSSFSheet sheet, String cellReference, int numberOfRows) {
 
+        if (sheet == null || numberOfRows == 0 || cellReference == null || cellReference.isEmpty()) {
+            // no op
+            return;
+        }
         CellReference refCell = new CellReference(cellReference);
         XSSFRow refRow = sheet.getRow(refCell.getRow());
 
@@ -60,6 +64,11 @@ public class POIUtil {
      * @param endColumn   - last column in the sheet
      */
     public static void insertColumn(XSSFSheet sheet, int startColumn, int endColumn) {
+
+        if (sheet == null || endColumn == 0) {
+            // no op
+            return;
+        }
 
         logger.fine("start Column=" + startColumn);
 
