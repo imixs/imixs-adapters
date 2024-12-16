@@ -36,7 +36,6 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.Model;
 import org.imixs.workflow.WorkflowKernel;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
@@ -48,6 +47,7 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.util.XMLParser;
+import org.openbpmn.bpmn.BPMNModel;
 
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RunAs;
@@ -80,7 +80,7 @@ public class SepaWorkflowService {
     public static final int EVENT_REMOVE_REF = 200;
 
     public static final String INVOICE_UPDATE = "invoice_update";
-    public static final String LINK_PROPERTY = "$workitemref";
+    public static final String LINK_PROPERTY = "";
 
     public static final String ITEM_MODEL_VERSION = "_model_version";
     public static final String ITEM_INITIAL_TASK = "_initial_task";
@@ -386,8 +386,10 @@ public class SepaWorkflowService {
         }
 
         // set workflow group name from the Task Element to identify document in xslt
-        Model model = modelService.getModel(modelVersion);
-        ItemCollection task = model.getTask(taskID);
+        BPMNModel model = modelService.getModelManager().getModel(modelVersion);
+        ItemCollection task = modelService.getModelManager().findTaskByID(model, taskID);
+
+        // model.openDefaultProces().fin(type);.getTask(taskID);
         String modelTaskGroupName = task.getItemValueString("txtworkflowgroup"); // DO NOT CHANGE!
         sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, modelTaskGroupName);
 

@@ -7,13 +7,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.ejb.ConcurrencyManagement;
-import jakarta.ejb.ConcurrencyManagementType;
-import jakarta.ejb.Singleton;
-import javax.enterprise.event.Observes;
-import jakarta.xml.bind.JAXBException;
-
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -26,6 +19,13 @@ import org.imixs.workflow.engine.ProcessingEvent;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.xml.XMLDocumentAdapter;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.ConcurrencyManagement;
+import jakarta.ejb.ConcurrencyManagementType;
+import jakarta.ejb.Singleton;
+import jakarta.enterprise.event.Observes;
+import jakarta.xml.bind.JAXBException;
 
 /**
  * The ProducerService is a Kafka client that publishes workflow events to the
@@ -121,10 +121,10 @@ public class ProducerService implements Serializable {
 
 			logger.info("...consuming ProcssingEvent (model:" + modelPattern + ") -> send new kafka event...");
 			try {
-				sendWorkitem(documentEvent.getDocument()); 
+				sendWorkitem(documentEvent.getDocument());
 			} catch (AdapterException e) {
 				// convert Adapter Exception into runtime Exception!
-				throw new ProcessingErrorException(e.getErrorContext() , e.getErrorCode(), e.getMessage(),e);
+				throw new ProcessingErrorException(e.getErrorContext(), e.getErrorCode(), e.getMessage(), e);
 			}
 		}
 
@@ -138,7 +138,7 @@ public class ProducerService implements Serializable {
 	 * The value is a serialized version of the workitem.
 	 * 
 	 * @param workitem
-	 * @throws AdapterException 
+	 * @throws AdapterException
 	 */
 	public void sendWorkitem(ItemCollection workitem) throws AdapterException {
 		String uid = workitem.getUniqueID();

@@ -29,18 +29,18 @@ import java.util.List;
 
 import java.util.logging.Logger;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ConversationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.jwt.JWTException;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.faces.data.WorkflowEvent;
 import org.imixs.workflow.faces.fileupload.FileUploadController;
 import org.imixs.workflow.faces.util.ResourceBundleHandler;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ConversationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 /**
  * The WopiController is a front end controller providing the access endpoint
@@ -80,7 +80,7 @@ public class WopiController implements Serializable {
     @Inject
     @ConfigProperty(name = "wopi.options", defaultValue = "none")
     String wopiOptions;
-    
+
     @Inject
     WopiAccessHandler wopiAccessHandler;
 
@@ -165,17 +165,16 @@ public class WopiController implements Serializable {
             logger.warning("...no wopi client endpoint found!");
             return null;
         }
-        
+
         // cut onlyoffice hints
-        if (baseURL.indexOf("&<rs=")>-1) {
-            baseURL=baseURL.substring(0,baseURL.indexOf("&<rs="));
-        }
-        
-        // add optional WOPI Params (e.g. thm=2
-        if (wopiOptions != null && !"none".equals(wopiOptions)) {
-            baseURL=baseURL+"&"+wopiOptions;
+        if (baseURL.indexOf("&<rs=") > -1) {
+            baseURL = baseURL.substring(0, baseURL.indexOf("&<rs="));
         }
 
+        // add optional WOPI Params (e.g. thm=2
+        if (wopiOptions != null && !"none".equals(wopiOptions)) {
+            baseURL = baseURL + "&" + wopiOptions;
+        }
 
         // test file extension
         String[] extensions = wopiFileExtensions.split(",");
@@ -201,7 +200,7 @@ public class WopiController implements Serializable {
 
         String token = generateAccessToken(userid, username);
         baseURL = baseURL + "WOPISrc=" + wopiHostEndpoint + uniqueid + "/files/" + file + "&access_token=" + token;
-       
+
         logger.fine("WOP Access URL=" + baseURL);
         return baseURL;
     }

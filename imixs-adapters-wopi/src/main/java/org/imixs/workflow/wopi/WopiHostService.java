@@ -38,6 +38,12 @@ import java.util.Optional;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.imixs.workflow.FileData;
+import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.WorkflowKernel;
+import org.imixs.workflow.engine.DocumentService;
+
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RunAs;
 import jakarta.ejb.LocalBean;
@@ -58,12 +64,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.imixs.workflow.FileData;
-import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.WorkflowKernel;
-import org.imixs.workflow.engine.DocumentService;
 
 /**
  * The WopiHostService implements a Rest Service for the Wopi protocol.
@@ -115,7 +115,7 @@ public class WopiHostService {
 
     @Inject
     DocumentService documentService;
-    
+
     @Inject
     @ConfigProperty(name = "wopi.postmessageorigin")
     Optional<String> postMessageOrigin;
@@ -181,8 +181,6 @@ public class WopiHostService {
             logger.warning("wokitem '" + uniqueid + "' no fileData object not found!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        
-    
 
         // create the json object
         JsonObjectBuilder builder = null;
@@ -206,7 +204,8 @@ public class WopiHostService {
      * <p>
      * <code> /wopi/xxxxxxx-0000-0000-0000-yyyy_{FILENAME}</code>
      * <p>
-     * If the file content was already modified before, the content is fetched from the 
+     * If the file content was already modified before, the content is fetched from
+     * the
      * local wopi file cache
      * 
      * @param name - the file name to be opened
@@ -252,7 +251,8 @@ public class WopiHostService {
     }
 
     /**
-     * This method stores a modified file content form the wopi client into the local wopi file cache.
+     * This method stores a modified file content form the wopi client into the
+     * local wopi file cache.
      * <p>
      * The method expects a $uniqueID and filename
      * <p>
@@ -269,19 +269,19 @@ public class WopiHostService {
     @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}/contents")
     public Response postFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             InputStream contentStream, @QueryParam("access_token") String accessToken, @Context UriInfo info) {
-        
+
         logger.info("......POST postFileContents: " + uniqueid + "/" + file);
-        // analyze header X-LOOL-WOPI-Timestamp, X-LOOL-WOPI-IsAutosave, X-LOOL-WOPI-IsExitSave
+        // analyze header X-LOOL-WOPI-Timestamp, X-LOOL-WOPI-IsAutosave,
+        // X-LOOL-WOPI-IsExitSave
         // We do ignroe the X-LOOL-WOPI-IsExitSave event
-        String wopiHeader=servletRequest.getHeader("X-LOOL-WOPI-IsExitSave");
-        if (wopiHeader!=null && "true".equalsIgnoreCase(wopiHeader)) {
+        String wopiHeader = servletRequest.getHeader("X-LOOL-WOPI-IsExitSave");
+        if (wopiHeader != null && "true".equalsIgnoreCase(wopiHeader)) {
             logger.info("...ignore X-LOOL-WOPI-IsExitSave = " + wopiHeader);
-            return  Response.ok().build();
+            return Response.ok().build();
         }
-        
+
         // clean unexpected query params
         accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
-        
 
         // validate access_token
         JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);
@@ -294,7 +294,7 @@ public class WopiHostService {
         try {
             content = readAllBytes(contentStream);
             logger.finest("...receifed " + content.length + " bytes");
-            // cache the file data temporary 
+            // cache the file data temporary
             fileData = new FileData(file, content, null, null);
             wopiAccessHandler.cacheFileData(accessToken, fileData);
 
@@ -453,13 +453,11 @@ public class WopiHostService {
         builder.add("UserCanWrite", true);
         builder.add("SupportsUpdate", true);
         // builder.add("EditNotificationPostMessage", true);
-        
-        
+
         if (postMessageOrigin.isPresent() && !postMessageOrigin.get().isEmpty()) {
-            logger.info("......setting postMessageOrigin=" + postMessageOrigin.get() );
+            logger.info("......setting postMessageOrigin=" + postMessageOrigin.get());
             builder.add("PostMessageOrigin", postMessageOrigin.get());
         }
-        
 
         return builder;
     }
