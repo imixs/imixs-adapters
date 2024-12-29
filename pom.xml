@@ -16,7 +16,6 @@
 		<module>imixs-adapters-poi</module>
 		<module>imixs-adapters-wopi</module>
 		<module>imixs-adapters-odf</module>
-		<module>imixs-adapters-e-invoice</module>
 	</modules>
 
 	<properties>
