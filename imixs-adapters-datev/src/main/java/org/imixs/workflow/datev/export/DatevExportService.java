@@ -672,7 +672,7 @@ public class DatevExportService {
      * @throws QueryException
      */
     public ItemCollection findDatevExport(String datevKey) throws QueryException {
-        String query = "(type:workitem) AND ($taskid:1000) AND ($modelversion:datev-export-de-2*) ";
+        String query = "(type:workitem) AND ($taskid:1000) AND ($modelversion:datev-export*) ";
         List<ItemCollection> resultList = documentService.find(query, 999, 0, "$modified", true);
 
         for (ItemCollection export : resultList) {
