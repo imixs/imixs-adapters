@@ -72,17 +72,17 @@ import jakarta.inject.Inject;
 import jakarta.xml.bind.JAXBException;
 
 /**
- * Der DatevExportService stellt methoden für den Datev export bereit
+ * Der DatevExportService stellt Methoden für den Datev export bereit
  * <p>
- * Unter anderem werden metadaten berechnet.
+ * Unter anderem werden Metadaten berechnet.
  * <p>
- * _stapelzeitraum_start und _stapelzeitraum_ende markieren die äterste und die
- * jüngste Rechnung. Diese Daten weren für die DATEV Kopf Datei benötigt.
+ * _stapelzeitraum_start und _stapelzeitraum_ende markieren die älterste und die
+ * jüngste Rechnung. Diese Daten werden für die DATEV Kopf Datei benötigt.
  * <p>
  * Change: 13.01.2021
  * <p>
  * Belegbilder dürfen immer nur einmal in der documents.xml drin stehen auch
- * wenn diese mehrfach in verschiedenne Buchungssätzen verwendet werden. Daher
+ * wenn diese mehrfach in verschiedene Buchungssätzen verwendet werden. Daher
  * prüfen wir beim Aufbau der documents.xml ob das belegbild schon generiert
  * wurde.
  * 
@@ -390,14 +390,14 @@ public class DatevExportService {
                 stapelZeitraumEnde = invoiceDate;
             }
         }
-        // update Stapelzeitruam begin und Ende
+        // update Stapelzeitraum begin und Ende
         if (stapelZeitraumStart != null) {
             // Begin stapelzeitrum
-            datevExport.replaceItemValue("_stapelzeitraum_start",
+            datevExport.replaceItemValue("datev.stapelzeitraum.start",
                     Date.from(stapelZeitraumStart.atZone(ZoneId.systemDefault()).toInstant()));
 
             // Ende Stapelzeitraum
-            datevExport.replaceItemValue("_stapelzeitraum_ende",
+            datevExport.replaceItemValue("datev.stapelzeitraum.ende",
                     Date.from(stapelZeitraumEnde.atZone(ZoneId.systemDefault()).toInstant()));
 
         }
@@ -531,7 +531,7 @@ public class DatevExportService {
 
             if (result == true) {
                 DatevHelper.logMessage(
-                        "...FTP file transfer '" + ftpPathReports + fileData.getName() + "' successfull", configuration,
+                        "...FTP file transfer '" + ftpPathReports + fileData.getName() + "' successful", configuration,
                         datevExport);
             } else {
                 throw new PluginException(DatevExportService.class.getName(), ITEM_FTP_ERROR,

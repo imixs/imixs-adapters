@@ -4,15 +4,13 @@
 	<xsl:strip-space elements="*" />
 	<xsl:output method="xml" indent="yes" encoding="UTF-8"
 		standalone="yes" />
-
 	<xsl:template match="/">
-
 		<xsl:variable name="now" select="current-dateTime()" />
-
-		<archive xmlns="http://xml.datev.de/bedi/tps/document/v04.0"
+		<archive
+			xmlns="http://xml.datev.de/bedi/tps/document/v04.0"
 			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 			xsi:schemaLocation="http://xml.datev.de/bedi/tps/document/v04.0 Document_v040.xsd"
-			version="4.0" generatingSystem="DATEV-Musterdaten">
+			version="4.0" generatingSystem="Imixs Office Workflow">
 			<header>
 				<date>
 					<xsl:value-of
@@ -22,43 +20,27 @@
 				<clientName>Imixs Office Workflow</clientName>
 			</header>
 			<content>
-
 				<xsl:for-each select="/data/document">
 
-					<xsl:variable name="filename"
-						select="./item[@name='$file']/value/item/@name" />
-					<xsl:variable name="date"
-						select="./item[@name='$modified']/value" />
-						
-
+					<xsl:variable
+						name="filename" select="./item[@name='$file']/value/item/@name" />
+					<xsl:variable
+						name="date" select="./item[@name='invoice.date']/value" />
 					<document>
-						<extension>
-							<xsl:attribute name="xsi:type">accountsPayableLedger</xsl:attribute>
-							<xsl:attribute name="datafile">
-							<xsl:value-of
-								select="./item[@name='$uniqueid']/value" /><xsl:text>.xml</xsl:text>
-								</xsl:attribute>
-							<property>
-								<xsl:attribute name="value"><xsl:value-of select="format-dateTime($date, '[Y0001]-[M01]')"/></xsl:attribute>
-								<xsl:attribute name="key">1</xsl:attribute>
-							</property>
-							<property>
-								<xsl:attribute name="value">Eingangsrechnungen</xsl:attribute>
-								<xsl:attribute name="key">3</xsl:attribute>
-							</property>
-						</extension>
+						<xsl:attribute name="guid"><xsl:value-of
+								select="./item[@name='$uniqueid']/value" /></xsl:attribute>
+						<xsl:attribute name="type">1</xsl:attribute>
+						<xsl:attribute name="processID">2</xsl:attribute>
+						<keywords>
+							<xsl:value-of select="./item[@name='invoice.number']/value" />
+						</keywords>
 						<extension>
 							<xsl:attribute name="xsi:type">File</xsl:attribute>
 							<xsl:attribute name="name"><xsl:value-of
-								select="$filename" /></xsl:attribute>
+									select="$filename" /></xsl:attribute>
 						</extension>
 					</document>
-
-
-
 				</xsl:for-each>
-
-
 			</content>
 		</archive>
 	</xsl:template>
