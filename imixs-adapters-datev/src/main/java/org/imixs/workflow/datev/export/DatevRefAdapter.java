@@ -12,6 +12,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.datev.DatevException;
+import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.ModelException;
@@ -50,6 +51,9 @@ public class DatevRefAdapter implements SignalAdapter {
 	@Inject
 	DatevExportService datevExportService;
 
+	@Inject
+	DatevService datevService;
+
 	/**
 	 * This method finds or create the Datev Export and adds a reference
 	 * ($workitemref) to the current invoice.
@@ -74,13 +78,13 @@ public class DatevRefAdapter implements SignalAdapter {
 	@SuppressWarnings("unchecked")
 	private void appendInvoice(ItemCollection invoice) throws PluginException {
 
-		ItemCollection datevConfig = datevExportService.loadConfiguration(DatevExportService.DEFAULT_CONFIG_NAME);
+		ItemCollection datevConfig = datevService.loadConfiguration();
 		if (datevConfig == null) {
 			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
 					"Datev Export kann nicht erzeugt werden da keine DATEV Konfiguration vorliegt.");
 		}
 
-		String datevClientID = datevConfig.getItemValueString(DatevExportService.ITEM_DATEV_CLIENT_ID);
+		String datevClientID = datevConfig.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
 
 		if (datevClientID == null || datevClientID.isEmpty()) {
 			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
@@ -106,16 +110,16 @@ public class DatevRefAdapter implements SignalAdapter {
 				// create a new one
 				datevExport = new ItemCollection().workflowGroup("DATEV-Export").task(1000);
 				// add cdtr.name
-				datevExport.setItemValue(DatevExportService.ITEM_DATEV_CLIENT_ID,
-						datevConfig.getItemValue(DatevExportService.ITEM_DATEV_CLIENT_ID));
-				datevExport.setItemValue(DatevExportService.ITEM_DATEV_CLIENT_NAME,
-						datevConfig.getItemValue(DatevExportService.ITEM_DATEV_CLIENT_NAME));
+				datevExport.setItemValue(DatevService.ITEM_DATEV_CLIENT_ID,
+						datevConfig.getItemValue(DatevService.ITEM_DATEV_CLIENT_ID));
+				datevExport.setItemValue(DatevService.ITEM_DATEV_CLIENT_NAME,
+						datevConfig.getItemValue(DatevService.ITEM_DATEV_CLIENT_NAME));
 
 				// set consultant ID
-				datevExport.setItemValue(DatevExportService.ITEM_DATEV_CONSULTANT_ID,
-						datevConfig.getItemValue(DatevExportService.ITEM_DATEV_CONSULTANT_ID));
+				datevExport.setItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID,
+						datevConfig.getItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID));
 
-				datevExport.setItemValue(DatevExportService.ITEM_DATEV_BOOKING_PERIOD, keyPeriode);
+				datevExport.setItemValue(DatevService.ITEM_DATEV_BOOKING_PERIOD, keyPeriode);
 				datevExport.setItemValue("name", key);
 			}
 

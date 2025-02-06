@@ -64,8 +64,6 @@ import jakarta.inject.Named;
 @SessionScoped
 public class DatevController implements Serializable {
 
-	public static final String DATEV_CONFIGURATION = "DATEV_CONFIGURATION";
-
 	private ItemCollection importData;
 
 	private ItemCollection configuration = null;
@@ -98,11 +96,11 @@ public class DatevController implements Serializable {
 	 */
 	@PostConstruct
 	public void init() {
-		configuration = loadConfiguration(getName());
+		configuration = loadConfiguration();
 	}
 
 	public String getName() {
-		return DATEV_CONFIGURATION;
+		return DatevService.DATEV_CONFIGURATION;
 	}
 
 	public ItemCollection getConfiguration() {
@@ -124,9 +122,9 @@ public class DatevController implements Serializable {
 	 * 
 	 * @return
 	 */
-	public ItemCollection loadConfiguration(String name) {
+	public ItemCollection loadConfiguration() {
 
-		configuration = datevService.loadConfiguration(name);
+		configuration = datevService.loadConfiguration();
 
 		return configuration;
 	}
@@ -412,4 +410,5 @@ public class DatevController implements Serializable {
 		importData.removeItem("$file");
 
 	}
+
 }

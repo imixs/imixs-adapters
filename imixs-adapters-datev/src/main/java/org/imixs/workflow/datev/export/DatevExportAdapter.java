@@ -10,6 +10,7 @@ import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.SignalAdapter;
+import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -138,7 +139,6 @@ import jakarta.inject.Inject;
 public class DatevExportAdapter implements SignalAdapter {
 
 	public static final String DATEV_EXPORT_ERROR = "DATEV_EXPORT_ERROR";
-	public static final String DATEV_CONFIGURATION = "DATEV_CONFIGURATION";
 
 	public static final int EVENT_INVOICE_COMPLETED = 200;
 
@@ -153,6 +153,9 @@ public class DatevExportAdapter implements SignalAdapter {
 	@Inject
 	DatevExportService datevExportService;
 
+	@Inject
+	DatevService datevService;
+
 	/**
 	 * This method finds or create the Zahlungsavis and adds a reference
 	 * ($workitemref) to the current invoice.
@@ -165,13 +168,13 @@ public class DatevExportAdapter implements SignalAdapter {
 			throws AdapterException, PluginException {
 
 		try {
-			ItemCollection configuration = datevExportService.loadConfiguration(DATEV_CONFIGURATION);
+			ItemCollection configuration = datevService.loadConfiguration();
 			// get the data source based on the $workitemref....
 			List<ItemCollection> masterDataSet = buildMasterDataSet(datevExport);
 
 			// first we need to extend the Export Workitem
 			datevExportService.updateExportWorkitem(datevExport, configuration, masterDataSet);
-			String datevClientID = datevExport.getItemValueString(DatevExportService.ITEM_DATEV_CLIENT_ID);
+			String datevClientID = datevExport.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
 
 			if (masterDataSet.size() > 0) {
 				// =====================================

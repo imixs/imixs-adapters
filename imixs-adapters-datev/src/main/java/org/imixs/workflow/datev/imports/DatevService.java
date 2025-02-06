@@ -35,8 +35,15 @@ import jakarta.ejb.Stateless;
 public class DatevService {
 
 	public static final String IMPORT_ERROR = "IMPORT_ERROR";
-
 	public static final String DOCUMENT_TYPE = "configuration";
+
+	public static final String ITEM_DATEV_KONTENLAENGE = "datev.sachkontennummernlaenge";
+	public static final String ITEM_DATEV_CLIENT_ID = "datev.client.id";
+	public static final String ITEM_DATEV_CLIENT_NAME = "datev.client.name";
+	public static final String ITEM_DATEV_BOOKING_PERIOD = "datev.booking_period";
+	public static final String ITEM_DATEV_CONSULTANT_ID = "datev.consultant.id";
+	public static final String ITEM_DATEV_FISCAL_START = "datev.fiscal_start";
+	public static final String DATEV_CONFIGURATION = "DATEV_CONFIGURATION";
 
 	@EJB
 	DocumentService documentService;
@@ -49,11 +56,10 @@ public class DatevService {
 	 * 
 	 * @return
 	 */
-	public ItemCollection loadConfiguration(String name) {
+	public ItemCollection loadConfiguration() {
 		try {
 			// support deprecated txtname attribure
-			String sQuery = "(type:\"" + DOCUMENT_TYPE + "\" AND (name:\"" + name + "\" OR txtname:\"" + name
-					+ "\" ) )";
+			String sQuery = "(type:\"" + DOCUMENT_TYPE + "\" AND name:\"" + DATEV_CONFIGURATION + "\" )";
 			Collection<ItemCollection> col = documentService.find(sQuery, 1, 0);
 			// check if we found a scheduler configuration
 			if (col.size() > 0) {

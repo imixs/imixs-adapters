@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
-import org.imixs.workflow.datev.export.DatevExportService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.index.SchemaService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -219,9 +218,9 @@ public class DatevImportService {
 		String type = null;
 		String clientID = null;
 		String consultenID = null;
-		logger.info("...starting csv data import...");
-		String log = "";
+		StringBuffer log = new StringBuffer();
 		int line = 0;
+		long l = System.currentTimeMillis();
 		String dataLine = null;
 		List<String> idCache = new ArrayList<>();
 
@@ -232,9 +231,11 @@ public class DatevImportService {
 		int workitemsFailed = 0;
 		int blockSize = 0;
 
+		log(log, "├── starte Dateimport");
 		if (encoding == null) {
 			encoding = "UTF-8";
 		}
+		log(log, "│   ├── encoding=" + encoding);
 
 		try {
 			BufferedReader in = new BufferedReader(new InputStreamReader(imputStream, encoding));
@@ -256,17 +257,19 @@ public class DatevImportService {
 			}
 
 			clientID = header1List[11];
+			log(log, "│   ├── Mandant ID= " + clientID);
 			consultenID = header1List[12];
+			log(log, "│   ├── Berater ID= " + consultenID);
 			if (clientID == null || clientID.isEmpty() || consultenID == null || consultenID.isEmpty()) {
 				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
 						"File Format not supported, 1st line must contain the Mandant and Berater ID.");
-
 			}
 
 			type = type.trim().toLowerCase();
-			logger.info("...object type=" + type);
+			log(log, "│   └── Objekt Type=" + type);
 			line++;
 
+			log(log, "├── Lese Daten...");
 			// read the 2nd first line containing the field names
 			String fieldnames = in.readLine();
 			line++;
@@ -328,17 +331,13 @@ public class DatevImportService {
 				}
 			}
 
-			logger.info("completed: " + workitemsTotal + " entries successful read");
-
 		} catch (Exception e) {
 			// Catch Workflow Exceptions
 			workitemsFailed++;
 			String sError = "import error at line " + line + ": " + e + " Datensatz=" + dataLine;
-			logger.severe(sError);
+			log(log, sError);
 			throw new PluginException(DatevImportService.class.getName(), DATA_ERROR, sError, e);
-		}
-
-		finally {
+		} finally {
 			// Close the input stream
 			try {
 				if (imputStream != null) {
@@ -350,7 +349,7 @@ public class DatevImportService {
 		}
 
 		try {
-			logger.info("removing deprecated entries...");
+			log(log, "├── Lösche veraltete Daten...");
 			// now we remove all existing entries not listed in the file
 			String sQuery = "(type:\"" + type + "\"";
 			if (clientID != null && !clientID.isEmpty()) {
@@ -370,15 +369,22 @@ public class DatevImportService {
 		} catch (QueryException e) {
 			// Catch Workflow Exceptions
 			String sError = "import error: unable to delete data";
-			logger.severe(sError);
+			log(log, sError);
 			throw new PluginException(DatevImportService.class.getName(), DATA_ERROR, sError, e);
 		}
 
-		log += workitemsTotal + " entries read \n" + workitemsImported + " new entries \n" + workitemsUpdated
-				+ " updates \n" + workitemsDeleted + " deletions \n" + workitemsFailed + " errors";
+		log(log, "│   ├── " + workitemsTotal + " Einträge gelesen ");
+		log(log, "│   ├── " + workitemsImported + " neue Einträge  ");
+		log(log, "│   ├── " + workitemsUpdated + " aktualisierte Einträge  ");
+		log(log, "│   ├── " + workitemsDeleted + " gelöschte Einträge  ");
+		log(log, "│   └── " + workitemsFailed + " fehlerhafte Einträge  ");
+		log(log, "└── Abgeschlossen in " + (System.currentTimeMillis() - l) + " ms");
+		return log.toString();
+	}
 
-		logger.info(log);
-		return log;
+	private void log(StringBuffer log, String message) {
+		log.append(message + "\n");
+		logger.info(message);
 	}
 
 	/**
@@ -447,9 +453,18 @@ public class DatevImportService {
 		// add type...
 		aWorkitem.replaceItemValue("type", type);
 		// add client and consult id...
-		aWorkitem.replaceItemValue(DatevExportService.ITEM_DATEV_CLIENT_ID, clientID);
-		aWorkitem.replaceItemValue(DatevExportService.ITEM_DATEV_CONSULTANT_ID, consultenID);
+		aWorkitem.replaceItemValue(DatevService.ITEM_DATEV_CLIENT_ID, clientID);
+		aWorkitem.replaceItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID, consultenID);
 
+		// no snapshot
+		aWorkitem.setItemValue("$nosnapshot", true);
+
+		// Build summary
+		if ("kontenbeschriftungen".equals(type)) {
+			String summary = aWorkitem.getItemValueString("_konto") + " "
+					+ aWorkitem.getItemValueString("_kontobeschriftung");
+			aWorkitem.setItemValue("$workflowsummary", summary);
+		}
 		documentService.save(aWorkitem);
 	}
 

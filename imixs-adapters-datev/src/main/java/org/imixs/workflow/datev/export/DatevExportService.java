@@ -36,7 +36,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
@@ -95,24 +94,12 @@ import jakarta.xml.bind.JAXBException;
 @LocalBean
 public class DatevExportService {
 
-    public static final String ITEM_DATEV_KONTENLAENGE = "datev.sachkontennummernlaenge";
-
     public static final String ITEM_FTP_HOST = "datev.ftp.host";
     public static final String ITEM_FTP_PORT = "datev.ftp.port";
     public static final String ITEM_FTP_USER = "datev.ftp.userid";
     public static final String ITEM_FTP_PASSWORD = "datev.ftp.password";
     public static final String ITEM_FTP_PATH_UPLOAD = "_datev.ftp.path.upload";
     public static final String ITEM_FTP_ERROR = "_ftp_error";
-
-    public static final String ITEM_DATEV_CLIENT_ID = "datev.client.id";
-    public static final String ITEM_DATEV_CLIENT_NAME = "datev.client.name";
-    public static final String ITEM_DATEV_BOOKING_PERIOD = "datev.booking_period";
-    public static final String ITEM_DATEV_CONSULTANT_ID = "datev.consultant.id";
-    public static final String ITEM_DATEV_FISCAL_START = "datev.fiscal_start";
-
-    // public static final String ITEM_DBTR_NAME = "dbtr.name";
-
-    public static final String DEFAULT_CONFIG_NAME = "DATEV_CONFIGURATION";
 
     public static final String CHILD_ITEM_PROPERTY = "_ChildItems";
 
@@ -152,22 +139,22 @@ public class DatevExportService {
         // invoice if available...
         if (data != null && data.size() > 0) {
             ItemCollection firstInvoice = data.get(0);
-            if (firstInvoice.hasItem(ITEM_DATEV_FISCAL_START)) {
-                datevExport.setItemValue(ITEM_DATEV_FISCAL_START,
-                        firstInvoice.getItemValue(ITEM_DATEV_FISCAL_START));
-                datevExport.setItemValue(ITEM_DATEV_CLIENT_ID,
-                        firstInvoice.getItemValue(ITEM_DATEV_CLIENT_ID));
+            if (firstInvoice.hasItem(DatevService.ITEM_DATEV_FISCAL_START)) {
+                datevExport.setItemValue(DatevService.ITEM_DATEV_FISCAL_START,
+                        firstInvoice.getItemValue(DatevService.ITEM_DATEV_FISCAL_START));
+                datevExport.setItemValue(DatevService.ITEM_DATEV_CLIENT_ID,
+                        firstInvoice.getItemValue(DatevService.ITEM_DATEV_CLIENT_ID));
                 // copy sachkontenlaenge from first invoice..
-                datevExport.setItemValue(ITEM_DATEV_KONTENLAENGE,
-                        firstInvoice.getItemValue(ITEM_DATEV_KONTENLAENGE));
+                datevExport.setItemValue(DatevService.ITEM_DATEV_KONTENLAENGE,
+                        firstInvoice.getItemValue(DatevService.ITEM_DATEV_KONTENLAENGE));
             }
         }
 
         // haben wir bereits eine Consultant ID von der Rechnung erhalten?
-        if (datevExport.getItemValueString(ITEM_DATEV_CONSULTANT_ID).isEmpty()) {
+        if (datevExport.getItemValueString(DatevService.ITEM_DATEV_CONSULTANT_ID).isEmpty()) {
             // nein - wir haben keine also nehemen wir die Zetral gepflegte
-            datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
-                    configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
+            datevExport.setItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID,
+                    configuration.getItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID));
         }
         return datevExport;
     }
@@ -197,7 +184,7 @@ public class DatevExportService {
 
         DatevHelper.logMessage(
                 "... Document export started (ClientID="
-                        + datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID) + ") ...",
+                        + datevExport.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID) + ") ...",
                 configuration, datevExport);
 
         // load report configuration....
@@ -340,7 +327,7 @@ public class DatevExportService {
         }
 
         DatevHelper.logMessage("... Document export completed (ClientID="
-                + datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID) + ", " + documentCount
+                + datevExport.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID) + ", " + documentCount
                 + " documents)", configuration, datevExport);
 
     }
@@ -354,7 +341,7 @@ public class DatevExportService {
      */
     public void buildCSVFile(ItemCollection datevExport, List<ItemCollection> data, String key,
             ItemCollection configuration) throws PluginException {
-        String clientID = datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID);
+        String clientID = datevExport.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
 
         // load the report for CSV export
         String reportNameInvoices = configuration.getItemValueString("report.invoices");
@@ -430,7 +417,7 @@ public class DatevExportService {
 
         // write log
         DatevHelper.logMessage("... CSV export completed (ClientID="
-                + datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID) + ", " + data.size()
+                + datevExport.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID) + ", " + data.size()
                 + " invoices)", configuration, datevExport);
 
     }
@@ -449,7 +436,7 @@ public class DatevExportService {
 
         boolean result = false;
         String ftpServer = configuration.getItemValueString(ITEM_FTP_HOST);
-        String datevClientID = datevExport.getItemValueString(ITEM_DATEV_CLIENT_ID);
+        String datevClientID = datevExport.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
 
         // if no server is given we exit
         if (ftpServer.isEmpty()) {
@@ -596,27 +583,27 @@ public class DatevExportService {
         // invoice if available...
         if (data != null && data.size() > 0) {
             ItemCollection firstInvoice = data.get(0);
-            if (firstInvoice.hasItem(ITEM_DATEV_FISCAL_START)) {
-                datevExport.setItemValue(ITEM_DATEV_FISCAL_START,
-                        firstInvoice.getItemValue(ITEM_DATEV_FISCAL_START));
-                datevExport.setItemValue(ITEM_DATEV_CLIENT_ID,
-                        firstInvoice.getItemValue(ITEM_DATEV_CLIENT_ID));
+            if (firstInvoice.hasItem(DatevService.ITEM_DATEV_FISCAL_START)) {
+                datevExport.setItemValue(DatevService.ITEM_DATEV_FISCAL_START,
+                        firstInvoice.getItemValue(DatevService.ITEM_DATEV_FISCAL_START));
+                datevExport.setItemValue(DatevService.ITEM_DATEV_CLIENT_ID,
+                        firstInvoice.getItemValue(DatevService.ITEM_DATEV_CLIENT_ID));
                 // copy sachkontenlaenge from first invoice..
-                datevExport.setItemValue(ITEM_DATEV_KONTENLAENGE,
-                        firstInvoice.getItemValue(ITEM_DATEV_KONTENLAENGE));
+                datevExport.setItemValue(DatevService.ITEM_DATEV_KONTENLAENGE,
+                        firstInvoice.getItemValue(DatevService.ITEM_DATEV_KONTENLAENGE));
 
                 // Copy Consulten ID if available (die nummer ist optional auf Corporate Ebene
                 // gepflegt)
-                datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
-                        firstInvoice.getItemValue(ITEM_DATEV_CONSULTANT_ID));
+                datevExport.setItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID,
+                        firstInvoice.getItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID));
             }
         }
 
         // haben wir bereits eine COnsultent ID von der Rechnung erhalten?
-        if (datevExport.getItemValueString(ITEM_DATEV_CONSULTANT_ID).isEmpty()) {
+        if (datevExport.getItemValueString(DatevService.ITEM_DATEV_CONSULTANT_ID).isEmpty()) {
             // nein - wir haben keine also nehemen wir die Zetral gepflegte
-            datevExport.setItemValue(ITEM_DATEV_CONSULTANT_ID,
-                    configuration.getItemValue(ITEM_DATEV_CONSULTANT_ID));
+            datevExport.setItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID,
+                    configuration.getItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID));
         }
         return datevExport;
     }
@@ -627,22 +614,23 @@ public class DatevExportService {
      * 
      * @return
      */
-    public ItemCollection loadConfiguration(String name) {
-        try {
-            // support deprecated txtname attribure
-            String sQuery = "(type:\"" + DatevService.DOCUMENT_TYPE + "\" AND (name:\"" + name + "\" OR txtname:\""
-                    + name + "\" ) )";
-            Collection<ItemCollection> col = documentService.find(sQuery, 1, 0);
-            // check if we found a configuration
-            if (col.size() > 0) {
-                ItemCollection configuration = col.iterator().next();
-                return configuration;
-            }
-        } catch (QueryException e1) {
-            e1.printStackTrace();
-        }
-        return null;
-    }
+    // public ItemCollection loadConfiguration(String name) {
+    // try {
+    // // support deprecated txtname attribure
+    // String sQuery = "(type:\"" + DatevService.DOCUMENT_TYPE + "\" AND (name:\"" +
+    // name + "\" OR txtname:\""
+    // + name + "\" ) )";
+    // Collection<ItemCollection> col = documentService.find(sQuery, 1, 0);
+    // // check if we found a configuration
+    // if (col.size() > 0) {
+    // ItemCollection configuration = col.iterator().next();
+    // return configuration;
+    // }
+    // } catch (QueryException e1) {
+    // e1.printStackTrace();
+    // }
+    // return null;
+    // }
 
     /**
      * Helper Method to copute the grouping key

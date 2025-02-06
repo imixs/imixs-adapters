@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
+import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.ModelException;
@@ -39,6 +40,9 @@ public class DatevRemoveAdapter implements SignalAdapter {
 	@Inject
 	DatevExportService datevExportService;
 
+	@Inject
+	DatevService datevService;
+
 	/**
 	 * This method finds the Datev export and removes a reference
 	 * ($workitemref) to the current invoice.
@@ -63,7 +67,7 @@ public class DatevRemoveAdapter implements SignalAdapter {
 	@SuppressWarnings("unchecked")
 	private void removeInvoice(ItemCollection invoice) throws PluginException {
 
-		ItemCollection datevConfig = datevExportService.loadConfiguration(DatevExportService.DEFAULT_CONFIG_NAME);
+		ItemCollection datevConfig = datevService.loadConfiguration();
 		if (datevConfig == null) {
 			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
 					"Datev Export kann nicht erzeugt werden da keine DATEV Konfiguration vorliegt.");
