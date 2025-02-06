@@ -45,12 +45,11 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
             throws AdapterException, PluginException {
 
         String key = sepaWorkflowService.computeKey(invoice, event);
-
-        logger.info("......Update SEPA export for: '" + key + "'...");
         ItemCollection sepaExport;
         try {
             sepaExport = sepaWorkflowService.findSEPAExport(key);
             if (sepaExport != null) {
+                logger.fine("......Update SEPA export for: '" + key + "'...");
                 // remove invoice from SePA export
                 List<String> refList = sepaExport.getItemValue("$workitemref");
                 if (refList.contains(invoice.getUniqueID())) {
@@ -61,8 +60,7 @@ public class SEPARefRemoveAdapter implements SignalAdapter {
                     sepaWorkflowService.processSEPAExport(sepaExport);
                 }
             } else {
-                throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-                        "SEPA Export not found for key '" + key + "'");
+                // No action needed
             }
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
             throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
