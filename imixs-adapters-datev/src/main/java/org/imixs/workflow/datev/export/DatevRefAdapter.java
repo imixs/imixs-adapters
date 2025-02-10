@@ -118,6 +118,8 @@ public class DatevRefAdapter implements SignalAdapter {
 				// set consultant ID
 				datevExport.setItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID,
 						datevConfig.getItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID));
+				datevExport.setItemValue(DatevService.ITEM_DATEV_FISCAL_START,
+						datevConfig.getItemValue(DatevService.ITEM_DATEV_FISCAL_START));
 
 				datevExport.setItemValue(DatevService.ITEM_DATEV_BOOKING_PERIOD, keyPeriode);
 				datevExport.setItemValue("name", key);

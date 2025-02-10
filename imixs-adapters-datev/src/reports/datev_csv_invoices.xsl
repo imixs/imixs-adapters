@@ -35,9 +35,9 @@
 			select="format-dateTime($date, '[Y0001][M01][D01][H01][m01][s01][f001]')"></xsl:value-of>
 <xsl:text>;;"RE";"ImixsWorkflow";"";</xsl:text>
 <xsl:value-of
-			select="item[@name='_datev_consultant_id']/value" /><xsl:text>;</xsl:text>
+			select="item[@name='datev.consultant.id']/value" /><xsl:text>;</xsl:text>
 <xsl:value-of
-			select="item[@name='_datev_client_id']/value" /><xsl:text>;</xsl:text>
+			select="item[@name='datev.client.id']/value" /><xsl:text>;</xsl:text>
 <xsl:value-of
 			select="format-dateTime($fiscalstart, '[Y0001][M01][D01]')"></xsl:value-of><xsl:text>;</xsl:text>
 		<!-- Sachkontennumernlaenge mandantenabhaengig - defautl = 6 -->
@@ -121,24 +121,18 @@
       
 		<xsl:variable
 			name="gegenkonto" select="item[@name='cdtr.number']/value" />
-		<!-- <xsl:variable name="subject" select="item[@name='_subject']/value"/> -->
 		<xsl:variable
-			name="subject" select="substring(item[@name='invlice.description']/value,1,59)" />
+			name="subject" select="substring(item[@name='$workflowsummary']/value,1,59)" />
 		<xsl:variable
 			name="invoicenumber" select="item[@name='invoice.number']/value" />
-		<!-- Geaendert 14.4.2020 - kostenstelle-1 nun auf child ebene 
-		<xsl:variable name="costcentre1" select="item[@name='_costcentre1']/value"/>
-		-->		
 		<xsl:variable
 			name="uniqueid" select="item[@name='$uniqueid']/value" />
 		<xsl:for-each
 			select="item[@name='_childitems']/value">
-
 			<xsl:variable name="betrag"
-				select="replace(./item[@name='invoice.total']/value, '\.', ',')" />
+				select="replace(./item[@name='datev.betrag']/value, '\.', ',')" />
 			<xsl:variable
 				name="abs_betrag" select="replace($betrag, '-', '')" />
-
 			<xsl:value-of
 				select="$abs_betrag" /><xsl:text>;</xsl:text>
 			<!-- S / H  -->
@@ -151,11 +145,11 @@
 			</xsl:if>
 			<xsl:text>;;;;</xsl:text>
 			<xsl:value-of
-				select="./item[@name='_konto']/value" /><xsl:text>;</xsl:text>
+				select="./item[@name='datev.konto']/value" /><xsl:text>;</xsl:text>
 			<xsl:value-of
 				select="$gegenkonto" /><xsl:text>;</xsl:text>
 			<xsl:value-of
-				select="./item[@name='_tax']/value" /><xsl:text>;</xsl:text>
+				select="./item[@name='datev.buschluessel']/value" /><xsl:text>;</xsl:text>
 			<xsl:value-of
 				select="format-dateTime($date, '[D01][M01]')" /><xsl:text>;</xsl:text>
 			<xsl:value-of
@@ -167,20 +161,14 @@
 
 			<!-- Beleglink -->		
 			<xsl:text>BEDI "</xsl:text><xsl:value-of
-				select="$uniqueid" /><xsl:text>";</xsl:text>
-	 				
+				select="$uniqueid" /><xsl:text>";</xsl:text>	 				
 			<xsl:text>;;;;;;;;;;;;;;;;</xsl:text>
-
-			<!-- Geaendert 14.4.2020 - kostenstelle-1 nun auf child ebene 
-				<xsl:value-of select="$costcentre1" /><xsl:text>;</xsl:text>
-			-->
 			<xsl:value-of
-				select="./item[@name='_costcentre1']/value" /><xsl:text>;</xsl:text>
+				select="./item[@name='datev.kostenstelle1']/value" /><xsl:text>;</xsl:text>
 			<xsl:value-of
-				select="./item[@name='_costcentre2']/value" /><xsl:text>;</xsl:text>
+				select="./item[@name='datev.kostenstelle2']/value" /><xsl:text>;</xsl:text>
 			<xsl:text>;;;;;;;;;;;;;;</xsl:text>
 			<xsl:text>&#xa;</xsl:text>
-
 		</xsl:for-each>
 	</xsl:template>
 </xsl:stylesheet>
