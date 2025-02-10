@@ -111,26 +111,14 @@ public class DatevSearchController implements Serializable {
         if (phrase == null) {
             return;
         }
-
         logger.fine("search prase '" + phrase + "'");
         if (phrase == null || phrase.length() < 2) {
             return;
         }
-
         logger.finest(".......trigger searchSachkonto: " + phrase);
-
-        logger.fine("search for=" + phrase);
-
         // DATEV Sachkonten suchen
-        // optional use clientID from workitem
-        if (workflowController.getWorkitem().hasItem(DatevService.ITEM_DATEV_CLIENT_ID)) {
-            String temp_clientID = workflowController.getWorkitem()
-                    .getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
-            dataList = searchEntity(phrase, "kontenbeschriftungen", temp_clientID);
-        } else {
-            // standard suche
-            dataList = searchEntity(phrase, "kontenbeschriftungen", null);
-        }
+        dataList = searchEntity(phrase, "kontenbeschriftungen");
+
         for (ItemCollection dbtr : dataList) {
             String kontoNumber = dbtr.getItemValueString("_konto");
             String display = kontoNumber + " - " + dbtr.getItemValueString("_kontobeschriftung");
@@ -139,7 +127,6 @@ public class DatevSearchController implements Serializable {
             display = display.replace("'", "");
             searchResult.add(new DatevSearchEntry(kontoNumber, display, buildSachkontoJsonData(dbtr)));
         }
-
     }
 
     /**
@@ -154,7 +141,6 @@ public class DatevSearchController implements Serializable {
      * }
      */
     public void searchCdtr() {
-        String client = null;
         List<ItemCollection> dataList = null;
         searchResult = new ArrayList<DatevSearchEntry>();
         // get the param from faces context....
@@ -168,35 +154,18 @@ public class DatevSearchController implements Serializable {
         if (phrase == null || phrase.length() < 2) {
             return;
         }
-
         logger.finest(".......trigger datev search...");
-        client = workflowController.getWorkitem().getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
         logger.fine("search for=" + phrase);
-        dataList = searchEntity(phrase, "debitoren/kreditoren", client);
-
+        dataList = searchEntity(phrase, "debitoren/kreditoren");
         for (ItemCollection dbtr : dataList) {
-            // displayname = konto.getItemValueString("_konto") + " " +
-            // konto.getItemValueString("_kurzbezeichnung");
             String dbtrNo = dbtr.getItemValueString("_konto");
-            // resolve name
-            String name = dbtr.getItemValueString("_name_(adressattyp_unternehmen)");
-            if (name.isEmpty()) {
-                name = dbtr.getItemValueString("_name_(adressattyp_keine_angabe)");
-            }
-            if (name.isEmpty()) {
-                name = dbtr.getItemValueString("_name_(adressattyp_natürl_person)");
-            }
-            if (name.isEmpty()) {
-                name = dbtr.getItemValueString("_kurzbezeichnung");
-            }
+            String name = dbtr.getItemValueString("_name");
             dbtr.setItemValue("_name", name);
-
             String display = dbtrNo + " - " + name;
             display = display.replace("\"", "");
             display = display.replace("'", "");
             searchResult.add(new DatevSearchEntry(dbtrNo, display, buildCdtrJsonData(dbtr)));
         }
-
     }
 
     /**
@@ -217,7 +186,6 @@ public class DatevSearchController implements Serializable {
      * @return
      */
     private String buildSachkontoJsonData(ItemCollection konto) {
-
         JsonObjectBuilder objectBuilder = Json.createObjectBuilder(). //
                 add("konto", jsonVal(konto.getItemValueString("_konto"))). //
                 add("name", jsonVal(konto.getItemValueString("_kontobeschriftung")));
@@ -240,7 +208,6 @@ public class DatevSearchController implements Serializable {
      * @return
      */
     private String buildCdtrJsonData(ItemCollection cdtr) {
-
         JsonObjectBuilder objectBuilder = Json.createObjectBuilder(). //
                 add("konto", jsonVal(cdtr.getItemValueString("_konto"))). //
                 add("name", jsonVal(cdtr.getItemValueString("_name"))). //
@@ -298,27 +265,18 @@ public class DatevSearchController implements Serializable {
      *                 (_datev_client_id)
      * @return - list of matching profiles
      */
-    public List<ItemCollection> searchEntity(String phrase, String type, String clientID) {
+    public List<ItemCollection> searchEntity(String phrase, String type) {
 
         List<ItemCollection> searchResult = new ArrayList<ItemCollection>();
-
-        if (phrase == null || phrase.isEmpty())
+        if (phrase == null || phrase.isEmpty()) {
             return searchResult;
-
+        }
         Collection<ItemCollection> col = null;
         try {
             phrase = phrase.trim();
             // phrase = LuceneSearchService.escapeSearchTerm(phrase);
             phrase = schemaService.normalizeSearchTerm(phrase);
-            String sQuery = "(type:\"" + type + "\"";
-
-            // restrict to client id?
-            if (clientID != null && !clientID.isEmpty()) {
-                sQuery += " AND _datev_client_id:\"" + clientID + "\"";
-            }
-
-            sQuery += ")";
-
+            String sQuery = "(type:\"" + type + "\")";
             sQuery += " AND (" + phrase + "*)";
 
             logger.finest("searchprofile: " + sQuery);
@@ -329,15 +287,11 @@ public class DatevSearchController implements Serializable {
         } catch (Exception e) {
             logger.warning("  lucene error - " + e.getMessage());
         }
-
         for (ItemCollection kreditor : col) {
             searchResult.add(kreditor);
         }
         // sort by txtname..
         Collections.sort(searchResult, new ItemCollectionComparator("txtname", true));
-
         return searchResult;
-
     }
-
 }
