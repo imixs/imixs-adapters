@@ -50,7 +50,7 @@ import jakarta.ejb.TransactionAttributeType;
  * <p>
  * The service provides methods to search for DATEV objects by key or search
  * phrase. A search result can be optional restricted to a specific DATEV
- * client. NOTE: the item _datev_client_id must be part of the property
+ * client. NOTE: the item datev.client.id must be part of the property
  * lucence.indexFieldListNoAnalyze to use this feature.
  * 
  * @see DatevImportService to import datev data and assign the data to a
@@ -85,33 +85,20 @@ public class DatevImportService {
 	private static Logger logger = Logger.getLogger(DatevImportService.class.getName());
 
 	/**
-	 * This method finds a datev entity by the attribute 'txtName'
+	 * This method finds a datev entity by the attribute 'name'
 	 * <p>
-	 * The param clientID is optional and restricts the result to a specific DATEV
-	 * client. NOTE: the item _datev_client_id must be part of the property
-	 * lucence.indexFieldListNoAnalyze.
+	 * The name includes the datev.consulten.id and datev.client.id
 	 * 
 	 * @param key
-	 *                 - name of the object (txtname)
+	 *             - name of the object
 	 * @param type
-	 *                 - DATEV type of the object
-	 * @param clientID
-	 *                 - optional restriction to a specific client id
-	 *                 (_datev_client_id)
+	 *             - DATEV type of the object
 	 * 
 	 * @return DATEV entity or null if no entity with the given name exits
 	 */
-	public ItemCollection findEntityByName(String key, String type, String clientID) {
+	public ItemCollection findEntityByPrimaryKey(String key, String type) {
 
-		String searchTerm = "(type:\"" + type + "\" AND txtname:\"" + key + "\"";
-
-		// restrict to client id?
-		if (clientID != null && !clientID.isEmpty()) {
-			searchTerm += " AND _datev_client_id:\"" + clientID + "\"";
-		}
-
-		searchTerm += ")";
-
+		String searchTerm = "(type:\"" + type + "\" AND name:\"" + key + "\")";
 		Collection<ItemCollection> col;
 		try {
 			col = documentService.find(searchTerm, 1, 0);
@@ -132,7 +119,7 @@ public class DatevImportService {
 	 * type. The type depends on the datev import file
 	 * <p>
 	 * The param clientID is optional and restricts the result to a specific DATEV
-	 * client. NOTE: the item _datev_client_id must be part of the property
+	 * client. NOTE: the item datev.client.id must be part of the property
 	 * lucence.indexFieldListNoAnalyze.
 	 * 
 	 * @param phrase
@@ -141,7 +128,7 @@ public class DatevImportService {
 	 *                 - DATEV type of the object
 	 * @param clientID
 	 *                 - optional restriction to a specific client id
-	 *                 (_datev_client_id)
+	 *                 (datev.client.id)
 	 * @return - list of matching profiles
 	 */
 	public List<ItemCollection> searchEntity(String phrase, String type, String clientID) {
@@ -160,7 +147,7 @@ public class DatevImportService {
 
 			// restrict to client id?
 			if (clientID != null && !clientID.isEmpty()) {
-				sQuery += " AND _datev_client_id:\"" + clientID + "\"";
+				sQuery += " AND datev.client.id:\"" + clientID + "\"";
 			}
 
 			sQuery += ")";
@@ -179,8 +166,8 @@ public class DatevImportService {
 		for (ItemCollection kreditor : col) {
 			searchResult.add(kreditor);
 		}
-		// sort by txtname..
-		Collections.sort(searchResult, new ItemCollectionComparator("txtname", true));
+		// sort by name..
+		Collections.sort(searchResult, new ItemCollectionComparator("name", true));
 
 		return searchResult;
 
@@ -195,15 +182,15 @@ public class DatevImportService {
 	 * All existing entries not listed in the current file will be removed.
 	 * 
 	 * <p>
-	 * Each imported document will have the item '_datev_client_id' and
+	 * Each imported document will have the item 'datev.client.id' and
 	 * '_datev_consultant_id'. These item are mapped to the "Mandant id" and
 	 * "Berater id" from Datev. These categories allow the import of data from
 	 * different clients and consults. It is important that the fields
-	 * '_datev_client_id' and '_datev_consultant_id' are added to the lucene index
+	 * 'datev.client.id' and '_datev_consultant_id' are added to the lucene index
 	 * so that a search for data of a specific client is possible.
 	 * <p>
 	 * {@code
-	 *   lucence.indexFieldListNoAnalyze=....,_datev_client_id,_datev_consultant_id
+	 *   lucence.indexFieldListNoAnalyze=....,datev.client.id,_datev_consultant_id
 	 * }
 	 * 
 	 * <p>
@@ -246,19 +233,19 @@ public class DatevImportService {
 			header1List = normalizeValueList(header1List);
 			if (header1List == null || header1List.length < 4) {
 				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
-						"File Format not supported, 1st line must contain the fromatname in column 4 (type).");
+						"File Format not supported, 1st line must contain the data format in column 4 (type).");
 			}
 			type = header1List[3];
 
 			if (type == null || type.isEmpty()) {
 				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
-						"File Format not supported, 1st line must contain the fromatname (type).");
+						"File Format not supported, 1st line must contain the data format in column 4 (type).");
 
 			}
 
-			clientID = header1List[11];
+			clientID = header1List[10];
 			log(log, "│   ├── Mandant ID= " + clientID);
-			consultenID = header1List[12];
+			consultenID = header1List[11];
 			log(log, "│   ├── Berater ID= " + consultenID);
 			if (clientID == null || clientID.isEmpty() || consultenID == null || consultenID.isEmpty()) {
 				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
@@ -279,20 +266,22 @@ public class DatevImportService {
 
 			// read content....
 			while ((dataLine = in.readLine()) != null) {
-
 				blockSize++;
 				line++;
 				workitemsTotal++;
 				ItemCollection entity = readEntity(dataLine, fields);
 				// add client and consulten id
-				entity.replaceItemValue("_datev_client_id", clientID);
-				entity.replaceItemValue("_datev_consultant_id", consultenID);
+				entity.replaceItemValue("datev.client.id", clientID);
+				entity.replaceItemValue("datev.consultant.id", consultenID);
 
-				// replace txtName by the key field
-				entity.replaceItemValue("txtname", entity.getItemValue(keyField));
+				// replace Name by the key field
+				String keyValue = entity.getItemValueString(keyField);
 
-				// resolve name for debitor/kreditor
-				String name = entity.getItemValueString("_name_(adressattyp_unternehmen)");
+				// resolve name for _kontobeschriftung or debitor/kreditor
+				String name = entity.getItemValueString("_kontobeschriftung");
+				if (name.isEmpty()) {
+					name = entity.getItemValueString("_name_(adressattyp_unternehmen)");
+				}
 				if (name.isEmpty()) {
 					name = entity.getItemValueString("_name_(adressattyp_keine_angabe)");
 				}
@@ -302,13 +291,20 @@ public class DatevImportService {
 				if (name.isEmpty()) {
 					name = entity.getItemValueString("_kurzbezeichnung");
 				}
+				if (name.isEmpty()) {
+					// should not happen!
+					name = entity.getItemValueString(keyValue);
+				}
 				entity.setItemValue("_name", name);
 
+				// create unique 'name' item
+				String masterKey = consultenID + "_" + clientID + "_" + keyValue;
+				entity.setItemValue("name", masterKey);
 				// store id into cache
-				idCache.add(entity.getItemValueString("txtname"));
+				idCache.add(masterKey);
 
 				// test if entity already exits....
-				ItemCollection oldEntity = findEntityByName(entity.getItemValueString("txtName"), type, clientID);
+				ItemCollection oldEntity = findEntityByPrimaryKey(masterKey, type);
 				if (oldEntity == null) {
 					// create new workitem
 					saveEntry(entity, type, clientID, consultenID);
@@ -316,7 +312,7 @@ public class DatevImportService {
 				} else {
 					// test if modified....
 					if (!isEqualEntity(oldEntity, entity, fields)) {
-						logger.fine("update exsting entity: " + oldEntity.getUniqueID());
+						logger.fine("update existing entity: " + oldEntity.getUniqueID());
 						// copy all datev entries from the import into the
 						// existing entity
 						oldEntity.replaceAllItems(entity.getAllItems());
@@ -353,13 +349,13 @@ public class DatevImportService {
 			// now we remove all existing entries not listed in the file
 			String sQuery = "(type:\"" + type + "\"";
 			if (clientID != null && !clientID.isEmpty()) {
-				sQuery += " AND _datev_client_id:\"" + clientID + "\"";
+				sQuery += " AND datev.client.id:\"" + clientID + "\"";
 			}
 			sQuery += ")";
 			List<ItemCollection> entries = documentService.find(sQuery, 999, 0);
 			if (entries != null && entries.size() > 0) {
 				for (ItemCollection entity : entries) {
-					String id = entity.getItemValueString("txtname");
+					String id = entity.getItemValueString("name");
 					if (!idCache.contains(id)) {
 						documentService.remove(entity);
 						workitemsDeleted++;
@@ -515,16 +511,16 @@ public class DatevImportService {
 	private boolean isEqualEntity(ItemCollection oldEntity, ItemCollection entity, List<String> fields) {
 
 		// test datev client id and consulten id
-		if (!entity.getItemValue("_datev_client_id").equals(oldEntity.getItemValue("_datev_client_id"))) {
+		if (!entity.getItemValue("datev.client.id").equals(oldEntity.getItemValue("datev.client.id"))) {
 			// not equal
 			return false;
 		}
-		if (!entity.getItemValue("_datev_consultant_id").equals(oldEntity.getItemValue("_datev_consultant_id"))) {
+		if (!entity.getItemValue("datev.consultant.id").equals(oldEntity.getItemValue("datev.consultant.id"))) {
 			// not equal
 			return false;
 		}
 
-		if (!entity.getItemValue("_name").equals(oldEntity.getItemValue("_name"))) {
+		if (!entity.getItemValue("name").equals(oldEntity.getItemValue("name"))) {
 			// not equal
 			return false;
 		}

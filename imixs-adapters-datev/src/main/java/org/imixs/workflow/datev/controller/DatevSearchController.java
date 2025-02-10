@@ -56,15 +56,15 @@ import jakarta.json.JsonObjectBuilder;
  * @author rsoika
  * @version 1.0
  */
-@Named("datevSearchController")
+@Named
 @ConversationScoped
 public class DatevSearchController implements Serializable {
 
     public static final int MAX_SEARCH_RESULT = 100;
+
     private static final long serialVersionUID = 1L;
     private static Logger logger = Logger.getLogger(DatevSearchController.class.getName());
 
-    private String clientID = null;
     private ItemCollection configuration = null;
 
     @Inject
@@ -86,9 +86,8 @@ public class DatevSearchController implements Serializable {
      */
     @PostConstruct
     void init() {
-        // initialize
+        // load config
         configuration = datevService.loadConfiguration();
-        clientID = configuration.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
     }
 
     /**
