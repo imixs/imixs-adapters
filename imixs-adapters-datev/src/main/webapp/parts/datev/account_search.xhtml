@@ -1,0 +1,79 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:h="http://xmlns.jcp.org/jsf/html" xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets" xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+	xmlns:marty="http://xmlns.jcp.org/jsf/composite/marty" xmlns:i="http://xmlns.jcp.org/jsf/composite/imixs">
+
+	<!-- DATEV Kreditor/Debitor Search integration
+	
+		This subform is a custom form part.
+		
+		The subform provides a jsf commandScript which calls the datevSearchController.search method in the backend.
+			
+		The script below inits a autocompletion feature for the input field. 
+		See imixs-office.autocompletion.js 
+
+		See also:
+		https://stackoverflow.com/questions/16588327/how-to-invoke-a-jsf-managed-bean-on-a-html-dom-event-using-native-javascript
+		https://dzone.com/articles/execute-a-jsf-ajax-request-by-just-a-function-call
+		https://www.w3schools.com/howto/howto_js_autocomplete.asp
+	 -->
+	
+	 <ui:param name="item_konto_name" value="#{item.name}.name"></ui:param>
+	 <ui:fragment rendered="#{!readonly}">			
+		<h:inputText value="#{workitem.item[item.name]}" pt:data-item="#{item.name}" />
+		<h:inputHidden value="#{workitem.item[item_konto_name]}" pt:data-item="#{item_konto_name}" />
+		<br />
+		<span id='datev-konto-id' class='small'>#{workitem.item[item_konto_name]}</span>
+		<h:commandScript name="datevSearch" action="#{datevSearchController.searchDebitorCreditor(options)}"
+			render="autocomplete-resultlist-datev-debkredkonto" onevent="autocompleteShowResult" />
+
+		<script type="text/javascript"> 
+			/*<![CDATA[*/
+
+			// init input fields...
+			$(document).ready(function () {
+				// add autocomplete feature ..
+				var creditorField = $("input[data-item='#{item.name}']");
+				$(creditorField).each(function () {
+					$(this).addClass("imixs-ml");
+					autocompleteInitInput(this, datevSearch, 'autocomplete-resultlist-datev-debkredkonto', selectDebitorCreditorCallback);
+				});
+			});
+
+			// Hier bekommen wir die JSON Struktur mit allen daten.
+			// diese Daten werden auf die einzelnen Felder verteilt.
+			function selectDebitorCreditorCallback(selection) {
+				const kontoData = JSON.parse(selection);
+				// fill data into the fields....
+				var inputElementKonto = $("input[data-item='#{item.name}']");
+				var inputElementKreditor = $("input[data-item='#{item_konto_name}']");
+				inputElementKonto.val(kontoData.konto);
+				inputElementKreditor.val(kontoData.name);
+				// remove old konto name
+				$('#datev-konto-id').remove();
+				// append span with konto name....
+				inputElementKonto.after("<span id='datev-konto-id' class='small'>" + kontoData.name + "</span>");
+			}
+
+			/*]]>*/
+		</script>
+
+		<!-- datev debkredkonto suggest list -->
+		<h:panelGroup id="autocomplete-resultlist-datev-debkredkonto" layout="block" class="autocomplete-resultlist">
+			<ui:repeat var="suggest" value="#{datevSearchController.searchResult}">
+				<div class="autocomplete-resultlist-element" onclick="autocompleteSelectElement('#{suggest.data}')">
+					<a href="#">
+						<h:outputText value="#{suggest.display}" escape="false" />
+					</a>
+				</div>
+			</ui:repeat>
+		</h:panelGroup>
+
+	</ui:fragment>
+
+	<!-- Read only -->
+	<ui:fragment rendered="#{readonly}">
+		<h:outputText value="#{workitem.item[item.name]} #{workitem.item[item_konto_name]}"/>
+	</ui:fragment>
+
+</ui:composition>

@@ -461,6 +461,11 @@ public class DatevImportService {
 					+ aWorkitem.getItemValueString("_kontobeschriftung");
 			aWorkitem.setItemValue("$workflowsummary", summary);
 		}
+		if ("debitoren/kreditoren".equals(type)) {
+			String summary = aWorkitem.getItemValueString("_konto") + " "
+					+ aWorkitem.getItemValueString("_name");
+			aWorkitem.setItemValue("$workflowsummary", summary);
+		}
 		documentService.save(aWorkitem);
 	}
 

@@ -32,6 +32,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
@@ -140,8 +142,8 @@ public class DatevSearchController implements Serializable {
      * render="autocomplete-resultlist-datev" onevent="autocompleteShowResult" />
      * }
      */
-    public void searchCdtr() {
-        List<ItemCollection> dataList = null;
+    public void searchDebitorCreditor(String regexPattern) {
+        List<ItemCollection> kontenListe = null;
         searchResult = new ArrayList<DatevSearchEntry>();
         // get the param from faces context....
         FacesContext fc = FacesContext.getCurrentInstance();
@@ -154,17 +156,32 @@ public class DatevSearchController implements Serializable {
         if (phrase == null || phrase.length() < 2) {
             return;
         }
-        logger.finest(".......trigger datev search...");
         logger.fine("search for=" + phrase);
-        dataList = searchEntity(phrase, "debitoren/kreditoren");
-        for (ItemCollection dbtr : dataList) {
-            String dbtrNo = dbtr.getItemValueString("_konto");
-            String name = dbtr.getItemValueString("_name");
-            dbtr.setItemValue("_name", name);
-            String display = dbtrNo + " - " + name;
+        kontenListe = searchEntity(phrase, "debitoren/kreditoren");
+        // Compile the regex pattern
+        logger.fine("regex=" + regexPattern);
+        Pattern pattern = null;
+        if (regexPattern != null && !regexPattern.isEmpty()) {
+            pattern = Pattern.compile(regexPattern);
+        }
+
+        for (ItemCollection konto : kontenListe) {
+            String kontoNummer = konto.getItemValueString("_konto");
+            // Prüfen, ob die Kontonummer der Regex entspricht
+            if (pattern != null) {
+                Matcher matcher = pattern.matcher(kontoNummer);
+                if (!matcher.matches()) {
+                    // Kein passendes Konto
+                    continue;
+
+                }
+            }
+            String kontoName = konto.getItemValueString("_name");
+            konto.setItemValue("_name", kontoName);
+            String display = kontoNummer + " - " + kontoName;
             display = display.replace("\"", "");
             display = display.replace("'", "");
-            searchResult.add(new DatevSearchEntry(dbtrNo, display, buildCdtrJsonData(dbtr)));
+            searchResult.add(new DatevSearchEntry(kontoNummer, display, buildCdtrJsonData(konto)));
         }
     }
 

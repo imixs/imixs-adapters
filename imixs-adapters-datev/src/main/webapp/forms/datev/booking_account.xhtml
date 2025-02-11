@@ -7,7 +7,7 @@
 	xmlns:fn="http://xmlns.jcp.org/jsp/jstl/functions">
 
 	<h:panelGroup layout="block" styleClass="imixs-form-section" style="position: relative;"
-		id="bookinglist" binding="#{orderlistContainer}">	
+		id="bookinglist" binding="#{bookinglistContainer}">	
 	
 		<c:if test="#{!readonly}">
 			<h:commandScript name="sachkontoSearch" action="#{datevSearchController.searchSachkonto()}"
@@ -26,7 +26,7 @@
 					</th>
 				</tr>
 				<ui:repeat var="bookingItem"
-					value="#{childItemController.childItems}">
+					value="#{datevBookingController.bookingList}">
 					<tr>
 						<td class="konto-input">
 							<!-- Input Field -->						
@@ -71,9 +71,9 @@
 							</h:inputText></td>
 
 						<td><h:commandLink
-								actionListener="#{childItemController.remove(bookingItem.item['numpos'])}">
+								actionListener="#{datevBookingController.remove(bookingItem.item['numpos'])}">
 								<span class="typcn typcn-trash imixs-state-info"></span>
-								<f:ajax render="#{orderlistContainer.clientId}"  execute="#{orderlistContainer.clientId}" 
+								<f:ajax render="#{bookinglistContainer.clientId}"  execute="#{bookinglistContainer.clientId}" 
 									onevent="initDatevTable" />
 							</h:commandLink></td>
 
@@ -85,9 +85,9 @@
 				<tr>
 					<td />
 					
-					<td class="orderlist-sum"
+					<td class="bookinglist-sum"
 						style="text-align: right; font-weight: bold;">Summe:</td>
-					<td class="orderlist-sum orderlist_summary"
+					<td class="bookinglist-sum bookinglist_summary"
 						style="text-align: right; font-weight: bold;"></td>
 					<td />
 				</tr>
@@ -100,8 +100,8 @@
 				id="bookingitems_capacity_dsp" />
 
 			<h:commandButton value="#{message.add}" id="addposbutton_id"
-				actionListener="#{childItemController.add}">
-				<f:ajax render="#{orderlistContainer.clientId}"  execute="#{orderlistContainer.clientId}" 
+				actionListener="#{datevBookingController.add}">
+				<f:ajax render="#{bookinglistContainer.clientId}"  execute="#{bookinglistContainer.clientId}" 
 					onevent="initDatevTable" />
 			</h:commandButton>
 
@@ -171,11 +171,11 @@
 					});
 
 					// update total _capacity
-					// update orderlist_summary
+					// update bookinglist_summary
 					$("[id$=bookingitems_capacity]").val(total);
 					$("[id$=bookingitems_capacity_dsp]").val(convertToCurrency(total));
-					$(".orderlist_summary", ".imixs-bookingitems").empty();
-					$(".orderlist_summary", ".imixs-bookingitems").append(
+					$(".bookinglist_summary", ".imixs-bookingitems").empty();
+					$(".bookinglist_summary", ".imixs-bookingitems").append(
 							convertToCurrency(total));
 
 				}
@@ -216,7 +216,7 @@
 				</tr>
 
 				<ui:repeat var="bookingItem"
-					value="#{childItemController.childItems}">
+					value="#{datevBookingController.bookingList}">
 					<tr>
 						<td class="konto-input"><h:outputText
 								value="#{bookingItem.item['datev.sachkonto']}"></h:outputText>
@@ -240,9 +240,9 @@
 				<tr>
 
 					<td />
-					<td class="orderlist-sum"
+					<td class="bookinglist-sum"
 						style="text-align: right; font-weight: bold;">Summe:</td>
-					<td class="orderlist-sum orderlist_summary"
+					<td class="bookinglist-sum bookinglist_summary"
 						style="text-align: right; font-weight: bold;">#{workitem.item['_capacity_dsp']}</td>
 				</tr>
 			</table>
