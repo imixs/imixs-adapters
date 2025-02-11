@@ -103,28 +103,14 @@
 	<xsl:template
 		match="/data/document[normalize-space(item[@name = '$workflowgroup']/value) != 'DATEV-Export']">
 
-		<!-- compute invoice date: if invoice.accounting.date not defined, then the fallback is
-		invoice.date -->
 		<xsl:variable
-			name="date">
-			<xsl:choose>
-				<xsl:when test="string-length(item[@name='invoice.accounting.date']/value) = 0">
-					<!-- Fallback... -->
-	           <xsl:value-of
-						select="item[@name='invoice.date']/value" />
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="item[@name='invoice.accounting.date']/value" />
-				</xsl:otherwise>
-			</xsl:choose>
-		</xsl:variable>
-      
+			name="belegdatum" select="item[@name='datev.belegdatum']/value" />  
+		<xsl:variable
+			name="belegfeld1" select="item[@name='datev.belegfeld1']/value" />
 		<xsl:variable
 			name="gegenkonto" select="item[@name='datev.gegenkonto']/value" />
 		<xsl:variable
-			name="subject" select="substring(item[@name='$workflowsummary']/value,1,59)" />
-		<xsl:variable
-			name="invoicenumber" select="item[@name='invoice.number']/value" />
+			name="buchungstext" select="substring(item[@name='$workflowsummary']/value,1,59)" />
 		<xsl:variable
 			name="uniqueid" select="item[@name='$uniqueid']/value" />
 		<xsl:for-each
@@ -151,12 +137,12 @@
 			<xsl:value-of
 				select="./item[@name='datev.buschluessel']/value" /><xsl:text>;</xsl:text>
 			<xsl:value-of
-				select="format-dateTime($date, '[D01][M01]')" /><xsl:text>;</xsl:text>
+				select="format-dateTime($belegdatum, '[D01][M01]')" /><xsl:text>;</xsl:text>
 			<xsl:value-of
-				select="$invoicenumber" /><xsl:text>;</xsl:text>
+				select="$belegfeld1" /><xsl:text>;</xsl:text>
 			<xsl:text>;;</xsl:text>
 			<xsl:value-of
-				select="$subject" /><xsl:text>;</xsl:text>
+				select="$buchungstext" /><xsl:text>;</xsl:text>
 			<xsl:text>;;;;;</xsl:text>
 
 			<!-- Beleglink -->		
