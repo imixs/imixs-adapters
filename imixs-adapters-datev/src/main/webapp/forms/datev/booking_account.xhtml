@@ -9,16 +9,23 @@
 	<h:panelGroup layout="block" styleClass="imixs-form-section" style="position: relative;"
 		id="bookinglist" binding="#{bookinglistContainer}">	
 	
+
+		<ui:param name="hasKostenstelle1" value="#{!empty datevController.kostenstelle1}"></ui:param>
+		<ui:param name="hasKostenstelle2" value="#{!empty datevController.kostenstelle2}"></ui:param>
+
 		<c:if test="#{!readonly}">
 			<h:commandScript name="sachkontoSearch" action="#{datevSearchController.searchSachkonto()}"
 				render="autocomplete-resultlist-datev-sachkonto" onevent="autocompleteShowResult" />
 			<table class="imixsdatatable imixs-bookingitems"> 
 				<tr>
-					<th style="width: 300px;">Buchungskonto</th>
-					<!-- 
-					<th style="width: 100px;">Kostenstelle I.</th>
-					<th style="width: 100px;">Kostenstelle  II.</th>
-					-->
+					<th style="width: 200px;">Buchungskonto</th>
+					<!-- -->
+					<ui:fragment rendered="#{hasKostenstelle1}">
+						<th style="width: 140px;">Kostenstelle I.</th>
+					</ui:fragment>
+					<ui:fragment rendered="#{hasKostenstelle2}">
+						<th style="width: 140px;">Kostenstelle  II.</th>
+					</ui:fragment>
 					<th style="width: 170px;">BU Schlüssel</th>
 					<th style="min-width: 120px;">Betrag</th>
 					<th style="width: 10px;">
@@ -42,18 +49,21 @@
 
 						</td>
 
-						<!-- Kostenstelle 
-						<td><h:selectOneMenu style="width:100%;"
-								value="#{bookingItem.item['datev.kostenstelle1']}">
-								<f:selectItem itemLabel="" itemValue="" />
-								<f:selectItems value="#{datevDataController.costcentre1}"></f:selectItems>
-							</h:selectOneMenu></td>
-						<td><h:selectOneMenu style="width:100%;"
-								value="#{bookingItem.item['datev.kostenstelle2']}">
-								<f:selectItem itemLabel="" itemValue="" />
-								<f:selectItems value="#{datevDataController.costcentre2}"></f:selectItems>
-							</h:selectOneMenu></td>
- 						-->
+						<!-- Kostenstelle -->
+						<ui:fragment rendered="#{!empty datevController.kostenstelle1}">
+							<td><h:selectOneMenu style="width:100%;"
+									value="#{bookingItem.item['datev.kostenstelle1']}">
+									<f:selectItem itemLabel="" itemValue="" />
+									<f:selectItems value="#{datevController.kostenstelle1}"></f:selectItems>
+								</h:selectOneMenu></td>
+						</ui:fragment>
+						<ui:fragment rendered="#{!empty datevController.kostenstelle2}">
+							<td><h:selectOneMenu style="width:100%;"
+									value="#{bookingItem.item['datev.kostenstelle2']}">
+									<f:selectItem itemLabel="" itemValue="" />
+									<f:selectItems value="#{datevController.kostenstelle2}"></f:selectItems>
+								</h:selectOneMenu></td>
+						</ui:fragment>
 
 
 						<td><h:selectOneMenu  style="width:100%;" 
@@ -84,6 +94,12 @@
 				<!-- summary -->
 				<tr>
 					<td />
+					<ui:fragment rendered="#{hasKostenstelle1}">
+						<td />
+					</ui:fragment>
+					<ui:fragment rendered="#{hasKostenstelle2}">
+						<td />
+					</ui:fragment>
 					
 					<td class="bookinglist-sum"
 						style="text-align: right; font-weight: bold;">Summe:</td>

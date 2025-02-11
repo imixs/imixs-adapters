@@ -104,6 +104,10 @@ public class DatevSearchController implements Serializable {
      * }
      */
     public void searchSachkonto() {
+        searchSachkonto(null);
+    }
+
+    public void searchSachkonto(String regexPattern) {
 
         List<ItemCollection> dataList = null;
         searchResult = new ArrayList<DatevSearchEntry>();
@@ -120,14 +124,28 @@ public class DatevSearchController implements Serializable {
         logger.finest(".......trigger searchSachkonto: " + phrase);
         // DATEV Sachkonten suchen
         dataList = searchEntity(phrase, "kontenbeschriftungen");
-
+        // Compile the regex pattern
+        logger.fine("regex=" + regexPattern);
+        Pattern pattern = null;
+        if (regexPattern != null && !regexPattern.isEmpty()) {
+            pattern = Pattern.compile(regexPattern);
+        }
         for (ItemCollection dbtr : dataList) {
-            String kontoNumber = dbtr.getItemValueString("_konto");
-            String display = kontoNumber + " - " + dbtr.getItemValueString("_kontobeschriftung");
+            String kontoNummer = dbtr.getItemValueString("_konto");
+            // Prüfen, ob die Kontonummer der Regex entspricht
+            if (pattern != null) {
+                Matcher matcher = pattern.matcher(kontoNummer);
+                if (!matcher.matches()) {
+                    // Kein passendes Konto
+                    continue;
+                }
+            }
+
+            String display = kontoNummer + " - " + dbtr.getItemValueString("_kontobeschriftung");
 
             display = display.replace("\"", "");
             display = display.replace("'", "");
-            searchResult.add(new DatevSearchEntry(kontoNumber, display, buildSachkontoJsonData(dbtr)));
+            searchResult.add(new DatevSearchEntry(kontoNummer, display, buildSachkontoJsonData(dbtr)));
         }
     }
 
@@ -173,7 +191,6 @@ public class DatevSearchController implements Serializable {
                 if (!matcher.matches()) {
                     // Kein passendes Konto
                     continue;
-
                 }
             }
             String kontoName = konto.getItemValueString("_name");

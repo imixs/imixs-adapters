@@ -36,6 +36,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
@@ -147,7 +148,17 @@ public class DatevExportService {
                 // copy sachkontenlaenge from first invoice..
                 datevExport.setItemValue(DatevService.ITEM_DATEV_KONTENLAENGE,
                         firstInvoice.getItemValue(DatevService.ITEM_DATEV_KONTENLAENGE));
+            } else {
+                // nein - wir haben keine also nehemen wir die Zetral gepflegte
+                String fs = configuration.getItemValueString(DatevService.ITEM_DATEV_FISCAL_START);
+                Date invoiceDate = firstInvoice.getItemValueDate("invoice.date");
+
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(invoiceDate);
+                fs = "" + calendar.get(Calendar.YEAR) + fs;
+                datevExport.setItemValue(DatevService.ITEM_DATEV_FISCAL_START, fs);
             }
+
         }
 
         // haben wir bereits eine Consultant ID von der Rechnung erhalten?
@@ -156,6 +167,7 @@ public class DatevExportService {
             datevExport.setItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID,
                     configuration.getItemValue(DatevService.ITEM_DATEV_CONSULTANT_ID));
         }
+
         return datevExport;
     }
 
@@ -607,30 +619,6 @@ public class DatevExportService {
         }
         return datevExport;
     }
-
-    /**
-     * Loads the DATEV configuration entity by name. The method returns null if no
-     * configuration exits.
-     * 
-     * @return
-     */
-    // public ItemCollection loadConfiguration(String name) {
-    // try {
-    // // support deprecated txtname attribure
-    // String sQuery = "(type:\"" + DatevService.DOCUMENT_TYPE + "\" AND (name:\"" +
-    // name + "\" OR txtname:\""
-    // + name + "\" ) )";
-    // Collection<ItemCollection> col = documentService.find(sQuery, 1, 0);
-    // // check if we found a configuration
-    // if (col.size() > 0) {
-    // ItemCollection configuration = col.iterator().next();
-    // return configuration;
-    // }
-    // } catch (QueryException e1) {
-    // e1.printStackTrace();
-    // }
-    // return null;
-    // }
 
     /**
      * Helper Method to copute the grouping key

@@ -213,7 +213,7 @@ public class DatevController implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<SelectItem> getCostcentre1() throws Exception {
+	public List<SelectItem> getKostenstelle1() throws Exception {
 
 		ArrayList<SelectItem> selection;
 		selection = new ArrayList<SelectItem>();
@@ -224,10 +224,13 @@ public class DatevController implements Serializable {
 		}
 
 		// get value list first value from vector if size >0
-		List<?> valueList = configuration.getItemValue("datev.kostenstell1");
+		List<?> valueList = configuration.getItemValue("datev.kostenstelle1");
 		for (Object aValue : valueList) {
 			// test if aValue has a | as an delimiter
 			String sValue = aValue.toString();
+			if (sValue.trim().isEmpty()) {
+				continue;
+			}
 			String sName = sValue;
 
 			if (sValue.indexOf("|") > -1) {
@@ -247,10 +250,11 @@ public class DatevController implements Serializable {
 	 * @param value
 	 * @return
 	 */
-	public String getCostcentre1Read(String value) {
+	@SuppressWarnings("unchecked")
+	public String getKostenstelle1Read(String value) {
 
 		// get value list first value from vector if size >0
-		List<String> valueList = configuration.getItemValue("datev.kostenstell1");
+		List<String> valueList = configuration.getItemValue("datev.kostenstelle1");
 
 		for (String aValue : valueList) {
 			String[] parts = aValue.split("\\|");
@@ -293,7 +297,7 @@ public class DatevController implements Serializable {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<SelectItem> getCostcentre2() throws Exception {
+	public List<SelectItem> getKostenstelle2() throws Exception {
 
 		ArrayList<SelectItem> selection;
 		selection = new ArrayList<SelectItem>();
@@ -304,10 +308,13 @@ public class DatevController implements Serializable {
 		}
 
 		// get value list first value from vector if size >0
-		List<?> valueList = configuration.getItemValue("datev.kostenstell2");
+		List<?> valueList = configuration.getItemValue("datev.kostenstelle2");
 		for (Object aValue : valueList) {
 			// test if aValue has a | as an delimiter
 			String sValue = aValue.toString();
+			if (sValue.trim().isEmpty()) {
+				continue;
+			}
 			String sName = sValue;
 
 			if (sValue.indexOf("|") > -1) {
@@ -327,10 +334,11 @@ public class DatevController implements Serializable {
 	 * @param value
 	 * @return
 	 */
-	public String getCostcentre2Read(String value) {
+	@SuppressWarnings("unchecked")
+	public String getKostenstelle2Read(String value) {
 
 		// get value list first value from vector if size >0
-		List<String> valueList = configuration.getItemValue("datev.kostenstell2");
+		List<String> valueList = configuration.getItemValue("datev.kostenstelle2");
 
 		for (String aValue : valueList) {
 			String[] parts = aValue.split("\\|");

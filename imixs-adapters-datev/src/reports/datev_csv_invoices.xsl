@@ -39,7 +39,7 @@
 <xsl:value-of
 			select="item[@name='datev.client.id']/value" /><xsl:text>;</xsl:text>
 <xsl:value-of
-			select="format-dateTime($fiscalstart, '[Y0001][M01][D01]')"></xsl:value-of><xsl:text>;</xsl:text>
+			select="$fiscalstart"></xsl:value-of><xsl:text>;</xsl:text>
 		<!-- Sachkontennumernlaenge mandantenabhaengig - defautl = 6 -->
 <xsl:choose>
 			<xsl:when test="string-length(./item[@name='datev.sachkontennummernlaenge']/value) > 0">
@@ -120,7 +120,7 @@
 		</xsl:variable>
       
 		<xsl:variable
-			name="gegenkonto" select="item[@name='cdtr.number']/value" />
+			name="gegenkonto" select="item[@name='datev.gegenkonto']/value" />
 		<xsl:variable
 			name="subject" select="substring(item[@name='$workflowsummary']/value,1,59)" />
 		<xsl:variable
@@ -128,7 +128,7 @@
 		<xsl:variable
 			name="uniqueid" select="item[@name='$uniqueid']/value" />
 		<xsl:for-each
-			select="item[@name='_childitems']/value">
+			select="item[@name='datev.booking.list']/value">
 			<xsl:variable name="betrag"
 				select="replace(./item[@name='datev.betrag']/value, '\.', ',')" />
 			<xsl:variable
