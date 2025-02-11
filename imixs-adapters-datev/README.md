@@ -5,10 +5,6 @@ Since DATEV is a German software system, the Imixs-DATEV Adapter module is excep
 
 # Überblick
 
-This adapter module provides services to import and export data from DATEV.
-The import feature allows the import of DATEV master data like 'Kontenbeschriftungen'.
-The export feature allows the export of workflow invoice data into a DATEV file (Buchungstapel).
-
 Dieses Adaptermodul stellt Dienste zum Im- und Export von Daten aus DATEV zur Verfügung. Die Importfunktion ermöglicht den Import von DATEV-Stammdaten wie z.B. 'Kontenbeschriftungen' oder Debitoren/Kreditoren Stammdaten.
 Die Exportfunktion ermöglicht den Export von Workflow-Belegdaten (z.B. Rechnungsdaten) in eine DATEV-Datei (Buchungstapel).
 
