@@ -10,6 +10,7 @@ import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.SignalAdapter;
+import org.imixs.workflow.datev.DatevException;
 import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.WorkflowService;
@@ -138,8 +139,6 @@ import jakarta.inject.Inject;
  */
 public class DatevExportAdapter implements SignalAdapter {
 
-	public static final String DATEV_EXPORT_ERROR = "DATEV_EXPORT_ERROR";
-
 	public static final int EVENT_INVOICE_COMPLETED = 200;
 
 	private static Logger logger = Logger.getLogger(DatevExportAdapter.class.getName());
@@ -208,7 +207,8 @@ public class DatevExportAdapter implements SignalAdapter {
 			processDatevExportEntities(datevExport, masterDataSet, event, configuration);
 
 		} catch (AccessDeniedException | ProcessingErrorException | ModelException e) {
-			throw new PluginException(DatevExportAdapter.class.getName(), DATEV_EXPORT_ERROR, e.getMessage(), e);
+			throw new PluginException(DatevExportAdapter.class.getName(), DatevException.DATEV_EXPORT_ERROR,
+					e.getMessage(), e);
 		}
 
 		return datevExport;

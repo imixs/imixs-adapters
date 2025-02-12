@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.datev.DatevException;
 import org.imixs.workflow.datev.imports.DatevImportService;
 import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.engine.DocumentService;
@@ -406,7 +407,7 @@ public class DatevController implements Serializable {
 				String result = datevImportService.importData(input, "ISO-8859-1");
 				getImportData().replaceItemValue("log", result);
 			} else {
-				throw new PluginException(this.getClass().getName(), DatevImportService.IMPORT_ERROR,
+				throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
 						"File Format not supported: " + file.getName());
 			}
 

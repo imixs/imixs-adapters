@@ -1,11 +1,11 @@
 package org.imixs.workflow.datev.export;
 
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
+import org.imixs.workflow.datev.DatevException;
 import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
@@ -17,7 +17,7 @@ import org.imixs.workflow.exceptions.QueryException;
 import jakarta.inject.Inject;
 
 /**
- * Der KriegerDatevRemoveAdapter enfernt die Verknüpfung einer Rechnung mit
+ * Der DatevRemoveAdapter enfernt eine Verknüpfung aus
  * einem DATEV Export
  * 
  * @see DatevRefAdapter
@@ -28,14 +28,6 @@ import jakarta.inject.Inject;
 public class DatevRemoveAdapter implements SignalAdapter {
 
 	private static Logger logger = Logger.getLogger(DatevRemoveAdapter.class.getName());
-
-	public static final String ERROR_MISSING_DATA = "MISSING_DATA";
-	public static final String ERROR_CONFIG = "CONFIG_ERROR";
-
-	public static final String ITEM_DATEV_CLIENT_ID = "_datev_client_id";
-	public static final String ITEM_DATEV_BOOKING_PERIOD = "_datev_booking_period";
-	public static final String ITEM_DBTR_NAME = "_dbtr_name";
-	public static final String CHILD_ITEM_PROPERTY = "_ChildItems";
 
 	@Inject
 	DatevExportService datevExportService;
@@ -53,7 +45,7 @@ public class DatevRemoveAdapter implements SignalAdapter {
 	public ItemCollection execute(ItemCollection document, ItemCollection event)
 			throws AdapterException, PluginException {
 
-		removeInvoice(document);
+		removeWorkitem(document);
 		return document;
 	}
 
@@ -61,33 +53,26 @@ public class DatevRemoveAdapter implements SignalAdapter {
 	 * Diese method entfernt eine referenz der aktuellen Rechnung aus dem Datev
 	 * export
 	 * 
-	 * @param invoice
+	 * @param workitem
 	 * @throws PluginException
 	 */
 	@SuppressWarnings("unchecked")
-	private void removeInvoice(ItemCollection invoice) throws PluginException {
+	private void removeWorkitem(ItemCollection workitem) throws PluginException {
 
 		ItemCollection datevConfig = datevService.loadConfiguration();
 		if (datevConfig == null) {
-			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+			throw new PluginException(PluginException.class.getName(), DatevException.DATEV_CONFIG_ERROR,
 					"Datev Export kann nicht erzeugt werden da keine DATEV Konfiguration vorliegt.");
 		}
 
-		String datevClientID = invoice.getItemValueString(ITEM_DATEV_CLIENT_ID);
+		String datevClientID = datevConfig.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
 
 		if (datevClientID == null || datevClientID.isEmpty()) {
-			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-					"Datev Export kann nicht korrigiert werden da keine DATEV Client ID definiert wurde. Bitte prüfen Sie die DATEV Konfiguration.");
+			throw new PluginException(PluginException.class.getName(), DatevException.DATEV_CONFIG_ERROR,
+					"Datev Export kann nicht erzeugt werden da keine DATEV Client ID definiert wurde. Bitte prüfen Sie die DATEV Konfiguration.");
 		}
 
-		Date datInvoice = invoice.getItemValueDate("_invoicedate");
-
-		if (datInvoice == null) {
-			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-					"Datev Export kann nicht erzeugt werden da kein Buchungsdatum angegeben wurde.");
-		}
-		String key = datevExportService.computeKey(invoice, datevClientID);
-
+		String key = datevService.computeKey(workitem, datevClientID);
 		logger.info("......Update DATEV export for: '" + key + "'...");
 		ItemCollection datevExport;
 		try {
@@ -95,8 +80,8 @@ public class DatevRemoveAdapter implements SignalAdapter {
 			if (datevExport != null) {
 				// Invoice wieder aus dem DATEV Export heruasnehmen
 				List<String> refList = datevExport.getItemValue("$workitemref");
-				if (refList.contains(invoice.getUniqueID())) {
-					refList.remove(invoice.getUniqueID());
+				if (refList.contains(workitem.getUniqueID())) {
+					refList.remove(workitem.getUniqueID());
 					datevExport.setItemValue("$workitemref", refList);
 					// set event 100
 					datevExport.event(100);
@@ -105,7 +90,7 @@ public class DatevRemoveAdapter implements SignalAdapter {
 			}
 
 		} catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
-			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+			throw new PluginException(PluginException.class.getName(), DatevException.DATEV_DATA_ERROR,
 					"Es konnte kein DATEV Export zugewiesen werden: " + e1.getMessage());
 
 		}

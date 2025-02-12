@@ -63,13 +63,15 @@ Für das Einfügen eines Beleges in den DATEV Belegsapel müssen im Workitem fol
 | datev.gegenkonto   | Gegenkonto   |
 | datev.buschluessel | Buschluessel |
 
-Auf diese weise können unterschiedliche Prozessdaten in einen Belegstapel zusammgefasst werden. Um ein Mapping eines workflow Items auf ein DATEV item zu erhalten kann dieses im BPMN Result event angelegt werden. Beisiel:
+Auf diese weise können unterschiedliche Prozessdaten in einen Belegstapel zusammengefasst werden. Um ein Mapping eines workflow Items auf ein DATEV item zu erhalten kann dieses im BPMN Result event angelegt werden.
+
+Beispiel:
 
 ```xml
-   <item name="datev.betrag"><itemvalue>invoice.total</itemvalue></item>
-   <item name="datev.belegfeld1"><itemvalue>invoice.number</itemvalue></item>
-   <item name="datev.gegenkonto"><itemvalue>cdtr.number</itemvalue></item>
-   ...
+<item name="datev.betrag" type="double"><itemvalue>invoice.total</itemvalue></item>
+<item name="datev.belegdatum" type="date"><itemvalue>invoice.date</itemvalue></item>
+<item name="datev.belegfeld1"><itemvalue>invoice.number</itemvalue></item>
+<item name="datev.gegenkonto"><itemvalue>cdtr.number</itemvalue></item>
 ```
 
 Der DATEV Export Workflow kann vollständig über das DATEV Export Modell gesteuert werden.

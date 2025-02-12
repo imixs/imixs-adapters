@@ -1,14 +1,19 @@
 package org.imixs.workflow.datev.imports;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.datev.DatevException;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.scheduler.SchedulerException;
 import org.imixs.workflow.engine.scheduler.SchedulerService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.InvalidAccessException;
+import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.QueryException;
 
 import jakarta.annotation.security.DeclareRoles;
@@ -34,15 +39,25 @@ import jakarta.ejb.Stateless;
 @LocalBean
 public class DatevService {
 
-	public static final String IMPORT_ERROR = "IMPORT_ERROR";
 	public static final String DOCUMENT_TYPE = "configuration";
 
+	// COnfig Items
 	public static final String ITEM_DATEV_KONTENLAENGE = "datev.sachkontennummernlaenge";
 	public static final String ITEM_DATEV_CLIENT_ID = "datev.client.id";
 	public static final String ITEM_DATEV_CLIENT_NAME = "datev.client.name";
 	public static final String ITEM_DATEV_BOOKING_PERIOD = "datev.booking_period";
 	public static final String ITEM_DATEV_CONSULTANT_ID = "datev.consultant.id";
 	public static final String ITEM_DATEV_FISCAL_START = "datev.fiscal_start";
+
+	// Date Items
+	public static final String ITEM_DATEV_BETRAG = "datev.betrag";
+	public static final String ITEM_DATEV_BELEGDATUM = "datev.belegdatum";
+	public static final String ITEM_DATEV_BELEGFELD1 = "datev.belegfeld1";
+	public static final String ITEM_DATEV_KONTO = "datev.konto";
+	public static final String ITEM_DATEV_GEGENKONTO = "datev.gegenkonto";
+	public static final String ITEM_DATEV_BUSCHLUESSEL = "datev.buschluessel";
+	public static final String ITEM_DATEV_BOOKING_LIST = "datev.booking.list";
+
 	public static final String DATEV_CONFIGURATION = "DATEV_CONFIGURATION";
 
 	@EJB
@@ -111,4 +126,27 @@ public class DatevService {
 		return configuration;
 	}
 
+	/**
+	 * Helper Method to compute the DATEV grouping key
+	 * 
+	 * (MandantID+Buchungsperiode)
+	 * 
+	 * @return
+	 * @throws PluginException
+	 */
+	public String computeKey(ItemCollection workitem, String datevClientID) throws PluginException {
+
+		Date datBelegdatum = workitem.getItemValueDate(DatevService.ITEM_DATEV_BELEGDATUM);
+		if (datBelegdatum == null) {
+			throw new PluginException(PluginException.class.getName(), DatevException.DATEV_DATA_ERROR,
+					"DATEV Daten Fehler - es wurde kein Belegdatum angegeben!");
+		}
+
+		// Berechnung der Buchungsperiode
+		DateFormat df = new SimpleDateFormat("yyyyMM");
+		String keyPeriode = df.format(datBelegdatum);
+		String key = keyPeriode + "_" + datevClientID;
+
+		return key;
+	}
 }

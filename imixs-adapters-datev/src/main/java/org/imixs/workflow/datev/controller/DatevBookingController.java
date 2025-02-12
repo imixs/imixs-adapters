@@ -50,8 +50,6 @@ import jakarta.inject.Named;
 @ConversationScoped
 public class DatevBookingController implements Serializable {
 
-    public static final String ITEM_DATEV_BOOKING_LIST = "datev.booking.list";
-
     private static final long serialVersionUID = 1L;
     private static Logger logger = Logger.getLogger(DatevBookingController.class.getName());
 
@@ -126,17 +124,17 @@ public class DatevBookingController implements Serializable {
         // reset orderItems if workItem has changed
         if (WorkflowEvent.WORKITEM_CHANGED == eventType || WorkflowEvent.WORKITEM_CREATED == eventType) {
             // reset state
-            bookingList = explodeChildList(workitem, ITEM_DATEV_BOOKING_LIST);
+            bookingList = explodeChildList(workitem, DatevService.ITEM_DATEV_BOOKING_LIST);
         }
 
         // before the workitem is saved we update the field txtOrderItems
         if (WorkflowEvent.WORKITEM_BEFORE_PROCESS == eventType) {
-            implodeChildList(workitem, bookingList, ITEM_DATEV_BOOKING_LIST);
+            implodeChildList(workitem, bookingList, DatevService.ITEM_DATEV_BOOKING_LIST);
         }
 
         if (WorkflowEvent.WORKITEM_AFTER_PROCESS == eventType) {
             // reset state
-            bookingList = explodeChildList(workitem, ITEM_DATEV_BOOKING_LIST);
+            bookingList = explodeChildList(workitem, DatevService.ITEM_DATEV_BOOKING_LIST);
         }
 
     }

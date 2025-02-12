@@ -51,6 +51,7 @@ import org.apache.commons.net.ftp.FTPSClient;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.WorkflowKernel;
+import org.imixs.workflow.datev.DatevException;
 import org.imixs.workflow.datev.DatevHelper;
 import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.engine.DocumentService;
@@ -101,11 +102,6 @@ public class DatevExportService {
     public static final String ITEM_FTP_PASSWORD = "datev.ftp.password";
     public static final String ITEM_FTP_PATH_UPLOAD = "_datev.ftp.path.upload";
     public static final String ITEM_FTP_ERROR = "_ftp_error";
-
-    public static final String CHILD_ITEM_PROPERTY = "_ChildItems";
-
-    public static final String REPORT_ERROR = "REPORT_ERROR";
-    public static final String MODEL_ERROR = "MODEL_ERROR";
 
     @Inject
     WorkflowService workflowService;
@@ -203,7 +199,7 @@ public class DatevExportService {
         String reportNameDocuments = configuration.getItemValueString("report.documents");
         ItemCollection documentsReport = reportService.findReport(reportNameDocuments);
         if (documentsReport == null) {
-            throw new PluginException(this.getClass().getClass().getName(), REPORT_ERROR,
+            throw new PluginException(this.getClass().getClass().getName(), DatevException.DATEV_REPORT_ERROR,
                     "unable to load documents report definition '" + reportNameDocuments
                             + "'. Please check the configuration");
         }
@@ -215,7 +211,7 @@ public class DatevExportService {
 
             String xslDocuments = documentsReport.getItemValueString("XSL").trim();
             if (xslDocuments.isEmpty()) {
-                throw new PluginException(this.getClass().getClass().getName(), REPORT_ERROR,
+                throw new PluginException(this.getClass().getClass().getName(), DatevException.DATEV_REPORT_ERROR,
                         "Failed to build DATEV zip archive '"
                                 + documentsReport.getItemValueString("txtname") + " XSL content is missing.");
             }
@@ -300,7 +296,7 @@ public class DatevExportService {
                 datevZip.write(byteData);
                 datevZip.closeEntry();
             } catch (IOException | TransformerException | JAXBException e) {
-                throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR,
+                throw new PluginException(DatevExportService.class.getName(), DatevException.DATEV_REPORT_ERROR,
                         "Failed to build DATEV zip archive '"
                                 + documentsReport.getItemValueString("txtname") + "' : " + e.getMessage(),
                         e);
@@ -316,7 +312,7 @@ public class DatevExportService {
             datevExport.addFileData(zipFileData);
 
         } catch (IOException e) {
-            throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR,
+            throw new PluginException(DatevExportService.class.getName(), DatevException.DATEV_REPORT_ERROR,
                     "Failed to create Documents archive '" + documentsReport.getItemValueString("txtname") + "' : "
                             + e.getClass().getName() + " -> " + e.getMessage(),
                     e);
@@ -330,7 +326,7 @@ public class DatevExportService {
                     zipOutputStream.close();
                 }
             } catch (IOException e) {
-                throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR,
+                throw new PluginException(DatevExportService.class.getName(), DatevException.DATEV_REPORT_ERROR,
                         "Failed to close DATEV archive '"
                                 + documentsReport.getItemValueString("txtname") + "' : " + e.getMessage(),
                         e);
@@ -366,7 +362,7 @@ public class DatevExportService {
         ItemCollection invoiceReport = null;
         invoiceReport = reportService.findReport(reportNameInvoices);
         if (invoiceReport == null) {
-            throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR,
+            throw new PluginException(DatevExportService.class.getName(), DatevException.DATEV_REPORT_ERROR,
                     "unable to load invoice report definition '"
                             + reportNameInvoices + "'. Please check the configuration");
         }
@@ -418,8 +414,10 @@ public class DatevExportService {
             // xsl transformation based on our tmp_data collection....
             filedata = reportService.transformDataSource(invoiceReport, tmp_data, datevFileName);
         } catch (JAXBException | TransformerException | IOException e) {
-            throw new PluginException(DatevExportService.class.getName(), REPORT_ERROR, "Failed to execute CSV report '"
-                    + invoiceReport.getItemValueString("txtname") + "' : " + e.getMessage(), e);
+            throw new PluginException(DatevExportService.class.getName(), DatevException.DATEV_REPORT_ERROR,
+                    "Failed to execute CSV report '"
+                            + invoiceReport.getItemValueString("txtname") + "' : " + e.getMessage(),
+                    e);
         }
 
         // attach the file
@@ -621,25 +619,6 @@ public class DatevExportService {
     }
 
     /**
-     * Helper Method to copute the grouping key
-     * 
-     * (MandantID+Buchungsperiode)
-     * 
-     * @return
-     */
-    public String computeKey(ItemCollection invoice, String datevClientID) {
-
-        Date datInvoice = invoice.getItemValueDate("invoice.date");
-
-        // Berechnung der Buchungsperiode
-        DateFormat df = new SimpleDateFormat("yyyyMM");
-        String keyPeriode = df.format(datInvoice);
-        String key = keyPeriode + "_" + datevClientID;
-
-        return key;
-    }
-
-    /**
      * Prüft alle offenen Datev Exporte und gibt den neuesten zur angegebenen Datev
      * Client ID zurück, oder null falls es keinen Offenen Datev Export gibt.
      * 
@@ -728,7 +707,7 @@ public class DatevExportService {
             }
 
         } else {
-            throw new PluginException(DatevExportService.class.getName(), MODEL_ERROR,
+            throw new PluginException(DatevExportService.class.getName(), DatevException.DATEV_MODEL_ERROR,
                     "Invoice Document not defined");
         }
 

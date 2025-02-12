@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
+import org.imixs.workflow.datev.DatevException;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.index.SchemaService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -70,8 +71,6 @@ import jakarta.ejb.TransactionAttributeType;
 @LocalBean
 public class DatevImportService {
 
-	public static final String DATA_ERROR = "DATA_ERROR";
-	public static final String IMPORT_ERROR = "IMPORT_ERROR";
 	public static final int MAX_SEARCH_RESULT = 100;
 	public final static String ISO8601_FORMAT_DATETIME = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 	public final static String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
@@ -232,13 +231,13 @@ public class DatevImportService {
 			String[] header1List = header1.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
 			header1List = normalizeValueList(header1List);
 			if (header1List == null || header1List.length < 4) {
-				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
+				throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
 						"File Format not supported, 1st line must contain the data format in column 4 (type).");
 			}
 			type = header1List[3];
 
 			if (type == null || type.isEmpty()) {
-				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
+				throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
 						"File Format not supported, 1st line must contain the data format in column 4 (type).");
 
 			}
@@ -248,7 +247,7 @@ public class DatevImportService {
 			consultenID = header1List[11];
 			log(log, "│   ├── Berater ID= " + consultenID);
 			if (clientID == null || clientID.isEmpty() || consultenID == null || consultenID.isEmpty()) {
-				throw new PluginException(this.getClass().getName(), IMPORT_ERROR,
+				throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
 						"File Format not supported, 1st line must contain the Mandant and Berater ID.");
 			}
 
@@ -332,7 +331,7 @@ public class DatevImportService {
 			workitemsFailed++;
 			String sError = "import error at line " + line + ": " + e + " Datensatz=" + dataLine;
 			log(log, sError);
-			throw new PluginException(DatevImportService.class.getName(), DATA_ERROR, sError, e);
+			throw new PluginException(DatevImportService.class.getName(), DatevException.DATEV_DATA_ERROR, sError, e);
 		} finally {
 			// Close the input stream
 			try {
@@ -366,7 +365,7 @@ public class DatevImportService {
 			// Catch Workflow Exceptions
 			String sError = "import error: unable to delete data";
 			log(log, sError);
-			throw new PluginException(DatevImportService.class.getName(), DATA_ERROR, sError, e);
+			throw new PluginException(DatevImportService.class.getName(), DatevException.DATEV_DATA_ERROR, sError, e);
 		}
 
 		log(log, "│   ├── " + workitemsTotal + " Einträge gelesen ");

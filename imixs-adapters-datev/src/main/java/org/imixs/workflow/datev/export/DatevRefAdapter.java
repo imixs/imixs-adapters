@@ -23,15 +23,15 @@ import org.imixs.workflow.exceptions.QueryException;
 import jakarta.inject.Inject;
 
 /**
- * Der DATEVRefAdapter verknüpft eine Rechnung mit einem DATEV Export zum
- * aktuellen Kreiditor und der Buchungsperiode. Existiert aktuell kein offener
- * DATEV Export für diesen Kreditor/Buchungsperiode, erzeugt der Adapter
+ * Der DATEVRefAdapter verknüpft ein workitem mit einem DATEV Export.
+ * Existiert aktuell kein offener
+ * DATEV Export für die Buchungsperiode, erzeugt der Adapter
  * automatisch eine neue Prozessinstanz.
  * <p>
- * Wurde die Rechnugn bereits einem DATEV Export zugeordnet passiert nichts.
+ * Wurde der Beleg bereits einem DATEV Export zugeordnet passiert nichts.
  * <p>
  * Existieren innerhalb der Rechnung noch keien Detailbuchugnssätze (ChildItems)
- * dann erzeugt der Adaper einen Default Buchungssatz .
+ * dann erzeugt der Adapter einen Default Buchungssatz .
  * 
  * 
  * @version 1.0
@@ -40,9 +40,6 @@ import jakarta.inject.Inject;
 public class DatevRefAdapter implements SignalAdapter {
 
 	private static Logger logger = Logger.getLogger(DatevRefAdapter.class.getName());
-
-	public static final String ERROR_MISSING_DATA = "MISSING_DATA";
-	public static final String ERROR_CONFIG = "CONFIG_ERROR";
 
 	@Inject
 	@ConfigProperty(name = "datev.defaultkonto", defaultValue = "1370")
@@ -56,7 +53,7 @@ public class DatevRefAdapter implements SignalAdapter {
 
 	/**
 	 * This method finds or create the Datev Export and adds a reference
-	 * ($workitemref) to the current invoice.
+	 * ($workitemref) to the current workitem.
 	 * 
 	 * @throws PluginException
 	 */
@@ -65,42 +62,37 @@ public class DatevRefAdapter implements SignalAdapter {
 			throws AdapterException, PluginException {
 
 		validateDefaultBooking(document);
-		appendInvoice(document);
+		appendWorkitem(document);
 		return document;
 	}
 
 	/**
 	 * Diese method hängt eine referenz der aktuellen Rechnung an den DATEV Export
 	 * 
-	 * @param invoice
+	 * @param workitem
 	 * @throws PluginException
 	 */
 	@SuppressWarnings("unchecked")
-	private void appendInvoice(ItemCollection invoice) throws PluginException {
+	private void appendWorkitem(ItemCollection workitem) throws PluginException {
 
 		ItemCollection datevConfig = datevService.loadConfiguration();
 		if (datevConfig == null) {
-			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+			throw new PluginException(PluginException.class.getName(), DatevException.DATEV_CONFIG_ERROR,
 					"Datev Export kann nicht erzeugt werden da keine DATEV Konfiguration vorliegt.");
 		}
 
 		String datevClientID = datevConfig.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
 
 		if (datevClientID == null || datevClientID.isEmpty()) {
-			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
+			throw new PluginException(PluginException.class.getName(), DatevException.DATEV_CONFIG_ERROR,
 					"Datev Export kann nicht erzeugt werden da keine DATEV Client ID definiert wurde. Bitte prüfen Sie die DATEV Konfiguration.");
 		}
 
-		Date datInvoice = invoice.getItemValueDate("invoice.date");
-		if (datInvoice == null) {
-			throw new PluginException(PluginException.class.getName(), ERROR_MISSING_DATA,
-					"Datev Export kann nicht erzeugt werden da kein Buchungsdatum angegeben wurde.");
-		}
-
-		String key = datevExportService.computeKey(invoice, datevClientID);
+		String key = datevService.computeKey(workitem, datevClientID);
 		// Optional - Berechnung der Buchungsperiode
 		DateFormat df = new SimpleDateFormat("yyyy/MM");
-		String keyPeriode = df.format(datInvoice);
+		Date datBelegdatum = workitem.getItemValueDate(DatevService.ITEM_DATEV_BELEGDATUM);
+		String keyPeriode = df.format(datBelegdatum);
 
 		logger.info("......Update DATEV export for: '" + key + "'...");
 		ItemCollection datevExport;
@@ -125,17 +117,17 @@ public class DatevRefAdapter implements SignalAdapter {
 				datevExport.setItemValue("name", key);
 			}
 
-			// Invoice mit DATEV export verknüpften (falls noch nicht verknüpft)
+			// Workitem mit DATEV export verknüpften (falls noch nicht verknüpft)
 			List<String> refList = datevExport.getItemValue("$workitemref");
-			if (!refList.contains(invoice.getUniqueID())) {
-				datevExport.appendItemValueUnique("$workitemref", invoice.getUniqueID());
+			if (!refList.contains(workitem.getUniqueID())) {
+				datevExport.appendItemValueUnique("$workitemref", workitem.getUniqueID());
 				// set event 100
 				datevExport.event(100);
 				datevExportService.processDatevExport(datevExport);
 			}
 
 		} catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
-			throw new DatevException(DatevRefAdapter.class.getName(), ERROR_MISSING_DATA,
+			throw new DatevException(DatevRefAdapter.class.getName(), DatevException.DATEV_CONFIG_ERROR,
 					"Es konnte kein DATEV Export zugewiesen werden: " + e1.getMessage());
 
 		}
@@ -147,13 +139,14 @@ public class DatevRefAdapter implements SignalAdapter {
 	 * <p>
 	 * 
 	 * 
-	 * @param invoice
+	 * @param workitem
 	 */
-	private void validateDefaultBooking(ItemCollection invoice) {
+	private void validateDefaultBooking(ItemCollection workitem) {
 
-		List<ItemCollection> buchunssaetze = explodeChildList(invoice);
+		List<ItemCollection> buchunssaetze = explodeChildList(workitem);
 		if (buchunssaetze.size() == 0
-				|| (buchunssaetze.size() == 1 && buchunssaetze.get(0).getItemValueString("_konto").isEmpty())) {
+				|| (buchunssaetze.size() == 1
+						&& buchunssaetze.get(0).getItemValueString(DatevService.ITEM_DATEV_KONTO).isEmpty())) {
 			// create a default booking item.
 			ItemCollection bookingItem = null;
 			if (buchunssaetze.size() == 0) {
@@ -161,8 +154,9 @@ public class DatevRefAdapter implements SignalAdapter {
 			} else {
 				bookingItem = buchunssaetze.get(0);
 			}
-			bookingItem.setItemValue("_konto", datevDefaultKonto);
-			bookingItem.setItemValue("_amount", invoice.getItemValue("invoice.amount"));
+			bookingItem.setItemValue(DatevService.ITEM_DATEV_KONTO, datevDefaultKonto);
+			bookingItem.setItemValue(DatevService.ITEM_DATEV_BETRAG,
+					workitem.getItemValue(DatevService.ITEM_DATEV_BETRAG));
 
 			if (buchunssaetze.size() == 1) {
 				buchunssaetze.remove(0);
@@ -172,7 +166,7 @@ public class DatevRefAdapter implements SignalAdapter {
 		}
 
 		// write data back...
-		implodeChildList(invoice, buchunssaetze);
+		implodeChildList(workitem, buchunssaetze);
 	}
 
 	/**
@@ -190,7 +184,7 @@ public class DatevRefAdapter implements SignalAdapter {
 			for (ItemCollection orderItem : childItems) {
 				mapOrderItems.add(orderItem.getAllItems());
 			}
-			workitem.replaceItemValue(DatevExportService.CHILD_ITEM_PROPERTY, mapOrderItems);
+			workitem.replaceItemValue(DatevService.ITEM_DATEV_BOOKING_LIST, mapOrderItems);
 		}
 	}
 
@@ -202,7 +196,7 @@ public class DatevRefAdapter implements SignalAdapter {
 		// convert current list of childItems into ItemCollection elements
 		ArrayList<ItemCollection> childItems = new ArrayList<ItemCollection>();
 
-		List<Object> mapOrderItems = workitem.getItemValue(DatevExportService.CHILD_ITEM_PROPERTY);
+		List<Object> mapOrderItems = workitem.getItemValue(DatevService.ITEM_DATEV_BOOKING_LIST);
 		int pos = 1;
 		for (Object mapOderItem : mapOrderItems) {
 
