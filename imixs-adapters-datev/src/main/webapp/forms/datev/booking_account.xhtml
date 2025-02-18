@@ -13,7 +13,7 @@
 		<ui:param name="hasKostenstelle1" value="#{!empty datevController.kostenstelle1}"></ui:param>
 		<ui:param name="hasKostenstelle2" value="#{!empty datevController.kostenstelle2}"></ui:param>
 
-		<c:if test="#{!readonly}">
+		<ui:fragment rendered="#{!readonly}">
 			<h:commandScript name="sachkontoSearch" action="#{datevSearchController.searchSachkonto()}"
 				render="autocomplete-resultlist-datev-sachkonto" onevent="autocompleteShowResult" />
 			<table class="imixsdatatable imixs-bookingitems"> 
@@ -212,14 +212,11 @@
 					return splitNum.join(",");
 				}
 						
-
 				/*]]>*/
 			</script>
+		</ui:fragment>
 
-		</c:if>
-
-		<c:if test="#{readonly}">	
-	
+		<ui:fragment rendered="#{readonly}">
 			<table class="imixsdatatable imixs-bookingitems">
 				<tr>
 					<th style="width: 300px;">Buchungskonto</th>
@@ -262,7 +259,7 @@
 						style="text-align: right; font-weight: bold;">#{workitem.item['_capacity_dsp']}</td>
 				</tr>
 			</table>
-		</c:if>
+		</ui:fragment>
 	</h:panelGroup>
 
 </ui:composition>
