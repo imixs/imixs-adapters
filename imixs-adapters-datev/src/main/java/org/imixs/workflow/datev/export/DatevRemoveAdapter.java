@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.datev.DatevException;
-import org.imixs.workflow.datev.imports.DatevService;
+import org.imixs.workflow.datev.DatevService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.ModelException;

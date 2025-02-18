@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
-import org.imixs.workflow.datev.imports.DatevService;
+import org.imixs.workflow.datev.DatevService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.index.SchemaService;
 import org.imixs.workflow.faces.data.WorkflowController;

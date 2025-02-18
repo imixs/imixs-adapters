@@ -34,8 +34,8 @@ import java.util.logging.Logger;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.datev.DatevException;
+import org.imixs.workflow.datev.DatevService;
 import org.imixs.workflow.datev.imports.DatevImportService;
-import org.imixs.workflow.datev.imports.DatevService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.index.UpdateService;
 import org.imixs.workflow.engine.scheduler.Scheduler;
@@ -404,7 +404,8 @@ public class DatevController implements Serializable {
 			// test if supported CSV file?
 			if (file.getName().toLowerCase().endsWith(".csv")) {
 				ByteArrayInputStream input = new ByteArrayInputStream(file.getContent());
-				String result = datevImportService.importData(input, "ISO-8859-1");
+				String encoding = configuration.getItemValueString("datev.encoding");
+				String result = datevImportService.importData(input, encoding, file.getName());
 				getImportData().replaceItemValue("log", result);
 			} else {
 				throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,

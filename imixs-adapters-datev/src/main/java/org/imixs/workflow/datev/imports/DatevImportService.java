@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.datev.DatevException;
+import org.imixs.workflow.datev.DatevService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.index.SchemaService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
@@ -24,11 +25,11 @@ import org.imixs.workflow.exceptions.QueryException;
 
 import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.ejb.EJB;
 import jakarta.ejb.LocalBean;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
+import jakarta.inject.Inject;
 
 /**
  * This Service provides methods to import data from a DATEV file.
@@ -75,11 +76,14 @@ public class DatevImportService {
 	public final static String ISO8601_FORMAT_DATETIME = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 	public final static String ISO8601_FORMAT_DATE = "yyyy-MM-dd";
 
-	@EJB
+	@Inject
 	DocumentService documentService;
 
-	@EJB
+	@Inject
 	SchemaService schemaService;
+
+	@Inject
+	DatevService datevService;
 
 	private static Logger logger = Logger.getLogger(DatevImportService.class.getName());
 
@@ -196,11 +200,15 @@ public class DatevImportService {
 	 * 
 	 * The method returns a log . If an error occurs a plugin exception is thrown
 	 * 
+	 * @param imputStream - file content
+	 * @param encoding    - encoding
+	 * @param _filename   - optional filename
+	 * 
 	 * @return ErrorMessage or empty String
 	 * @throws PluginException
 	 */
 	@TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-	public String importData(InputStream imputStream, String encoding) throws PluginException {
+	public String importData(InputStream imputStream, String encoding, String _filename) throws PluginException {
 		String type = null;
 		String clientID = null;
 		String consultenID = null;
@@ -218,48 +226,63 @@ public class DatevImportService {
 		int blockSize = 0;
 
 		log(log, "├── starte Dateimport");
-		if (encoding == null) {
+		if (encoding == null || encoding.trim().isEmpty()) {
 			encoding = "UTF-8";
 		}
+		encoding = encoding.trim();
 		log(log, "│   ├── encoding=" + encoding);
-
+		String fieldNames = null;
 		try {
 			BufferedReader in = new BufferedReader(new InputStreamReader(imputStream, encoding));
-
 			// read first line containing the object type
-			String header1 = in.readLine();
-			String[] header1List = header1.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
-			header1List = normalizeValueList(header1List);
-			if (header1List == null || header1List.length < 4) {
-				throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
-						"File Format not supported, 1st line must contain the data format in column 4 (type).");
+			String header = in.readLine();
+			String[] headerList = header.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
+			headerList = normalizeValueList(headerList);
+			// Test "DTVF" Export format
+			// "DTVF";700;20;"Kontenbeschriftungen";2;20180917165240335;;"RE";"Mustermann";"";217386;21010;20180101;6;;;"";"";;0;;"";;"";;141987;"04";;;"";""
+			if ("DTVF".endsWith(headerList[0])) {
+				log(log, "│   ├── Format: DTVF");
+				consultenID = headerList[11];
+				log(log, "│   ├── Berater ID= " + consultenID);
+				clientID = headerList[10];
+				log(log, "│   ├── Mandant ID= " + clientID);
+				if (clientID == null || clientID.isEmpty() || consultenID == null || consultenID.isEmpty()) {
+					throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
+							"Ungültiges DTVF Importformat: Erste Zeile die Mandant ID '" + clientID
+									+ "' und die Berater ID '" + consultenID + "' enthalten!");
+				}
+				type = headerList[3];
+				type = type.trim().toLowerCase();
+				log(log, "│   └── Objekt Typ=" + type);
+				// read header
+				fieldNames = in.readLine();
+			} else {
+				log(log, "│   ├── Format: CSV/Excel");
+				// read datev config
+				ItemCollection datevConfig = datevService.loadConfiguration();
+				consultenID = datevConfig.getItemValueString(DatevService.ITEM_DATEV_CONSULTANT_ID);
+				log(log, "│   ├── Berater ID= " + consultenID);
+				clientID = datevConfig.getItemValueString(DatevService.ITEM_DATEV_CLIENT_ID);
+				log(log, "│   ├── Mandant ID= " + clientID);
+
+				// Excel Format. No DATEV Header
+				// Datei name muss mit 'DTVF_DebKred_Stamm' oder 'DTVF_SKBeschrift' beginnen
+				if (_filename.startsWith("DTVF_DebKred_Stamm")) {
+					type = "Debitoren/Kreditoren";
+				}
+				if (_filename.startsWith("DTVF_SKBeschrift")) {
+					type = "kontenbeschriftungen";
+				}
+				if (type == null) {
+					throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
+							"Ungültiges Importformat: Dateiname muss entweder mit 'DTVF_DebKred_Stamm' oder 'DTVF_SKBeschrift' beginnen!");
+				}
+				log(log, "│   └── Objekt Typ=" + type);
+				fieldNames = header;
 			}
-			type = header1List[3];
-
-			if (type == null || type.isEmpty()) {
-				throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
-						"File Format not supported, 1st line must contain the data format in column 4 (type).");
-
-			}
-
-			clientID = header1List[10];
-			log(log, "│   ├── Mandant ID= " + clientID);
-			consultenID = header1List[11];
-			log(log, "│   ├── Berater ID= " + consultenID);
-			if (clientID == null || clientID.isEmpty() || consultenID == null || consultenID.isEmpty()) {
-				throw new PluginException(this.getClass().getName(), DatevException.DATEV_IMPORT_ERROR,
-						"File Format not supported, 1st line must contain the Mandant and Berater ID.");
-			}
-
-			type = type.trim().toLowerCase();
-			log(log, "│   └── Objekt Type=" + type);
-			line++;
 
 			log(log, "├── Lese Daten...");
-			// read the 2nd first line containing the field names
-			String fieldnames = in.readLine();
-			line++;
-			List<String> fields = parseFieldList(fieldnames);
+			List<String> fields = parseFieldList(fieldNames);
 			// the first field is the keyfield
 			String keyField = fields.get(0).trim();
 
@@ -368,12 +391,12 @@ public class DatevImportService {
 			throw new PluginException(DatevImportService.class.getName(), DatevException.DATEV_DATA_ERROR, sError, e);
 		}
 
+		log(log, "└── Abgeschlossen in " + (System.currentTimeMillis() - l) + " ms");
 		log(log, "│   ├── " + workitemsTotal + " Einträge gelesen ");
 		log(log, "│   ├── " + workitemsImported + " neue Einträge  ");
 		log(log, "│   ├── " + workitemsUpdated + " aktualisierte Einträge  ");
 		log(log, "│   ├── " + workitemsDeleted + " gelöschte Einträge  ");
 		log(log, "│   └── " + workitemsFailed + " fehlerhafte Einträge  ");
-		log(log, "└── Abgeschlossen in " + (System.currentTimeMillis() - l) + " ms");
 		return log.toString();
 	}
 

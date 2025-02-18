@@ -53,7 +53,7 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.WorkflowKernel;
 import org.imixs.workflow.datev.DatevException;
 import org.imixs.workflow.datev.DatevHelper;
-import org.imixs.workflow.datev.imports.DatevService;
+import org.imixs.workflow.datev.DatevService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ReportService;
 import org.imixs.workflow.engine.WorkflowService;

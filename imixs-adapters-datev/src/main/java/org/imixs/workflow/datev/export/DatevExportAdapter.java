@@ -11,7 +11,7 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.datev.DatevException;
-import org.imixs.workflow.datev.imports.DatevService;
+import org.imixs.workflow.datev.DatevService;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
