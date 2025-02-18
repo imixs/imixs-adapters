@@ -220,11 +220,14 @@
 			<table class="imixsdatatable imixs-bookingitems">
 				<tr>
 					<th style="width: 300px;">Buchungskonto</th>
-					<!--
-					<th style="width: 100px;">Kostenstelle I.</th>
-					<th style="width: 100px;">Kostenstelle  II.</th>
-					-->
-					<th style="width: 170px;">BU Schlüssel</th>
+					<!-- -->
+					<ui:fragment rendered="#{hasKostenstelle1}">
+						<th style="width: 140px;">Kostenstelle I.</th>
+					</ui:fragment>
+					<ui:fragment rendered="#{hasKostenstelle2}">
+						<th style="width: 140px;">Kostenstelle  II.</th>
+					</ui:fragment>
+					<th style="width: 70px;">BU Schlüssel</th>
 					<th style="width: 50px;">Betrag</th>
 				</tr>
 
@@ -232,19 +235,24 @@
 					value="#{datevBookingController.bookingList}">
 					<tr>
 						<td class="konto-input"><h:outputText
-								value="#{bookingItem.item['datev.sachkonto']}"></h:outputText>
+								value="#{bookingItem.item['datev.konto']}"></h:outputText>
 								<h:outputText
 								value=" #{bookingItem.item['datev.kontobeschriftung']}"></h:outputText>
-								</td>
+						</td>
  
-						<!-- Kostenstelle 
-						<td><h:outputText value="#{bookingItem.item['datev.kostenstelle1']}"></h:outputText>
+
+
+						<!-- Kostenstelle -->
+						<ui:fragment rendered="#{!empty datevController.kostenstelle1}">
+							<td><h:outputText value="#{bookingItem.item['datev.kostenstelle1']}"></h:outputText></td>
+						</ui:fragment>
+						<ui:fragment rendered="#{!empty datevController.kostenstelle2}">
+							<td><h:outputText value="#{bookingItem.item['datev.kostenstelle2']}"></h:outputText></td>
+						</ui:fragment>
+						<td style="text-align: right;">
+							<h:outputText value="#{bookingItem.item['datev.buschluessel']}"></h:outputText>
 						</td>
-						<td><h:outputText value="#{bookingItem.item['date.kostenstell2']}"></h:outputText>
-						</td>
-						 -->
-						<td><h:outputText value="#{bookingItem.item['datev.buschluessel']}"></h:outputText>
-						</td>
+
 						<td style="text-align: right;"><h:outputText
 								value="#{bookingItem.item['datev.betrag']}"></h:outputText></td>
 					</tr>
@@ -253,6 +261,12 @@
 				<tr>
 
 					<td />
+					<ui:fragment rendered="#{hasKostenstelle1}">
+						<td />
+					</ui:fragment>
+					<ui:fragment rendered="#{hasKostenstelle2}">
+						<td />
+					</ui:fragment>
 					<td class="bookinglist-sum"
 						style="text-align: right; font-weight: bold;">Summe:</td>
 					<td class="bookinglist-sum bookinglist_summary"
