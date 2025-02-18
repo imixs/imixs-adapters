@@ -158,6 +158,7 @@
 										</ul>
 									</div>
 
+									
 									<dl>
 										<dt>Importdatei wählen:</dt>
 										<dd>
@@ -174,7 +175,14 @@
 											</h:panelGroup>
 										</dd>
 									</dl>
-
+									<dl>
+										<dt>Encoding </dt>
+										<dd>
+											<h:inputText required="false" style="width: 220px;"
+												value="#{datevController.configuration.item['datev.encoding']}">
+											</h:inputText>
+										</dd>
+									</dl>
 									<h:commandButton
 										actionListener="#{datevController.startImport}"
 										value="Start Import">
