@@ -14,18 +14,22 @@ The LDAP connection can either be configured as a JNDI Ressource with the name `
 Die Search Configuration erfolgt über die `imixs.properties` Datei
 
 | Variable                         | Description                                            | Example                                                             |
-| -------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------- | ------------ | ------------- | -------------------- | ----------- |
+| -------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------- |
 | ldap.disable-jndi                | Disable JNDI lookup                                    | false                                                               |
 | ldap.search-context              | Search Context                                         | DC=intern,DC=ib-vassen,DC=de                                        |
 | ldap.dn-search-filter            | Suche nach UserID                                      | (sAMAccountName=%u)                                                 |
 | ldap.group-search-filter         | (Optionale Gruppen Suche)                              | (member=%d)                                                         |
 | ldap.search-filter-phrase        | LDAP Search query                                      | (& (objectClass=user) (mail=\*) ((name=?_)(mail=?_)(cn=?_)(sn=?_))) |
-| ldap.user-attributes             | Mapping for LDAP Attribute zu Imixs Profile Attributen | sAMAccountName                                                      | txtname,mail | txtemail,name | txtUserName,initials | txtInitials |
+| ldap.user-attributes             | Mapping for LDAP Attribute zu Imixs Profile Attributen |                                                                     |
 | ldap.cache-expires               | Disable Search                                         | 3600000                                                             |
 | ldap.cache-size                  | cache size                                             | 100                                                                 |
 | java.naming.provider.url         | Host                                                   | false                                                               |
 | java.naming.security.principal   | User                                                   | false                                                               |
 | java.naming.security.credentials | Password                                               | false                                                               |
+
+The attirbute mapping is defined by useing the '|' char to separate the ldap attribute name from the imixs profile item name - e.g
+
+    sAMAccountName|txtname, mail|txtemail, name|txtUserName, initials|txtInitials
 
 ### External Configuration File
 
