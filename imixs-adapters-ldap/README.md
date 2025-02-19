@@ -13,8 +13,8 @@ The LDAP connection can either be configured as a JNDI Ressource with the name `
 
 Die Search Configuration erfolgt über die `imixs.properties` Datei
 
-| Variable                         | Description                                          | Example                                                            |
-|--------------------------------- |------------------------------------------------------|------------------------------------------------------------------- | 
+| Variable                         | Description                                            | Example                                                             |
+| -------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------- | ------------ | ------------- | -------------------- | ----------- |
 | ldap.disable-jndi                | Disable JNDI lookup                                    | false                                                               |
 | ldap.search-context              | Search Context                                         | DC=intern,DC=ib-vassen,DC=de                                        |
 | ldap.dn-search-filter            | Suche nach UserID                                      | (sAMAccountName=%u)                                                 |
@@ -133,6 +133,28 @@ The LDAPPlugin can be used in the system model to update a user profile when pro
     org.imixs.workflow.ldap.LDAPPlugin
 
 The plugin runs on Profile Entities only. The plugin makes a ldap lookup and updates all items defined by he property ldap.user-attributes
+
+## LDAP User Input Controller
+
+As an alternative to the Marty UserInputController this project provides a generic `LDAPUserInputController` implementation. This CDI bean can be used as an alternative to the Marty UserInputController. It allows to search for names, even if there are no profiles created for them yet. The class is only used for the name search in user input fields from the [imixs-marty project](https://github.com/imixs/imixs-marty)! The controller can be declared as a replacement for the class `org.imixs.marty.profile.UserInputController` by adding the CDI Bean as an alternative defined in the `beans.xml`:
+
+```xml
+...
+    <alternatives>
+        <class>org.imixs.workflow.ldap.LDAPUserInputController</class>
+    </alternatives>
+...
+```
+
+### Filter Phrase
+
+The default filter phrase is defined by the following LDAP expression:
+
+```
+(& (|(objectClass=user)(objectClass=person)) (mail=*) (|(name=?*)(mail=?*)(cn=?*)(sn=?*)))")
+```
+
+This is filter phrase is useful for most cases. It can be overwritten by setting the property value `ldap.search-filter-phrase` in the ldap.properties file. See the section 'configuration' above.
 
 ## The LDAP Group Interceptor
 

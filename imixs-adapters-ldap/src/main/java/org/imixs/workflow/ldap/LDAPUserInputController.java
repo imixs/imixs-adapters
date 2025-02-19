@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.marty.profile.ProfileService;
 import org.imixs.marty.profile.UserInputController;
 import org.imixs.workflow.ItemCollection;
@@ -37,7 +36,6 @@ import org.imixs.workflow.ItemCollectionComparator;
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.enterprise.inject.Alternative;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 /**
@@ -76,10 +74,6 @@ public class LDAPUserInputController extends UserInputController {
 
 	@EJB
 	protected ProfileService profileService;
-
-	@Inject
-	@ConfigProperty(name = LDAPLookupService.LDAP_SEARCH_FILTER_PHRASE, defaultValue = "(& (|(objectClass=user)(objectClass=person)) (mail=*) (|(name=?*)(mail=?*)(cn=?*)(sn=?*)))")
-	String ldapSearchFilterPhrase;
 
 	private static Logger logger = Logger.getLogger(LDAPUserInputController.class.getName());
 
