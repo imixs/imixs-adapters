@@ -16,7 +16,6 @@ import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AccessDeniedException;
 import org.imixs.workflow.exceptions.AdapterException;
-import org.imixs.workflow.exceptions.ModelException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 
@@ -203,10 +202,7 @@ public class DatevExportAdapter implements SignalAdapter {
 				}
 			}
 
-			// update and process invoices in new transaction to avoid partial updates...
-			processDatevExportEntities(datevExport, masterDataSet, event, configuration);
-
-		} catch (AccessDeniedException | ProcessingErrorException | ModelException e) {
+		} catch (AccessDeniedException | ProcessingErrorException e) {
 			throw new PluginException(DatevExportAdapter.class.getName(), DatevException.DATEV_EXPORT_ERROR,
 					e.getMessage(), e);
 		}
@@ -237,28 +233,6 @@ public class DatevExportAdapter implements SignalAdapter {
 		Collections.sort(result, new ItemCollectionComparator("$created", true));
 
 		return result;
-	}
-
-	/**
-	 * This method finishes the workflow process of invoices
-	 * 
-	 * <p>
-	 * The update is only performed if not taskID=5900
-	 * 
-	 */
-	private void processDatevExportEntities(ItemCollection datevExport, List<ItemCollection> datevExportEntities,
-			final ItemCollection event, ItemCollection configuration)
-			throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
-
-		// process all invoices...
-		for (ItemCollection invoice : datevExportEntities) {
-			if (invoice.getTaskID() != 5900) {
-				invoice.event(EVENT_INVOICE_COMPLETED);
-				workflowService.processWorkItem(invoice);
-			}
-		}
-		// write log
-		logger.info("..." + datevExportEntities.size() + " invoices exported. ");
 	}
 
 }

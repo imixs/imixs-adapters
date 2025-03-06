@@ -112,6 +112,8 @@
 		<xsl:variable
 			name="buchungstext" select="substring(item[@name='$workflowsummary']/value,1,59)" />
 		<xsl:variable
+			name="shkennzeichen" select="item[@name='datev.shkennzeichen']/value" />
+		<xsl:variable
 			name="uniqueid" select="item[@name='$uniqueid']/value" />
 		<xsl:for-each
 			select="item[@name='datev.booking.list']/value">
@@ -122,13 +124,9 @@
 			<xsl:value-of
 				select="$abs_betrag" /><xsl:text>;</xsl:text>
 			<!-- S / H  -->
-			<xsl:if
-				test="not(starts-with($betrag, '-'))">
-				<xsl:text>S;</xsl:text>
-			</xsl:if>
-			<xsl:if test="(starts-with($betrag, '-'))">
-				<xsl:text>H;</xsl:text>
-			</xsl:if>
+			<xsl:value-of
+				select="$shkennzeichen" /><xsl:text>;</xsl:text>
+
 			<xsl:text>;;;;</xsl:text>
 			<xsl:value-of
 				select="./item[@name='datev.konto']/value" /><xsl:text>;</xsl:text>
