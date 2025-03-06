@@ -36,11 +36,13 @@
 		<h3>Belegübersicht</h3>
 
 		<table class="" style="width:100%">
-			<tr>			
-				<th style="text-align: left;">Belegnummer</th>
-				<th style="">Beschreibung</th>
-				<th style="">Belegdatum</th>
+			<tr>
 				<th style="text-align: right;">Betrag</th>			
+				<th style="text-align: center;">S/H</th>
+				<th style="text-align: center;">Gegenkonto</th>
+				<th style="text-align: center;">Belegdatum</th>
+				<th style="text-align: center;">Belegfeld 1</th>		
+				<th style="text-align: left;">Beschreibung</th>			
 			</tr>
 			
 				<c:forEach items="#{workitem.itemList['$workitemref']}" var="id">
@@ -48,26 +50,46 @@
 					<!--  load inovice data by documentController:   #{documentController.load(id)} -->
 					<ui:param name="beleg" value="#{documentController.getDocument()}"></ui:param>
 					
+					
 					<tr>
-						<td><h:link outcome="/pages/workitems/workitem">
-								 #{beleg.item['datev.belegfeld1']}
-								 <f:param name="id" value="#{beleg.item['$uniqueid']}" />
-							</h:link> 
+
+
+						<td style="text-align: right;"><h:outputText
+							value="#{beleg.item['datev.betrag']}">
+							<f:convertNumber minFractionDigits="2" locale="de" />
+						</h:outputText></td>
+						<td style="text-align: center;">
+							#{beleg.item['datev.shkennzeichen']}
 						</td>
+
+
+					
+
+						<td style="text-align: center;">
+							#{beleg.item['datev.gegenkonto']}
+						</td>
+
 						
-						<td>
-							#{beleg.item['$workflowsummary']}
-						</td>
-				   
+						
 						<td style="text-align: center;"><h:outputText value="#{beleg.item['datev.belegdatum']}">
 							<f:convertDateTime pattern="#{message.datePatternShort}"
 								timeZone="#{message.timeZone}" />
 						</h:outputText></td>
+						
+						<td style="text-align: center;">
+							
+							#{beleg.item['datev.belegfeld1']}
+							
+				   		</td>
 
-						<td style="text-align: right;"><h:outputText
-								value="#{beleg.item['datev.betrag']}">
-								<f:convertNumber minFractionDigits="2" locale="de" />
-							</h:outputText></td>
+						<td  style="text-align: left;">
+							<h:link outcome="/pages/workitems/workitem">#{beleg.item['$workflowgroup']} - #{beleg.item['$workflowsummary']}
+							<f:param name="id" value="#{beleg.item['$uniqueid']}" />
+							</h:link> 
+						</td>
+						
+				   
+						
 
 					</tr>
 				</c:forEach>
