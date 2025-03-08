@@ -162,7 +162,7 @@ public class WopiController implements Serializable {
         // compute the access base url
         String baseURL = wopiAccessHandler.getClientEndpointByFilename(file);
         if (baseURL == null) {
-            logger.warning("...no wopi client endpoint found!");
+            logger.fine("...no wopi client endpoint found for file: " + file);
             return null;
         }
 
