@@ -28,11 +28,13 @@ import java.io.ByteArrayInputStream;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.ItemCollectionComparator;
 import org.imixs.workflow.datev.DatevException;
 import org.imixs.workflow.datev.DatevService;
 import org.imixs.workflow.datev.imports.DatevImportService;
@@ -421,4 +423,24 @@ public class DatevController implements Serializable {
 
 	}
 
+	/**
+	 * Liefert alle rechnungen zu einem DATEV Export sortiert nach Belegdatum.
+	 * 
+	 * @param workitem
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public List<ItemCollection> getBuchungsexportByBelegdatum(ItemCollection workitem) {
+		List<ItemCollection> result = new ArrayList<>();
+
+		List<String> ids = workitem.getItemValue("$workitemref");
+		for (String id : ids) {
+			ItemCollection invoice = documentService.load(id);
+			result.add(invoice);
+		}
+
+		// sort by belegdatum
+		Collections.sort(result, new ItemCollectionComparator("datev.belegdatum", false));
+		return result;
+	}
 }
