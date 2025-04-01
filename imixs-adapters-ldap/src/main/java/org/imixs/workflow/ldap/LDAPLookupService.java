@@ -330,7 +330,7 @@ public class LDAPLookupService {
                     debug("......put user: '" + aUID + "' into cache.");
                     ldapCache.putUser(aUID, user);
                     debug(
-                            "... lookup user '" + aUID + "' successfull in " + (System.currentTimeMillis() - l) + "ms");
+                            "... lookup user '" + aUID + "' successful in " + (System.currentTimeMillis() - l) + "ms");
                 } else {
                     debug("no LDAP object found: '" + aUID + "'");
                 }

@@ -127,12 +127,12 @@ public class LDAPUserInputController extends UserInputController {
 				if (!ldapLookupService.isEnabled()) {
 					// suche ober normalen profile controller
 					profile = profileService.findProfileById(aentry.toString());
-
 				} else {
 					// use ldap....
 					profile = this.ldapLookupService.findUser(aentry.toString());
 				}
 				if (profile != null) {
+					profile.setItemValue("txtname", aentry.toString());
 					profiles.add(profile);
 				} else {
 					// create a dummy entry
