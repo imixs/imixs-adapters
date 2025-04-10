@@ -69,6 +69,7 @@ import jakarta.annotation.security.DeclareRoles;
 import jakarta.annotation.security.RunAs;
 import jakarta.ejb.LocalBean;
 import jakarta.ejb.Stateless;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.xml.bind.JAXBException;
 
@@ -111,6 +112,9 @@ public class DatevExportService {
 
     @Inject
     ReportService reportService;
+
+    @Inject
+    protected Event<DatevEvent> datevEvents;
 
     private static Logger logger = Logger.getLogger(DatevExportService.class.getName());
 
@@ -657,11 +661,12 @@ public class DatevExportService {
     /**
      * This method first lookups the origin workItem from the given export
      * data entity. Then the method returns the first PDF fileData from a snapshot
-     * by a
-     * resolved invoice workItem.
+     * by a resolved invoice workItem.
      * <p>
      * If multiple files are attached, the method returns the latest FileData object
      * <p>
+     * The method also fires a DatevEvent so that a client can decide to export a
+     * specific fileData obejct
      * 
      * @param uniqueid
      * @param file     - file name
@@ -671,48 +676,56 @@ public class DatevExportService {
     public FileData getWorkItemFileFromWorkitem(ItemCollection invoice) throws PluginException {
         String snapshotID;
 
-        if (invoice != null) {
-            // we found the corresponding invoice workitem!
-
-            // test if we have a $snapshotid
-            snapshotID = invoice.getItemValueString("$snapshotid");
-            ItemCollection snapshot = documentService.load(snapshotID);
-            if (snapshot != null) {
-                // return the latest fileData object
-                FileData lastFileData = null;
-                List<FileData> fileDataList = snapshot.getFileData();
-                for (FileData fileData : fileDataList) {
-                    // we are only interested in files with sufix .pdf
-                    if (!fileData.getName().toLowerCase().endsWith(".pdf")) {
-                        // not a PDF file...
-                        continue;
-                    }
-                    if (lastFileData == null) {
-                        lastFileData = fileData;
-                    } else {
-                        // compare the $creation date....
-                        ItemCollection attributes = new ItemCollection(fileData.getAttributes());
-                        ItemCollection lastAttributes = new ItemCollection(lastFileData.getAttributes());
-
-                        Date date = attributes.getItemValueDate("$created");
-                        Date lastDate = lastAttributes.getItemValueDate("$created");
-                        if (date != null && lastDate != null && (date.compareTo(lastDate) > 0)) {
-                            // this is a newer fileData!
-                            lastFileData = fileData;
-                        }
-                    }
-                }
-
-                return lastFileData;
-            }
-
-        } else {
-            throw new PluginException(DatevExportService.class.getName(), DatevException.DATEV_MODEL_ERROR,
-                    "Invoice Document not defined");
+        if (invoice == null) {
+            return null;
         }
 
-        // no file found!
-        return null;
+        ItemCollection dateWorkitem = invoice;
+        // test if we have a $snapshotid
+        snapshotID = invoice.getItemValueString("$snapshotid");
+        ItemCollection snapshot = documentService.load(snapshotID);
+        if (snapshot != null) {
+            dateWorkitem = snapshot;
+
+        }
+
+        // we found the corresponding invoice workitem!
+
+        // secn custom by datevEvent....
+        if (datevEvents != null) {
+            DatevEvent event = new DatevEvent(dateWorkitem, DatevEvent.ON_EXPORT_FILE);
+            datevEvents.fire(event); // found FileData?
+            if (event.getFileData() != null) {
+                // return FileData provided by CDI client
+                return event.getFileData();
+            }
+        }
+
+        // Default behavior - return the latest fileData object
+        FileData lastFileData = null;
+        List<FileData> fileDataList = dateWorkitem.getFileData();
+        for (FileData fileData : fileDataList) {
+            // we are only interested in files with sufix .pdf
+            if (!fileData.getName().toLowerCase().endsWith(".pdf")) {
+                // not a PDF file...
+                continue;
+            }
+            if (lastFileData == null) {
+                lastFileData = fileData;
+            } else {
+                // compare the $creation date....
+                ItemCollection attributes = new ItemCollection(fileData.getAttributes());
+                ItemCollection lastAttributes = new ItemCollection(lastFileData.getAttributes());
+
+                Date date = attributes.getItemValueDate("$created");
+                Date lastDate = lastAttributes.getItemValueDate("$created");
+                if (date != null && lastDate != null && (date.compareTo(lastDate) > 0)) {
+                    // this is a newer fileData!
+                    lastFileData = fileData;
+                }
+            }
+        }
+        return lastFileData;
     }
 
 }
