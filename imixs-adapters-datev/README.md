@@ -114,6 +114,47 @@ Um den Dokumenttyp zu identifizieren, können Sie die entsprechenden xsl select-
     .....
 ```
 
+### Belegbild Export
+
+Als default Einstellung wird bei einem DATEV Belegbild export immer die letzte angefügte PDF Datei exportiert.
+Dieses Verhalten kann durch eine Custom CDI Bean angepasst werden um z.b. eine Datei anhand eines bestimmten Datei patterns zu exportieren. Hierbei wird auf das CDI Event `DatevEvent` reagiert.
+
+```java
+@DeclareRoles({ "org.imixs.ACCESSLEVEL.MANAGERACCESS" })
+@RunAs("org.imixs.ACCESSLEVEL.MANAGERACCESS")
+@Stateless
+@LocalBean
+public class SuperOfficeDatevService {
+    public void onDatevEvent(@Observes @Priority(Interceptor.Priority.APPLICATION + 600) DatevEvent event) {
+        ItemCollection invoice = event.getWorkitem();
+
+        if (event.getEventType() == DatevEvent.ON_EXPORT_FILE) {
+            // nur Ausgangsrechnungen exportieren die mit dem Buchstaben "R" beginnen
+            if (invoice.getModelVersion().startsWith("rechnungsausgang")) {
+                FileData lastFileData = null;
+                List<FileData> fileDataList = invoice.getFileData();
+                for (FileData fileData : fileDataList) {
+                    // we are only interested in files with suffix .pdf
+                    // and start with "R"
+                    if (!fileData.getName().toLowerCase().endsWith(".pdf")) {
+                        // not a PDF file...
+                        continue;
+                    }
+                    if (!fileData.getName().toLowerCase().startsWith("r")) {
+                        // ist keine Rechnung
+                        continue;
+                    }
+                    // Dokument exportieren (R****.pdf)
+                    event.setFileData(fileData);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+```
+
 ## Formular
 
 Es gibt auch benutzerdefinierte Formularelemente, die für typische Datev-Prozesse verwendet werden können
