@@ -4,17 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Name;
-import org.apache.poi.ss.util.CellReference;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -265,7 +258,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
             XSSFWorkbook workbook = new XSSFWorkbook(imputStream);
 
             logger.fine("XSSFWorkbook loaded");
-            updateXSSFWorkbook(workbook, document, replaceDevList);
+            XSSFUtil.updateXSSFWorkbook(workbook, document, replaceDevList, workflowService);
 
             logger.fine("findreplace completed");
             // recalculate formulas
@@ -274,7 +267,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
                 // iterate over all cells to be evaluated
                 String[] cellPositions = eval.split(";");
                 for (String cellPos : cellPositions) {
-                    evalXSSFSheet(workbook, sheet, cellPos);
+                    XSSFUtil.evalXSSFSheet(workbook, sheet, cellPos);
                 }
                 logger.fine("formula evualtion completed");
             }
@@ -320,91 +313,28 @@ public class POIFindReplaceAdapter implements SignalAdapter {
     }
 
     /**
-     * This method updates the XSSFWorkbook document. The method can be overwritten
-     * by subclasses to add additional logic
-     * 
-     * @param workbook
-     * @param workitem
-     * @param replaceDevList
-     * @throws PluginException
-     */
-    public void updateXSSFWorkbook(XSSFWorkbook workbook, ItemCollection workitem, List<String> replaceDevList)
-            throws PluginException {
-
-        logger.fine("XSSFWorkbook loaded");
-        // NOTE: we only take the first sheet !
-        XSSFSheet sheet = workbook.getSheetAt(0);
-
-        for (String entityDev : replaceDevList) {
-            ItemCollection entityData = XMLParser.parseItemStructure(entityDev);
-
-            if (entityData != null) {
-                String find = entityData.getItemValueString("find");
-                String replace = entityData.getItemValueString("replace");
-                replace = workflowService.adaptText(replace, workitem);
-                // optional itename
-                String itemname = entityData.getItemValueString("itemname");
-
-                // replace with item value?
-                if (!itemname.isEmpty()) {
-                    List<?> valueList = workitem.getItemValue(itemname);
-                    if (valueList.size() > 0) {
-                        // provide the first value only
-                        replaceXSSFSheetItemValue(workbook, sheet, find, valueList.get(0));
-                    }
-                } else {
-                    replaceXSSFSheetStringValue(workbook, sheet, find, replace);
-                }
-
-            }
-        }
-    }
-
-    /**
-     * Helper method replaces a given cell of a XSSFSheet with a string value
-     * 
-     * @throws PluginException
-     */
-    private void replaceXSSFSheetStringValue(XSSFWorkbook doc, XSSFSheet sheet, String find, String replace)
-            throws PluginException {
-        logger.finest("update cell " + find);
-        XSSFCell cell = getCellByRef(doc, sheet, find);
-        if (cell == null) {
-            logger.warning("Cell " + find + " not found.");
-            return;
-        }
-        try {
-            // we try to set first as float value if possible
-            float f = Float.parseFloat(replace);
-            cell.setCellValue(f);
-        } catch (NumberFormatException e) {
-            // set value as string
-            cell.setCellValue(replace);
-        }
-    }
-
-    /**
      * Helper method replaces a given cell of a XSSFSheet with a typed item value
      * 
      * @throws PluginException
      */
-    public void replaceXSSFSheetItemValue(XSSFWorkbook doc, XSSFSheet sheet, String find, Object itemValue)
-            throws PluginException {
-        logger.finest("update cell " + find);
-        XSSFCell cell = getCellByRef(doc, sheet, find);
-        if (cell == null) {
-            logger.warning("Cell " + find + " not found.");
-            return;
-        }
-        if (itemValue instanceof Date) {
-            cell.setCellValue((Date) itemValue);
-        } else if (itemValue instanceof Double) {
-            cell.setCellValue((Double) itemValue);
-        } else {
-            // default to text
-            cell.setCellValue(itemValue.toString());
-        }
-    }
+    // public void replaceXSSFSheetItemValue(XSSFWorkbook doc, XSSFSheet sheet,
+    // String find, Object itemValue)
+    // throws PluginException {
+    // logger.finest("update cell " + find);
+    // XSSFCell cell = getCellByRef(doc, sheet, find);
+    // if (cell == null) {
+    // logger.warning("Cell " + find + " not found.");
+    // return;
+    // }
+    // if (itemValue instanceof Date) {
+    // cell.setCellValue((Date) itemValue);
+    // } else if (itemValue instanceof Double) {
+    // cell.setCellValue((Double) itemValue);
+    // } else {
+    // // default to text
+    // cell.setCellValue(itemValue.toString());
+    // }
+    // }
 
     /**
      * Returns a Cell by name or an optional absolute cell postion
@@ -413,27 +343,28 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * <p>
      * 
      */
-    public static XSSFCell getCellByRef(XSSFWorkbook doc, XSSFSheet sheet, String cellReference) {
-        XSSFCell cell = null;
+    // public static XSSFCell getCellByRef(XSSFWorkbook doc, XSSFSheet sheet, String
+    // cellReference) {
+    // XSSFCell cell = null;
 
-        // first we test if the cellName is a named cell
-        Name aNamedCell = doc.getName(cellReference);
-        if (aNamedCell != null) {
-            // yes its a named cell so we need to get the referrer Formula
-            logger.finest("...resolving named cell = " + aNamedCell.getNameName());
-            cellReference = aNamedCell.getRefersToFormula();
-            // now we can find the cell by its ref
-        }
+    // // first we test if the cellName is a named cell
+    // Name aNamedCell = doc.getName(cellReference);
+    // if (aNamedCell != null) {
+    // // yes its a named cell so we need to get the referrer Formula
+    // logger.finest("...resolving named cell = " + aNamedCell.getNameName());
+    // cellReference = aNamedCell.getRefersToFormula();
+    // // now we can find the cell by its ref
+    // }
 
-        CellReference cr = new CellReference(cellReference);
-        XSSFRow row = sheet.getRow(cr.getRow());
-        if (row == null) {
-            logger.severe("Unable to resolve cell ref '" + cellReference + "'!");
-            return null;
-        }
-        cell = row.getCell(cr.getCol());
-        return cell;
-    }
+    // CellReference cr = new CellReference(cellReference);
+    // XSSFRow row = sheet.getRow(cr.getRow());
+    // if (row == null) {
+    // logger.severe("Unable to resolve cell ref '" + cellReference + "'!");
+    // return null;
+    // }
+    // cell = row.getCell(cr.getCol());
+    // return cell;
+    // }
 
     /**
      * Evaluates a given list of cells in a given XSWorkbook
@@ -443,25 +374,28 @@ public class POIFindReplaceAdapter implements SignalAdapter {
      * @param cell
      * @throws PluginException
      */
-    public void evalXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cell) throws PluginException {
-        FormulaEvaluator evaluator = doc.getCreationHelper().createFormulaEvaluator();
-        XSSFCell c = getCellByRef(doc, sheet, cell);
-        if (c == null) {
-            logger.warning("Cell " + cell + " not found.");
-            return;
-        }
-        if (c.getCellType() == CellType.FORMULA) {
-            logger.finest("...eval cell " + cell);
-            try {
-                CellType evalResult = evaluator.evaluateFormulaCell(c);
-                if (evalResult == CellType.ERROR) {
-                    logger.warning("...unable to evaluate cell " + cell);
-                }
-            } catch (Exception poie) {
-                logger.warning("...failed to evaluate cell " + cell + " : " + poie.getMessage());
-            }
-        }
-    }
+    // public void evalXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cell)
+    // throws PluginException {
+    // FormulaEvaluator evaluator =
+    // doc.getCreationHelper().createFormulaEvaluator();
+    // XSSFCell c = getCellByRef(doc, sheet, cell);
+    // if (c == null) {
+    // logger.warning("Cell " + cell + " not found.");
+    // return;
+    // }
+    // if (c.getCellType() == CellType.FORMULA) {
+    // logger.finest("...eval cell " + cell);
+    // try {
+    // CellType evalResult = evaluator.evaluateFormulaCell(c);
+    // if (evalResult == CellType.ERROR) {
+    // logger.warning("...unable to evaluate cell " + cell);
+    // }
+    // } catch (Exception poie) {
+    // logger.warning("...failed to evaluate cell " + cell + " : " +
+    // poie.getMessage());
+    // }
+    // }
+    // }
 
     /**
      * Helper method replaces a given text in a XWPFDocument

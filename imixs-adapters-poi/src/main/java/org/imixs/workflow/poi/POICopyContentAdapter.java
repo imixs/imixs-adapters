@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Inject;
-
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -21,6 +19,8 @@ import org.imixs.workflow.engine.WorkflowService;
 import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.util.XMLParser;
+
+import jakarta.inject.Inject;
 
 /**
  * This POICopyAdapter can be used to find and extract text fragments from a MS
@@ -196,7 +196,7 @@ public class POICopyContentAdapter implements SignalAdapter {
     private Object findCellValueXSSFSheet(XSSFWorkbook doc, XSSFSheet sheet, String cellName, String type)
             throws PluginException {
 
-        XSSFCell cell = POIFindReplaceAdapter.getCellByRef(doc, sheet, cellName);
+        XSSFCell cell = XSSFUtil.getCellByRef(doc, sheet, cellName);
         if (cell != null) {
             try {
                 Object cellValue;
