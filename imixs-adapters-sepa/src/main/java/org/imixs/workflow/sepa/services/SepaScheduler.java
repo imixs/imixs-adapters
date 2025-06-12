@@ -37,6 +37,7 @@ import javax.xml.transform.TransformerException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.ModelManager;
 import org.imixs.workflow.WorkflowKernel;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
@@ -107,12 +108,13 @@ public class SepaScheduler implements Scheduler {
         int taskID = configuration.getItemValueInteger(SepaWorkflowService.ITEM_INITIAL_TASK);
         try {
             // fetch the initial event
-            BPMNModel model = modelService.getModelManager().getModel(modelVersion);
+            ModelManager modelManager = new ModelManager(workflowService);
+            BPMNModel model = modelManager.getModel(modelVersion);
             // ItemCollection event = model.getEvent(taskID,
             // SepaWorkflowService.EVENT_START);
-            ItemCollection event = modelService.getModelManager().findEventByID(model, taskID, taskID);
+            ItemCollection event = modelManager.findEventByID(model, taskID, taskID);
             // ItemCollection task = model.getTask(taskID);
-            ItemCollection task = modelService.getModelManager().findTaskByID(model, taskID);
+            ItemCollection task = modelManager.findTaskByID(model, taskID);
 
             // load the report
             ItemCollection report = reportService.findReport(event.getItemValueString("txtReportName"));

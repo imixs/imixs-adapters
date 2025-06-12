@@ -395,6 +395,11 @@ public class DatevController implements Serializable {
 	 */
 	public void startImport() throws PluginException {
 
+		try {
+			fileUploadController.attacheFiles(importData);
+		} catch (PluginException e) {
+			e.printStackTrace();
+		}
 		List<FileData> fileList = importData.getFileData();
 		if (fileList == null) {
 			return;

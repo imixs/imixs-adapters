@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.imixs.workflow.ItemCollection;
+import org.imixs.workflow.ModelManager;
 import org.imixs.workflow.WorkflowKernel;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.ModelService;
@@ -386,8 +387,9 @@ public class SepaWorkflowService {
         }
 
         // set workflow group name from the Task Element to identify document in xslt
-        BPMNModel model = modelService.getModelManager().getModel(modelVersion);
-        ItemCollection task = modelService.getModelManager().findTaskByID(model, taskID);
+        ModelManager modelManager = new ModelManager(workflowService);
+        BPMNModel model = modelManager.getModel(modelVersion);
+        ItemCollection task = modelManager.findTaskByID(model, taskID);
 
         // model.openDefaultProces().fin(type);.getTask(taskID);
         String modelTaskGroupName = task.getItemValueString("txtworkflowgroup"); // DO NOT CHANGE!
