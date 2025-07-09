@@ -124,6 +124,7 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
             }
 
             // read configuration params and adapt text
+            boolean debug = wopiConverterConfig.getItemValueBoolean("debug");
             String apiEndpoint = wopiConverterConfig.getItemValueString("api-endpoint");
             String fileName = wopiConverterConfig.getItemValueString("filename");
             String convertTo = wopiConverterConfig.getItemValueString("convert-to");
@@ -141,13 +142,18 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
             }
             String uri = apiEndpoint + convertTo;
 
-            logger.info("WopiDocumentConverter: " + fileName + " => " + uri);
-
+            logger.info("├── Converting into: " + fileName);
+            if (debug) {
+                logger.info("│   ├── endpoint=" + uri);
+                logger.info("│   ├── convertTo=" + convertTo);
+            }
+            int fileCount = 0;
             // test all file matching the filename or regular expression
             FileData fileData = document.getFileData(fileName);
             if (fileData != null) {
                 // file data found by name directly - so we can convert it....
-                convertFile(fileData, document, uri);
+                convertFile(fileData, document, uri, debug);
+                fileCount++;
             } else {
                 // not found, we can test regular expressions...
                 List<String> fileNames = document.getFileNames();
@@ -160,12 +166,15 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
                         fileData = document.getFileData(aFileName);
                         if (fileData != null) {
                             // file data found - so we can updated it....
-                            convertFile(fileData, document, uri);
+                            convertFile(fileData, document, uri, debug);
+                            fileCount++;
+
                         }
 
                     }
                 }
             }
+            logger.info("└── ✅ " + fileCount + " files converted");
         }
 
         return document;
@@ -183,7 +192,7 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
      * @param uri
      * @throws PluginException
      */
-    void convertFile(FileData fileData, ItemCollection document, String uri) throws PluginException {
+    void convertFile(FileData fileData, ItemCollection document, String uri, boolean debug) throws PluginException {
 
         if (fileData == null) {
             throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), CONFIG_ERROR,
@@ -191,6 +200,9 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
 
         }
         String fileName = fileData.getName();
+        if (debug) {
+            logger.info("│   ├── convert file: " + fileData.getName());
+        }
 
         if (fileData.getContent() == null || fileData.getContent().length < 3) {
             // load the snapshot
@@ -205,6 +217,7 @@ public class WopiDocumentConverterAdapter implements SignalAdapter {
             throw new PluginException(WopiDocumentConverterAdapter.class.getSimpleName(), DOCUMENT_ERROR,
                     "WopiDocumentConverter Error - failed to post document data: " + e.getMessage());
         }
+        logger.info("│   └── ☑️ conversion successful");
     }
 
     /**

@@ -257,22 +257,7 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         if (fileName.toLowerCase().endsWith(".xls") || fileName.toLowerCase().endsWith(".xlsx")) {
             XSSFWorkbook workbook = new XSSFWorkbook(imputStream);
 
-            logger.fine("XSSFWorkbook loaded");
-            XSSFUtil.updateXSSFWorkbook(workbook, document, replaceDevList, workflowService);
-
-            logger.fine("findreplace completed");
-            // recalculate formulas
-            XSSFSheet sheet = workbook.getSheetAt(0);
-            if (eval != null && !eval.isEmpty()) {
-                // iterate over all cells to be evaluated
-                String[] cellPositions = eval.split(";");
-                for (String cellPos : cellPositions) {
-                    XSSFUtil.evalXSSFSheet(workbook, sheet, cellPos);
-                }
-                logger.fine("formula evualtion completed");
-            }
-            // doc.setForceFormulaRecalculation(true);
-            // XSSFFormulaEvaluator.evaluateAllFormulaCells(doc);
+            updateXSSFWorkbook(workbook, document, replaceDevList, eval);
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             workbook.write(byteArrayOutputStream);
@@ -284,6 +269,24 @@ public class POIFindReplaceAdapter implements SignalAdapter {
         // update the fileData
         document.addFileData(fileDataNew);
         logger.fine("new document added");
+    }
+
+    public void updateXSSFWorkbook(XSSFWorkbook workbook, ItemCollection document, List<String> replaceDevList,
+            String eval) throws PluginException {
+        logger.fine("XSSFWorkbook loaded");
+        XSSFUtil.updateXSSFWorkbook(workbook, document, replaceDevList, workflowService);
+
+        logger.fine("findreplace completed");
+        // recalculate formulas
+        XSSFSheet sheet = workbook.getSheetAt(0);
+        if (eval != null && !eval.isEmpty()) {
+            // iterate over all cells to be evaluated
+            String[] cellPositions = eval.split(";");
+            for (String cellPos : cellPositions) {
+                XSSFUtil.evalXSSFSheet(workbook, sheet, cellPos);
+            }
+            logger.fine("formula evualtion completed");
+        }
     }
 
     /**
