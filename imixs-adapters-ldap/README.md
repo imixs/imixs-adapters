@@ -27,7 +27,7 @@ Die Search Configuration erfolgt über die `imixs.properties` Datei
 | java.naming.security.principal   | User                                                   | false                                                               |
 | java.naming.security.credentials | Password                                               | false                                                               |
 
-The attirbute mapping is defined by useing the '|' char to separate the ldap attribute name from the imixs profile item name - e.g
+The attribute mapping is defined by useing the '|' char to separate the ldap attribute name from the imixs profile item name - e.g
 
     sAMAccountName|txtname, mail|txtemail, name|txtUserName, initials|txtInitials
 
