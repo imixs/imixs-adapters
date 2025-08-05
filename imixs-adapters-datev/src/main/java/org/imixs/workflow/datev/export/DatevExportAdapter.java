@@ -60,8 +60,7 @@ import jakarta.inject.Inject;
  * zurückgestellt. Die CSV Datei wird mit einer neuen Information GUID für das
  * Belegabbild ergänzt. Die DATEV Export Files sollen nicht mehr in die Aufgabe
  * im Workflow angehängt werden (bisheriger Workflow) sondern künftig direkt auf
- * einem FTP Server abgelegt werden. Dieser FTP Server wird von der KRIEGER GmbH
- * bereitgestellt.
+ * einem FTP Server abgelegt werden.
  * <p>
  * 1.) Anpassung der Document.xml
  * <p>
