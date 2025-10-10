@@ -123,11 +123,15 @@ public class SEPARefAddAdapter implements SignalAdapter {
                 if (invoicesMaxCount > 0 && sepaExport.getItemValue("$workitemref").size() >= invoicesMaxCount) {
                     logger.info("......Max Count of " + invoicesMaxCount
                             + " invoices reached, executing maxcount-event=" + invoicesMaxCountEvent);
-                    // process the maxcoutn event on the sepa export
+                    // process the maxcount event on the sepa export
                     sepaExport.event(invoicesMaxCountEvent);
                     sepaWorkflowService.processSEPAExport(sepaExport);
                 }
             }
+
+            // also add the ref of this workitem to the invoice
+            // This is just to align the behavoir to the new DataGroup Feature
+            workitem.appendItemValueUnique("$workitemref", sepaExport.getUniqueID());
 
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
             throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
