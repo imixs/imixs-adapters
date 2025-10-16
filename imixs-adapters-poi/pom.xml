@@ -17,12 +17,10 @@
 			<groupId>org.imixs.workflow</groupId>
 			<artifactId>imixs-workflow-core</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.imixs.workflow</groupId>
 			<artifactId>imixs-workflow-engine</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.imixs.workflow</groupId>
 			<artifactId>imixs-archive-api</artifactId>
@@ -32,13 +30,9 @@
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
+			<version>${poi.ooxml.version}</version>
 		</dependency>
-		<!-- Explicitly add commons-compress with managed version -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-compress</artifactId>
-			<!-- version from parent dependency management -->
-		</dependency>
+
 	</dependencies>
 
 
