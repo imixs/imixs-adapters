@@ -32,15 +32,18 @@ import java.util.logging.Logger;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.imixs.jwt.JWTException;
 import org.imixs.workflow.FileData;
+import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.faces.data.WorkflowEvent;
 import org.imixs.workflow.faces.fileupload.FileUploadController;
 import org.imixs.workflow.faces.util.ResourceBundleHandler;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ConversationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.interceptor.Interceptor;
 
 /**
  * The WopiController is a front end controller providing the access endpoint
@@ -210,24 +213,29 @@ public class WopiController implements Serializable {
      * into the current workitem, before the workitem is processed. The method also
      * clears the file cache.
      * <p>
-     * To access the filedata object, the controller uses the access token
+     * Note: to access the fileData object, the controller uses the access token
+     * <p>
+     * Finally the method attach the new file content by calling the
+     * FileUploadController explizit. See Issue #183
+     * 
+     * @throws PluginException
      * 
      */
-    public void onWorkflowEvent(@Observes WorkflowEvent workflowEvent) {
+    public void onWorkflowEvent(@Observes @Priority(Interceptor.Priority.LIBRARY_BEFORE) WorkflowEvent workflowEvent)
+            throws PluginException {
         if (workflowEvent == null || workflowEvent.getWorkitem() == null) {
             return;
         }
-
         int eventType = workflowEvent.getEventType();
-
-        // Update usericon, signature image imformation
+        // Update new wopi file content
         if (WorkflowEvent.WORKITEM_BEFORE_PROCESS == eventType && getAccessToken() != null) {
             List<FileData> files = wopiAccessHandler.getAllFileData(getAccessToken());
             for (FileData fileData : files) {
                 logger.info(".....updating " + fileData.getName() + "...");
                 fileUploadController.addAttachedFile(fileData);
             }
-            // clear file cache
+            // attache new file content explizit and clear wopi file cache
+            fileUploadController.attacheFiles(workflowEvent.getWorkitem());
             wopiAccessHandler.clearFileCache(accessToken);
 
             // reset wopi.auto.open

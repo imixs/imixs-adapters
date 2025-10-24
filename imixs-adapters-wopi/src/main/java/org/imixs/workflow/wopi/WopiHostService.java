@@ -205,8 +205,7 @@ public class WopiHostService {
      * <code> /wopi/xxxxxxx-0000-0000-0000-yyyy_{FILENAME}</code>
      * <p>
      * If the file content was already modified before, the content is fetched from
-     * the
-     * local wopi file cache
+     * the local wopi file cache
      * 
      * @param name - the file name to be opened
      * @return
@@ -293,7 +292,7 @@ public class WopiHostService {
         byte[] content;
         try {
             content = readAllBytes(contentStream);
-            logger.finest("...receifed " + content.length + " bytes");
+            logger.finest("...received " + content.length + " bytes");
             // cache the file data temporary
             fileData = new FileData(file, content, null, null);
             wopiAccessHandler.cacheFileData(accessToken, fileData);
