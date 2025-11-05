@@ -30,6 +30,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.FileData;
@@ -47,7 +48,7 @@ import org.imixs.workflow.faces.data.WorkflowController;
 import org.imixs.workflow.faces.fileupload.FileUploadController;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.context.ConversationScoped;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -64,7 +65,7 @@ import jakarta.inject.Named;
  * 
  */
 @Named
-@SessionScoped
+@ConversationScoped
 public class DatevController implements Serializable {
 
 	private ItemCollection importData;
@@ -91,6 +92,8 @@ public class DatevController implements Serializable {
 
 	@Inject
 	protected FileUploadController fileUploadController;
+
+	private List<ItemCollection> belegListe = null;
 
 	/**
 	 * This method load the config entity after postContstruct. If no Entity exists
@@ -436,16 +439,56 @@ public class DatevController implements Serializable {
 	 */
 	@SuppressWarnings("unchecked")
 	public List<ItemCollection> getBuchungsexportByBelegdatum(ItemCollection workitem) {
-		List<ItemCollection> result = new ArrayList<>();
-
-		List<String> ids = workitem.getItemValue("$workitemref");
-		for (String id : ids) {
-			ItemCollection invoice = documentService.load(id);
-			result.add(invoice);
+		logger.fine("getBuchungsexportByBelegdatum..............");
+		if (belegListe == null) {
+			// comptue belegListe....
+			long l = System.currentTimeMillis();
+			logger.fine("load getBuchungsexportByBelegdatum...");
+			belegListe = new ArrayList<>();
+			List<String> ids = workitem.getItemValue("$workitemref");
+			for (String id : ids) {
+				ItemCollection invoice = documentService.load(id);
+				belegListe.add(invoice);
+			}
+			// sort by belegdatum
+			Collections.sort(belegListe, new ItemCollectionComparator("datev.belegdatum", false));
+			logger.fine("Buchungsexport completed in  " + (System.currentTimeMillis() - l) + "ms");
 		}
+		return belegListe;
 
-		// sort by belegdatum
-		Collections.sort(result, new ItemCollectionComparator("datev.belegdatum", false));
+	}
+
+	/**
+	 * Liefert die erste Buchungszeile
+	 * 
+	 * @param beleg
+	 * @return
+	 */
+	public ItemCollection getBuchung(ItemCollection beleg) {
+		List<ItemCollection> buchungen = explodeChildList(beleg, "datev.booking.list");
+		if (buchungen != null && buchungen.size() > 0) {
+			return buchungen.get(0);
+		}
+		return new ItemCollection();
+
+	}
+
+	/**
+	 * converts the Map List of a workitem into a List of ItemCollectons
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static List<ItemCollection> explodeChildList(ItemCollection workitem, String childItemName) {
+		// convert current list of childItems into ItemCollection elements
+		ArrayList<ItemCollection> result = new ArrayList<ItemCollection>();
+
+		List<Object> mapOrderItems = workitem.getItemValue(childItemName);
+		for (Object mapOderItem : mapOrderItems) {
+			if (mapOderItem instanceof Map) {
+				ItemCollection itemCol = new ItemCollection((Map) mapOderItem);
+				result.add(itemCol);
+			}
+		}
 		return result;
 	}
+
 }

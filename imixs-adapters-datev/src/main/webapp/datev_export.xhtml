@@ -53,8 +53,9 @@
 						</h:link>
 					</td>
 
-					<td style="text-align: center;">
-						#{beleg.item['datev.konto']}
+					<td style="text-align: left;">
+						#{datevController.getBuchung(beleg).item['datev.konto']} -
+						#{datevController.getBuchung(beleg).item['datev.kontobeschriftung']}
 					</td>
 					<td style="text-align: right;">
 						<h:outputText value="#{beleg.item['datev.betrag']}">
@@ -68,7 +69,7 @@
 						#{beleg.item['datev.gegenkonto']}
 					</td>
 					<td style="text-align: center;">
-						#{beleg.item['datev.buschluessel']}
+						#{datevController.getBuchung(beleg).item['datev.buschluessel']}
 					</td>
 					<td style="text-align: center;">
 						<h:outputText value="#{beleg.item['datev.belegdatum']}">
