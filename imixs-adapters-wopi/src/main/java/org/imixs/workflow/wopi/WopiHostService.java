@@ -156,7 +156,7 @@ public class WopiHostService {
     public Response getFileInfo(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             @QueryParam("access_token") String accessToken) {
 
-        logger.info("......GET getFileInfo: " + uniqueid + "/" + file);
+        logger.info("├── GET getFileInfo: " + uniqueid + "/" + file);
 
         // clean unexpected query params
         accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
@@ -164,21 +164,21 @@ public class WopiHostService {
         // validate access_token
         JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);
         if (acessTokenPayload == null) {
-            logger.warning("...invalid access_token!");
+            logger.warning("└── ⚠️ invalid access_token!");
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
         ItemCollection workitem = null;
         workitem = documentService.load(uniqueid);
         if (workitem == null) {
-            logger.warning("wokitem '" + uniqueid + "' not found!");
+            logger.warning("└── ⚠️ wokitem '" + uniqueid + "' not found!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
         FileData fileData = null;
         fileData = loadFileData(uniqueid, file, accessToken);
         if (fileData == null) {
-            logger.warning("wokitem '" + uniqueid + "' no fileData object not found!");
+            logger.warning("└── ⚠️ wokitem '" + uniqueid + "' no fileData object not found!");
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -188,7 +188,7 @@ public class WopiHostService {
             builder = buildJsonFileInfo(fileData, workitem.getItemValueDate(WorkflowKernel.MODIFIED),
                     acessTokenPayload);
         } catch (NoSuchAlgorithmException e) {
-            logger.warning("unable to compute Sha256 from content: " + e.getMessage());
+            logger.warning("└── ⚠️ unable to compute Sha256 from content: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
@@ -214,14 +214,14 @@ public class WopiHostService {
     @Path("/{uniqueid : ([0-9a-f]{8}-.*|[0-9a-f]{11}-.*)}/files/{file}/contents")
     public Response getFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             @QueryParam("access_token") String accessToken) {
-        logger.info("......GET getFileContents: " + uniqueid + "/" + file);
+        logger.info("├── GET getFileContents: " + uniqueid + "/" + file);
         // clean unexpected query params
         accessToken = wopiAccessHandler.purgeAccessToken(accessToken);
 
         // validate access_token
         JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);
         if (acessTokenPayload == null) {
-            logger.warning("...invalid access_token!");
+            logger.warning("└── ⚠️ invalid access_token!");
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
@@ -233,7 +233,7 @@ public class WopiHostService {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         try {
-            logger.info("......sending " + fileData.getContent().length + " bytes...");
+            logger.info("│   ├── sending " + fileData.getContent().length + " bytes...");
             // load file
             Response.ResponseBuilder builder = Response.ok(fileData.getContent(), MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition",
@@ -269,13 +269,13 @@ public class WopiHostService {
     public Response postFileContents(@PathParam("uniqueid") String uniqueid, @PathParam("file") String file,
             InputStream contentStream, @QueryParam("access_token") String accessToken, @Context UriInfo info) {
 
-        logger.info("......POST postFileContents: " + uniqueid + "/" + file);
+        logger.info("├── POST postFileContents: " + uniqueid + "/" + file);
         // analyze header X-LOOL-WOPI-Timestamp, X-LOOL-WOPI-IsAutosave,
         // X-LOOL-WOPI-IsExitSave
         // We do ignroe the X-LOOL-WOPI-IsExitSave event
         String wopiHeader = servletRequest.getHeader("X-LOOL-WOPI-IsExitSave");
         if (wopiHeader != null && "true".equalsIgnoreCase(wopiHeader)) {
-            logger.info("...ignore X-LOOL-WOPI-IsExitSave = " + wopiHeader);
+            logger.info("│   ├── ignore X-LOOL-WOPI-IsExitSave = " + wopiHeader);
             return Response.ok().build();
         }
 
@@ -285,7 +285,7 @@ public class WopiHostService {
         // validate access_token
         JsonObject acessTokenPayload = wopiAccessHandler.validateAccessToken(accessToken);
         if (acessTokenPayload == null) {
-            logger.warning("...invalid access_token!");
+            logger.warning("└── ⚠️ invalid access_token!");
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
         FileData fileData = null;
@@ -298,7 +298,7 @@ public class WopiHostService {
             wopiAccessHandler.cacheFileData(accessToken, fileData);
 
         } catch (IOException e) {
-            logger.warning("failed to cache document data: " + e.getMessage());
+            logger.warning("└── ⚠️ failed to cache document data: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
@@ -307,7 +307,7 @@ public class WopiHostService {
         try {
             builder = buildJsonFileInfo(fileData, new Date(), acessTokenPayload);
         } catch (NoSuchAlgorithmException e) {
-            logger.warning("unable to compute Sha256 from content: " + e.getMessage());
+            logger.warning("└── ⚠️ unable to compute Sha256 from content: " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
         JsonObject result = builder.build();
@@ -388,7 +388,6 @@ public class WopiHostService {
             try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                 while ((readLen = inputStream.read(buf, 0, bufLen)) != -1)
                     outputStream.write(buf, 0, readLen);
-
                 return outputStream.toByteArray();
             }
         } catch (IOException e) {
@@ -437,7 +436,6 @@ public class WopiHostService {
         builder.add("LastModifiedTime", sdf.format(modified));
 
         // compute SHA-256
-
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(fileData.getContent());
         // This bytes[] has bytes in decimal format;
@@ -454,7 +452,7 @@ public class WopiHostService {
         // builder.add("EditNotificationPostMessage", true);
 
         if (postMessageOrigin.isPresent() && !postMessageOrigin.get().isEmpty()) {
-            logger.info("......setting postMessageOrigin=" + postMessageOrigin.get());
+            logger.info("│   ├── set postMessageOrigin=" + postMessageOrigin.get());
             builder.add("PostMessageOrigin", postMessageOrigin.get());
         }
 

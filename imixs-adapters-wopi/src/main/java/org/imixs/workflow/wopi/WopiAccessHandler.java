@@ -18,14 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import jakarta.annotation.PostConstruct;
 import javax.crypto.SecretKey;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.json.Json;
-import jakarta.json.JsonNumber;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -42,6 +35,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.Json;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 
 /**
  * The WopiAccessHandler provides methods to generate 'access_token's and also
@@ -431,7 +432,7 @@ public class WopiAccessHandler {
     void parseDiscoveryURL(String endpoint)
             throws MalformedURLException, SAXException, IOException, ParserConfigurationException {
 
-        logger.info("...parsing wopi.discovery.endpoint: " + endpoint);
+        logger.info("├── Parse wopi.discovery.endpoint: " + endpoint);
 
         if (endpoint.startsWith("http://")) {
             logger.fine("...WOPI Client is running without SSL - this is not recommended for production!");
