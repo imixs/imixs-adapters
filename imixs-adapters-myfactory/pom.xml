@@ -1,0 +1,50 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.imixs.workflow</groupId>
+		<artifactId>imixs-adapters</artifactId>
+		<version>3.2.2-SNAPSHOT</version>
+	</parent>
+	<artifactId>imixs-adapters-myfactory</artifactId>
+
+	<name>Imixs MyFactory Adapter</name>
+	<url>https://github.com/imixs/imixs-adapters</url>
+	<description>Imixs myfactory Adapter</description>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-workflow-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-workflow-engine</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-workflow-faces</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-marty</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.imixs.security</groupId>
+			<artifactId>imixs-jwt</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.imixs.workflow</groupId>
+			<artifactId>imixs-archive-api</artifactId>
+		</dependency>
+
+	</dependencies>
+</project>
