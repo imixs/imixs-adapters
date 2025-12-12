@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.xml.soap.MessageFactory;
@@ -30,7 +31,7 @@ import jakarta.xml.soap.SOAPPart;
 @ApplicationScoped
 public class MyFactorySessionManager {
 
-    private static final Logger LOGGER = Logger.getLogger(MyFactorySessionManager.class.getName());
+    private static final Logger logger = Logger.getLogger(MyFactorySessionManager.class.getName());
 
     // Correct namespace from WSDL
     private static final String SOAP_NAMESPACE = "http://www.myfactory.de/";
@@ -55,6 +56,12 @@ public class MyFactorySessionManager {
     @ConfigProperty(name = "myfactory.division", defaultValue = "1")
     private int division;
 
+    @Inject
+    @ConfigProperty(name = "myfactory.session.timeout.minutes", defaultValue = "5")
+    private int sessionTimeoutMinutes;
+
+    private volatile long lastAccessTime;
+
     // Thread-safe session storage
     private volatile String currentClientId;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -68,13 +75,31 @@ public class MyFactorySessionManager {
     /**
      * Optionaler Konstruktor für JUnit / Standalone
      */
-    public MyFactorySessionManager(String endpointUrl, String username, String password, String database,
+    public MyFactorySessionManager(String endpointUrl, int sessionTimeoutMinutes, String username, String password,
+            String database,
             int division) {
         this.endpointUrl = endpointUrl;
+        this.sessionTimeoutMinutes = sessionTimeoutMinutes;
         this.username = username;
         this.password = password;
         this.database = Optional.ofNullable(database);
         this.division = division;
+    }
+
+    /**
+     * Cleanup on application shutdown.
+     * Ensures the MyFactory session is properly closed when the server stops.
+     */
+    @PreDestroy
+    void destroy() {
+        if (currentClientId != null) {
+            logger.info("├── Application shutting down, logging out from MyFactory...");
+            try {
+                logout();
+            } catch (MyFactorySessionException e) {
+                logger.warning("├── Logout during shutdown failed: " + e.getMessage());
+            }
+        }
     }
 
     public String getEndpointUrl() {
@@ -88,15 +113,31 @@ public class MyFactorySessionManager {
      * @throws MyFactorySessionException if login fails
      */
     public String getClientId() throws MyFactorySessionException {
-        lock.readLock().lock();
+        lock.writeLock().lock();
         try {
-            if (currentClientId == null) {
-                throw new MyFactorySessionException("Not logged in. Call login() first.");
+            // Session expired?
+            if (currentClientId != null && isSessionExpired()) {
+                logger.info("├── Session expired, logging out...");
+                logout();
+                currentClientId = null;
             }
+
+            // do we have a login?
+            if (currentClientId == null) {
+                currentClientId = login();
+                logger.info("Login successful. ClientID: " + currentClientId);
+            }
+
+            // update Timestamp
+            lastAccessTime = System.currentTimeMillis();
             return currentClientId;
         } finally {
-            lock.readLock().unlock();
+            lock.writeLock().unlock();
         }
+    }
+
+    private boolean isSessionExpired() {
+        return System.currentTimeMillis() - lastAccessTime > (sessionTimeoutMinutes * 60 * 1000L);
     }
 
     /**
@@ -107,14 +148,18 @@ public class MyFactorySessionManager {
      */
     public String login() throws MyFactorySessionException {
         lock.writeLock().lock();
+        logger.info("├── MyFactory API Login...");
         try {
             // Check if already logged in
             if (currentClientId != null) {
-                LOGGER.warning("Already logged in with clientID: " + currentClientId);
+                logger.warning("├── Already logged in with clientID: " + currentClientId);
                 return currentClientId;
             }
 
-            LOGGER.info("Logging in to MyFactory API as user: " + username);
+            logger.info("│   ├── user: " + username);
+            logger.info("│   ├── endpointUrl: " + endpointUrl);
+            logger.info("│   ├── database: " + database.orElse(""));
+            logger.info("│   ├── division: " + division);
 
             SOAPConnection soapConnection = null;
             try {
@@ -124,14 +169,14 @@ public class MyFactorySessionManager {
                 SOAPMessage loginRequest = createLoginRequest();
 
                 // Debug output
-                if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+                if (logger.isLoggable(java.util.logging.Level.FINE)) {
                     logSoapMessage("Login Request", loginRequest);
                 }
 
                 SOAPMessage loginResponse = soapConnection.call(loginRequest, endpointUrl);
 
                 // Debug output
-                if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+                if (logger.isLoggable(java.util.logging.Level.FINE)) {
                     logSoapMessage("Login Response", loginResponse);
                 }
 
@@ -142,19 +187,19 @@ public class MyFactorySessionManager {
                 }
 
                 this.currentClientId = clientId;
-                LOGGER.info("Login successful. ClientID: " + clientId);
+                logger.info("├── Login successful. ClientID: " + clientId);
 
                 return clientId;
 
             } catch (SOAPException e) {
-                LOGGER.severe("SOAP error during login: " + e.getMessage());
+                logger.severe("├── SOAP error during login: " + e.getMessage());
                 throw new MyFactorySessionException("Login failed", e);
             } finally {
                 if (soapConnection != null) {
                     try {
                         soapConnection.close();
                     } catch (SOAPException e) {
-                        LOGGER.warning("Failed to close SOAP connection: " + e.getMessage());
+                        logger.warning("├── Failed to close SOAP connection: " + e.getMessage());
                     }
                 }
             }
@@ -174,12 +219,12 @@ public class MyFactorySessionManager {
         lock.writeLock().lock();
         try {
             if (currentClientId == null) {
-                LOGGER.warning("No active session to logout");
+                logger.warning("└── No active session to logout");
                 return;
             }
 
             String clientIdToLogout = currentClientId;
-            LOGGER.info("Logging out from MyFactory API. ClientID: " + clientIdToLogout);
+            logger.info("├── Logging out from MyFactory API. ClientID: " + clientIdToLogout);
 
             SOAPConnection soapConnection = null;
             try {
@@ -189,14 +234,14 @@ public class MyFactorySessionManager {
                 SOAPMessage logoutRequest = createLogoutRequest(clientIdToLogout);
 
                 // Debug output
-                if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+                if (logger.isLoggable(java.util.logging.Level.FINE)) {
                     logSoapMessage("Logout Request", logoutRequest);
                 }
 
                 SOAPMessage logoutResponse = soapConnection.call(logoutRequest, endpointUrl);
 
                 // Debug output
-                if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
+                if (logger.isLoggable(java.util.logging.Level.FINE)) {
                     logSoapMessage("Logout Response", logoutResponse);
                 }
 
@@ -204,10 +249,10 @@ public class MyFactorySessionManager {
                 checkLogoutResponse(logoutResponse);
 
                 this.currentClientId = null;
-                LOGGER.info("Logout successful");
+                logger.info("└── Logout successful");
 
             } catch (SOAPException e) {
-                LOGGER.severe("SOAP error during logout: " + e.getMessage());
+                logger.severe("SOAP error during logout: " + e.getMessage());
                 // Still clear the client ID to avoid stuck sessions
                 this.currentClientId = null;
                 throw new MyFactorySessionException("Logout failed", e);
@@ -216,7 +261,7 @@ public class MyFactorySessionManager {
                     try {
                         soapConnection.close();
                     } catch (SOAPException e) {
-                        LOGGER.warning("Failed to close SOAP connection: " + e.getMessage());
+                        logger.warning("Failed to close SOAP connection: " + e.getMessage());
                     }
                 }
             }
@@ -244,7 +289,7 @@ public class MyFactorySessionManager {
     public void clearSession() {
         lock.writeLock().lock();
         try {
-            LOGGER.warning("Forcefully clearing session. ClientID was: " + currentClientId);
+            logger.warning("Forcefully clearing session. ClientID was: " + currentClientId);
             this.currentClientId = null;
         } finally {
             lock.writeLock().unlock();
@@ -341,7 +386,7 @@ public class MyFactorySessionManager {
         if (responseBody.hasFault()) {
             SOAPFault fault = responseBody.getFault();
             String faultString = fault.getFaultString();
-            LOGGER.severe("Login SOAP Fault: " + faultString);
+            logger.severe("Login SOAP Fault: " + faultString);
             throw new MyFactorySessionException("Login failed: " + faultString);
         }
 
@@ -356,7 +401,7 @@ public class MyFactorySessionManager {
             if (errorNodes.getLength() > 0) {
                 String error = errorNodes.item(0).getTextContent();
                 if (error != null && !error.trim().isEmpty()) {
-                    LOGGER.severe("Login error from API: " + error);
+                    logger.severe("Login error from API: " + error);
                     throw new MyFactorySessionException("Login failed: " + error);
                 }
             }
@@ -376,7 +421,7 @@ public class MyFactorySessionManager {
         if (responseBody.hasFault()) {
             SOAPFault fault = responseBody.getFault();
             String faultString = fault.getFaultString();
-            LOGGER.severe("Logout SOAP Fault: " + faultString);
+            logger.severe("Logout SOAP Fault: " + faultString);
             throw new MyFactorySessionException("Logout failed: " + faultString);
         }
 
@@ -386,7 +431,7 @@ public class MyFactorySessionManager {
         if (nodes.getLength() > 0) {
             String result = nodes.item(0).getTextContent();
             if (!"true".equalsIgnoreCase(result)) {
-                LOGGER.warning("Logout returned false");
+                logger.warning("Logout returned false");
             }
         }
     }
@@ -397,9 +442,9 @@ public class MyFactorySessionManager {
     private void logSoapMessage(String label, SOAPMessage message) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             message.writeTo(out);
-            LOGGER.fine(label + ":\n" + out.toString("UTF-8"));
+            logger.fine(label + ":\n" + out.toString("UTF-8"));
         } catch (Exception e) {
-            LOGGER.warning("Failed to log SOAP message: " + e.getMessage());
+            logger.warning("Failed to log SOAP message: " + e.getMessage());
         }
     }
 

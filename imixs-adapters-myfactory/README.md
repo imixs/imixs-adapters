@@ -48,7 +48,7 @@ The following example shows a setup for in a Docker Compose file running in a lo
           MYFACTORY_USERNAME: "test"
           MYFACTORY_PASSWORD: "*****"
           MYFACTORY_DATABASE: "mydb"
-          MYFACTORY_PAMYFACTORY_DEVISIONSSWORD: "1"
+          MYFACTORY_DEVISION: "1"
         ....
         ports:
           - "8080:8080"
