@@ -45,11 +45,21 @@ Daten können auf diese Weise durch eine einfache Abfrage basierend auf dem Typ 
 
     (type:"Kontenbeschriftungen" AND name:"00001_00001_1400")
 
-## DATEV Export
+## DATEV Buchungsstapel
 
-Der DATEV-Export kann über einen SignalAdapter innerhalb eines Workflow-Modells erzeugt werden.
+Der Beleg Export in einen DATEV Buchungsstapel erfolgt über eine Imixs Data Group definition. Diese kann über den SignalAdapter `org.imixs.workflow.datev.export.DatevDataGroupAdapter` innerhalb eines Workflow-Modells erzeugt werden.
 
-    org.imixs.workflow.datev.adapter.DATEVRefAddAdapter
+### Hinzufügen eines Belegs
+
+```xml
+<datev name="ADD">
+    <init.model>datev-export-de-3.0</init.model>
+    <init.task>1000</init.task>
+    <init.event>100</init.event>
+</datev>
+```
+
+Die tags `init.model`, `init.task` und `init.event` sind verpflichtend. Sie geben an, über welches Modell der Buchungstapel erzeugt werden soll
 
 Der Adapter prüft automatisch, ob bereits ein DATEV-Belegstapel Export für den aktuellen Buchungszeitraum und den 'datev.client.id' existiert. Ist dies nicht der Fall, erstellt der Adapter automatisch einen neuen Belegstapel und fügt den aktuellen Vorgang ein.
 
@@ -63,7 +73,7 @@ Für das Einfügen eines Beleges in den DATEV Belegsapel müssen im Workitem fol
 | datev.gegenkonto   | Gegenkonto   |
 | datev.buschluessel | Buschluessel |
 
-Auf diese weise können unterschiedliche Prozessdaten in einen Belegstapel zusammengefasst werden. Um ein Mapping eines workflow Items auf ein DATEV item zu erhalten kann dieses im BPMN Result event angelegt werden.
+Auf diese Weise können unterschiedliche Prozessdaten in einen Belegstapel zusammengefasst werden. Um ein Mapping eines workflow Items auf ein DATEV item zu erhalten kann dieses im BPMN Result event angelegt werden.
 
 Beispiel:
 
@@ -74,19 +84,38 @@ Beispiel:
 <item name="datev.gegenkonto"><itemvalue>cdtr.number</itemvalue></item>
 ```
 
-Der DATEV Export Workflow kann vollständig über das DATEV Export Modell gesteuert werden.
+Die Liste der Belege kann über die Formsection `datev/datev_buchungsstapel` angezeigt werden:
+
+```xml
+<?xml version="1.0"?>
+<imixs-form>
+   <imixs-form-section type="custom" path="datev/datev_buchungsstapel" />
+</imixs-form>
+```
+
+### Entfernen eines Belegs
+
+Über den Modus `remove` kann ein Beleg wieder aus einem Buchungsstapel entfernt werden.
+
+```xml
+<datev name="REMOVE">
+</datev>
+```
+
+### Buchungsstapel Exportieren
+
+Der DATEV Buchungsstapel Export kann vollständig über das DATEV Export Modell gesteuert werden.
 
 <img src="datev-export-workflow.png" />
 
-Um einen verknüpfte Vorgang aus dem Buchunsstapel zu entfernen, kann der RemoveAdapter verwendet werden.
+Um den Buchunstapel export erfolgt ebenfalls über den Adapter `org.imixs.workflow.datev.export.DatevDataGroupAdapter` im Modus `EXECUTE`
 
-    org.imixs.workflow.datev.adapter.DATEVRefRemoveAdapter
+```xml
+<datev name="EXECUTE">
+</datev>
+```
 
-Um den Buchunstapel zu erzeugen kann der ExecuteAdatper verwendet weden
-
-    org.imixs.workflow.datev.adapter.DATEVExecuteAdapter
-
-### XSL Transformation
+#### XSL Transformation
 
 Die DATEV-Datei wird mit Hilfe der imixs-report-Funktionalität erzeugt. Dem DATEV-Report wird eine XSLT-Datei zugeordnet, um die Ausgabe zu erzeugen.
 Das DATEV-Dateiformat ist standardisiert.
@@ -94,7 +123,7 @@ Für den DATEV Standard CSV Export muss ein Imixs Report definiert werden. Für 
 
 **Hinweis:** Die DATEV-Schnittstelle ist nicht öffentlich und nicht Open Source! Sie benötigen die offizielle DATEV-Dokumentation, um Informationen darüber zu erhalten, wie die CSV- und XML-Dateien gestaltet sein müssen.
 
-#### XML Data Source
+##### XML Data Source
 
 Die XML-Datenquelle wird aus der Liste der ausgewählten Belege erzeugt, die durch die Report Schnittstelle definiert sind, und dem DATEV-Export-Workitem selbst generiert. Die Anzahl der Dateneinträge entspricht damit der Anzahl der Belege+1.
 
@@ -114,7 +143,7 @@ Um den Dokumenttyp zu identifizieren, können Sie die entsprechenden xsl select-
     .....
 ```
 
-### Belegbild Export
+#### Belegbild Export
 
 Als default Einstellung wird bei einem DATEV Belegbild export immer die letzte angefügte PDF Datei exportiert.
 Dieses Verhalten kann durch eine Custom CDI Bean angepasst werden um z.b. eine Datei anhand eines bestimmten Datei patterns zu exportieren. Hierbei wird auf das CDI Event `DatevEvent` reagiert.

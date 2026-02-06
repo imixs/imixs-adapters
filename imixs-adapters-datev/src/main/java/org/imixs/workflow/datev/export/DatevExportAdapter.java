@@ -163,7 +163,8 @@ public class DatevExportAdapter implements SignalAdapter {
 	@Override
 	public ItemCollection execute(ItemCollection datevExport, ItemCollection event)
 			throws AdapterException, PluginException {
-
+		logger.warning(
+				"DatevExportAdapter is deprecated - use instead 'org.imixs.workflow.datev.DatevDataGroupAdapter'");
 		try {
 			ItemCollection configuration = datevService.loadConfiguration();
 			// get the data source based on the $workitemref....

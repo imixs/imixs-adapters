@@ -1,11 +1,7 @@
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:f="http://java.sun.com/jsf/core"
-	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:ui="http://java.sun.com/jsf/facelets"
-	xmlns:i="http://java.sun.com/jsf/composite/imixs"
-	xmlns:c="http://java.sun.com/jsp/jstl/core"
-	xmlns:marty="http://java.sun.com/jsf/composite/marty"
-	template="/layout/template.xhtml">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:i="http://java.sun.com/jsf/composite/imixs" xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:marty="http://java.sun.com/jsf/composite/marty" template="/layout/template.xhtml">
 
 	<ui:define name="content">
 		<f:view>
@@ -34,7 +30,7 @@
 							<ul>
 								<li><a href="#tab-1">Einstellungen</a></li>
 								<li><a href="#tab-2">Import</a></li>
-								<li><a href="#tab-3">Export</a></li>
+
 							</ul>
 
 							<div id="tab-1">
@@ -43,13 +39,14 @@
 									<div class="ui-state-highlight ui-corner-all"
 										style="margin-bottom: 10px; padding: .5em;">
 										<h3>DATEV Einstellungen</h3>
-										<p>Definieren Sie hier die DATEV Parameter die Ihnen von Ihrem Steuerberater mitgeteilt wurden.</p>
+										<p>Definieren Sie hier die DATEV Parameter die Ihnen von Ihrem Steuerberater
+											mitgeteilt wurden.</p>
 									</div>
 
-									
-									<div class="imixs-form-section-2">
-										
-										<dl>
+
+									<div class="imixs-form-section-flex">
+
+										<dl style="grid-column-start: span 4;">
 											<dt>DATEV Mandant Name</dt>
 											<dd>
 												<h:inputText required="false"
@@ -58,7 +55,7 @@
 											</dd>
 										</dl>
 
-										<dl>
+										<dl style="grid-column-start: span 4;">
 											<dt>DATEV Mandantennummer </dt>
 											<dd>
 												<h:inputText required="false"
@@ -67,7 +64,7 @@
 											</dd>
 										</dl>
 
-										<dl>
+										<dl style="grid-column-start: span 4;">
 											<dt>
 												DATEV Beraternummer <span class="imixs-required">*</span>
 											</dt>
@@ -78,59 +75,107 @@
 											</dd>
 										</dl>
 
-										<dl>
-											<dt>BU Schlüssel:</dt>
-											<dd>
-		
-												<h:inputTextarea required="false"
-													converter="org.imixs.VectorConverter"
-													style="height: 8em; width: 100%;"
-													value="#{datevController.configuration.itemList['datev.buschluessel']}">
-												</h:inputTextarea>
-												<span style="font-size:0.7rem;">Format: BEZEICHNUNG | DATEV_BU_SCHLUESSEL | PROZENTSATZ</span>
-	
-											</dd>
-										</dl>
 
-										<dl>
+										<dl style="grid-column-start: span 4;">
 											<dt>
-												DATEV WJ-Beginn (MMTT) <span class="imixs-required">* <h:message
-														for="fiscalstart" /></span>
+												DATEV WJ-Beginn (MMTT) <span class="imixs-required">*
+													<h:message for="fiscalstart" />
+												</span>
 											</dt>
 											<dd>
-												<h:inputText value="#{datevController.configuration.item['datev.fiscal_start']}"
-													id="fiscalstart" required="false"/>
+												<h:inputText
+													value="#{datevController.configuration.item['datev.fiscal_start']}"
+													id="fiscalstart" required="false" />
 											</dd>
 										</dl>
-										<dl>
+										<dl style="grid-column-start: span 4;">
 											<dt>DATEV Sachkontennummernlänge</dt>
 											<dd>
 												<h:inputText
 													value="#{datevController.configuration.item['datev.sachkontennummernlaenge']}" />
 											</dd>
 										</dl>
-										<dl>
+									</div>
+									<div class="imixs-form-section-flex">
+										<dl style="grid-column-start: span 4;">
+											<dt>BU Schlüssel:</dt>
+											<dd>
+
+												<h:inputTextarea required="false" converter="org.imixs.VectorConverter"
+													style="height: 8em; width: 100%;"
+													value="#{datevController.configuration.itemList['datev.buschluessel']}">
+												</h:inputTextarea>
+												<span style="font-size:0.7rem;">Format: BEZEICHNUNG |
+													DATEV_BU_SCHLUESSEL | PROZENTSATZ</span>
+
+											</dd>
+										</dl>
+
+										<dl style="grid-column-start: span 4;">
 											<dt>Kostenstelle I. (Nummer|Bezeichnung)</dt>
 											<dd>
-												<h:inputTextarea required="false"
-													converter="org.imixs.VectorConverter"
+												<h:inputTextarea required="false" converter="org.imixs.VectorConverter"
 													style="height: 8em; width: 100%;"
 													value="#{datevController.configuration.itemList['datev.kostenstelle1']}">
 												</h:inputTextarea>
 											</dd>
 										</dl>
-									
-										<dl>
+
+										<dl style="grid-column-start: span 4;">
 											<dt>Kostenstellen II. (Nummer|Bezeichnung)</dt>
 											<dd>
-												<h:inputTextarea required="false"
-													converter="org.imixs.VectorConverter"
+												<h:inputTextarea required="false" converter="org.imixs.VectorConverter"
 													style="height: 8em; width: 100%;"
 													value="#{datevController.configuration.itemList['datev.kostenstelle2']}">
 												</h:inputTextarea>
 											</dd>
 										</dl>
 									</div>
+								</div>
+
+								<div class="imixs-form-section">
+									<h3>Export Buchungsstapel</h3>
+									<h:panelGroup layout="block" id="report_selection"
+										styleClass="imixs-form-section-2">
+										<dl>
+											<dt>
+												DATEV Schnittstellen-Typ <span class="imixs-required">*</span>
+											</dt>
+											<dd>
+												<h:selectOneRadio layout="pageDirection"
+													value="#{datevController.configuration.item['export.type']}"
+													required="true">
+													<f:selectItem itemValue="xml"
+														itemLabel="Buchungsstapel (csv) und Belege (zip)">
+													</f:selectItem>
+													<f:selectItem itemValue="csv" itemLabel="Nur Buchungsstapel (csv)">
+													</f:selectItem>
+													<f:ajax render="report_selection" />
+												</h:selectOneRadio>
+											</dd>
+										</dl>
+
+										<dl>
+											<dt>
+												DATEV Report Definitionen <span class="imixs-required">*</span>
+											</dt>
+											<dd>
+												Belegexport:
+												<h:inputText required="true"
+													value="#{datevController.configuration.item['report.invoices']}">
+												</h:inputText>
+
+												<h:panelGroup
+													rendered="#{'xml' eq datevController.configuration.item['export.type']}">
+													<br />
+													Dokumente: <h:inputText required="false"
+														value="#{datevController.configuration.item['report.documents']}">
+													</h:inputText>
+												</h:panelGroup>
+
+											</dd>
+										</dl>
+									</h:panelGroup>
 								</div>
 							</div>
 
@@ -158,7 +203,7 @@
 										</ul>
 									</div>
 
-									
+
 									<dl>
 										<dt>Importdatei wählen:</dt>
 										<dd>
@@ -166,8 +211,7 @@
 												workitem="#{datevController.importData}"
 												context_url="#{facesContext.externalContext.requestContextPath}/rest-service/workflow/workitem/#{workflowController.workitem.item['$uniqueid']}"
 												hideatachments="true" />
-											<h:panelGroup layout="block"
-												styleClass="ui-state-highlight ui-corner-all"
+											<h:panelGroup layout="block" styleClass="ui-state-highlight ui-corner-all"
 												style="margin-bottom: 10px; padding: .5em;"
 												rendered="#{! empty datevController.importData.item['log']}">
 												<pre>#{datevController.importData.item['log']}</pre>
@@ -183,117 +227,24 @@
 											</h:inputText>
 										</dd>
 									</dl>
-									<h:commandButton
-										actionListener="#{datevController.startImport}"
+									<h:commandButton actionListener="#{datevController.startImport}"
 										value="Start Import">
 									</h:commandButton>
 
 								</div>
 
-							</div>
-							<div id="tab-3">
 
-								<!-- **** Export Buchunsstapel ***** -->
-								<div class="imixs-form-section">
-									<div class="ui-state-highlight ui-corner-all"
-										style="margin-bottom: 10px; padding: .5em;">
-										<h3>Export DATEV Buchungsstapel</h3>
-										<p>Definieren Sie hier den Export Workflow sowie die Reportdefinition.</p>
-									</div>
-
-									<h:panelGroup layout="block" id="report_selection"
-										styleClass="imixs-form-section-2">
-										<dl>
-											<dt>
-												DATEV Schnittstellen-Typ <span class="imixs-required">*</span>
-											</dt>
-											<dd>
-												<h:selectOneRadio
-													value="#{datevController.configuration.item['export.type']}"
-													required="true">
-													<f:selectItem itemValue="xml"
-														itemLabel="DATEV Belegsatzschnittstelle im XML-Format"></f:selectItem>
-													<f:selectItem itemValue="csv"
-														itemLabel="DATEV-Format (csv)"></f:selectItem>
-													<f:ajax render="report_selection"/>
-												</h:selectOneRadio>
-											</dd>
-										</dl>
-
-										<dl>
-											<dt>
-												DATEV Report Definitionen <span class="imixs-required">*</span>
-											</dt>
-											<dd>
-												Belegexport:
-												<h:inputText required="true"
-													value="#{datevController.configuration.item['report.invoices']}">
-												</h:inputText>
-
-												<h:panelGroup
-													rendered="#{'xml' eq datevController.configuration.item['export.type']}">
-													<br />
-											Dokumente: <h:inputText required="false"
-														value="#{datevController.configuration.item['report.documents']}">
-													</h:inputText>
-												</h:panelGroup>
-
-											</dd>
-										</dl>
-									</h:panelGroup>
-									<div class="imixs-form-section-2">
-
-										<dl>
-											<dt>
-												DATEV Model Version <span class="imixs-required">*</span>
-											</dt>
-											<dd>
-												<h:inputText required="true"
-													value="#{datevController.configuration.item['model.version']}">
-												</h:inputText>
-											</dd>
-										</dl>
-
-										<dl>
-											<dt>
-												DATEV Initial Task <span class="imixs-required">*</span>
-											</dt>
-											<dd>
-												<h:inputText required="true"
-													value="#{datevController.configuration.item['initial.task']}">
-												</h:inputText>
-											</dd>
-										</dl>
-
-									</div>
-
-									
-
-
-									<div class="imixs-form-section">
-										<p>
-											<span class="typcn typcn-lightbulb"></span> Der Initaltask
-											muss einen Report definieren, der die Abfrage und das Stylesheet enthält. 
-											Die Rechnungen werden automatisch nach dem
-											 Attribut "datev.client.id" sowie der Buchungsperiode gruppiert.
-										</p>
-									</div>
-
-								</div>
 
 							</div>
+
 						</div>
-
 
 					</div>
 
 
-
-
 					<div class="imixs-footer">
 						<h:outputLabel value="#{message.modified}: " />
-						<h:outputText
-							value="#{datevController.configuration.item['$modified']}">
+						<h:outputText value="#{datevController.configuration.item['$modified']}">
 							<f:convertDateTime timeZone="#{message.timeZone}" type="both"
 								pattern="#{message.dateTimePattern}" />
 						</h:outputText>
@@ -301,8 +252,7 @@
 
 						<br />
 
-						<h:commandButton
-							actionListener="#{datevController.saveConfiguration()}"
+						<h:commandButton actionListener="#{datevController.saveConfiguration()}"
 							value="#{message.save}">
 						</h:commandButton>
 

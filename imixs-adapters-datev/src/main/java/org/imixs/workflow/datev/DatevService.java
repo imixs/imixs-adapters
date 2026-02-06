@@ -2,8 +2,10 @@ package org.imixs.workflow.datev;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
@@ -148,4 +150,29 @@ public class DatevService {
 
 		return key;
 	}
+
+	/**
+	 * Liefert alle Rechnungen zu einem DATEV Export sortiert nach Belegdatum.
+	 * <p>
+	 * 
+	 * Die neue Methode verwendet hingegen die neue DataGroup Funktionalität
+	 * 
+	 * @param workitem
+	 * @return
+	 */
+	public List<ItemCollection> getBuchungsstapel(ItemCollection workitem) {
+		logger.fine("getBuchungsestapel..............");
+		List<ItemCollection> belegListe = new ArrayList<>();
+		String query = " ($workitemref:" + workitem.getUniqueID() + ")";
+
+		try {
+			belegListe = documentService.find(query, 1000, 0, "datev.belegdatum", false);
+		} catch (QueryException e) {
+			logger.severe("failed to get buchungsstapel: " + e.getMessage());
+		}
+
+		return belegListe;
+
+	}
+
 }

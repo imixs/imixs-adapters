@@ -374,19 +374,19 @@ public class DatevExportService {
         // link invoices with export workitem and find the earliest invoice.date ...
         LocalDateTime stapelZeitraumStart = null;
         LocalDateTime stapelZeitraumEnde = null;
-        for (ItemCollection invoice : data) {
-            Date baseDate = invoice.getItemValueDate("accounting.date");
+        for (ItemCollection beleg : data) {
+            Date baseDate = beleg.getItemValueDate("datev.belegdatum");
             if (baseDate == null) {
                 // fallback auf invoice date
-                baseDate = invoice.getItemValueDate("invoice.date");
+                baseDate = beleg.getItemValueDate("invoice.date");
             }
-            LocalDateTime invoiceDate = new Date(baseDate.getTime()).toInstant().atZone(ZoneId.systemDefault())
+            LocalDateTime datevBelegDatum = new Date(baseDate.getTime()).toInstant().atZone(ZoneId.systemDefault())
                     .toLocalDateTime();
-            if (stapelZeitraumStart == null || stapelZeitraumStart.isAfter(invoiceDate)) {
-                stapelZeitraumStart = invoiceDate;
+            if (stapelZeitraumStart == null || stapelZeitraumStart.isAfter(datevBelegDatum)) {
+                stapelZeitraumStart = datevBelegDatum;
             }
-            if (stapelZeitraumEnde == null || invoiceDate.isAfter(stapelZeitraumEnde)) {
-                stapelZeitraumEnde = invoiceDate;
+            if (stapelZeitraumEnde == null || datevBelegDatum.isAfter(stapelZeitraumEnde)) {
+                stapelZeitraumEnde = datevBelegDatum;
             }
         }
         // update Stapelzeitraum begin und Ende

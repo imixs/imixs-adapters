@@ -37,6 +37,7 @@ import jakarta.inject.Inject;
  * @version 1.0
  * @author rsoika
  */
+@Deprecated
 public class DatevRefAdapter implements SignalAdapter {
 
 	private static Logger logger = Logger.getLogger(DatevRefAdapter.class.getName());
@@ -61,6 +62,7 @@ public class DatevRefAdapter implements SignalAdapter {
 	public ItemCollection execute(ItemCollection document, ItemCollection event)
 			throws AdapterException, PluginException {
 
+		logger.warning("DatevRefAdapter is deprecated - use instead 'org.imixs.workflow.datev.DatevDataGroupAdapter'");
 		validateDefaultBooking(document);
 		appendWorkitem(document);
 		return document;

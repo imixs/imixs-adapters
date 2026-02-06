@@ -433,10 +433,16 @@ public class DatevController implements Serializable {
 
 	/**
 	 * Liefert alle rechnungen zu einem DATEV Export sortiert nach Belegdatum.
+	 * <p>
+	 * Diese Methode ist veraltet und nutzt das feld $workitemref als referenz für
+	 * alle verbundenen Belege.
+	 * Die neue Methode getBuchungsstapel() verwendet hingegen die neue DataGroup
+	 * Funktionalität
 	 * 
 	 * @param workitem
 	 * @return
 	 */
+	@Deprecated
 	@SuppressWarnings("unchecked")
 	public List<ItemCollection> getBuchungsexportByBelegdatum(ItemCollection workitem) {
 		logger.fine("getBuchungsexportByBelegdatum..............");
@@ -456,6 +462,22 @@ public class DatevController implements Serializable {
 		}
 		return belegListe;
 
+	}
+
+	/**
+	 * Liefert alle Rechnungen zu einem DATEV Export sortiert nach Belegdatum.
+	 * <p>
+	 * 
+	 * Die neue Methode verwendet hingegen die neue DataGroup Funktionalität
+	 * 
+	 * @param workitem
+	 * @return
+	 */
+	public List<ItemCollection> getBuchungsstapel(ItemCollection workitem) {
+		if (belegListe == null) {
+			belegListe = datevService.getBuchungsstapel(workitem);
+		}
+		return belegListe;
 	}
 
 	/**

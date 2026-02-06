@@ -44,7 +44,7 @@ public class DatevRemoveAdapter implements SignalAdapter {
 	@Override
 	public ItemCollection execute(ItemCollection document, ItemCollection event)
 			throws AdapterException, PluginException {
-
+		logger.warning("DatevRefAdapter is deprecated - use instead 'org.imixs.workflow.datev.DatevDataGroupAdapter'");
 		removeWorkitem(document);
 		return document;
 	}
