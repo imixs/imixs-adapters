@@ -2,11 +2,11 @@ package org.imixs.workflow.sepa;
 
 import java.util.logging.Logger;
 
-import org.iban4j.BicFormatException;
-import org.iban4j.Iban;
-import org.iban4j.IbanFormatException;
-import org.iban4j.InvalidCheckDigitException;
-import org.iban4j.UnsupportedCountryException;
+import de.speedbanking.bic.InvalidBicException;
+import de.speedbanking.iban.Iban;
+import de.speedbanking.iban.InvalidIbanException;
+import de.speedbanking.iban.RandomIban;
+
 import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.sepa.plugins.IBANBICPlugin;
@@ -15,107 +15,104 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * This test verifies the IBAN regex
- * 
+ * Tests for IBAN and BIC validation in IBANBICPlugin.
+ *
  * @author rsoika
- * 
  */
 public class TestIBANBIC {
+
     private static Logger logger = Logger.getLogger(IBANBICPlugin.class.getName());
 
-    private IBANBICPlugin ibanbicPlugin = null;
+    private IBANBICPlugin ibanbicPlugin;
 
     @Before
     public void setup() throws PluginException {
         ibanbicPlugin = new IBANBICPlugin();
+        // ensure default (non-strict) mode for each test
+        ibanbicPlugin.setSepaValidationStrict(false);
     }
 
-    /**
-     * test the fieldlist of the first line of the file
-     */
     @Test
-    public void testIBAN() {
+    public void testValidIBAN() {
         ItemCollection workitem = new ItemCollection();
 
-        // test random iban
-        Iban iban = Iban.random();
+        Iban iban = RandomIban.ofSepa();
         workitem.setItemValue("iban", iban.toString());
+
+        // must not throw
         ibanbicPlugin.validateIBAN(workitem, "iban");
+    }
 
-        // test invalid iban
+    @Test
+    public void testInvalidIBAN() {
+        ItemCollection workitem = new ItemCollection();
+        workitem.setItemValue("iban", "DE55880109902211842211");
+
         try {
-            // test random iban
-            workitem.setItemValue("iban", "DE55880109902211842211");
             ibanbicPlugin.validateIBAN(workitem, "iban");
-            Assert.fail();
-        } catch (IbanFormatException | InvalidCheckDigitException | UnsupportedCountryException e) {
-            // expected exception
-            System.out.println("invalid iban: " + e.getMessage());
+            Assert.fail("Expected InvalidIbanException for a malformed IBAN");
+        } catch (InvalidIbanException e) {
+            logger.info("Expected exception for invalid IBAN: " + e.getMessage());
         }
     }
 
-    /**
-     * test the fieldlist of the first line of the file
-     */
     @Test
-    public void testBIC() {
-
+    public void testValidBIC() {
         ItemCollection workitem = new ItemCollection();
-
         workitem.setItemValue("bic", "DEUTDEFF");
+
+        // must not throw
         ibanbicPlugin.validateBIC(workitem, "bic");
+    }
 
-        // test invalid bic
+    @Test
+    public void testInvalidBIC() {
+        ItemCollection workitem = new ItemCollection();
+        workitem.setItemValue("bic", "DXUXXXFF");
+
         try {
-            workitem.setItemValue("bic", "DXUXXXFF");
             ibanbicPlugin.validateBIC(workitem, "bic");
-
-            Assert.fail();
-        } catch (BicFormatException | UnsupportedCountryException e) {
-            // expected exception
-            System.out.println("invalid bic: " + e.getMessage());
+            Assert.fail("Expected InvalidBicException for a malformed BIC");
+        } catch (InvalidBicException e) {
+            logger.info("Expected exception for invalid BIC: " + e.getMessage());
         }
     }
 
     /**
-     * Here we are testing a IBAN with a space at a invalid position (3) This should
-     * be tolerated by the Imxis IBANPlugin in the mode SEPA_VALIDATION_STRICT=false
-     * (default)
+     * An IBAN with a space at an atypical position (e.g. after the country code)
+     * must be accepted in non-strict mode and rejected in strict mode.
      */
     @Test
-    public void testValidationMode() {
+    public void testSpacesInIBANNonStrictMode() {
         ItemCollection workitem = new ItemCollection();
+        Iban iban = RandomIban.ofSepa();
+        // Insert a space after the country code — not a standard group boundary
+        String ibanWithSpace = iban.toString().substring(0, 2) + " " + iban.toString().substring(2);
+        logger.info("IBAN with mid-group space: '" + ibanWithSpace + "'");
 
-        // test random iban
-        Iban iban = Iban.random();
-        workitem.setItemValue("iban", iban.toString());
+        workitem.setItemValue("iban", ibanWithSpace);
 
-        // test invalid iban
+        // non-strict mode: spaces are stripped, validation must pass
+        ibanbicPlugin.setSepaValidationStrict(false);
+        ibanbicPlugin.validateIBAN(workitem, "iban");
+    }
+
+    @Test
+    public void testSpacesInIBANStrictMode() {
+        ItemCollection workitem = new ItemCollection();
+        Iban iban = RandomIban.ofSepa();
+        String ibanWithSpace = iban.toString().substring(0, 2) + " " + iban.toString().substring(2);
+        logger.info("IBAN with mid-group space (strict): '" + ibanWithSpace + "'");
+
+        workitem.setItemValue("iban", ibanWithSpace);
+
+        // strict mode: any space must cause a validation failure
+        ibanbicPlugin.setSepaValidationStrict(true);
         try {
-            // test random iban
-            String test_iban = iban.toString();
-
-            logger.info("IBAN='" + test_iban + "'");
-            // add a space at position 3
-            test_iban = test_iban.substring(0, 2) + " " + test_iban.substring(2);
-            logger.info("IBAN='" + test_iban + "'");
-
-            workitem.setItemValue("iban", test_iban);
             ibanbicPlugin.validateIBAN(workitem, "iban");
-
-            try {
-                // now we switch in the strict mode where a space is disallowed
-                ibanbicPlugin.setSepaValidationStrict(true);
-                ibanbicPlugin.validateIBAN(workitem, "iban");
-                Assert.fail();
-            } catch (Exception e) {
-                // in strict mode we expect a exception
-            }
-
-        } catch (IbanFormatException | InvalidCheckDigitException | UnsupportedCountryException e) {
-            // expected exception
-            System.out.println("invalid iban: " + e.getMessage());
-            Assert.fail();
+            Assert.fail("Expected an exception for space in IBAN in strict mode");
+        } catch (Exception e) {
+            logger.info("Expected exception in strict mode: " + e.getMessage());
         }
     }
 }
