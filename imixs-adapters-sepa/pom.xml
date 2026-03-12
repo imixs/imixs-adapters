@@ -33,9 +33,9 @@
 
 		<!-- tiny java lib for iban/bic validation -->
 		<dependency>
-			<groupId>org.iban4j</groupId>
-			<artifactId>iban4j</artifactId>
-			<version>3.2.1</version>
+			<groupId>de.speedbanking</groupId>
+			<artifactId>iban-commons</artifactId>
+			<version>1.8.4</version>
 		</dependency>
 
 	</dependencies>
