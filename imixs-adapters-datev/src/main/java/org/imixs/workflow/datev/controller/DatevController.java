@@ -432,7 +432,7 @@ public class DatevController implements Serializable {
 	}
 
 	/**
-	 * Liefert alle rechnungen zu einem DATEV Export sortiert nach Belegdatum.
+	 * Liefert alle Rechnungen zu einem DATEV Export sortiert nach Belegdatum.
 	 * <p>
 	 * Diese Methode ist veraltet und nutzt das feld $workitemref als referenz für
 	 * alle verbundenen Belege.
@@ -445,7 +445,7 @@ public class DatevController implements Serializable {
 	@Deprecated
 	@SuppressWarnings("unchecked")
 	public List<ItemCollection> getBuchungsexportByBelegdatum(ItemCollection workitem) {
-		logger.fine("getBuchungsexportByBelegdatum..............");
+		logger.warning("getBuchungsexportByBelegdatum is deprecated - use getBuchungsstapel!");
 		if (belegListe == null) {
 			// comptue belegListe....
 			long l = System.currentTimeMillis();
@@ -468,7 +468,7 @@ public class DatevController implements Serializable {
 	 * Liefert alle Rechnungen zu einem DATEV Export sortiert nach Belegdatum.
 	 * <p>
 	 * 
-	 * Die neue Methode verwendet hingegen die neue DataGroup Funktionalität
+	 * Die neue Methode verwendet die neue DataGroup Funktionalität
 	 * 
 	 * @param workitem
 	 * @return
