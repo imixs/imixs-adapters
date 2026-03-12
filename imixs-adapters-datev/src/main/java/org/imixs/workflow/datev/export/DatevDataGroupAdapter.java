@@ -36,7 +36,8 @@ import jakarta.inject.Inject;
  * <p>
  * Wurde der Beleg bereits einem DATEV Export zugeordnet passiert nichts.
  * <p>
- * Existieren innerhalb der Rechnung noch keien Detailbuchugnssätze (ChildItems)
+ * Existieren innerhalb der Rechnung noch keine Detail Buchungssätze
+ * (ChildItems)
  * dann erzeugt der Adapter einen Default Buchungssatz .
  * 
  * Example to add a workitem to a data group:
@@ -50,7 +51,7 @@ import jakarta.inject.Inject;
     <init.event>10</init.event>
     <!-- Optional -->
     <update.event>20</update.event>
-</imixs-data-group>
+</datev>
  * }
  * </pre>
  * 
@@ -74,7 +75,7 @@ public class DatevDataGroupAdapter implements SignalAdapter {
 	public static final String MODE_ADD = "add";
 	public static final String MODE_REMOVE = "remove";
 	public static final String MODE_EXECUTE = "execute";
-	public static final String ITEM_WORKITEMREF = "$workitemref";
+	public static final String ITEM_WORKITEMREF = "$uniqueidref";
 	public static final String API_ERROR = "API_ERROR";
 	public static final String ERROR_MISSING_DATA = "MISSING_DATA";
 
@@ -93,7 +94,7 @@ public class DatevDataGroupAdapter implements SignalAdapter {
 
 	/**
 	 * This method finds or create the Datev Export and adds a reference
-	 * ($workitemref) to the current workitem.
+	 * ($uniqueidref) to the current workitem.
 	 * 
 	 * @throws PluginException
 	 */
@@ -301,7 +302,7 @@ public class DatevDataGroupAdapter implements SignalAdapter {
 		int updateEventId = groupDefinition.getItemValueInteger("update.event");
 
 		ItemCollection configuration = datevService.loadConfiguration();
-		// get the data source based on the $workitemref....
+		// get the data source based on the $uniqueidRef....
 		List<ItemCollection> masterDataSet = datevService.getBuchungsstapel(datevExport);
 		// first we need to extend the Export Workitem
 		datevExportService.updateExportWorkitem(datevExport, configuration, masterDataSet);

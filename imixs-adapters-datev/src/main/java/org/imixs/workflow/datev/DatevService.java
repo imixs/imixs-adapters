@@ -155,7 +155,8 @@ public class DatevService {
 	 * Liefert alle Rechnungen zu einem DATEV Export sortiert nach Belegdatum.
 	 * <p>
 	 * 
-	 * Die neue Methode verwendet hingegen die neue DataGroup Funktionalität
+	 * Die neue Methode verwendet die neue DataGroup Funktionalität via $unqiueidref
+	 * unterstützt aber weiterhin die alte Referenz über $workitemref
 	 * 
 	 * @param workitem
 	 * @return
@@ -163,7 +164,8 @@ public class DatevService {
 	public List<ItemCollection> getBuchungsstapel(ItemCollection workitem) {
 		logger.fine("getBuchungsestapel..............");
 		List<ItemCollection> belegListe = new ArrayList<>();
-		String query = " ($workitemref:" + workitem.getUniqueID() + ")";
+		// we support both - old $workiteref and new $uniqueidref
+		String query = "($workitemref:" + workitem.getUniqueID() + ") OR ($uniqueidref:" + workitem.getUniqueID() + ")";
 
 		try {
 			belegListe = documentService.find(query, 1000, 0, "datev.belegdatum", false);

@@ -36,8 +36,7 @@ public class DatevImportAdapter implements SignalAdapter {
     public static final String ENCODING = "ISO-8859-1";
 
     /**
-     * This method finds or create the Datev Export and adds a reference
-     * ($workitemref) to the current invoice.
+     * This method imports a DATEV file.
      * 
      * @throws PluginException
      */
@@ -84,7 +83,7 @@ public class DatevImportAdapter implements SignalAdapter {
      * Liest die erste header zeile aus
      * 
      * @param document
-     * @throws PluginException 
+     * @throws PluginException
      */
     private void readHeader(ItemCollection workitem) throws PluginException {
         FileData fileData = workitem.getFileData().get(0);
@@ -97,41 +96,39 @@ public class DatevImportAdapter implements SignalAdapter {
             header1 = in.readLine();
             String[] header1List = header1.split(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)", 99);
 
-            if (header1List.length<13) {
+            if (header1List.length < 13) {
                 throw new PluginException(DatevImportAdapter.class.getName(), DATEV_IMPORT_ERROR, "Invalid header-1!");
             }
-            
-            
-            
+
             workitem.setItemValue("datev.format-kz", csvVal(header1List[0]));
             workitem.setItemValue("datev.Versionsnummer", csvVal(header1List[1]));
             workitem.setItemValue("datev.Datenkategorie", csvVal(header1List[2]));
             workitem.setItemValue("datev.Formatname", csvVal(header1List[3]));
             workitem.setItemValue("datev.Erzeugt_am", csvVal(header1List[5]));
             workitem.setItemValue("datev.WJ-Beginn", csvVal(header1List[12]));
-            
 
         } catch (IOException e) {
-            throw new PluginException(DatevImportAdapter.class.getName(), DATEV_IMPORT_ERROR, "Unable to read file",e);
+            throw new PluginException(DatevImportAdapter.class.getName(), DATEV_IMPORT_ERROR, "Unable to read file", e);
         }
 
     }
 
     /**
      * Diese methode entfernt optional " Zeichen am begin und ende
+     * 
      * @param value
      * @return
      */
     public static String csvVal(String value) {
-        
+
         if (value.startsWith("\"")) {
-            value=value.substring(1);
+            value = value.substring(1);
         }
         if (value.endsWith("\"")) {
-            value=value.substring(0,value.length()-1);
+            value = value.substring(0, value.length() - 1);
         }
-        
+
         return value;
-        
+
     }
 }

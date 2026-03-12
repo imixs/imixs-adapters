@@ -36,7 +36,7 @@ public class DatevRemoveAdapter implements SignalAdapter {
 	DatevService datevService;
 
 	/**
-	 * This method finds the Datev export and removes a reference
+	 * This method finds the DATEV export and removes a reference
 	 * ($workitemref) to the current invoice.
 	 * 
 	 * @throws PluginException
@@ -56,6 +56,7 @@ public class DatevRemoveAdapter implements SignalAdapter {
 	 * @param workitem
 	 * @throws PluginException
 	 */
+	@Deprecated
 	@SuppressWarnings("unchecked")
 	private void removeWorkitem(ItemCollection workitem) throws PluginException {
 
