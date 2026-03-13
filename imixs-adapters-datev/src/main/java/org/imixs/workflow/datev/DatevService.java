@@ -155,8 +155,13 @@ public class DatevService {
 	 * Liefert alle Rechnungen zu einem DATEV Export sortiert nach Belegdatum.
 	 * <p>
 	 * 
-	 * Die neue Methode verwendet die neue DataGroup Funktionalität via $unqiueidref
+	 * Die neue Methode verwendet die neue DataGroup Funktionalität via $uniqueIdRef
 	 * unterstützt aber weiterhin die alte Referenz über $workitemref
+	 * <p>
+	 * Um ein workitem eindeutig als Datev Beleg zu identifizieren muss dieses
+	 * entweder über das item datev.belegdatum oder invoice.date verfügen.
+	 * Andernfalls wird das Workitem ignoriert (z.b. Process Entities welche
+	 * ebenfalls über $uniqueidRef referenziert sind)
 	 * 
 	 * @param workitem
 	 * @return
@@ -168,13 +173,31 @@ public class DatevService {
 		String query = "($workitemref:" + workitem.getUniqueID() + ") OR ($uniqueidref:" + workitem.getUniqueID() + ")";
 
 		try {
-			belegListe = documentService.find(query, 1000, 0, "datev.belegdatum", false);
+			List<ItemCollection> selection = documentService.find(query, 1000, 0, "datev.belegdatum", false);
+			// wir übernehmen nur 'echte' datev belege!
+			for (ItemCollection beleg : selection) {
+				if (isDatevBeleg(beleg)) {
+					belegListe.add(beleg);
+				}
+			}
 		} catch (QueryException e) {
 			logger.severe("failed to get buchungsstapel: " + e.getMessage());
 		}
-
 		return belegListe;
-
 	}
 
+	/**
+	 * Gibt true zurück wenn es sich um einen Buchungsbeleg handelt
+	 * 
+	 * @param beleg
+	 * @return
+	 */
+	public boolean isDatevBeleg(ItemCollection beleg) {
+		Date baseDate = beleg.getItemValueDate("datev.belegdatum");
+		if (baseDate == null) {
+			// fallback auf invoice date
+			baseDate = beleg.getItemValueDate("invoice.date");
+		}
+		return baseDate != null;
+	}
 }
