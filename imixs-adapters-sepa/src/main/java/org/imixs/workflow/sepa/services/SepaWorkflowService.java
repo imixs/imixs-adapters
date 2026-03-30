@@ -316,6 +316,7 @@ public class SepaWorkflowService {
      * @throws ModelException
      * @throws PluginException
      */
+    @Deprecated
     public ItemCollection createNewSEPAExport(String key, ItemCollection workitem, ItemCollection event)
             throws ModelException, PluginException {
         String modelVersion = null;
@@ -410,6 +411,7 @@ public class SepaWorkflowService {
      * @throws ProcessingErrorException
      * @throws AccessDeniedException
      */
+    @Deprecated
     public ItemCollection processSEPAExport(ItemCollection datevExport)
             throws AccessDeniedException, ProcessingErrorException, PluginException, ModelException {
         return workflowService.processWorkItem(datevExport);
