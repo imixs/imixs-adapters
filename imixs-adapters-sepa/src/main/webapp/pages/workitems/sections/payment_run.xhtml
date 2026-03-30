@@ -1,0 +1,63 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:f="http://java.sun.com/jsf/core" xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:h="http://java.sun.com/jsf/html" xmlns:i="http://java.sun.com/jsf/composite/imixs"
+	xmlns:marty="http://java.sun.com/jsf/composite/marty">
+
+	<div>
+		<table class="imixsdatatable">
+			<tr>
+				<th style="">#{message['form.date']}</th>
+				<th style="">#{message['form.invoicenumber']}</th>
+				<th style="">#{message['form.company']}</th>
+
+				<th style="">#{message['form.amount']}</th>
+				<th style=""></th>
+				<th style="">IBAN</th>
+				<th style="">BIC</th>
+			</tr>
+
+			<c:forEach items="#{paymentRunController.getInvoices(workitem)}" var="invoice">
+				<tr>
+					<td>
+						<h:outputText value="#{invoice.item['invoice.date']}">
+							<f:convertDateTime pattern="#{message.datePatternShort}" timeZone="#{message.timeZone}" />
+						</h:outputText>
+					</td>
+					<td>
+						<h:link outcome="/pages/workitems/workitem">
+							#{invoice.item['invoice.number']}
+							<f:param name="id" value="#{invoice.item['$uniqueid']}" />
+						</h:link>
+					</td>
+					<td>#{invoice.item['cdtr.name']}</td>
+
+					<td style="text-align: right;">
+						<h:outputText value="#{invoice.item['invoice.total']}">
+							<f:convertNumber minFractionDigits="2" locale="de" />
+						</h:outputText>
+					</td>
+
+					<td>#{invoice.item['invoice.currency']}</td>
+					<td>#{invoice.item ['cdtr.iban']}</td>
+					<td>#{invoice.item['cdtr.bic']}</td>
+				</tr>
+			</c:forEach>
+
+			<tr style="border-top: 1px solid #ccc;">
+				<td />
+				<td />
+				<td><strong>Summary</strong></td>
+				<td style="text-align: right;"><strong>
+						<h:outputText value="#{paymentRunController.calculateSum(workitem,'invoice.total')}">
+							<f:convertNumber minFractionDigits="2" locale="de" />
+						</h:outputText>
+					</strong></td>
+				<td><strong>#{invoice.item['invoice.currency']}</strong></td>
+				<td />
+				<td />
+			</tr>
+		</table>
+	</div>
+
+
+</ui:composition>

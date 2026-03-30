@@ -1,0 +1,21 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+	xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+
+	<ui:fragment rendered="#{!readonly}">
+		<h:panelGroup id="accountselector_id">
+			<h:selectOneMenu required="#{required?validationController.required:false}"
+				value="#{workitem.item[item.name]}" disabled="#{item.disabled}">
+				<c:forEach items="#{sepaController.dbtrList}" var="dbtr">
+					<f:selectItem itemLabel="#{dbtr.item['dbtr.name']}" itemValue="#{dbtr.item['name']}" />
+				</c:forEach>
+			</h:selectOneMenu>
+
+		</h:panelGroup>
+	</ui:fragment>
+	<ui:fragment rendered="#{readonly}">
+		<h:outputText value="#{workitem.item[item.name]}" />
+	</ui:fragment>
+
+</ui:composition>
