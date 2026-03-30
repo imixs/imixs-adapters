@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.imixs.workflow.ItemCollection;
-import org.imixs.workflow.ModelManager;
 import org.imixs.workflow.SignalAdapter;
 import org.imixs.workflow.WorkflowKernel;
 import org.imixs.workflow.engine.WorkflowService;
@@ -17,7 +16,6 @@ import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.exceptions.ProcessingErrorException;
 import org.imixs.workflow.exceptions.QueryException;
 import org.imixs.workflow.sepa.services.SepaWorkflowService;
-import org.openbpmn.bpmn.BPMNModel;
 
 import jakarta.inject.Inject;
 
@@ -40,9 +38,9 @@ import jakarta.inject.Inject;
  * <pre>
  * {@code
 <sepa name="ADD">
-   <modelversion>sepa-export-manual-3.0</modelversion>
-   <task>1000</task>
-   <event>20</event>
+   <workflowgroup>Payment Run</workflowgroup>
+   <init.task>1000</init.task>
+   <init.event>20</init.event>
    <key><itemvalue>invoice.payment.type</key>
    <type>IN|OUT</type>
 </sepa>
@@ -106,18 +104,18 @@ public class SEPAAdapter implements SignalAdapter {
          * Iterate over each definition and process the data group
          */
         if (addDefinitions != null) {
-            for (ItemCollection groupDefinition : addDefinitions) {
-                addWorkitemToSepa(workitem, event, groupDefinition);
+            for (ItemCollection sepaDefinition : addDefinitions) {
+                addWorkitemToSepa(workitem, event, sepaDefinition);
             }
 
         }
 
-        // // verify REMOVE mode
-        // if (removeDefinitions != null) {
-        // for (ItemCollection groupDefinition : removeDefinitions) {
-        // removeWorkitemFromDataGroup(workitem, groupDefinition);
-        // }
-        // }
+        // verify REMOVE mode
+        if (removeDefinitions != null) {
+            for (ItemCollection sepaDefinition : removeDefinitions) {
+                removeWorkitemFromDataGroup(workitem, sepaDefinition);
+            }
+        }
 
         // // verify EXECUTE mode
         // if (executeDefinitions != null) {
@@ -125,8 +123,6 @@ public class SEPAAdapter implements SignalAdapter {
         // executeWorkitemFromDataGroup(workitem, groupDefinition);
         // }
         // }
-
-        logger.info("├── ✅ completed (" + (System.currentTimeMillis() - processingTime) + "ms)");
 
         return workitem;
     }
@@ -142,10 +138,28 @@ public class SEPAAdapter implements SignalAdapter {
     public void addWorkitemToSepa(ItemCollection workitem, ItemCollection event, ItemCollection sepaConfig)
             throws PluginException {
 
-        String modelVersion = sepaConfig.getItemValueString("modelversion");
+        String workflowgroup = sepaConfig.getItemValueString("workflowgroup");
         String key = sepaConfig.getItemValueString("key");
-        int initTask = sepaConfig.getItemValueInteger("task");
-        int initEvent = sepaConfig.getItemValueInteger("event");
+        int initTask = sepaConfig.getItemValueInteger("init.task");
+        int initEvent = sepaConfig.getItemValueInteger("init.event");
+        boolean debug = sepaConfig.getItemValueBoolean("debug");
+
+        if (workflowgroup.isBlank()) {
+            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
+                    "Invalid SEPA configuration - missing tag workflowgroup! Verify BPMN configuration.");
+        }
+        if (initTask == 0) {
+            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
+                    "Invalid SEPA configuration - missing init.task! Verify BPMN configuration.");
+        }
+        if (initEvent == 0) {
+            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
+                    "Invalid SEPA configuration - missing init.event! Verify BPMN configuration.");
+        }
+        if (key.isBlank()) {
+            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
+                    "Invalid SEPA configuration - missing key! Verify BPMN configuration.");
+        }
 
         // We test the config item "type". If it is set to OUT than a
         String type = "OUT"; // default
@@ -159,29 +173,75 @@ public class SEPAAdapter implements SignalAdapter {
             // validate workitem
             sepaWorkflowService.validateDbtrData(workitem);
         }
-
-        if (key.isBlank()) {
-            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
-                    "Unable to add Invoice to SEPA Export: missing key attribute! Verify BPMN configuration.");
+        if (debug) {
+            logger.info("├── Adding workitem " + workitem.getUniqueID() + " to SEPA group '" + key + "'...");
         }
-
-        logger.info("......Update SEPA export for: '" + key + "'...");
         ItemCollection sepaExport;
         try {
 
-            sepaExport = sepaWorkflowService.findSEPAExportByTask(key, initTask);
+            sepaExport = findSEPAExportByTask(workflowgroup, key, initTask);
             if (sepaExport == null) {
                 // create a new one
-                // sepaExport = sepaWorkflowService.createNewSEPAExport(key, workitem, event);
-                sepaExport = createNewSEPAExport(key, modelVersion, initTask, initEvent, type, workitem);
+                sepaExport = createNewSEPAExport(key, workflowgroup, initTask, initEvent, type, workitem, debug);
                 sepaExport = workflowService.processWorkItem(sepaExport);
             }
 
             // also add the ref of this workitem to the invoice
             // This is just to align the behavoir to the new DataGroup Feature
             workitem.appendItemValueUnique("$workitemref", sepaExport.getUniqueID());
-
+            if (debug) {
+                logger.info("└── ✓ Added to SEPA group " + sepaExport.getUniqueID());
+            }
         } catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
+            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
+                    "Unable to add Invoice to SEPA Export: " + e1.getMessage());
+        }
+
+    }
+
+    /**
+     * Removes a workitem form a sepa group
+     * 
+     * @param workitem
+     * @param sepaConfig
+     * @throws PluginException
+     */
+    private void removeWorkitemFromDataGroup(ItemCollection workitem, ItemCollection sepaConfig)
+            throws PluginException {
+        String workflowgroup = sepaConfig.getItemValueString("workflowgroup");
+        String key = sepaConfig.getItemValueString("key");
+
+        boolean debug = sepaConfig.getItemValueBoolean("debug");
+
+        if (workflowgroup.isBlank()) {
+            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
+                    "Invalid SEPA configuration - missing tag workflowgroup! Verify BPMN configuration.");
+        }
+        if (key.isBlank()) {
+            throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
+                    "Invalid SEPA configuration - missing key! Verify BPMN configuration.");
+        }
+
+        if (debug) {
+            logger.info("├── Removing workitem " + workitem.getUniqueID() + " from SEPA group '" + key + "'...");
+        }
+        ItemCollection sepaExport;
+        try {
+
+            sepaExport = findSEPAExportByTask(workflowgroup, key, 0);
+            if (sepaExport != null) {
+                // Sepa group found remove reference
+                List<String> refs = workitem.getItemValueList("$workitemref", String.class);
+                refs.remove(sepaExport.getUniqueID());
+                workitem.setItemValue("$workitemref", refs);
+                if (debug) {
+                    logger.info("└── ✓ Removed from SEPA group " + sepaExport.getUniqueID());
+                }
+            } else {
+                // Not found!
+            }
+
+        } catch (QueryException | AccessDeniedException | ProcessingErrorException e1) {
             throw new PluginException(SEPARefAddAdapter.class.getName(), SepaWorkflowService.ERROR_MISSING_DATA,
                     "Unable to add Invoice to SEPA Export: " + e1.getMessage());
         }
@@ -193,12 +253,16 @@ public class SEPAAdapter implements SignalAdapter {
      * 
      * @throws QueryException
      */
-    private ItemCollection createNewSEPAExport(String key, String modelVersion, int taskID, int eventId, String type,
-            ItemCollection workitem)
+    private ItemCollection createNewSEPAExport(String key, String workflowgroup, int taskID, int eventId, String type,
+            ItemCollection workitem, boolean debug)
             throws ModelException, PluginException, QueryException {
 
         // build the sepa export workitem....
-        ItemCollection sepaExport = new ItemCollection().model(modelVersion).task(taskID).event(eventId);
+        ItemCollection sepaExport = new ItemCollection()
+                .workflowGroup(workflowgroup)
+                .task(taskID)
+                .event(eventId)
+                .setItemValue("name", key);
 
         // Lookup SEPA config....
         ItemCollection bankConfig = null;
@@ -253,16 +317,16 @@ public class SEPAAdapter implements SignalAdapter {
                 bankConfig.getItemValue(SepaWorkflowService.ITEM_SEPA_REPORT));
 
         // set workflow group name from the Task Element to identify document in xslt
-        ModelManager modelManager = new ModelManager(workflowService);
-        BPMNModel model = modelManager.getModel(modelVersion);
-        ItemCollection task = modelManager.findTaskByID(model, taskID);
-
-        // model.openDefaultProces().fin(type);.getTask(taskID);
-        String modelTaskGroupName = task.getItemValueString("txtworkflowgroup"); // DO NOT CHANGE!
-        sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, modelTaskGroupName);
-
-        logger.info("...created new SEPA export for iban=" + key + "...");
-
+        // ModelManager modelManager = new ModelManager(workflowService);
+        // BPMNModel model = modelManager.getModel(modelVersion);
+        // ItemCollection task = modelManager.findTaskByID(model, taskID);
+        // // model.openDefaultProces().fin(type);.getTask(taskID);
+        // String modelTaskGroupName = task.getItemValueString("txtworkflowgroup"); //
+        // DO NOT CHANGE!
+        // sepaExport.setItemValue(WorkflowKernel.WORKFLOWGROUP, modelTaskGroupName);
+        if (debug) {
+            logger.info("├── Created new SEPA group=" + key + "");
+        }
         return sepaExport;
     }
 
@@ -286,6 +350,38 @@ public class SEPAAdapter implements SignalAdapter {
         } catch (QueryException e1) {
             e1.printStackTrace();
         }
+        return null;
+    }
+
+    /**
+     * Helper method to find a matching sepa group
+     * 
+     * @param key
+     * @param taskID - optional can be used to restrict the lookup for a specific
+     *               task
+     * @return
+     * @throws QueryException
+     */
+    private ItemCollection findSEPAExportByTask(String workflowgroup, String key, int taskID) throws QueryException {
+        String query = "";
+
+        if (taskID > 0) {
+            query = "(type:workitem)  AND ($taskid:" + taskID + ") AND ($workflowgroup:" + workflowgroup
+                    + ") AND (name:\""
+                    + key + "\")";
+
+        } else {
+            query = "(type:workitem) AND ($workflowgroup:" + workflowgroup + ") AND (name:\""
+                    + key + "\")";
+
+        }
+
+        List<ItemCollection> resultList = workflowService.getDocumentService().find(query, 1, 0, "$modified", true);
+
+        if (resultList.size() > 0) {
+            return resultList.get(0);
+        }
+        // no sepa export found
         return null;
     }
 }
