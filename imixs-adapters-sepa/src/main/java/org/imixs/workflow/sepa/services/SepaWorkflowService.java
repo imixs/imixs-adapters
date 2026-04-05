@@ -418,6 +418,38 @@ public class SepaWorkflowService {
     }
 
     /**
+     * Helper method to find a matching sepa group
+     * 
+     * @param key
+     * @param taskID - optional can be used to restrict the lookup for a specific
+     *               task
+     * @return
+     * @throws QueryException
+     */
+    public ItemCollection findSEPAExportByWorkflowGroup(String workflowgroup, String key, int taskID)
+            throws QueryException {
+        String query = "";
+
+        if (taskID > 0) {
+            query = "(type:workitem)  AND ($taskid:" + taskID + ") AND ($workflowgroup:\"" + workflowgroup
+                    + "\") AND (name:\"" + key + "\")";
+
+        } else {
+            query = "(type:workitem) AND ($workflowgroup:\"" + workflowgroup + "\") AND (name:\""
+                    + key + "\")";
+
+        }
+
+        List<ItemCollection> resultList = workflowService.getDocumentService().find(query, 1, 0, "$modified", true);
+
+        if (resultList.size() > 0) {
+            return resultList.get(0);
+        }
+        // no sepa export found
+        return null;
+    }
+
+    /**
      * Helper method verifies all open SEPA exports and returns the latest for the
      * given key name. If no open SEPA export exists the method returns null.
      * 
@@ -427,6 +459,7 @@ public class SepaWorkflowService {
      * @return
      * @throws QueryException
      */
+    @Deprecated
     public ItemCollection findSEPAExportByTask(String key, int taskID) throws QueryException {
         String query = "";
         if (taskID <= 0) {

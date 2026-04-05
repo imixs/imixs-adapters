@@ -37,6 +37,8 @@ import org.imixs.workflow.ItemCollection;
 import org.imixs.workflow.engine.DocumentService;
 import org.imixs.workflow.engine.scheduler.SchedulerController;
 import org.imixs.workflow.engine.scheduler.SchedulerService;
+import org.imixs.workflow.exceptions.QueryException;
+import org.imixs.workflow.faces.data.WorkflowController;
 import org.imixs.workflow.sepa.services.SepaScheduler;
 import org.imixs.workflow.sepa.services.SepaWorkflowService;
 

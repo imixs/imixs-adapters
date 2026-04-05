@@ -179,7 +179,7 @@ public class SEPAAdapter implements SignalAdapter {
         ItemCollection sepaExport;
         try {
 
-            sepaExport = findSEPAExportByTask(workflowgroup, key, initTask);
+            sepaExport = sepaWorkflowService.findSEPAExportByWorkflowGroup(workflowgroup, key, initTask);
             if (sepaExport == null) {
                 // create a new one
                 sepaExport = createNewSEPAExport(key, workflowgroup, initTask, initEvent, type, workitem, debug);
@@ -228,7 +228,7 @@ public class SEPAAdapter implements SignalAdapter {
         ItemCollection sepaExport;
         try {
 
-            sepaExport = findSEPAExportByTask(workflowgroup, key, 0);
+            sepaExport = sepaWorkflowService.findSEPAExportByWorkflowGroup(workflowgroup, key, 0);
             if (sepaExport != null) {
                 // Sepa group found remove reference
                 List<String> refs = workitem.getItemValueList("$workitemref", String.class);
@@ -261,8 +261,7 @@ public class SEPAAdapter implements SignalAdapter {
         ItemCollection sepaExport = new ItemCollection()
                 .workflowGroup(workflowgroup)
                 .task(taskID)
-                .event(eventId)
-                .setItemValue("name", key);
+                .event(eventId);
 
         // Lookup SEPA config....
         ItemCollection bankConfig = null;
@@ -281,7 +280,7 @@ public class SEPAAdapter implements SignalAdapter {
         sepaExport.replaceItemValue(WorkflowKernel.MODIFIED, new Date());
         // set uniqueId, needed for xslt
         sepaExport.setItemValue(WorkflowKernel.UNIQUEID, WorkflowKernel.generateUniqueID());
-
+        sepaExport.setItemValue("name", key);
         // Invoice/Lastschrift?
         if ("OUT".equalsIgnoreCase(type)) {
             // copy dbtr data...
@@ -353,35 +352,4 @@ public class SEPAAdapter implements SignalAdapter {
         return null;
     }
 
-    /**
-     * Helper method to find a matching sepa group
-     * 
-     * @param key
-     * @param taskID - optional can be used to restrict the lookup for a specific
-     *               task
-     * @return
-     * @throws QueryException
-     */
-    private ItemCollection findSEPAExportByTask(String workflowgroup, String key, int taskID) throws QueryException {
-        String query = "";
-
-        if (taskID > 0) {
-            query = "(type:workitem)  AND ($taskid:" + taskID + ") AND ($workflowgroup:" + workflowgroup
-                    + ") AND (name:\""
-                    + key + "\")";
-
-        } else {
-            query = "(type:workitem) AND ($workflowgroup:" + workflowgroup + ") AND (name:\""
-                    + key + "\")";
-
-        }
-
-        List<ItemCollection> resultList = workflowService.getDocumentService().find(query, 1, 0, "$modified", true);
-
-        if (resultList.size() > 0) {
-            return resultList.get(0);
-        }
-        // no sepa export found
-        return null;
-    }
 }
