@@ -75,7 +75,8 @@ public class DatevDataGroupAdapter implements SignalAdapter {
 	public static final String MODE_ADD = "add";
 	public static final String MODE_REMOVE = "remove";
 	public static final String MODE_EXECUTE = "execute";
-	public static final String ITEM_WORKITEMREF = "$uniqueidref";
+	public static final String ITEM_UNIQUEIDREF = "$uniqueidref";
+	public static final String ITEM_WORKITEMREF = "$workitemref";
 	public static final String API_ERROR = "API_ERROR";
 	public static final String ERROR_MISSING_DATA = "MISSING_DATA";
 
@@ -225,6 +226,7 @@ public class DatevDataGroupAdapter implements SignalAdapter {
 			}
 
 			// Workitem mit DATEV export verknüpften
+			workitem.appendItemValueUnique(ITEM_UNIQUEIDREF, datevExport.getUniqueID());
 			workitem.appendItemValueUnique(ITEM_WORKITEMREF, datevExport.getUniqueID());
 
 		} catch (QueryException | AccessDeniedException | ProcessingErrorException | ModelException e1) {
@@ -263,10 +265,15 @@ public class DatevDataGroupAdapter implements SignalAdapter {
 							"│   ├── remove workitem '" + workitem.getUniqueID() + "' from datevexport "
 									+ datevExport.getUniqueID());
 				}
-				List<String> refList = workitem.getItemValue(ITEM_WORKITEMREF);
+				List<String> refList = workitem.getItemValue(ITEM_UNIQUEIDREF);
 				while (refList.contains(datevExport.getUniqueID())) {
 					refList.remove(datevExport.getUniqueID());
-					workitem.setItemValue(ITEM_WORKITEMREF, refList);
+					workitem.setItemValue(ITEM_UNIQUEIDREF, refList);
+				}
+				List<String> refListWorkitem = workitem.getItemValue(ITEM_WORKITEMREF);
+				while (refListWorkitem.contains(datevExport.getUniqueID())) {
+					refListWorkitem.remove(datevExport.getUniqueID());
+					workitem.setItemValue(ITEM_UNIQUEIDREF, refListWorkitem);
 				}
 
 			} else {
