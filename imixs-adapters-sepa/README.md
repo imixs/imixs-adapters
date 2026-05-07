@@ -59,6 +59,12 @@ The SEPA Adapter class `org.imixs.workflow.sepa.adapter.SEPAAdapter` is a generi
 |           | `workflowgroup` | The name of the workflow group of the SEPA workflow                                   |
 |           | `debug`         | Optional boolean to print debug information                                           |
 | EXECUTE   |                 | Executes a sepa run by the given report definition                                    |
+|           | `debug`         | Optional boolean to print debug information                                           |
+| FINISH    |                 | Executes a sepa run by the given report definition                                    |
+|           | `modelversion`  | A regex pattenr to match invoice model versions                                       |
+|           | `task`          | A regex pattenr to match invoice task IDs                                             |
+|           | `event`         | The event id to be exeucted on the invoice                                            |
+|           | `debug`         | Optional boolean to print debug information                                           |
 
 ## SEPA Workflow
 
