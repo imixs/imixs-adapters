@@ -35,6 +35,7 @@ import jakarta.inject.Inject;
  * @version 1.0
  * @author rsoika
  */
+@Deprecated
 public class SEPARefFinishAdapter implements SignalAdapter {
 
     private static Logger logger = Logger.getLogger(SEPARefFinishAdapter.class.getName());

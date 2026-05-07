@@ -8,9 +8,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-import jakarta.ejb.EJB;
-import jakarta.inject.Inject;
-import jakarta.xml.bind.JAXBException;
 import javax.xml.transform.TransformerException;
 
 import org.imixs.workflow.FileData;
@@ -21,6 +18,10 @@ import org.imixs.workflow.exceptions.AdapterException;
 import org.imixs.workflow.exceptions.PluginException;
 import org.imixs.workflow.sepa.services.SepaWorkflowService;
 
+import jakarta.ejb.EJB;
+import jakarta.inject.Inject;
+import jakarta.xml.bind.JAXBException;
+
 /**
  * The SEPAExportAdapter executes the SEPA export and generates a SEPA XML file
  * from all referred workitems.
@@ -28,6 +29,7 @@ import org.imixs.workflow.sepa.services.SepaWorkflowService;
  * @version 1.0
  * @author rsoika
  */
+@Deprecated
 public class SEPAExportAdapter implements SignalAdapter {
 
     private static Logger logger = Logger.getLogger(SEPAExportAdapter.class.getName());
@@ -118,7 +120,7 @@ public class SEPAExportAdapter implements SignalAdapter {
             }
             // attach the file
             sepaExport.addFileData(filedata);
-        } catch (JAXBException| IOException | TransformerException e) {
+        } catch (JAXBException | IOException | TransformerException e) {
             throw new PluginException(SEPAExportAdapter.class.getName(), SepaWorkflowService.REPORT_ERROR,
                     "Failed to generate SEPA File:" + e.getMessage());
         }

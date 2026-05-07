@@ -23,6 +23,7 @@ import jakarta.inject.Inject;
  * @version 1.0
  * @author rsoika
  */
+@Deprecated
 public class SEPARefRemoveAdapter implements SignalAdapter {
 
     private static Logger logger = Logger.getLogger(SEPARefRemoveAdapter.class.getName());
