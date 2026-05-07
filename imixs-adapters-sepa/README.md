@@ -51,19 +51,19 @@ The SEPA Adapter class `org.imixs.workflow.sepa.adapter.SEPAAdapter` is a generi
 | ADD       |                 | Adds the current workitem into a sepa group. If no group exits a new group is created |
 |           | `key`           | The bank ID from the sepa configuration                                               |
 |           | `workflowgroup` | The name of the workflow group of the SEPA workflow                                   |
-|           | `init.task`     | The inital task id to create a new sepa group                                         |
-|           | `init.event`    | The inital taseventk id to create a new sepa group                                    |
+|           | `init.task`     | The initial task id to create a new sepa group                                        |
+|           | `init.event`    | The initial event id to create a new sepa group                                       |
 |           | `debug`         | Optional boolean to print debug information                                           |
-| REMOVE    |                 | Removes the current worktiem from a sepa group                                        |
+| REMOVE    |                 | Removes the current workitem from a sepa group                                        |
 |           | `key`           | The bank ID from the sepa configuration                                               |
 |           | `workflowgroup` | The name of the workflow group of the SEPA workflow                                   |
 |           | `debug`         | Optional boolean to print debug information                                           |
 | EXECUTE   |                 | Executes a sepa run by the given report definition                                    |
 |           | `debug`         | Optional boolean to print debug information                                           |
-| FINISH    |                 | Executes a sepa run by the given report definition                                    |
-|           | `modelversion`  | A regex pattenr to match invoice model versions                                       |
-|           | `task`          | A regex pattenr to match invoice task IDs                                             |
-|           | `event`         | The event id to be exeucted on the invoice                                            |
+| FINISH    |                 | Closes a sepa run by executing all referred invoices                                  |
+|           | `modelversion`  | A regex pattern to match invoice model versions                                       |
+|           | `task`          | A regex pattern to match invoice task IDs                                             |
+|           | `event`         | The event id to be executed on the invoice                                            |
 |           | `debug`         | Optional boolean to print debug information                                           |
 
 ## SEPA Workflow
