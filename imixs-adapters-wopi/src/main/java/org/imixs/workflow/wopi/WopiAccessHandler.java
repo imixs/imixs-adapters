@@ -112,7 +112,7 @@ public class WopiAccessHandler {
                 mimeTypes = null;
             }
         } else {
-            logger.warning("...unable to parse discovery endpoint - parameter ' not provided!");
+            logger.fine("...unable to parse discovery endpoint - parameter ' not provided!");
         }
 
     }
@@ -410,7 +410,7 @@ public class WopiAccessHandler {
             }
 
         } else {
-            logger.warning("...wopi.public.endpoint is not set - check configuration!");
+            logger.fine("...wopi.public.endpoint is not set - check configuration!");
 
         }
 
