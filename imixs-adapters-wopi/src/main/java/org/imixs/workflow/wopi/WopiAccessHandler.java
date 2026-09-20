@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 
 import javax.crypto.SecretKey;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -30,6 +29,7 @@ import org.imixs.jwt.JWTException;
 import org.imixs.jwt.JWTParser;
 import org.imixs.workflow.FileData;
 import org.imixs.workflow.WorkflowKernel;
+import org.imixs.workflow.util.XMLParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -443,9 +443,8 @@ public class WopiAccessHandler {
 
         try {
             // parse the discovery URL
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(new URL(endpoint).openStream());
+            DocumentBuilder builder = XMLParser.getSecureDocumentBuilder();
+            Document doc = builder.parse(new URL(endpoint).openStream());
 
             // parse all <app> nodes
             NodeList appList = doc.getElementsByTagName("app");
