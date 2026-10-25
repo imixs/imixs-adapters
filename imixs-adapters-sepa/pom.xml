@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>de.speedbanking</groupId>
 			<artifactId>iban-commons</artifactId>
-			<version>1.8.7</version>
+			<version>1.8.13</version>
 		</dependency>
 
 	</dependencies>
